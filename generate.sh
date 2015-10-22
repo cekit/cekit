@@ -1,7 +1,7 @@
 #!/bin/sh
 
 VERSION=${VERSION:="1.0.0"}
-TEMPLATE=${TEMPLATE:="image.yaml"}
+TEMPLATE=${TEMPLATE:="`pwd`/image.yaml"}
 SCRIPTS_DIR=${SCRIPTS_DIR:="`pwd`/scripts"}
 OUTPUT_DIR=${OUTPUT_DIR:="`pwd`/target"}
 
