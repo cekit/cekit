@@ -12,5 +12,5 @@ echo "Using template: $TEMPLATE"
 echo "Using scripts directory: $SCRIPTS_DIR"
 echo "Using output directory: $OUTPUT_DIR"
 
-docker run -t --rm -v $SCRIPTS_DIR:/scripts:z -v $TEMPLATE:/input/image.yaml:z -v $OUTPUT_DIR:/output:z jboss/dockerfile-generator:$VERSION
+exec docker run -it --rm -v $SCRIPTS_DIR:/scripts:z -v $TEMPLATE:/input/image.yaml:z -v $OUTPUT_DIR:/output:z jboss/dockerfile-generator:$VERSION
 
