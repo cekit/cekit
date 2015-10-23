@@ -8,7 +8,6 @@ RUN groupadd -r dogen -g 1000 && useradd -u 1000 -r -g dogen -m -d $HOME -s /sbi
 # Add required files
 RUN yum -y install python-setuptools && yum clean all
 
-
 WORKDIR /home/dogen
 
 ADD dogen $HOME/dogen/
