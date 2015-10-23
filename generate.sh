@@ -34,7 +34,7 @@ if [ -n "$SCRIPTS_DIR" ]; then
     cmd="--scripts /scripts $cmd"
 fi
 
-if [ -z "$DIST_GIT" ]; then
+if [ -n "$DIST_GIT" ]; then
     cmd="--dist-git $cmd"
 fi
 
