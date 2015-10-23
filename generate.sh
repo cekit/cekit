@@ -27,5 +27,5 @@ fi
 # Pre-create the target directory
 mkdir -p $OUTPUT_DIR
 
-exec docker run -t --rm $volumes jboss/dockerfile-generator:$VERSION
+exec docker run -t --rm $volumes jboss/dogen:$VERSION
 

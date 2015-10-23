@@ -1,0 +1,109 @@
+# This is a Dockerfile for the {{ name }}:{{ version }}-{{ release }} image.
+#
+# In you have feedback, please send an email
+# to cloud-enablement-feedback@redhat.com.
+#
+# Thank you!
+
+FROM {{ helper.base_image(from, version) }}
+
+{% if maintainer %}
+MAINTAINER {{ maintainer }}
+
+{% endif -%}
+
+# Environment variables
+ENV JBOSS_IMAGE_NAME="{{name}}" \
+    JBOSS_IMAGE_VERSION="{{version}}" \
+    JBOSS_IMAGE_RELEASE="{{release}}" {% if envs %}{% if envs.information %}\{% endif %}
+    {% for env in envs.information %}
+
+    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
+    {% endfor %}
+
+    {% endif %}
+
+# Labels
+LABEL Name="$JBOSS_IMAGE_NAME" \
+      Version="$JBOSS_IMAGE_VERSION" \
+      Release="$JBOSS_IMAGE_RELEASE" \
+      Architecture="x86_64" \
+      BZComponent="{{ helper.component(name) }}" {%- if labels %} \
+      {% for label in labels %}
+      {{ label.name }}="{{ label.value }}" {%- if loop.index < loop.length %} \{% endif %}
+
+      {% endfor %}
+{% endif %}
+
+{% if ports %}
+# Exposed ports
+EXPOSE {%- for port in ports %} {{ port.value }}{% endfor %}
+
+{% endif %}
+
+USER root
+
+{% if packages %}
+# Inject yum repo
+RUN echo -e "[jboss] \n\
+name=Cloud Enablement JBoss RPM repository \n\
+baseurl=http://download.eng.bos.redhat.com/rcm-guest/puddles/JBoss/1.0/latest/x86_64/os/ \n\
+enabled=1 \n\
+gpgcheck=1 \n\
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release" > /etc/yum.repos.d/jboss.repo
+
+# Install required RPMs
+RUN yum install -y --disablerepo=\* --enablerepo=jboss {%- for package in packages %} {{ package }}{% endfor %} \
+    && yum clean all \
+    && rm /etc/yum.repos.d/jboss.repo
+
+{% endif %}
+
+{%- if sources %}
+# Add all required sources to the /tmp/scripts/sources/
+# directory
+ADD \
+{% for source in sources %}
+    {{ helper.basename(source.url) }} \
+    {% endfor %}
+    /tmp/scripts/sources/
+
+{% endif %}
+
+{%- if scripts %}
+# Add scripts used to configure the image
+ADD scripts /tmp/scripts
+
+# Custom scripts
+{% for script in scripts %}
+{% if script.user %}
+USER {{ script.user }}
+{% else %}
+USER jboss
+{% endif %}
+RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
+
+{% endfor %}
+# Cleanup the scripts directory
+USER root
+RUN rm -rf /tmp/scripts
+
+{% endif %}
+
+{%- if openshift %}
+# Switch to the user 185 for OpenShift usage
+USER 185
+{% else %}
+USER jboss
+{% endif %}
+
+{%- if workdir %}
+# Specify the working directory
+WORKDIR {{ workdir }}
+{% endif %}
+
+{% if cmd %}
+# Start the main process
+CMD {{ helper.cmd(cmd) }}
+{% endif %}
+
