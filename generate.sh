@@ -19,7 +19,7 @@ fi
 
 volumes="-v $TEMPLATE:/input/image.yaml:z -v $OUTPUT_DIR:/output:z"
 
-if [ -n "$SCRIPTS_DIR" ];
+if [ -n "$SCRIPTS_DIR" ]; then
     echo "Using '$SCRIPTS_DIR' as the scripts directory"
     volumes="$volumes -v $SCRIPTS_DIR:/scripts:z"
 fi
