@@ -12,6 +12,9 @@ setup(
     name = "dogen",
     version = version,
     packages = find_packages(exclude=["tests"]),
+    package_data = {
+        'dogen.templates': ['*.jinja']
+    },
     url = 'https://github.com/jboss-dockerfiles/dogen',
     download_url = "https://github.com/jboss-dockerfiles/dogen/archive/%s.tar.gz" % version,
     author = 'Cloud Enablement',

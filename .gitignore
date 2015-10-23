@@ -1,3 +1,6 @@
 *.pyc
 *.swp
 target
+dogen.egg-info
+build
+setup.cfg

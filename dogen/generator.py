@@ -250,7 +250,7 @@ class Generator(object):
 
     def render_from_template(self):
         print("Rendering Dockerfile...")
-        loader = FileSystemLoader(self.pwd)
+        loader = FileSystemLoader(os.path.join(self.pwd, "templates"))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
         template = env.get_template("template.jinja")

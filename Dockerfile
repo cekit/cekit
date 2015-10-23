@@ -12,7 +12,7 @@ RUN yum -y install python-setuptools && yum clean all
 WORKDIR /home/dogen
 
 ADD dogen $HOME/dogen/
-ADD requirements.txt setup.py LICENSE README.rst $HOME/
+ADD requirements.txt setup.py LICENSE README.rst MANIFEST.in $HOME/
 RUN chown dogen:dogen $HOME -R
 
 USER dogen
