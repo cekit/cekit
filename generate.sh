@@ -27,5 +27,5 @@ fi
 # Pre-create the target directory
 mkdir -p $OUTPUT_DIR
 
-exec docker run -t --rm $volumes jboss/dogen:$VERSION
+exec docker run -t --rm $volumes ce-registry.usersys.redhat.com/jboss/dogen:$VERSION
 
