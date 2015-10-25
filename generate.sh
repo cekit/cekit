@@ -20,13 +20,16 @@
 # ------------------------------------------------------------
 
 VERSION=${VERSION:="1.0.0"}
-echo "Using '$VERSION' version of the generator tool"
 
-TEMPLATE=${TEMPLATE:="$PWD/image.yaml"}
-echo "Using '$TEMPLATE' template"
-
-if [ ! -f "$TEMPLATE" ]; then
+if [ -n "$TEMPLATE" ] && [ ! -f "$TEMPLATE" ]; then
     echo "Cannot find '$TEMPLATE' template, make sure the file exists, aborting."
+    exit 1
+fi
+
+if [ -z "$TEMPLATE" ] && [ -f "$PWD/image.yaml" ]; then
+    TEMPLATE="$PWD/image.yaml"
+else
+    echo "Cannot find image.yaml template in the current directory nor 'TEMPLATE' env variable was set, aborting."
     exit 1
 fi
 
@@ -43,7 +46,22 @@ if [ -z "$SCRIPTS_DIR" ] && [ -d "$PWD/scripts" ]; then
     SCRIPTS_DIR="$PWD/scripts"
 fi
 
+# If the directory that contains the template is a git repository
+# get the last commit ID and store it in the SOURCE_COMMIT_ID
+# environment variable. This could be used later in the dogen
+# tool for example in the commit message when used with
+# DIST_GIT env variable set to true
+pushd `dirname $TEMPLATE` > /dev/null
+    commit=$(git rev-parse HEAD 2> /dev/null)
+    if [ "$?" = "0" ]; then
+        export SOURCE_COMMIT_ID=$commit
+    fi
+popd > /dev/null
+
 OUTPUT_DIR=${OUTPUT_DIR:="$PWD/target"}
+
+echo "Using '$VERSION' version of the generator tool"
+echo "Using '$TEMPLATE' template"
 echo "Using '$OUTPUT_DIR' as the output directory"
 
 # Pre-create the target directory
