@@ -2,19 +2,27 @@
 
 # Helper script to run the jboss/dogen tool
 # 
-# Honored environemnt variables:
+# Honored environment variables. All variables are optional.
 #
-# - TEMPLATE (required) - path the the template (image.yaml) file
-# - OUTPUT_DIR (required) - target directory
-# - VERSION (optional - latest stable is used by default)- version of the tool to run
-# - SCRIPTS_DIR (optional) - path to scripts directory
+# - TEMPLATE:       defaults to $PWD/image.yaml, path the the template
+#                   (image.yaml) file, fails if the file does not exists
+#
+# - OUTPUT_DIR:     defaults to $PWD/target, target directory, creates
+#                   the target directory if necessary
+#
+# - SCRIPTS_DIR:    defaults to $PWD/scripts, path to scripts directory,
+#                   fails if the directory does not exists, if the environment
+#                   variable is not provided checks if $PWD/scripts directory
+#                   exists and uses this directory
+#
+# - VERSION:        defaults to latest stable release, version of the tool to run
 #
 # ------------------------------------------------------------
 
 VERSION=${VERSION:="1.0.0"}
 echo "Using '$VERSION' version of the generator tool"
 
-TEMPLATE=${TEMPLATE:="`pwd`/image.yaml"}
+TEMPLATE=${TEMPLATE:="$PWD/image.yaml"}
 echo "Using '$TEMPLATE' template"
 
 if [ ! -f "$TEMPLATE" ]; then
@@ -22,15 +30,20 @@ if [ ! -f "$TEMPLATE" ]; then
     exit 1
 fi
 
-# If SCRIPTS_DIR env variable is not provided,
-# check if the default location (currentdir/scripts)
-# exists, if yes, assume that this is the scripts
-# directory to mount
-if [ -z "$SCRIPTS_DIR" ] && [ -d "`pwd`/scripts" ]; then
-    SCRIPTS_DIR=${SCRIPTS_DIR:="`pwd`/scripts"}
+if [ -n "$SCRIPTS_DIR" ] && [ ! -d "$SCRIPTS_DIR" ]; then
+    echo "Cannot find '$SCRIPTS_DIR' directory, make sure you provided correct path to scripts directory, aborting."
+    exit 1
 fi
 
-OUTPUT_DIR=${OUTPUT_DIR:="`pwd`/target"}
+# If SCRIPTS_DIR env variable is not provided,
+# check if the default location ($PWD/scripts)
+# exists, if yes, assume that this is the scripts
+# directory to mount
+if [ -z "$SCRIPTS_DIR" ] && [ -d "$PWD/scripts" ]; then
+    SCRIPTS_DIR="$PWD/scripts"
+fi
+
+OUTPUT_DIR=${OUTPUT_DIR:="$PWD/target"}
 echo "Using '$OUTPUT_DIR' as the output directory"
 
 # Pre-create the target directory
