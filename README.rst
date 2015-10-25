@@ -23,39 +23,24 @@ Considering above you need to remember to mount appropriate volumes at the conta
 start. You are free to change the paths, but please remember to provide new locations
 as part of the container's :code:`run` command instruction.
 
-::
+The best option to run the dogen tool is to use the :code:`generate.sh` script which makes
+it easy to provide required options.
 
-    $ docker run -it --rm jboss/dogen:1.0.0 --help
-    usage: dogen [-h] [-v] [--version] [--without-sources] [--dist-git]
-                 [--scripts SCRIPTS]
-                 template output
-    
-    Dockerfile generator tool
-    
-    positional arguments:
-      template              Path to yaml template to process
-      output                Path to directory where generated files should be
-                            saved
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      -v, --verbose         Verbose output
-      --version             Show version and exit
-      --without-sources, --ws
-                            Do not process sources, only generate Dockerfile
-      --dist-git            Specifies if the target directory is a dist-git
-                            repository
-      --scripts SCRIPTS     Location of the scripts directory
-
-Example
-~~~~~~~
-
-::
+Examples
+~~~~~~~~
 
 For image without scripts to be added::
 
     docker run -it --rm -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
 
+The same with :code:`generate.sh` script:
+
+    TEMPLATE=PATH_TO_IMAGE_YAML OUTPUT_DIR=PATH_TO_TARGET_DIR ./generate.sh
+
 For image with scripts to be added::
 
     docker run -it --rm -v PATH_TO_SCRIPTS_DIR:/scripts:z -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
+
+The same with :code:`generate.sh` script:
+
+    TEMPLATE=PATH_TO_IMAGE_YAML OUTPUT_DIR=PATH_TO_TARGET_DIR SCRIPTS_DIR=PATH_TO_SCRIPTS_DIR ./generate.sh
