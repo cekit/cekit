@@ -5,6 +5,11 @@ This is a simple tool to generate `Dockerfile` files from YAML templates.
 
 .. image:: much_files.jpg
 
+Template
+--------
+
+TBD
+
 Usage
 -----
 
@@ -12,7 +17,7 @@ This tool is shipped as a Docker image registered as :code:`jboss/dogen`.
 You can see the :code:`Dockerfile` for this image in the main directory
 of the source distribution. This Docker image uses some conventions:
 
-1. The image template that should be converted into :code:`Dockerfile` is expected to be
+1. The **image template** that should be converted into :code:`Dockerfile` is expected to be
    available at :code:`/input/image.yaml`.
 2. The output directory will be :code:`/output`.
 3. The directory with (optional) scripts should be available at :code:`/scripts`.
@@ -33,7 +38,9 @@ For image without scripts to be added::
 
 The same with :code:`generate.sh` script::
 
-    TEMPLATE=PATH_TO_IMAGE_YAML OUTPUT_DIR=PATH_TO_TARGET_DIR ./generate.sh
+    export TEMPLATE=PATH_TO_IMAGE_YAML
+    export OUTPUT_DIR=PATH_TO_TARGET_DIR
+    ./generate.sh
 
 For image with scripts to be added::
 
@@ -41,4 +48,7 @@ For image with scripts to be added::
 
 The same with :code:`generate.sh` script::
 
-    TEMPLATE=PATH_TO_IMAGE_YAML OUTPUT_DIR=PATH_TO_TARGET_DIR SCRIPTS_DIR=PATH_TO_SCRIPTS_DIR ./generate.sh
+    export TEMPLATE=PATH_TO_IMAGE_YAML
+    export OUTPUT_DIR=PATH_TO_TARGET_DIR
+    export SCRIPTS_DIR=PATH_TO_SCRIPTS_DIR
+    ./generate.sh
