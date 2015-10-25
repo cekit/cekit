@@ -4,10 +4,10 @@
 # 
 # Honored environemnt variables:
 #
-# - VERSION - version of the tool to run
-# - SCRIPTS_DIR - path to scripts directory
-# - TEMPLATE - path the the template (image.yaml) file
-# - OUTPUT_DIR - target directory
+# - TEMPLATE (required) - path the the template (image.yaml) file
+# - OUTPUT_DIR (required) - target directory
+# - VERSION (optional - latest stable is used by default)- version of the tool to run
+# - SCRIPTS_DIR (optional) - path to scripts directory
 #
 # ------------------------------------------------------------
 
