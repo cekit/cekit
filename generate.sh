@@ -1,5 +1,16 @@
 #!/bin/sh
 
+# Helper script to run the jboss/dogen tool
+# 
+# Honored environemnt variables:
+#
+# - VERSION - version of the tool to run
+# - SCRIPTS_DIR - path to scripts directory
+# - TEMPLATE - path the the template (image.yaml) file
+# - OUTPUT_DIR - target directory
+#
+# ------------------------------------------------------------
+
 VERSION=${VERSION:="1.0.0"}
 echo "Using '$VERSION' version of the generator tool"
 
@@ -39,4 +50,3 @@ if [ -n "$DIST_GIT" ]; then
 fi
 
 exec docker run -t --rm $volumes ce-registry.usersys.redhat.com/jboss/dogen:$VERSION $cmd
-
