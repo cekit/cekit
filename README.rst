@@ -33,7 +33,7 @@ For image without scripts to be added::
 
     docker run -it --rm -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
 
-The same with :code:`generate.sh` script:
+The same with :code:`generate.sh` script::
 
     TEMPLATE=PATH_TO_IMAGE_YAML OUTPUT_DIR=PATH_TO_TARGET_DIR ./generate.sh
 
@@ -41,6 +41,6 @@ For image with scripts to be added::
 
     docker run -it --rm -v PATH_TO_SCRIPTS_DIR:/scripts:z -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
 
-The same with :code:`generate.sh` script:
+The same with :code:`generate.sh` script::
 
     TEMPLATE=PATH_TO_IMAGE_YAML OUTPUT_DIR=PATH_TO_TARGET_DIR SCRIPTS_DIR=PATH_TO_SCRIPTS_DIR ./generate.sh
