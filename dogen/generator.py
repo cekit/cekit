@@ -14,6 +14,8 @@ import re
 
 from jinja2 import FileSystemLoader, Environment
 
+from dogen.version import version
+
 class Chdir(object):
 
     """ Context manager for changing the current working directory """
@@ -81,7 +83,6 @@ class Generator(object):
 
         if self.dist_git:
             self.repo = self.init_repo(self.output)
-            self.input_repo = self.init_repo(self.input)
 
     def init_repo(self, path):
         try:
@@ -148,8 +149,21 @@ class Generator(object):
         if self.scripts:
             self.repo.index.add(["scripts"])
 
+        commit_msg = "Sync"
+
+        source_commit_id = os.environ.get("DOGEN_SOURCE_COMMIT_ID")
+        repo_name = os.environ.get("DOGEN_REPO_NAME")
+
+        if repo_name:
+            commit_msg += " with %s" % repo_name
+
+        if source_commit_id:
+            commit_msg += ", commit %s" % source_commit_id
+
+        commit_msg += ", release %s-%s" % (version, release)
+
         # Commit the change
-        self.repo.index.commit("Sync with jboss-dockerfiles, commit %s, release %s-%s" % (self.input_repo.head.commit.hexsha, version, release))
+        self.repo.index.commit(commit_msg)
 
         untracked = self.repo.untracked_files
 

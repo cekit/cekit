@@ -26,9 +26,6 @@ Considering above you need to remember to mount appropriate volumes at the conta
 start. You are free to change the paths, but please remember to provide new locations
 as part of the container's :code:`run` command instruction.
 
-The best option to run the dogen tool is to use the :code:`generate.sh` script which makes
-it easy to provide required options.
-
 Examples
 ~~~~~~~~
 
@@ -36,19 +33,7 @@ For image without scripts to be added::
 
     docker run -it --rm -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
 
-The same with :code:`generate.sh` script::
-
-    export TEMPLATE=PATH_TO_IMAGE_YAML
-    export OUTPUT_DIR=PATH_TO_TARGET_DIR
-    ./generate.sh
-
 For image with scripts to be added::
 
     docker run -it --rm -v PATH_TO_SCRIPTS_DIR:/scripts:z -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
 
-The same with :code:`generate.sh` script::
-
-    export TEMPLATE=PATH_TO_IMAGE_YAML
-    export OUTPUT_DIR=PATH_TO_TARGET_DIR
-    export SCRIPTS_DIR=PATH_TO_SCRIPTS_DIR
-    ./generate.sh
