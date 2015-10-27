@@ -294,7 +294,7 @@ class Generator(object):
 
             if not passed:
                 if getpass.getuser() == 'jenkins':
-                    url = "http://172.17.42.1/%s" % basename
+                    url = "http://ce-ci.usersys.redhat.com/cache/%s" % basename
 
                 print("Downloading %s" % url)
                 urllib.urlretrieve(url, filename)
