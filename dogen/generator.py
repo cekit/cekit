@@ -293,7 +293,7 @@ class Generator(object):
                 passed = False
 
             if not passed:
-                if getpass.getuser() == 'jenkins':
+                if os.environ.get("CI"):
                     url = "http://ce-ci.usersys.redhat.com/cache/%s" % basename
 
                 print("Downloading %s" % url)
