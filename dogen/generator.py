@@ -66,7 +66,8 @@ class TemplateHelper(object):
             return "%s:%s" % (base_image, version)
 
 class Generator(object):
-    def __init__(self, template, output, scripts=None, without_sources=False, dist_git=False):
+    def __init__(self, log, template, output, scripts=None, without_sources=False, dist_git=False):
+        self.log = log
         self.uid = os.stat(template).st_uid
         self.gid = os.stat(template).st_gid
 
@@ -158,6 +159,7 @@ class Generator(object):
         repo_name = os.environ.get("DOGEN_REPO_NAME")
 
         if repo_name:
+            self.log.debug("Repository name was specified, using '%s'" % repo_name)
             commit_msg += " with %s" % repo_name
 
         if source_commit_id:
@@ -213,10 +215,11 @@ class Generator(object):
                 try:
                     # Poor-man's workaround for not copying multiple times the same thing
                     if not os.path.exists(output_path):
+                        self.log.info("Copying package '%s'..." % package)
                         shutil.copytree(src=os.path.join(self.scripts, package), dst=output_path)
-                        print("Package %s copied" % package)
+                        self.log.debug("Done.")
                 except Exception, ex:
-                    print("Cannot copy package %s because: %s" % (package, str(ex)))
+                    self.log.exception("Cannot copy package %s" % package, ex)
         except KeyError:
             pass
 
@@ -229,7 +232,7 @@ class Generator(object):
             new_version, release = self.read_version_and_release()
             new_release = int(old_release) + 1
 
-            print "New release will be: %s-%s." % (new_version, new_release)
+            self.log.info("New release will be: %s-%s." % (new_version, new_release))
 
             # Bump the release environment variable
             self.update_value("JBOSS_IMAGE_RELEASE", new_release)
@@ -248,14 +251,14 @@ class Generator(object):
         Changes the owner of the generated files to the same user
         as the owner of the mounted template
         """
-        print "Changing owner of the generated files to: %s:%s..." % (self.uid, self.gid)
+        self.log.debug("Changing owner of generated files to: %s:%s..." % (self.uid, self.gid))
         os.chown(self.output, self.uid, self.gid)
         for root, dirs, files in os.walk(self.output):
             for d in dirs:
                 os.chown(os.path.join(root, d), self.uid, self.gid)
             for f in files:
                 os.chown(os.path.join(root, f), self.uid, self.gid)
-        print "Done."
+        self.log.debug("Done.")
 
     def read_dockerfile(self):
         with open(self.dockerfile, 'r') as f:
@@ -282,7 +285,7 @@ class Generator(object):
             f.write(re.sub("(?<=%s=\")(.*)(?=\")" % env, str(value), dockerfile))
 
     def render_from_template(self):
-        print("Rendering Dockerfile...")
+        self.log.info("Rendering Dockerfile...")
         loader = FileSystemLoader(os.path.join(self.pwd, "templates"))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
@@ -290,6 +293,7 @@ class Generator(object):
 
         with open(self.dockerfile, 'w') as f:
             f.write(template.render(self.cfg).encode('utf-8'))
+        self.log.debug("Done.")
 
     def handle_sources(self):
         if not 'sources' in self.cfg or self.without_sources:
@@ -305,19 +309,19 @@ class Generator(object):
             passed = False
             try:
                 if os.path.exists(filename):
-                    print("Checking %s hash" % filename)
                     self.check_sum(filename, source['hash'])
                     passed = True
             except:
                 passed = False
 
             if not passed:
-                if os.environ.get("CI"):
-                    url = "http://ce-ci.usersys.redhat.com/cache/%s" % basename
+                sources_cache = os.environ.get("DOGEN_SOURCES_CACHE")
+                if sources_cache:
+                    self.log.info("Using '%s' as cached location for sources" % sources_cache)
+                    url = "%s/%s" % (sources_cache, basename)
 
-                print("Downloading %s" % url)
+                self.log.info("Downloading '%s'..." % url)
                 urllib.urlretrieve(url, filename)
-                print("Checking %s hash" % filename)
                 self.check_sum(filename, source['hash'])
 
         # If destination is a dist-git repository add the sources files
@@ -327,9 +331,11 @@ class Generator(object):
                 subprocess.call(["rhpkg", "new-sources"] + files)
 
     def check_sum(self, filename, checksum):
-         filesum = hashlib.md5(open(filename, 'rb').read()).hexdigest()
-         if filesum != checksum:
-             raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
+        self.log.info("Checking '%s' hash..." % os.path.basename(filename))
+        filesum = hashlib.md5(open(filename, 'rb').read()).hexdigest()
+        if filesum != checksum:
+            raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
+        self.log.debug("Hash is correct.")
 
 
 

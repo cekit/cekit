@@ -55,7 +55,7 @@ class CLI(object):
         self.log.debug("Running version %s", version)
 
         try:
-            Generator(args.template, args.output, scripts=args.scripts, without_sources=args.without_sources, dist_git=args.dist_git).run()
+            Generator(self.log, args.template, args.output, scripts=args.scripts, without_sources=args.without_sources, dist_git=args.dist_git).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:
