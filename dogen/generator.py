@@ -67,6 +67,9 @@ class TemplateHelper(object):
 
 class Generator(object):
     def __init__(self, template, output, scripts=None, without_sources=False, dist_git=False):
+        self.uid = os.stat(template).st_uid
+        self.gid = os.stat(template).st_gid
+
         with open(template, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
 
@@ -219,6 +222,7 @@ class Generator(object):
 
         self.render_from_template()
         self.handle_sources()
+        self.change_owners()
 
         if self.dist_git:
 
@@ -232,11 +236,26 @@ class Generator(object):
 
             self.update_dist_git(new_version, new_release)
 
+
     def decision(self, question):
         if raw_input("%s [Y/n] " % question) in ["", "y", "Y"]:
             return True
 
         return False
+
+    def change_owners(self):
+        """
+        Changes the owner of the generated files to the same user
+        as the owner of the mounted template
+        """
+        print "Changing owner of the generated files to: %s:%s..." % (self.uid, self.gid)
+        os.chown(self.output, self.uid, self.gid)
+        for root, dirs, files in os.walk(self.output):
+            for d in dirs:
+                os.chown(os.path.join(root, d), self.uid, self.gid)
+            for f in files:
+                os.chown(os.path.join(root, f), self.uid, self.gid)
+        print "Done."
 
     def read_dockerfile(self):
         with open(self.dockerfile, 'r') as f:
