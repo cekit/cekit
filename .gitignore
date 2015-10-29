@@ -4,3 +4,4 @@ target
 dogen.egg-info
 build
 setup.cfg
+build.sh
