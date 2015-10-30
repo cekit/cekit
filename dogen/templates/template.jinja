@@ -10,8 +10,7 @@ MAINTAINER {{ maintainer }}
 # Environment variables
 ENV JBOSS_IMAGE_NAME="{{name}}" \
     JBOSS_IMAGE_VERSION="{{version}}" \
-    JBOSS_IMAGE_RELEASE="{{release}}" {% if envs %}{% if envs.information %}\{% endif %}
-    {% for env in envs.information %}
+    JBOSS_IMAGE_RELEASE="{{release}}" {% if helper.envs(envs) %}\{% for env in helper.envs(envs) %}
 
     {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
     {% endfor %}

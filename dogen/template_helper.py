@@ -34,3 +34,23 @@ class TemplateHelper(object):
             return base_image
         else:
             return "%s:%s" % (base_image, version)
+
+    def envs(self, env_variables):
+        """
+        Combines all environment variables that should be added to the
+        Dockerfile into one array
+        """
+
+        envs = []
+
+        if 'information' in env_variables:
+            for e in env_variables['information']:
+                envs.append(e)
+
+        if 'configuration' in env_variables:
+            for e in env_variables['configuration']:
+                if 'value' in e:
+                    envs.append(e)
+
+        return envs
+
