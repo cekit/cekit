@@ -41,8 +41,9 @@ class CLI(object):
         parser.add_argument('--without-sources', '--ws', action='store_true', help='Do not process sources, only generate Dockerfile')
         parser.add_argument('--dist-git', action='store_true', help='Specifies if the target directory is a dist-git repository')
         parser.add_argument('--scripts', help='Location of the scripts directory')
+        parser.add_argument('--template', help='Path to custom template')
 
-        parser.add_argument('template', help="Path to yaml template to process")
+        parser.add_argument('path', help="Path to yaml descriptor to process")
         parser.add_argument('output', help="Path to directory where generated files should be saved")
 
         args = parser.parse_args()
@@ -55,7 +56,7 @@ class CLI(object):
         self.log.debug("Running version %s", version)
 
         try:
-            Generator(self.log, args.template, args.output, scripts=args.scripts, without_sources=args.without_sources, dist_git=args.dist_git).run()
+            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, without_sources=args.without_sources, dist_git=args.dist_git).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:

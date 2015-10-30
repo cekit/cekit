@@ -14,22 +14,37 @@ from jinja2 import FileSystemLoader, Environment
 
 from dogen.git import Git
 from dogen.template_helper import TemplateHelper
+from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, template, output, scripts=None, without_sources=False, dist_git=False):
+    def __init__(self, log, descriptor, output, template=None, scripts=None, without_sources=False, dist_git=False):
         self.log = log
-        self.uid = os.stat(template).st_uid
-        self.gid = os.stat(template).st_gid
 
-        with open(template, 'r') as stream:
+        if not os.path.exists(descriptor):
+            raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % descriptor)
+
+        self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
+
+        if template:
+            if not os.path.exists(template):
+                raise Error("Template file '%s' could not be found. Please make sure you specified correct path." % template)
+
+            self.log.debug("Using custom provided template file: '%s'" % template)
+            self.template = template
+        else:
+            self.log.debug("Using dogen provided template file")
+            self.template = os.path.join(self.pwd, "templates", "template.jinja")
+
+        self.uid = os.stat(descriptor).st_uid
+        self.gid = os.stat(descriptor).st_gid
+
+        with open(descriptor, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
 
-        self.input = os.path.realpath(os.path.dirname(os.path.realpath(template)))
+        self.input = os.path.realpath(os.path.dirname(os.path.realpath(descriptor)))
         self.output = output
         self.scripts = scripts
 
-        self.template = template
-        self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
         self.without_sources = without_sources
         self.dist_git = dist_git
 
@@ -68,31 +83,16 @@ class Generator(object):
 
         self.render_from_template()
         self.handle_sources()
-        self.change_owners()
 
         if self.dist_git:
             self.git.update()
 
-    def change_owners(self):
-        """
-        Changes the owner of the generated files to the same user
-        as the owner of the mounted template
-        """
-        self.log.debug("Changing owner of generated files to: %s:%s..." % (self.uid, self.gid))
-        os.chown(self.output, self.uid, self.gid)
-        for root, dirs, files in os.walk(self.output):
-            for d in dirs:
-                os.chown(os.path.join(root, d), self.uid, self.gid)
-            for f in files:
-                os.chown(os.path.join(root, f), self.uid, self.gid)
-        self.log.debug("Done.")
-
     def render_from_template(self):
         self.log.info("Rendering Dockerfile...")
-        loader = FileSystemLoader(os.path.join(self.pwd, "templates"))
+        loader = FileSystemLoader(os.path.dirname(self.template))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
-        template = env.get_template("template.jinja")
+        template = env.get_template(os.path.basename(self.template))
 
         with open(self.dockerfile, 'w') as f:
             f.write(template.render(self.cfg).encode('utf-8'))

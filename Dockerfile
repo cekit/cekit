@@ -1,11 +1,9 @@
 FROM centos:7
 
-ENV HOME="/home/dogen"
+RUN mkdir /opt/dogen
+WORKDIR /opt/dogen
 
-RUN mkdir -p /home/dogen
-WORKDIR /home/dogen
-
-# Add required files
+# Install required pacakges
 RUN yum -y install python-setuptools git && yum clean all
 
 # Color the git output by default
@@ -15,10 +13,9 @@ RUN git config --global user.name "dogen"
 # Set default value for the user email address
 RUN git config --global user.email "dogen@jboss.org"
 
-ADD dogen $HOME/dogen/
-ADD requirements.txt setup.py LICENSE README.rst MANIFEST.in $HOME/
+ADD dogen /opt/dogen/dogen/
+ADD launch.sh requirements.txt setup.py LICENSE README.rst MANIFEST.in /opt/dogen/
 
-RUN easy_install --user .
+RUN easy_install .
 
-ENTRYPOINT ["/home/dogen/.local/bin/dogen"]
-CMD ["--help"]
+ENTRYPOINT ["/opt/dogen/launch.sh"]
