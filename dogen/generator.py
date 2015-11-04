@@ -6,9 +6,11 @@ import getpass
 import os
 import shutil
 import sys
-import urllib
+import requests
+import urlparse
 import yaml
 import subprocess
+import tempfile
 
 from jinja2 import FileSystemLoader, Environment
 
@@ -17,8 +19,9 @@ from dogen.template_helper import TemplateHelper
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts=None, without_sources=False, dist_git=False):
+    def __init__(self, log, descriptor, output, template=None, scripts=None, without_sources=False, dist_git=False, ssl_verify=True):
         self.log = log
+        self.ssl_verify = ssl_verify
 
         if not os.path.exists(descriptor):
             raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % descriptor)
@@ -26,17 +29,26 @@ class Generator(object):
         self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
 
         if template:
+            # Check if this is an URL
+            if bool(urlparse.urlparse(template).netloc):
+                self.log.debug("Provided template path is an URL, trying to fetch '%s'..." % template)
+                self.url = template
+                # Template is provided as an url, need to fetch it first
+                tmp_dir = tempfile.mkdtemp("dogen")
+                template = os.path.join(tmp_dir, "template.jinja")
+                self.log.debug("Custom template will be saved as '%s'..." % template)
+
+                with open(template, 'wb') as f:
+                    f.write(requests.get(self.url, verify=self.ssl_verify).content)
+
             if not os.path.exists(template):
                 raise Error("Template file '%s' could not be found. Please make sure you specified correct path." % template)
 
-            self.log.debug("Using custom provided template file: '%s'" % template)
+            self.log.info("Using custom provided template file: '%s'" % template)
             self.template = template
         else:
             self.log.debug("Using dogen provided template file")
             self.template = os.path.join(self.pwd, "templates", "template.jinja")
-
-        self.uid = os.stat(descriptor).st_uid
-        self.gid = os.stat(descriptor).st_gid
 
         with open(descriptor, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
@@ -56,7 +68,6 @@ class Generator(object):
     def run(self):
         if self.dist_git:
             self.git.prepare()
-
 
         # Remove the scripts directory
         shutil.rmtree(os.path.join(self.output, "scripts"), ignore_errors=True)
@@ -96,7 +107,11 @@ class Generator(object):
 
         with open(self.dockerfile, 'w') as f:
             f.write(template.render(self.cfg).encode('utf-8'))
-        self.log.debug("Done.")
+        self.log.debug("Done")
+
+        if self.url:
+            self.log.debug("Removing temporary template file...")
+            shutil.rmtree(os.path.dirname(self.template))
 
     def handle_sources(self):
         if not 'sources' in self.cfg or self.without_sources:
@@ -124,7 +139,8 @@ class Generator(object):
                     url = "%s/%s" % (sources_cache, basename)
 
                 self.log.info("Downloading '%s'..." % url)
-                urllib.urlretrieve(url, filename)
+                with open(filename, 'wb') as f:
+                    f.write(requests.get(url, verify=self.ssl_verify).content)
                 self.check_sum(filename, source['hash'])
 
         if self.dist_git:

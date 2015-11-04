@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import requests
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -27,6 +28,9 @@ class CLI(object):
             '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         handler.setFormatter(formatter)
         self.log.addHandler(handler)
+        requests_log = logging.getLogger("requests.packages.urllib3")
+        requests_log.setLevel(logging.WARNING)
+        requests.packages.urllib3.disable_warnings()
 
     def run(self):
         parser = MyParser(
@@ -40,6 +44,7 @@ class CLI(object):
 
         parser.add_argument('--without-sources', '--ws', action='store_true', help='Do not process sources, only generate Dockerfile')
         parser.add_argument('--dist-git', action='store_true', help='Specifies if the target directory is a dist-git repository')
+        parser.add_argument('--skip-ssl-verification', action='store_true', help='Should we skip SSL verification when retrieving data?')
         parser.add_argument('--scripts', help='Location of the scripts directory')
         parser.add_argument('--template', help='Path to custom template')
 
@@ -56,7 +61,7 @@ class CLI(object):
         self.log.debug("Running version %s", version)
 
         try:
-            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, without_sources=args.without_sources, dist_git=args.dist_git).run()
+            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, without_sources=args.without_sources, dist_git=args.dist_git, ssl_verify=not args.skip_ssl_verification).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:
