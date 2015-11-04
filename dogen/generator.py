@@ -22,6 +22,7 @@ class Generator(object):
     def __init__(self, log, descriptor, output, template=None, scripts=None, without_sources=False, dist_git=False, ssl_verify=True):
         self.log = log
         self.ssl_verify = ssl_verify
+        self.url = None
 
         if not os.path.exists(descriptor):
             raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % descriptor)
