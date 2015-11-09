@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import getpass
+import glob
 import os
 import shutil
 import sys
@@ -19,10 +20,11 @@ from dogen.template_helper import TemplateHelper
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts=None, without_sources=False, dist_git=False, ssl_verify=True):
+    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_scripts=None, without_sources=False, dist_git=False, ssl_verify=True):
         self.log = log
         self.ssl_verify = ssl_verify
         self.url = None
+        self.additional_scripts = additional_scripts
 
         if not os.path.exists(descriptor):
             raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % descriptor)
@@ -78,6 +80,7 @@ class Generator(object):
 
         if not os.path.exists(self.output):
             os.makedirs(self.output)
+
         try:
             for scripts in self.cfg['scripts']:
                 package = scripts['package']
@@ -92,6 +95,18 @@ class Generator(object):
                     self.log.exception("Cannot copy package %s" % package, ex)
         except KeyError:
             pass
+
+        # Additional scripts (not package scripts)
+        if self.additional_scripts:
+            for d in self.additional_scripts:
+                if not (os.path.exists(d) and os.path.isdir(d)):
+                    self.log.warn("Directory '%s' does not exist, additional scripts from that directory will not be copied!" % d)
+                    continue
+
+                self.log.debug("Copying additional scripts from '%s' directory..." % d)
+
+                for f in glob.glob(os.path.join(d, "*")):
+                    shutil.copy(f, os.path.join(self.output, "scripts"))
 
         self.render_from_template()
         self.handle_sources()

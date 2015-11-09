@@ -1,4 +1,3 @@
-import git
 import os
 import re
 import subprocess
