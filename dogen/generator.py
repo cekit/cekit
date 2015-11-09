@@ -98,6 +98,11 @@ class Generator(object):
 
         # Additional scripts (not package scripts)
         if self.additional_scripts:
+            output_scripts = os.path.join(self.output, "scripts")
+
+            if not os.path.exists(output_scripts):
+                os.makedirs(output_scripts)
+
             for d in self.additional_scripts:
                 if not (os.path.exists(d) and os.path.isdir(d)):
                     self.log.warn("Directory '%s' does not exist, additional scripts from that directory will not be copied!" % d)
@@ -106,7 +111,7 @@ class Generator(object):
                 self.log.debug("Copying additional scripts from '%s' directory..." % d)
 
                 for f in glob.glob(os.path.join(d, "*")):
-                    shutil.copy(f, os.path.join(self.output, "scripts"))
+                    shutil.copy(f, output_scripts)
 
         self.render_from_template()
         self.handle_sources()
