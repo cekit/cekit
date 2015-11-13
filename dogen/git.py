@@ -16,7 +16,7 @@ class Git(object):
         self.tools = Tools()
 
         self.name, self.branch, self.commit = self.tools.repo_info(path)
-        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = self.tools.repo_info(os.path.dirname(source))
+        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = self.tools.repo_info(source)
 
     def prepare(self):
         self.log.debug("Resetting git repository...")

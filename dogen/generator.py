@@ -56,7 +56,6 @@ class Generator(object):
         with open(descriptor, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
 
-        self.input = os.path.realpath(os.path.dirname(os.path.realpath(descriptor)))
         self.output = output
         self.scripts = scripts
 
@@ -66,7 +65,7 @@ class Generator(object):
         self.dockerfile = os.path.join(self.output, "Dockerfile")
 
         if self.dist_git:
-            self.git = Git(self.log, os.path.dirname(self.input), self.output)
+            self.git = Git(self.log, os.path.dirname(os.path.realpath(descriptor)), self.output)
 
     def run(self):
         if self.dist_git:
