@@ -46,8 +46,8 @@ class CLI(object):
         parser.add_argument('--dist-git', action='store_true', help='Specifies if the target directory is a dist-git repository')
         parser.add_argument('--skip-ssl-verification', action='store_true', help='Should we skip SSL verification when retrieving data?')
         parser.add_argument('--scripts', help='Location of the scripts directory containing script packages.')
-        parser.add_argument('--additional-scripts', action='append', help='Location of additional scripts. Can be specified multiple times.')
-        parser.add_argument('--template', help='Path to custom template')
+        parser.add_argument('--additional-script', action='append', help='Location of additional script (can be url). Can be specified multiple times.')
+        parser.add_argument('--template', help='Path to custom template (can be url)')
 
         parser.add_argument('path', help="Path to yaml descriptor to process")
         parser.add_argument('output', help="Path to directory where generated files should be saved")
@@ -62,7 +62,7 @@ class CLI(object):
         self.log.debug("Running version %s", version)
 
         try:
-            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_scripts=args.additional_scripts, without_sources=args.without_sources, dist_git=args.dist_git, ssl_verify=not args.skip_ssl_verification).run()
+            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_script=args.additional_script, without_sources=args.without_sources, dist_git=args.dist_git, ssl_verify=not args.skip_ssl_verification).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:

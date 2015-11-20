@@ -20,38 +20,17 @@ from dogen.template_helper import TemplateHelper
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_scripts=None, without_sources=False, dist_git=False, ssl_verify=True):
+    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_script=None, without_sources=False, dist_git=False, ssl_verify=True):
         self.log = log
         self.ssl_verify = ssl_verify
-        self.url = None
-        self.additional_scripts = additional_scripts
+        self.template = template
+        self.custom_template = False
+        self.additional_script = additional_script
 
         if not os.path.exists(descriptor):
             raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % descriptor)
 
         self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
-
-        if template:
-            # Check if this is an URL
-            if bool(urlparse.urlparse(template).netloc):
-                self.log.debug("Provided template path is an URL, trying to fetch '%s'..." % template)
-                self.url = template
-                # Template is provided as an url, need to fetch it first
-                tmp_dir = tempfile.mkdtemp("dogen")
-                template = os.path.join(tmp_dir, "template.jinja")
-                self.log.debug("Custom template will be saved as '%s'..." % template)
-
-                with open(template, 'wb') as f:
-                    f.write(requests.get(self.url, verify=self.ssl_verify).content)
-
-            if not os.path.exists(template):
-                raise Error("Template file '%s' could not be found. Please make sure you specified correct path." % template)
-
-            self.log.info("Using custom provided template file: '%s'" % template)
-            self.template = template
-        else:
-            self.log.debug("Using dogen provided template file")
-            self.template = os.path.join(self.pwd, "templates", "template.jinja")
 
         with open(descriptor, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
@@ -67,9 +46,52 @@ class Generator(object):
         if self.dist_git:
             self.git = Git(self.log, os.path.dirname(os.path.realpath(descriptor)), self.output)
 
+    def is_url(self, location):
+        """ Checks if provided path is a URL """
+
+        return bool(urlparse.urlparse(location).netloc)
+
+    def fetch_file(self, location, output=None):
+        """
+        Fetches remote file and saves it under output. If no
+        output path is provided, a temporary file is created
+        and path to this file is returned.
+
+        SSL verification could be disabled by setting
+        self.ssl_verify to True.
+        """
+
+        self.log.debug("Fetching '%s' file..." % location)
+
+        if not output:
+            output = tempfile.mktemp("-dogen")
+        
+        self.log.debug("File will be saved as '%s'..." % output)
+
+        with open(output, 'wb') as f:
+            f.write(requests.get(location, verify=self.ssl_verify).content)
+
+        return output
+    
+    def handle_custom_template(self):
+        self.log.info("Using custom provided template file: '%s'" % self.template)
+        self.custom_template = True
+
+        if self.is_url(self.template):
+            self.template = self.fetch_file(self.template)
+
+        if not os.path.exists(self.template):
+            raise Error("Template file '%s' could not be found. Please make sure you specified correct path or check if the file was successfully fetched." % self.template)
+
     def run(self):
         if self.dist_git:
             self.git.prepare()
+
+        if self.template:
+            self.handle_custom_template()
+        else:
+            self.log.debug("Using dogen provided template file")
+            self.template = os.path.join(self.pwd, "templates", "template.jinja")
 
         # Remove the scripts directory
         shutil.rmtree(os.path.join(self.output, "scripts"), ignore_errors=True)
@@ -96,20 +118,22 @@ class Generator(object):
             pass
 
         # Additional scripts (not package scripts)
-        if self.additional_scripts:
+        if self.additional_script:
+            self.log.info("Additional scripts provided, installing them...")
             output_scripts = os.path.join(self.output, "scripts")
 
             if not os.path.exists(output_scripts):
                 os.makedirs(output_scripts)
 
-            for d in self.additional_scripts:
-                if not (os.path.exists(d) and os.path.isdir(d)):
-                    self.log.warn("Directory '%s' does not exist, additional scripts from that directory will not be copied!" % d)
-                    continue
+            for f in self.additional_script:
+                self.log.debug("Handling '%s' file..." % f)
+                if self.is_url(f):
+                    self.fetch_file(f, os.path.join(output_scripts, os.path.basename(f)))
+                else:
+                    if not (os.path.exists(f) and os.path.isfile(f)):
+                        raise Error("File '%s' does not exist. Please make sure you specified correct path to a file when specifying additional scripts." % f)
 
-                self.log.debug("Copying additional scripts from '%s' directory..." % d)
-
-                for f in glob.glob(os.path.join(d, "*")):
+                    self.log.debug("Copying '%s' file to target scripts directory..." % f)
                     shutil.copy(f, output_scripts)
 
         self.render_from_template()
@@ -129,9 +153,9 @@ class Generator(object):
             f.write(template.render(self.cfg).encode('utf-8'))
         self.log.debug("Done")
 
-        if self.url:
+        if self.custom_template:
             self.log.debug("Removing temporary template file...")
-            shutil.rmtree(os.path.dirname(self.template))
+            os.remove(self.template)
 
     def handle_sources(self):
         if not 'sources' in self.cfg or self.without_sources:
