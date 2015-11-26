@@ -86,9 +86,9 @@ class Git(object):
         # Read envs from Dockerfile
         # Used to bump the release label and fill the commit message later
         try:
-            version = self.read_value(dockerfile, 'JBOSS_IMAGE_VERSION="([\d\.]+)"')
+            version = self.read_value(dockerfile, 'JBOSS_IMAGE_VERSION="([\w\.]+)"')
         except:
-            version = self.read_value(dockerfile, 'Version="([\d\.]+)"')
+            version = self.read_value(dockerfile, 'Version="([\w\.]+)"')
 
         try:
             release = self.read_value(dockerfile, 'JBOSS_IMAGE_RELEASE="(\d+)"')

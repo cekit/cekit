@@ -1,4 +1,5 @@
 import os
+import re
 
 class TemplateHelper(object):
     def basename(self, url):
@@ -22,7 +23,7 @@ class TemplateHelper(object):
         Returns the vomponent name based on the image name
         """
 
-        return "%s-docker" % name.replace("/", "-")
+        return "%s" % re.sub(r'^(.*-\d).*/(.*)$', r'\1-\2-docker', name)
 
     def base_image(self, base_image, version):
         """
