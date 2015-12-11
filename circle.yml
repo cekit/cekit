@@ -1,0 +1,23 @@
+general:
+  artifacts:
+    - "target"
+
+machine:
+  python:
+  services:
+    - docker
+  environment:
+    CI: true
+
+dependencies:
+  post:
+    - docker version
+    - docker info
+
+test:
+  override:
+    - case $CIRCLE_NODE_INDEX in 0) make test-py27 ;; 1) make test-py34 ;; esac:
+        parallel: true
+  post:
+    - make ci-publish-junit
+#    - make hook-gitter
