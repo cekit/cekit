@@ -5,3 +5,7 @@ dogen.egg-info
 build
 setup.cfg
 build.sh
+.tox
+.coverage
+.cache
+htmlcov

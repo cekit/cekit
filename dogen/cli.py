@@ -59,10 +59,15 @@ class CLI(object):
         else:
             self.log.setLevel(logging.INFO)
 
+        if args.skip_ssl_verification:
+            ssl_verify = False
+        else:
+            ssl_verify = None
+
         self.log.debug("Running version %s", version)
 
         try:
-            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_script=args.additional_script, without_sources=args.without_sources, dist_git=args.dist_git, ssl_verify=not args.skip_ssl_verification).run()
+            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_scripts=args.additional_script, without_sources=args.without_sources, dist_git=args.dist_git, ssl_verify=ssl_verify).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:

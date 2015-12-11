@@ -8,57 +8,49 @@ import os
 import shutil
 import sys
 import requests
-import urlparse
 import yaml
 import subprocess
 import tempfile
+
+from six.moves import urllib
 
 from jinja2 import FileSystemLoader, Environment
 
 from dogen.git import Git
 from dogen.template_helper import TemplateHelper
+from dogen.version import version
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_script=None, without_sources=False, dist_git=False, ssl_verify=True):
+    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_scripts=None, without_sources=False, dist_git=False, ssl_verify=None):
         self.log = log
-        self.ssl_verify = ssl_verify
-        self.template = template
-        self.custom_template = False
-        self.additional_script = additional_script
-
-        if not os.path.exists(descriptor):
-            raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % descriptor)
-
         self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
-
-        with open(descriptor, 'r') as stream:
-            self.cfg = yaml.safe_load(stream)
-
-        self.output = output
-        self.scripts = scripts
-
+        self.descriptor = os.path.realpath(descriptor)
         self.without_sources = without_sources
         self.dist_git = dist_git
-
+        self.output = output
         self.dockerfile = os.path.join(self.output, "Dockerfile")
+        self.template = template
+        self.scripts = scripts
+        self.additional_scripts = additional_scripts
+        self.ssl_verify = ssl_verify
 
         if self.dist_git:
-            self.git = Git(self.log, os.path.dirname(os.path.realpath(descriptor)), self.output)
+            self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
 
-    def is_url(self, location):
+    def _is_url(self, location):
         """ Checks if provided path is a URL """
 
-        return bool(urlparse.urlparse(location).netloc)
+        return bool(urllib.parse.urlparse(location).netloc)
 
-    def fetch_file(self, location, output=None):
+    def _fetch_file(self, location, output=None):
         """
         Fetches remote file and saves it under output. If no
         output path is provided, a temporary file is created
         and path to this file is returned.
 
         SSL verification could be disabled by setting
-        self.ssl_verify to True.
+        self.ssl_verify to False.
         """
 
         self.log.debug("Fetching '%s' file..." % location)
@@ -66,34 +58,137 @@ class Generator(object):
         if not output:
             output = tempfile.mktemp("-dogen")
         
-        self.log.debug("File will be saved as '%s'..." % output)
+        self.log.debug("Fetched file will be saved as '%s'..." % output)
 
         with open(output, 'wb') as f:
             f.write(requests.get(location, verify=self.ssl_verify).content)
 
         return output
     
-    def handle_custom_template(self):
-        self.log.info("Using custom provided template file: '%s'" % self.template)
-        self.custom_template = True
+    def _handle_custom_template(self):
+        """
+        Fetches custom template (if provided) and saves as temporary
+        file. This file is removed later in the process.
+        """
 
-        if self.is_url(self.template):
-            self.template = self.fetch_file(self.template)
+        if not self.template:
+            return
+
+        self.log.info("Using custom provided template file: '%s'" % self.template)
+
+        if self._is_url(self.template):
+            self.template = self._fetch_file(self.template)
 
         if not os.path.exists(self.template):
             raise Error("Template file '%s' could not be found. Please make sure you specified correct path or check if the file was successfully fetched." % self.template)
 
+
+    def configure(self):
+        """
+        Reads configuration values from the descriptor, if provided.
+
+        Some Dogen configuration values can be set in the YAML
+        descriptor file using the 'dogen' section.
+        """
+
+        # Fail early if descriptor file is not found
+        if not os.path.exists(self.descriptor):
+            raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % self.descriptor)
+
+        if not self.scripts:
+            # If scripts directory is not provided, see if there is a "scripts"
+            # directory next to the descriptor. If found - assume that's the
+            # directory containing scripts.
+            scripts = os.path.join(os.path.dirname(self.descriptor), "scripts")
+            if os.path.exists(scripts) and os.path.isdir(scripts):
+                self.scripts = scripts
+
+        with open(self.descriptor, 'r') as stream:
+            self.cfg = yaml.safe_load(stream)
+
+        dogen_cfg = self.cfg.get('dogen')
+
+        if not dogen_cfg:
+            return
+
+        required_version = dogen_cfg.get('version')
+
+        if required_version:
+            # Check if the current runnig version of Dogen
+            # is the one the descriptor is expecting.
+            if required_version != version:
+                raise Error("You try to parse descriptor that requires Dogen version %s, but you run version %s" % (required_version, version))
+
+        ssl_verify = dogen_cfg.get('ssl_verify')
+
+        if self.ssl_verify is None and ssl_verify is not None:
+            self.ssl_verify = ssl_verify
+
+        template = dogen_cfg.get('template')
+
+        if template and not self.template:
+            self.template = template
+
+        scripts = dogen_cfg.get('scripts')
+
+        if scripts and not self.scripts:
+            self.scripts = scripts
+
+        if self.scripts:
+            if not os.path.exists(self.scripts):
+                raise Error("Provided scripts directory '%s' does not exists" % self.scripts)
+
+    def _handle_scripts(self):
+        for scripts in self.cfg['scripts']:
+            package = scripts['package']
+            output_path = os.path.join(self.output, "scripts", package)
+#                try:
+            # Poor-man's workaround for not copying multiple times the same thing
+            if not os.path.exists(output_path):
+                self.log.info("Copying package '%s'..." % package)
+                shutil.copytree(src=os.path.join(self.scripts, package), dst=output_path)
+                self.log.debug("Done.")
+#                except Exception, ex:
+#                    self.log.exception("Cannot copy package %s" % package)
+
+    def _handle_additional_scripts(self):
+        self.log.info("Additional scripts provided, installing them...")
+        output_scripts = os.path.join(self.output, "scripts")
+
+        if not os.path.exists(output_scripts):
+            os.makedirs(output_scripts)
+
+        for f in self.additional_scripts:
+            self.log.debug("Handling '%s' file..." % f)
+            if self._is_url(f):
+                self._fetch_file(f, os.path.join(output_scripts, os.path.basename(f)))
+            else:
+                if not (os.path.exists(f) and os.path.isfile(f)):
+                    raise Error("File '%s' does not exist. Please make sure you specified correct path to a file when specifying additional scripts." % f)
+
+                self.log.debug("Copying '%s' file to target scripts directory..." % f)
+                shutil.copy(f, output_scripts)
+
+
     def run(self):
+        # Set Dogen settings if  provided in descriptor
+        self.configure()
+
+        # Special case for ssl_verify setting. Setting it to None
+        # in CLI if --skip-ssl-verification is not set to make it
+        # possible to determine which setting should be used.
+        # This means that we need to se the ssl_verify to the
+        # default value of True is not set.
+        if self.ssl_verify is None:
+            self.ssl_verify = True
+
         if self.dist_git:
             self.git.prepare()
 
         if self.template:
-            self.handle_custom_template()
-        else:
-            self.log.debug("Using dogen provided template file")
-            self.template = os.path.join(self.pwd, "templates", "template.jinja")
+            self._handle_custom_template()
 
-        # Remove the scripts directory
+        # Remove the target scripts directory
         shutil.rmtree(os.path.join(self.output, "scripts"), ignore_errors=True)
 
         if self.dist_git:
@@ -102,39 +197,14 @@ class Generator(object):
         if not os.path.exists(self.output):
             os.makedirs(self.output)
 
-        try:
-            for scripts in self.cfg['scripts']:
-                package = scripts['package']
-                output_path = os.path.join(self.output, "scripts", package)
-                try:
-                    # Poor-man's workaround for not copying multiple times the same thing
-                    if not os.path.exists(output_path):
-                        self.log.info("Copying package '%s'..." % package)
-                        shutil.copytree(src=os.path.join(self.scripts, package), dst=output_path)
-                        self.log.debug("Done.")
-                except Exception, ex:
-                    self.log.exception("Cannot copy package %s" % package, ex)
-        except KeyError:
-            pass
+        if self.scripts:
+            self._handle_scripts()
+        else:
+            self.log.warn("No scripts will be copied, mistake?")
 
         # Additional scripts (not package scripts)
-        if self.additional_script:
-            self.log.info("Additional scripts provided, installing them...")
-            output_scripts = os.path.join(self.output, "scripts")
-
-            if not os.path.exists(output_scripts):
-                os.makedirs(output_scripts)
-
-            for f in self.additional_script:
-                self.log.debug("Handling '%s' file..." % f)
-                if self.is_url(f):
-                    self.fetch_file(f, os.path.join(output_scripts, os.path.basename(f)))
-                else:
-                    if not (os.path.exists(f) and os.path.isfile(f)):
-                        raise Error("File '%s' does not exist. Please make sure you specified correct path to a file when specifying additional scripts." % f)
-
-                    self.log.debug("Copying '%s' file to target scripts directory..." % f)
-                    shutil.copy(f, output_scripts)
+        if self.additional_scripts:
+            self._handle_additional_scripts()
 
         self.render_from_template()
         self.handle_sources()
@@ -142,18 +212,26 @@ class Generator(object):
         if self.dist_git:
             self.git.update()
 
+        self.log.info("Finished!")
+
     def render_from_template(self):
+        if self.template:
+            template_file = self.template
+        else:
+            self.log.debug("Using dogen provided template file")
+            template_file = os.path.join(self.pwd, "templates", "template.jinja")
+
         self.log.info("Rendering Dockerfile...")
-        loader = FileSystemLoader(os.path.dirname(self.template))
+        loader = FileSystemLoader(os.path.dirname(template_file))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
-        template = env.get_template(os.path.basename(self.template))
+        template = env.get_template(os.path.basename(template_file))
 
         with open(self.dockerfile, 'w') as f:
             f.write(template.render(self.cfg).encode('utf-8'))
         self.log.debug("Done")
 
-        if self.custom_template:
+        if self.template:
             self.log.debug("Removing temporary template file...")
             os.remove(self.template)
 
