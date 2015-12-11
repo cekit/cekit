@@ -10,6 +10,8 @@ machine:
     CI: true
 
 dependencies:
+  pre:
+    - sudo apt-get update; sudo apt-get install python2.7-dev python3.4-dev
   post:
     - docker version
     - docker info
