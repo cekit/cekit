@@ -120,3 +120,19 @@ class TestConfig(unittest.TestCase):
         generator.configure()
         mock_patch.assert_called_with('custom-scripts')
         self.assertEqual(generator.scripts, "custom-scripts")
+
+    def test_custom_additional_scripts_in_descriptor(self):
+        with self.descriptor as f:
+            f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
+
+        generator = Generator(self.log, self.descriptor.name, "target")
+        generator.configure()
+        self.assertEqual(generator.additional_scripts, ["http://host/somescript"])
+
+    def test_custom_additional_scipts_in_cli_should_override_in_descriptor(self):
+        with self.descriptor as f:
+            f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
+
+        generator = Generator(self.log, self.descriptor.name, "target", additional_scripts=["https://otherhost/otherscript"])
+        generator.configure()
+        self.assertEqual(generator.additional_scripts, ["https://otherhost/otherscript"])

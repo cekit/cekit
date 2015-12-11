@@ -134,6 +134,11 @@ class Generator(object):
         if scripts and not self.scripts:
             self.scripts = scripts
 
+        additional_scripts = dogen_cfg.get('additional_scripts')
+
+        if additional_scripts and not self.additional_scripts:
+            self.additional_scripts = additional_scripts
+
         if self.scripts:
             if not os.path.exists(self.scripts):
                 raise Error("Provided scripts directory '%s' does not exists" % self.scripts)
@@ -142,14 +147,12 @@ class Generator(object):
         for scripts in self.cfg['scripts']:
             package = scripts['package']
             output_path = os.path.join(self.output, "scripts", package)
-#                try:
+
             # Poor-man's workaround for not copying multiple times the same thing
             if not os.path.exists(output_path):
                 self.log.info("Copying package '%s'..." % package)
                 shutil.copytree(src=os.path.join(self.scripts, package), dst=output_path)
                 self.log.debug("Done.")
-#                except Exception, ex:
-#                    self.log.exception("Cannot copy package %s" % package)
 
     def _handle_additional_scripts(self):
         self.log.info("Additional scripts provided, installing them...")
