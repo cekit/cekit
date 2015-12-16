@@ -64,7 +64,7 @@ ADD scripts /tmp/scripts
 {% if script.user %}
 USER {{ script.user }}
 {% else %}
-USER jboss
+USER root
 {% endif %}
 RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 
