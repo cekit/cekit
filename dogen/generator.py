@@ -172,6 +172,21 @@ class Generator(object):
                 self.log.debug("Copying '%s' file to target scripts directory..." % f)
                 shutil.copy(f, output_scripts)
 
+    def _handle_custom_repo_files(self):
+        repo_files = glob.glob(os.path.join(self.output, "scripts", "*.repo"))
+
+        if not repo_files:
+            return
+
+        self.log.debug("Found following additional repo files: %s" % ", ".join(repo_files))
+
+        repos = []
+
+        for f in repo_files:
+            repos.append(os.path.splitext(os.path.basename(f))[0])
+
+        # Make it available under 'additional_repos' in template
+        self.cfg['additional_repos'] = repos
 
     def run(self):
         # Set Dogen settings if  provided in descriptor
@@ -208,6 +223,8 @@ class Generator(object):
         # Additional scripts (not package scripts)
         if self.additional_scripts:
             self._handle_additional_scripts()
+
+        self._handle_custom_repo_files()
 
         self.render_from_template()
         self.handle_sources()

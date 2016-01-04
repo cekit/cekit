@@ -1,0 +1,28 @@
+
+# Conventions over configuration
+
+This document covers conventions used in Dogen that may help you build Dockerfiles faster and easier.
+
+## Handling YUM/DNF repo files
+
+In case you add YUM/DNF repo files that you want to put to the `/etc/yum.repos.d` directory
+to enable additional repositories Dogen will handle it for you automatically.
+
+If Dogen will detect files
+with `.repo` extension in the `scripts` directory located under the target (output) directory Dogen will
+automatically copy all these files to `/etc/yum.repos.d` directory and enable them to be used while
+installing packages listed in the `packages` section.
+
+After installation Dogen removes newly added repo files from the `/etc/yum.repos.d` directory *automatically*.
+If you do not want to have these files removed after installation -- you need to make your repo files
+part of some package and install them manually.
+
+### Things to note
+
+1. This feature covers only the situation where you want to add a custom repo file at *build
+   time* but you do not want it to be enabled in containers.
+2. Repo file name should be the *same* as the repo id in the repository
+   (the name between square brackets).
+3. There should be *only one* repository per file.
+4. Only added repositories will be enabled during install of packages, all other repositories (including default)
+   will be *disabled*.
