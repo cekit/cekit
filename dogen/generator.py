@@ -176,6 +176,7 @@ class Generator(object):
         repo_files = glob.glob(os.path.join(self.output, "scripts", "*.repo"))
 
         if not repo_files:
+            self.cfg['additional_repos'] = []
             return
 
         self.log.debug("Found following additional repo files: %s" % ", ".join(repo_files))
