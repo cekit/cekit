@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import argparse
 import hashlib
-import getpass
 import glob
 import os
 import shutil
-import sys
 import requests
 import yaml
-import subprocess
 import tempfile
 
 from six.moves import urllib
@@ -57,14 +53,14 @@ class Generator(object):
 
         if not output:
             output = tempfile.mktemp("-dogen")
-        
+
         self.log.debug("Fetched file will be saved as '%s'..." % output)
 
         with open(output, 'wb') as f:
             f.write(requests.get(location, verify=self.ssl_verify).content)
 
         return output
-    
+
     def _handle_custom_template(self):
         """
         Fetches custom template (if provided) and saves as temporary
@@ -295,6 +291,3 @@ class Generator(object):
         if filesum != checksum:
             raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
         self.log.debug("Hash is correct.")
-
-
-
