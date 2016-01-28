@@ -4,8 +4,6 @@ import tempfile
 import os
 
 from dogen.generator import Generator
-from dogen.errors import Error
-from dogen.version import version
 
 class TestGenerateCustomRepoFiles(unittest.TestCase):
     def setUp(self):

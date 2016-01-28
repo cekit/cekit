@@ -8,12 +8,11 @@ import requests
 import yaml
 import tempfile
 
-from six.moves import urllib
-
 from jinja2 import FileSystemLoader, Environment
 
 from dogen.git import Git
 from dogen.template_helper import TemplateHelper
+from dogen.tools import Tools
 from dogen.version import version
 from dogen.errors import Error
 
@@ -33,11 +32,6 @@ class Generator(object):
 
         if self.dist_git:
             self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
-
-    def _is_url(self, location):
-        """ Checks if provided path is a URL """
-
-        return bool(urllib.parse.urlparse(location).netloc)
 
     def _fetch_file(self, location, output=None):
         """
@@ -72,7 +66,7 @@ class Generator(object):
 
         self.log.info("Using custom provided template file: '%s'" % self.template)
 
-        if self._is_url(self.template):
+        if Tools.is_url(self.template):
             self.template = self._fetch_file(self.template)
 
         if not os.path.exists(self.template):
@@ -159,7 +153,7 @@ class Generator(object):
 
         for f in self.additional_scripts:
             self.log.debug("Handling '%s' file..." % f)
-            if self._is_url(f):
+            if Tools.is_url(f):
                 self._fetch_file(f, os.path.join(output_scripts, os.path.basename(f)))
             else:
                 if not (os.path.exists(f) and os.path.isfile(f)):
