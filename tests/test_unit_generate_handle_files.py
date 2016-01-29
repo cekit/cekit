@@ -4,7 +4,7 @@ import six
 
 from dogen.generator import Generator
 from dogen.errors import Error
-from dogen.version import version
+from dogen.tools import Tools
 
 class TestURL(unittest.TestCase):
     def setUp(self):
@@ -12,13 +12,13 @@ class TestURL(unittest.TestCase):
         self.generator = Generator(self.log, "image.yaml", "target")
 
     def test_local_file(self):
-        self.assertFalse(self.generator._is_url("a_file.tmp"))
-    
+        self.assertFalse(Tools.is_url("a_file.tmp"))
+
     def test_remote_http_file(self):
-        self.assertTrue(self.generator._is_url("http://host/file.tmp"))
+        self.assertTrue(Tools.is_url("http://host/file.tmp"))
 
     def test_remote_https_file(self):
-        self.assertTrue(self.generator._is_url("https://host/file.tmp"))
+        self.assertTrue(Tools.is_url("https://host/file.tmp"))
 
 class TestFetchFile(unittest.TestCase):
     def setUp(self):
@@ -76,7 +76,7 @@ class TestCustomTemplateHandling(unittest.TestCase):
         self.generator._handle_custom_template()
         fetch_file_mock.assert_called_with("http://host/custom-template")
         self.assertEqual(self.generator.template, "some-tmp-file")
-    
+
     @mock.patch('dogen.generator.os.path.exists', return_value=False)
     def test_fetch_template_with_error(self, mock_path):
         fetch_file_mock = mock.Mock(return_value="some-tmp-file")
@@ -86,7 +86,7 @@ class TestCustomTemplateHandling(unittest.TestCase):
 
         with self.assertRaises(Error) as cm:
             self.generator._handle_custom_template()
-        
+
         self.assertEquals(str(cm.exception), "Template file 'some-tmp-file' could not be found. Please make sure you specified correct path or check if the file was successfully fetched.")
 
         fetch_file_mock.assert_called_with("http://host/custom-template")

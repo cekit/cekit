@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import argparse
 import hashlib
-import getpass
 import glob
 import os
 import shutil
-import sys
 import requests
 import yaml
-import subprocess
 import tempfile
-
-from six.moves import urllib
 
 from jinja2 import FileSystemLoader, Environment
 
 from dogen.git import Git
 from dogen.template_helper import TemplateHelper
+from dogen.tools import Tools
 from dogen.version import version
 from dogen.errors import Error
 
@@ -38,11 +33,6 @@ class Generator(object):
         if self.dist_git:
             self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
 
-    def _is_url(self, location):
-        """ Checks if provided path is a URL """
-
-        return bool(urllib.parse.urlparse(location).netloc)
-
     def _fetch_file(self, location, output=None):
         """
         Fetches remote file and saves it under output. If no
@@ -57,14 +47,14 @@ class Generator(object):
 
         if not output:
             output = tempfile.mktemp("-dogen")
-        
+
         self.log.debug("Fetched file will be saved as '%s'..." % output)
 
         with open(output, 'wb') as f:
             f.write(requests.get(location, verify=self.ssl_verify).content)
 
         return output
-    
+
     def _handle_custom_template(self):
         """
         Fetches custom template (if provided) and saves as temporary
@@ -76,7 +66,7 @@ class Generator(object):
 
         self.log.info("Using custom provided template file: '%s'" % self.template)
 
-        if self._is_url(self.template):
+        if Tools.is_url(self.template):
             self.template = self._fetch_file(self.template)
 
         if not os.path.exists(self.template):
@@ -163,7 +153,7 @@ class Generator(object):
 
         for f in self.additional_scripts:
             self.log.debug("Handling '%s' file..." % f)
-            if self._is_url(f):
+            if Tools.is_url(f):
                 self._fetch_file(f, os.path.join(output_scripts, os.path.basename(f)))
             else:
                 if not (os.path.exists(f) and os.path.isfile(f)):
@@ -173,21 +163,16 @@ class Generator(object):
                 shutil.copy(f, output_scripts)
 
     def _handle_custom_repo_files(self):
+        self.cfg['additional_repos'] = []
         repo_files = glob.glob(os.path.join(self.output, "scripts", "*.repo"))
 
         if not repo_files:
-            self.cfg['additional_repos'] = []
             return
 
         self.log.debug("Found following additional repo files: %s" % ", ".join(repo_files))
 
-        repos = []
-
         for f in repo_files:
-            repos.append(os.path.splitext(os.path.basename(f))[0])
-
-        # Make it available under 'additional_repos' in template
-        self.cfg['additional_repos'] = repos
+            self.cfg['additional_repos'].append(os.path.splitext(os.path.basename(f))[0])
 
     def run(self):
         # Set Dogen settings if  provided in descriptor
@@ -295,6 +280,3 @@ class Generator(object):
         if filesum != checksum:
             raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
         self.log.debug("Hash is correct.")
-
-
-
