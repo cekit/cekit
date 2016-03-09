@@ -13,7 +13,7 @@ from jinja2 import FileSystemLoader, Environment
 from dogen.git import Git
 from dogen.template_helper import TemplateHelper
 from dogen.tools import Tools
-from dogen.version import version
+from dogen import version, DEFAULT_SCRIPT_EXEC
 from dogen.errors import Error
 
 class Generator(object):
@@ -134,14 +134,18 @@ class Generator(object):
                 raise Error("Provided scripts directory '%s' does not exists" % self.scripts)
 
     def _handle_scripts(self):
-        for scripts in self.cfg['scripts']:
-            package = scripts['package']
+        for script in self.cfg['scripts']:
+            package = script['package']
+            src_path = os.path.join(self.scripts, package)
             output_path = os.path.join(self.output, "scripts", package)
+
+            if "exec" not in script and os.path.exists(os.path.join(src_path, DEFAULT_SCRIPT_EXEC)):
+                script['exec'] = DEFAULT_SCRIPT_EXEC
 
             # Poor-man's workaround for not copying multiple times the same thing
             if not os.path.exists(output_path):
                 self.log.info("Copying package '%s'..." % package)
-                shutil.copytree(src=os.path.join(self.scripts, package), dst=output_path)
+                shutil.copytree(src=src_path, dst=output_path)
                 self.log.debug("Done.")
 
     def _handle_additional_scripts(self):

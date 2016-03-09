@@ -7,7 +7,7 @@ import tempfile
 
 from dogen.generator import Generator
 from dogen.errors import Error
-from dogen.version import version
+from dogen import version, DEFAULT_SCRIPT_EXEC
 
 class TestConfig(unittest.TestCase):
     def setUp(self):
@@ -129,10 +129,36 @@ class TestConfig(unittest.TestCase):
         generator.configure()
         self.assertEqual(generator.additional_scripts, ["http://host/somescript"])
 
-    def test_custom_additional_scipts_in_cli_should_override_in_descriptor(self):
+    def test_custom_additional_scripts_in_cli_should_override_in_descriptor(self):
         with self.descriptor as f:
             f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
 
         generator = Generator(self.log, self.descriptor.name, "target", additional_scripts=["https://otherhost/otherscript"])
         generator.configure()
         self.assertEqual(generator.additional_scripts, ["https://otherhost/otherscript"])
+
+    @mock.patch('dogen.generator.os.path.exists', return_value=True)
+    def test_default_script_exec(self, mock_patch):
+        """Ensure that when no 'exec' is defined for a script, the default is used."""
+        with self.descriptor as f:
+            f.write("scripts:\n    - package: somepackage".encode())
+
+        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
+        generator.configure()
+        generator._handle_scripts()
+        self.assertEqual(generator.cfg['scripts'][0]['exec'], DEFAULT_SCRIPT_EXEC)
+
+    @mock.patch('dogen.generator.os.path.exists', return_value=True)
+    def test_custom_script_exec(self, mock_patch):
+        """Ensure that when 'exec' *is* defined for a script, it is used in place of the default."""
+
+        custom_script_name = "somescript.sh"
+        self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
+
+        with self.descriptor as f:
+            f.write(("scripts:\n  - package: somepackage\n    exec: " + custom_script_name).encode())
+
+        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
+        generator.configure()
+        generator._handle_scripts()
+        self.assertEqual(generator.cfg['scripts'][0]['exec'], custom_script_name)

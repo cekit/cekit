@@ -26,3 +26,14 @@ part of some package and install them manually.
 3. There should be *only one* repository per file.
 4. Only added repositories will be enabled during install of packages, all other repositories (including default)
    will be *disabled*.
+
+## Running scripts
+
+### Default script name
+
+If you do not specify an `exec` key for a script, dogen will check for a script named `run`
+and execute it if it exists.
+
+### Default script execution user
+
+Dogen will execute all scripts as `root` unless you have specified a user with the `user` key.
