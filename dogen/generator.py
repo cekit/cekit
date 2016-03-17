@@ -139,11 +139,12 @@ class Generator(object):
             src_path = os.path.join(self.scripts, package)
             output_path = os.path.join(self.output, "scripts", package)
 
-            if "exec" not in script and os.path.exists(os.path.join(src_path, DEFAULT_SCRIPT_EXEC)):
-                script['exec'] = DEFAULT_SCRIPT_EXEC
+            possible_exec = os.getenv('DOGEN_SCRIPT_EXEC', DEFAULT_SCRIPT_EXEC)
+            if "exec" not in script and os.path.exists(os.path.join(src_path, possible_exec)):
+                script['exec'] = possible_exec
 
             if "user" not in script:
-                script['user'] = DEFAULT_SCRIPT_USER
+                script['user'] = os.getenv('DOGEN_SCRIPT_USER', DEFAULT_SCRIPT_USER)
 
             # Poor-man's workaround for not copying multiple times the same thing
             if not os.path.exists(output_path):

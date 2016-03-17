@@ -31,9 +31,16 @@ part of some package and install them manually.
 
 ### Default script name
 
-If you do not specify an `exec` key for a script, dogen will check for a script named `run`
-and execute it if it exists.
+If you specify an `exec` key for a script, that value will be used as the command name to be executed for a script.
+
+Otherwise, if the environment has `DOGEN_SCRIPT_EXEC` defined and a script with that name exists, it will be used.
+
+Otherwise, if a script with the name `run` exists, it will be execute if it exists.
 
 ### Default script execution user
 
-Dogen will execute all scripts as `root` unless you have specified a user with the `user` key.
+If you specify an `user` key for a script, that value will be used as the `USER` for executing the script.
+
+Otherwise, if the environment has `DOGEN_SCRIPT_USER` defined, it will be used as the `USER`.
+
+Otherwise, dogen will use `root`.

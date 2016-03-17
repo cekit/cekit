@@ -138,53 +138,110 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(generator.additional_scripts, ["https://otherhost/otherscript"])
 
     @mock.patch('dogen.generator.os.path.exists', return_value=True)
-    def test_default_script_exec(self, mock_patch):
-        """Ensure that when no 'exec' is defined for a script, the default is used."""
+    def helper_test_script_exec(self, exec_to_test, cfg, mock_patch):
+        """Helper method for tests around script exec value"""
         with self.descriptor as f:
-            f.write("scripts:\n    - package: somepackage".encode())
+            f.write(cfg.encode())
 
         generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
         generator.configure()
         generator._handle_scripts()
-        self.assertEqual(generator.cfg['scripts'][0]['exec'], DEFAULT_SCRIPT_EXEC)
+        self.assertEqual(generator.cfg['scripts'][0]['exec'], exec_to_test)
 
-    @mock.patch('dogen.generator.os.path.exists', return_value=True)
-    def test_custom_script_exec(self, mock_patch):
-        """Ensure that when 'exec' *is* defined for a script, it is used in place of the default."""
+    def test_default_script_exec(self):
+        """Ensure that when no 'exec' is defined for a script and DOGEN_SCRIPT_EXEC is
+           unset, the default is used."""
+
+        os.environ.pop('DOGEN_SCRIPT_EXEC', None)
+        cfg = "scripts:\n    - package: somepackage"
+
+        self.helper_test_script_exec(DEFAULT_SCRIPT_EXEC, cfg)
+
+    def test_env_supplied_script_exec(self):
+        """Ensure that when no 'exec' is defined for a script and DOGEN_SCRIPT_EXEC is defined,
+           DOGEN_SCRIPT_EXEC is used."""
 
         custom_script_name = "somescript.sh"
+        # we must be sure that DEFAULT_SCRIPT_EXEC is not being used by accident
         self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
+        os.environ['DOGEN_SCRIPT_EXEC'] = custom_script_name
+        cfg = "scripts:\n    - package: somepackage"
+
+        self.helper_test_script_exec(custom_script_name, cfg)
+
+    def test_custom_script_exec(self):
+        """Ensure that when 'exec' *is* defined for a script and DOGEN_SCRIPT_EXEC is
+           not defined, exec is used and not the default."""
+
+        os.environ.pop('DOGEN_SCRIPT_EXEC', None)
+        custom_script_name = "somescript.sh"
+        self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
+        cfg = "scripts:\n  - package: somepackage\n    exec: " + custom_script_name
+
+        self.helper_test_script_exec(custom_script_name, cfg)
+
+    def test_custom_script_exec_not_env(self):
+        """Ensure that when 'exec' *is* defined for a script, it is not overridden by a
+           provided value in the environment, or the default."""
+
+        os.environ['DOGEN_SCRIPT_EXEC'] = "some_other_script.sh"
+        custom_script_name = "somescript.sh"
+        self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
+        cfg = "scripts:\n  - package: somepackage\n    exec: " + custom_script_name
+
+        self.helper_test_script_exec(custom_script_name, cfg)
+
+    @mock.patch('dogen.generator.os.path.exists', return_value=True)
+    def helper_test_script_user(self, cfg, user_to_test, mock_patch):
+        """A helper for script user-related tests"""
 
         with self.descriptor as f:
-            f.write(("scripts:\n  - package: somepackage\n    exec: " + custom_script_name).encode())
+            f.write(cfg.encode())
 
         generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
         generator.configure()
         generator._handle_scripts()
-        self.assertEqual(generator.cfg['scripts'][0]['exec'], custom_script_name)
+        self.assertEqual(generator.cfg['scripts'][0]['user'], user_to_test)
 
-    @mock.patch('dogen.generator.os.path.exists', return_value=True)
-    def test_default_script_user(self, mock_patch):
-        """Ensure that when no 'user' is defined for a script, the default is used."""
-        with self.descriptor as f:
-            f.write("scripts:\n    - package: somepackage".encode())
+    def test_default_script_user(self):
+        """Ensure that when no 'user' is defined for a script and DOGEN_DEFAULT_USER is unset,
+           the default is used."""
 
-        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
-        generator.configure()
-        generator._handle_scripts()
-        self.assertEqual(generator.cfg['scripts'][0]['user'], DEFAULT_SCRIPT_USER)
+        os.environ.pop('DOGEN_SCRIPT_USER', None)
+        cfg = "scripts:\n    - package: somepackage"
 
-    @mock.patch('dogen.generator.os.path.exists', return_value=True)
-    def test_custom_script_user(self, mock_patch):
-        """Ensure that when 'user' *is* defined for a script, it is used in place of the default."""
+        self.helper_test_script_user(cfg, DEFAULT_SCRIPT_USER)
 
+    def test_env_provided_script_user(self):
+        """Ensure that when no 'user' is defined for a script and DOGEN_DEFAULT_USER is set,
+           DOGEN_SCRIPT_USER is used."""
+
+        env_user = os.environ['DOGEN_SCRIPT_USER'] = 'some_user'
+        self.assertNotEqual(env_user, DEFAULT_SCRIPT_USER)
+        cfg = "scripts:\n    - package: somepackage"
+
+        self.helper_test_script_user(cfg, env_user)
+
+    def test_custom_script_user_not_default(self):
+        """Ensure that when 'user' *is* defined for a script and DOGEN_SCRIPT_USER is not set,
+           the script user is used."""
+
+        os.environ.pop('DOGEN_SCRIPT_USER', None)
         custom_script_user = "notroot"
         self.assertNotEqual(custom_script_user, DEFAULT_SCRIPT_USER)
+        cfg = "scripts:\n  - package: somepackage\n    user: " + custom_script_user
 
-        with self.descriptor as f:
-            f.write(("scripts:\n  - package: somepackage\n    user: " + custom_script_user).encode())
+        self.helper_test_script_user(cfg, custom_script_user)
 
-        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
-        generator.configure()
-        generator._handle_scripts()
-        self.assertEqual(generator.cfg['scripts'][0]['user'], custom_script_user)
+    def test_custom_script_user_not_env(self):
+        """Ensure that when 'user' *is* defined for a script and DOGEN_SCRIPT_USER is set,
+           the script user is used."""
+
+        custom_script_user = "notroot"
+        env_user = "nobody"
+        self.assertNotEqual(custom_script_user, DEFAULT_SCRIPT_USER)
+        self.assertNotEqual(env_user, DEFAULT_SCRIPT_USER)
+        os.environ['DOGEN_SCRIPT_USER'] = env_user
+        cfg = "scripts:\n  - package: somepackage\n    user: " + custom_script_user
+
+        self.helper_test_script_user(cfg, custom_script_user)
