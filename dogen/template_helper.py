@@ -23,7 +23,7 @@ class TemplateHelper(object):
         Returns the vomponent name based on the image name
         """
 
-        return "%s" % re.sub(r'^(.*-\d).*/(.*)$', r'\1-\2-docker', name)
+        return "%s" % re.sub(r'^(.*)/(.*)$', r'\1-\2-docker', name)
 
     def base_image(self, base_image, version):
         """
