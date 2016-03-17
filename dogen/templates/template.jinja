@@ -88,11 +88,7 @@ ADD scripts /tmp/scripts
 
 # Custom scripts
 {% for script in scripts %}
-{% if script.user %}
 USER {{ script.user }}
-{% else %}
-USER root
-{% endif %}
 RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 
 {% endfor %}

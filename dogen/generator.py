@@ -13,7 +13,7 @@ from jinja2 import FileSystemLoader, Environment
 from dogen.git import Git
 from dogen.template_helper import TemplateHelper
 from dogen.tools import Tools
-from dogen import version, DEFAULT_SCRIPT_EXEC
+from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
 from dogen.errors import Error
 
 class Generator(object):
@@ -139,8 +139,12 @@ class Generator(object):
             src_path = os.path.join(self.scripts, package)
             output_path = os.path.join(self.output, "scripts", package)
 
-            if "exec" not in script and os.path.exists(os.path.join(src_path, DEFAULT_SCRIPT_EXEC)):
-                script['exec'] = DEFAULT_SCRIPT_EXEC
+            possible_exec = os.getenv('DOGEN_SCRIPT_EXEC', DEFAULT_SCRIPT_EXEC)
+            if "exec" not in script and os.path.exists(os.path.join(src_path, possible_exec)):
+                script['exec'] = possible_exec
+
+            if "user" not in script:
+                script['user'] = os.getenv('DOGEN_SCRIPT_USER', DEFAULT_SCRIPT_USER)
 
             # Poor-man's workaround for not copying multiple times the same thing
             if not os.path.exists(output_path):
