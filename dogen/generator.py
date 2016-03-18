@@ -134,12 +134,16 @@ class Generator(object):
                 raise Error("Provided scripts directory '%s' does not exists" % self.scripts)
 
     def _handle_scripts(self):
+        if not self.cfg.get('scripts'):
+            return
+
         for script in self.cfg['scripts']:
             package = script['package']
             src_path = os.path.join(self.scripts, package)
             output_path = os.path.join(self.output, "scripts", package)
 
             possible_exec = os.getenv('DOGEN_SCRIPT_EXEC', DEFAULT_SCRIPT_EXEC)
+
             if "exec" not in script and os.path.exists(os.path.join(src_path, possible_exec)):
                 script['exec'] = possible_exec
 
