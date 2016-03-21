@@ -1,14 +1,9 @@
-Dockerfile generator
-====================
+Dogen [dodʒen]
+==============
 
 This is a simple tool to generate `Dockerfile` files from YAML templates.
 
 .. image:: much_files.jpg
-
-Template
---------
-
-TBD
 
 Usage
 -----
