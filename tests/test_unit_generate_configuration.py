@@ -245,3 +245,14 @@ class TestConfig(unittest.TestCase):
         cfg = "scripts:\n  - package: somepackage\n    user: " + custom_script_user
 
         self.helper_test_script_user(cfg, custom_script_user)
+
+    def test_no_scripts_defined(self):
+        "make sure _handle_scripts doesn't blow up when there are no scripts"
+
+        with self.descriptor as f:
+            f.write("name: somecfg\n".encode())
+
+        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
+        generator.configure()
+        generator._handle_scripts()
+        # success if no stack trace thrown
