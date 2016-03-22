@@ -267,7 +267,7 @@ class Generator(object):
             passed = False
             try:
                 if os.path.exists(filename):
-                    self.check_sum(filename, source['hash'])
+                    self.check_sum(filename, source['md5sum'])
                     passed = True
             except:
                 passed = False
@@ -281,14 +281,14 @@ class Generator(object):
                 self.log.info("Downloading '%s'..." % url)
                 with open(filename, 'wb') as f:
                     f.write(requests.get(url, verify=self.ssl_verify).content)
-                self.check_sum(filename, source['hash'])
+                self.check_sum(filename, source['md5sum'])
 
         if self.dist_git:
             self.git.update_lookaside_cache(files)
 
     def check_sum(self, filename, checksum):
-        self.log.info("Checking '%s' hash..." % os.path.basename(filename))
+        self.log.info("Checking '%s' MD5 hash..." % os.path.basename(filename))
         filesum = hashlib.md5(open(filename, 'rb').read()).hexdigest()
         if filesum != checksum:
             raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
-        self.log.debug("Hash is correct.")
+        self.log.debug("MD5 hash is correct.")
