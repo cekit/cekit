@@ -249,7 +249,7 @@ class Generator(object):
             f.write(template.render(self.cfg).encode('utf-8'))
         self.log.debug("Done")
 
-        if self.template:
+        if self.template and Tools.is_url(self.template):
             self.log.debug("Removing temporary template file...")
             os.remove(self.template)
 
