@@ -10,7 +10,6 @@ import tempfile
 
 from jinja2 import FileSystemLoader, Environment
 
-from dogen.git import Git
 from dogen.template_helper import TemplateHelper
 from dogen.tools import Tools
 from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
