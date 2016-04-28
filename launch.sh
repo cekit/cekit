@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -11,9 +11,9 @@ fi
 stat=(`stat -c "%g %u" ${@: -2:1}`)
 
 if [ "${stat[0]}" != "0" ] && [ "${stat[1]}" != "0" ]; then
-    groupadd -r dogen -g ${stat[0]}
-    useradd -u ${stat[1]} -r -g dogen -M -d /opt/dogen dogen
-    runuser dogen -c "/usr/bin/dogen $*"
+    addgroup -S -g ${stat[0]} dogen
+    adduser -u ${stat[1]} -S -G dogen dogen
+    sudo -u dogen /usr/bin/dogen $*
 else
     /usr/bin/dogen "$@"
 fi

@@ -1,10 +1,7 @@
-FROM fedora:23
+FROM alpine:3.3
+RUN apk add --update sudo bash py-setuptools git && rm -rf /var/cache/apk/*
 
-RUN mkdir /opt/dogen
-WORKDIR /opt/dogen
-
-# Install required pacakges
-RUN dnf -y install python-pip git && dnf clean all
+ENV DOGEN_VERSION master
 
 # Color the git output by default
 RUN git config --global color.ui true
@@ -13,9 +10,8 @@ RUN git config --global user.name "dogen"
 # Set default value for the user email address
 RUN git config --global user.email "dogen@jboss.org"
 
-ADD dogen /opt/dogen/dogen/
-ADD launch.sh requirements.txt setup.py LICENSE README.rst MANIFEST.in /opt/dogen/
+RUN easy_install-2.7 https://github.com/jboss-dockerfiles/dogen/archive/$DOGEN_VERSION.zip
 
-RUN pip install .
+ADD launch.sh /
 
-ENTRYPOINT ["/opt/dogen/launch.sh"]
+ENTRYPOINT ["/launch.sh"]
