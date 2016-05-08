@@ -13,6 +13,8 @@ from dogen.errors import Error
 from dogen.plugin import Plugin
 
 import dogen.plugins.dist_git
+import dogen.plugins.cct
+import dogen.plugins.rpm
 
 class MyParser(argparse.ArgumentParser):
 

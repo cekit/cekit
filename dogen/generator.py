@@ -199,7 +199,7 @@ class Generator(object):
             self.ssl_verify = True
 
         for plugin in self.plugins:
-            plugin.prepare()
+            plugin.prepare(cfg=self.cfg)
 
         if self.template:
             self._handle_custom_template()
@@ -225,7 +225,7 @@ class Generator(object):
         sources = self.handle_sources()
 
         for plugin in self.plugins:
-            plugin.after_sources(sources)
+            plugin.after_sources(files=sources)
 
         self.log.info("Finished!")
 

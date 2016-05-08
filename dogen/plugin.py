@@ -9,9 +9,9 @@ class Plugin(object):
         self.log = dogen.log
         self.descriptor = dogen.descriptor
         self.output = dogen.output
-        
-    def prepare(self):
+
+    def prepare(self, **kwargs):
         pass
 
-    def after_sources(self):
+    def after_sources(self, **kwargs):
         pass
