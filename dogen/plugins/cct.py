@@ -21,6 +21,16 @@ class CCT(Plugin):
         """
         if os.path.exists(self.output + '/cct/'):
             shutil.rmtree(self.output + '/cct/')
+
+        if 'modules' in cfg['cct']:
+            self._prepare_modules(cfg)
+
+        cfg_file = os.path.join(self.output, "cct", "cct.yaml")
+        cfg['cct']['run'] = ['cct.yaml']
+        with open(cfg_file, 'w') as f:
+            yaml.dump(cfg['cct']['configure'], f)
+
+    def _prepare_modules(self, cfg):
         for module in cfg['cct']['modules']:
             name = None
             if module['path'][-1] == '/':
@@ -44,10 +54,6 @@ class CCT(Plugin):
                 self.append_sources(name, cfg)
             except:
                 self.log.info("cannot process module souces")
-        cfg_file = os.path.join(self.output, "cct", "cct.yaml")
-        cfg['cct']['run'] = ['cct.yaml']
-        with open(cfg_file, 'w') as f:
-            yaml.dump(cfg['cct']['configure'], f)
 
     def clone_repo(self, url, path):
         try:
