@@ -25,8 +25,13 @@ class CCT(Plugin):
         if 'modules' in cfg['cct']:
             self._prepare_modules(cfg)
 
-        cfg_file = os.path.join(self.output, "cct", "cct.yaml")
         cfg['cct']['run'] = ['cct.yaml']
+
+        cfg_file_dir = os.path.join(self.output, "cct")
+        if not os.path.exists(cfg_file_dir):
+            os.makedirs(cfg_file_dir)
+
+        cfg_file = os.path.join(cfg_file_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
 
