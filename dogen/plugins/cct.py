@@ -57,8 +57,9 @@ class CCT(Plugin):
                 self.log.info("Cloned cct module %s." % name)
             try:
                 self.append_sources(name, cfg)
-            except:
-                self.log.info("cannot process module souces")
+            except Exception as ex:
+                self.log.info("cannot process sources for module %s" % name)
+                self.log.debug("exception: %s" % ex)
 
     def clone_repo(self, url, path):
         try:
@@ -68,12 +69,20 @@ class CCT(Plugin):
             self.log.error("cannot clone repo %s into %s: %s", url, path, ex)
 
     def append_sources(self, module, cfg):
-        sources_path = os.path.join(self.output + "/cct/" + module, "sources.yaml")
+        """
+        Extract sources defined within the module, if provided, and merge
+        them with Dogen's master sources list.
+        """
+        sources_path = os.path.join(self.output, "cct", module, "sources.yaml")
 
-        source_prefix = os.getenv("DOGEN_CCT_SOURCES_PREFIX")
-        if source_prefix is None:
-            source_prefix = ""
-            self.log.debug("DOGEN_CCT_SOURCES_PREFIX variable is not provided")
+        if not os.path.exists(sources_path):
+            self.log.debug("no sources defined for module %s" % module)
+            return
+
+        source_prefix = os.getenv("DOGEN_CCT_SOURCES_PREFIX") or ""
+        if not source_prefix:
+            self.log.debug("DOGEN_CCT_SOURCES_PREFIX variable is not defined")
+
         cct_sources = []
         with open(sources_path) as f:
             cct_sources = yaml.load(f)
