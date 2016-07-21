@@ -26,10 +26,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(self.generator.scripts, None)
         self.assertEqual(self.generator.additional_scripts, None)
         self.assertEqual(self.generator.without_sources, False)
-        self.assertEqual(self.generator.dist_git, False)
         # Set to True in the configure() method later 
         self.assertEqual(self.generator.ssl_verify, None)
-        self.assertFalse(self.generator.dist_git)
 
     def test_fail_if_version_mismatch(self):
         with self.descriptor as f:
