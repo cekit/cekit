@@ -80,9 +80,10 @@ class CLI(object):
 
         enabled_plugins = []
 
-        for plugin in plugins:
-            if plugin.info()[0] in args.plugin:
-                enabled_plugins.append(plugin)
+        if args.plugin:
+            for plugin in plugins:
+                if plugin.info()[0] in args.plugin:
+                    enabled_plugins.append(plugin)
 
         try:
             Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_scripts=args.additional_script, without_sources=args.without_sources, plugins=enabled_plugins, ssl_verify=ssl_verify).run()
