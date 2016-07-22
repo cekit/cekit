@@ -1,22 +1,52 @@
 import os
 import re
+import shutil
 import subprocess
 
 from dogen.tools import Tools, Chdir
+from dogen.plugin import Plugin
+
+class DistGitPlugin(Plugin):
+    @staticmethod
+    def info():
+        return "dist-git", "Support for dist-git repositories"
+
+    def __init__(self, dogen):
+        super(DistGitPlugin, self).__init__(dogen)
+        self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
+
+    def prepare(self):
+        self.git.prepare()
+        self.git.clean_scripts()
+
+    def after_sources(self, files):
+        self.git.update_lookaside_cache(files)
+        self.git.update()
 
 class Git(object):
     """
     Git support for target directories
     """
+    @staticmethod
+    def repo_info(path):
+
+        with Chdir(path):
+            if not os.path.exists(os.path.join(path, ".git")):
+                raise Exception("Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
+
+            name = os.path.basename(subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip())
+            branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
+            commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
+
+        return name, branch, commit
 
     def __init__(self, log, source, path):
         self.log = log
         self.path = path
         self.dockerfile = os.path.join(self.path, "Dockerfile")
-        self.tools = Tools()
 
-        self.name, self.branch, self.commit = self.tools.repo_info(path)
-        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = self.tools.repo_info(source)
+        self.name, self.branch, self.commit = Git.repo_info(path)
+        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = Git.repo_info(source)
 
     def prepare(self):
         self.log.debug("Resetting git repository...")
@@ -26,7 +56,7 @@ class Git(object):
             subprocess.check_output(["git", "reset", "--hard"])
 
         # Just check if the target branch is correct
-        if not self.tools.decision("You are currently working on the '%s' branch, is this what you want?" % self.branch):
+        if not Tools.decision("You are currently working on the '%s' branch, is this what you want?" % self.branch):
             print("")
             self.switch_branch()
 
@@ -45,6 +75,7 @@ class Git(object):
 
     def clean_scripts(self):
         """ Removes the scripts directory from staging and disk """
+        shutil.rmtree(os.path.join(self.path, "scripts"), ignore_errors=True)
 
         with Chdir(self.path): 
             if os.path.exists("scripts"):
@@ -163,18 +194,23 @@ class Git(object):
  
             if diffs: 
                 self.log.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(diffs.splitlines()))
+
+        with Chdir(self.path): 
+            subprocess.call(["git", "status"]) 
+            subprocess.call(["read", "-p", "\nPress any key to see the last commit...", "-n1", "-s"]) 
+            subprocess.call(["git", "show"]) 
  
-        if self.tools.decision("Do you want to review your changes?"): 
+        if Tools.decision("Do you want to review your changes?"): 
             with Chdir(self.path): 
                 subprocess.call(["bash"]) 
  
-        if self.tools.decision("Do you want to push the commit?"): 
+        if Tools.decision("Do you want to push the commit?"): 
             print("")
             with Chdir(self.path): 
                 self.log.info("Pushing change to the upstream repository...")
                 subprocess.check_output(["git", "push", "-q"])
                 self.log.info("Change pushed.")
  
-                if self.tools.decision("Do you want to execute a build on OSBS?"): 
+                if Tools.decision("Do you want to execute a build on OSBS?"): 
                     subprocess.call(["rhpkg", "container-build"])
 

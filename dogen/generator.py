@@ -10,19 +10,17 @@ import tempfile
 
 from jinja2 import FileSystemLoader, Environment
 
-from dogen.git import Git
 from dogen.template_helper import TemplateHelper
 from dogen.tools import Tools
 from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_scripts=None, without_sources=False, dist_git=False, ssl_verify=None):
+    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_scripts=None, without_sources=False, plugins=[], ssl_verify=None):
         self.log = log
         self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
         self.descriptor = os.path.realpath(descriptor)
         self.without_sources = without_sources
-        self.dist_git = dist_git
         self.output = output
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.template = template
@@ -30,8 +28,10 @@ class Generator(object):
         self.additional_scripts = additional_scripts
         self.ssl_verify = ssl_verify
 
-        if self.dist_git:
-            self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
+        self.plugins = []
+
+        for plugin in plugins:
+            self.plugins.append(plugin(self))
 
     def _fetch_file(self, location, output=None):
         """
@@ -198,17 +198,14 @@ class Generator(object):
         if self.ssl_verify is None:
             self.ssl_verify = True
 
-        if self.dist_git:
-            self.git.prepare()
+        for plugin in self.plugins:
+            plugin.prepare(cfg=self.cfg)
 
         if self.template:
             self._handle_custom_template()
 
         # Remove the target scripts directory
         shutil.rmtree(os.path.join(self.output, "scripts"), ignore_errors=True)
-
-        if self.dist_git:
-            self.git.clean_scripts()
 
         if not os.path.exists(self.output):
             os.makedirs(self.output)
@@ -225,10 +222,10 @@ class Generator(object):
         self._handle_custom_repo_files()
 
         self.render_from_template()
-        self.handle_sources()
+        sources = self.handle_sources()
 
-        if self.dist_git:
-            self.git.update()
+        for plugin in self.plugins:
+            plugin.after_sources(files=sources)
 
         self.log.info("Finished!")
 
@@ -283,8 +280,7 @@ class Generator(object):
                     f.write(requests.get(url, verify=self.ssl_verify).content)
                 self.check_sum(filename, source['hash'])
 
-        if self.dist_git:
-            self.git.update_lookaside_cache(files)
+        return files
 
     def check_sum(self, filename, checksum):
         self.log.info("Checking '%s' hash..." % os.path.basename(filename))
