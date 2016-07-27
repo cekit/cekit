@@ -102,7 +102,7 @@ class CLI(object):
         directory = os.path.join(os.path.dirname(__file__), "plugins")
         for candidate in glob.glob(directory + os.sep + "*py"):
             self.log.debug("inspecting %s" %candidate)
-            module_name = "dogen.plugins." + os.path.basename(candidate).split('.')[0]
+            module_name = "dogen.plugins"
             self.log.debug("importing module %s to %s" % (os.path.abspath(candidate), module_name))
             module = imp.load_source(module_name, os.path.abspath(candidate))
             # Get all classes from our module
@@ -113,7 +113,7 @@ class CLI(object):
                     cls = getattr(module, name)
                     if issubclass(cls, Plugin):
                         self.log.info("found %s" %cls)
-                        modules[module_name.split('.')[-1]] = cls
+                        modules[cls.__name__] = cls
         return modules
 
 def run():
