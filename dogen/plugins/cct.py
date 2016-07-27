@@ -14,6 +14,18 @@ class CCT(Plugin):
     def __init__(self, dogen):
         super(CCT, self).__init__(dogen)
 
+    def extend_schema(self, parent_schema):
+        """
+        Read in a schema definition for our part of the config and hook it
+        into the parent schema at the cct: top-level key.
+        """
+        schema_path = os.path.join(self.dogen.pwd, "plugins", "cct", "cct_schema.yaml")
+        schema = {}
+        with open(schema_path, 'r') as fh:
+            schema = yaml.safe_load(fh)
+
+        parent_schema['map']['cct'] = schema
+
     def prepare(self, cfg):
         """
         create cct changes yaml file for image.yaml template decscriptor

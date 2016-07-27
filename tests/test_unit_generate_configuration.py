@@ -10,9 +10,15 @@ from dogen.errors import Error
 from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
 
 class TestConfig(unittest.TestCase):
+
+    # keys that must be present in config file but we don't care about
+    # for specific tests
+    basic_config ="release: '1'\nversion: '1'\ncmd:\n - whoami\nfrom: scratch\nname: someimage\n"
+
     def setUp(self):
         self.log = mock.Mock()
         self.descriptor = tempfile.NamedTemporaryFile(delete=False)
+        self.descriptor.write(self.basic_config.encode())
 
     def tearDown(self):
         os.remove(self.descriptor.name)
@@ -151,7 +157,8 @@ class TestConfig(unittest.TestCase):
            unset, the default is used."""
 
         os.environ.pop('DOGEN_SCRIPT_EXEC', None)
-        cfg = "scripts:\n    - package: somepackage"
+
+        cfg = self.basic_config + "scripts:\n    - package: somepackage"
 
         self.helper_test_script_exec(DEFAULT_SCRIPT_EXEC, cfg)
 
@@ -163,7 +170,7 @@ class TestConfig(unittest.TestCase):
         # we must be sure that DEFAULT_SCRIPT_EXEC is not being used by accident
         self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
         os.environ['DOGEN_SCRIPT_EXEC'] = custom_script_name
-        cfg = "scripts:\n    - package: somepackage"
+        cfg = self.basic_config + "scripts:\n    - package: somepackage"
 
         self.helper_test_script_exec(custom_script_name, cfg)
 
@@ -174,7 +181,7 @@ class TestConfig(unittest.TestCase):
         os.environ.pop('DOGEN_SCRIPT_EXEC', None)
         custom_script_name = "somescript.sh"
         self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
-        cfg = "scripts:\n  - package: somepackage\n    exec: " + custom_script_name
+        cfg = self.basic_config + "scripts:\n  - package: somepackage\n    exec: " + custom_script_name
 
         self.helper_test_script_exec(custom_script_name, cfg)
 
@@ -185,7 +192,7 @@ class TestConfig(unittest.TestCase):
         os.environ['DOGEN_SCRIPT_EXEC'] = "some_other_script.sh"
         custom_script_name = "somescript.sh"
         self.assertNotEqual(custom_script_name, DEFAULT_SCRIPT_EXEC)
-        cfg = "scripts:\n  - package: somepackage\n    exec: " + custom_script_name
+        cfg = self.basic_config + "scripts:\n  - package: somepackage\n    exec: " + custom_script_name
 
         self.helper_test_script_exec(custom_script_name, cfg)
 
@@ -206,7 +213,7 @@ class TestConfig(unittest.TestCase):
            the default is used."""
 
         os.environ.pop('DOGEN_SCRIPT_USER', None)
-        cfg = "scripts:\n    - package: somepackage"
+        cfg = self.basic_config + "scripts:\n    - package: somepackage"
 
         self.helper_test_script_user(cfg, DEFAULT_SCRIPT_USER)
 
@@ -216,7 +223,7 @@ class TestConfig(unittest.TestCase):
 
         env_user = os.environ['DOGEN_SCRIPT_USER'] = 'some_user'
         self.assertNotEqual(env_user, DEFAULT_SCRIPT_USER)
-        cfg = "scripts:\n    - package: somepackage"
+        cfg = self.basic_config + "scripts:\n    - package: somepackage"
 
         self.helper_test_script_user(cfg, env_user)
 
@@ -227,7 +234,7 @@ class TestConfig(unittest.TestCase):
         os.environ.pop('DOGEN_SCRIPT_USER', None)
         custom_script_user = "notroot"
         self.assertNotEqual(custom_script_user, DEFAULT_SCRIPT_USER)
-        cfg = "scripts:\n  - package: somepackage\n    user: " + custom_script_user
+        cfg = self.basic_config + "scripts:\n  - package: somepackage\n    user: " + custom_script_user
 
         self.helper_test_script_user(cfg, custom_script_user)
 
@@ -240,16 +247,14 @@ class TestConfig(unittest.TestCase):
         self.assertNotEqual(custom_script_user, DEFAULT_SCRIPT_USER)
         self.assertNotEqual(env_user, DEFAULT_SCRIPT_USER)
         os.environ['DOGEN_SCRIPT_USER'] = env_user
-        cfg = "scripts:\n  - package: somepackage\n    user: " + custom_script_user
+        cfg = self.basic_config + "scripts:\n  - package: somepackage\n    user: " + custom_script_user
 
         self.helper_test_script_user(cfg, custom_script_user)
 
     def test_no_scripts_defined(self):
         "make sure _handle_scripts doesn't blow up when there are no scripts"
 
-        with self.descriptor as f:
-            f.write("name: somecfg\n".encode())
-
+        self.descriptor.close()
         generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
         generator.configure()
         generator._handle_scripts()

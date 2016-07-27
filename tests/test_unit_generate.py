@@ -6,11 +6,17 @@ import os
 from dogen.generator import Generator
 
 class TestGenerateCustomRepoFiles(unittest.TestCase):
+
+    # keys that must be present in config file but we don't care about
+    # for specific tests
+    basic_config ="release: '1'\nversion: '1'\ncmd:\n - whoami\nfrom: scratch\nname: someimage\n"
+
     def setUp(self):
         self.log = mock.Mock()
         self.descriptor = tempfile.NamedTemporaryFile(delete=False)
 
         with self.descriptor as f:
+            f.write(self.basic_config.encode())
             f.write("dogen:\n  ssl_verify: true".encode())
 
         self.generator = Generator(self.log, self.descriptor.name, "target")

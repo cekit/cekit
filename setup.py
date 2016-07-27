@@ -13,7 +13,9 @@ setup(
     version = version,
     packages = find_packages(exclude=["tests"]),
     package_data = {
-        'dogen.templates': ['*.jinja']
+        'dogen.templates': ['*.jinja'],
+        'dogen.schema': ['*.yaml'],
+        'dogen.plugins.cct': ['*.yaml'],
     },
     url = 'https://github.com/jboss-dockerfiles/dogen',
     download_url = "https://github.com/jboss-dockerfiles/dogen/archive/%s.tar.gz" % version,
