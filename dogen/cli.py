@@ -5,16 +5,15 @@ import logging
 import requests
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import glob
+import imp
+import inspect
 
 from dogen.generator import Generator
 from dogen.version import version
 from dogen.errors import Error
 from dogen.plugin import Plugin
 
-import dogen.plugins.dist_git
-import dogen.plugins.cct
-import dogen.plugins.rpm
 
 class MyParser(argparse.ArgumentParser):
 
@@ -42,10 +41,10 @@ class CLI(object):
 
         epilog = "List of available plugins:\n"
 
-        plugins = Plugin.list()
+        plugins = self.get_plugins()
 
         for plugin in plugins:
-            key, description = plugin.info()
+            key, description = plugins[plugin].info()
             epilog += "\n  * %s:\t%s" % (key, description)
 
         parser.epilog = epilog
@@ -84,8 +83,8 @@ class CLI(object):
 
         if args.plugin:
             for plugin in plugins:
-                if plugin.info()[0] in args.plugin:
-                    enabled_plugins.append(plugin)
+                if plugins[plugin].info()[0] in args.plugin:
+                    enabled_plugins.append(plugins[plugin])
 
         try:
             Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_scripts=args.additional_script, without_sources=args.without_sources, plugins=enabled_plugins, ssl_verify=ssl_verify).run()
@@ -95,6 +94,27 @@ class CLI(object):
             self.log.exception(e)
             sys.exit(1)
 
+    def get_plugins(self):
+        """
+        Finds all modules in the subdirs of directory
+        """
+        modules = {}
+        directory = os.path.join(os.path.dirname(__file__), "plugins")
+        for candidate in glob.glob(directory + os.sep + "*py"):
+            self.log.debug("inspecting %s" %candidate)
+            module_name = "dogen.plugins." + os.path.basename(candidate).split('.')[0]
+            self.log.debug("importing module %s to %s" % (os.path.abspath(candidate), module_name))
+            module = imp.load_source(module_name, os.path.abspath(candidate))
+            # Get all classes from our module
+            for name, clazz in inspect.getmembers(module, inspect.isclass):
+                # Check that class is from our namespace
+                if module_name == clazz.__module__:
+                    # Instantiate class
+                    cls = getattr(module, name)
+                    if issubclass(cls, Plugin):
+                        self.log.info("found %s" %cls)
+                        modules[module_name.split('.')[-1]] = cls
+        return modules
 
 def run():
     cli = CLI()
