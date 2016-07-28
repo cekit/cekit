@@ -195,6 +195,9 @@ class Generator(object):
         with open(schema_path, 'r') as fh:
             schema = yaml.safe_load(fh)
 
+        if schema == None:
+            raise Error("couldn't read a valid schema at %s" % schema_path)
+
         for plugin in self.plugins:
             plugin.extend_schema(schema)
 

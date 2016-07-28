@@ -1,0 +1,7 @@
+# Ensure that numeric release is permitted
+release: 1
+version: '1'
+cmd:
+ - whoami
+from: scratch
+name: someimage

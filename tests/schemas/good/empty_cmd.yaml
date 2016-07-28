@@ -1,0 +1,6 @@
+# The minimal permitted configuration
+release: '1'
+version: '1'
+cmd: []
+from: scratch
+name: someimage
