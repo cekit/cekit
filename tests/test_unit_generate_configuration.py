@@ -23,7 +23,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(self.generator.dockerfile, "target/Dockerfile")
         self.assertEqual(self.generator.descriptor, self.descriptor.name)
         self.assertEqual(self.generator.template, None)
-        self.assertEqual(self.generator.scripts, None)
+        self.assertEqual(self.generator.scripts_path, None)
         self.assertEqual(self.generator.additional_scripts, None)
         self.assertEqual(self.generator.without_sources, False)
         # Set to True in the configure() method later 
@@ -92,32 +92,32 @@ class TestConfig(unittest.TestCase):
     @mock.patch('dogen.generator.os.path.exists', return_value=True)
     def test_custom_scripts_dir_in_descriptor(self, mock_patch):
         with self.descriptor as f:
-            f.write("dogen:\n  scripts: custom-scripts".encode())
+            f.write("dogen:\n  scripts_path: custom-scripts".encode())
 
         generator = Generator(self.log, self.descriptor.name, "target")
         generator.configure()
         mock_patch.assert_called_with('custom-scripts')
-        self.assertEqual(generator.scripts, "custom-scripts")
+        self.assertEqual(generator.scripts_path, "custom-scripts")
 
     @mock.patch('dogen.generator.os.path.exists', return_value=True)
     def test_custom_scripts_dir_in_cli_should_override_in_descriptor(self, mock_patch):
         with self.descriptor as f:
             f.write("dogen:\n  template: custom-scripts".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target", scripts="custom-scripts-cli")
+        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="custom-scripts-cli")
         generator.configure()
         mock_patch.assert_called_with('custom-scripts-cli')
-        self.assertEqual(generator.scripts, "custom-scripts-cli")
+        self.assertEqual(generator.scripts_path, "custom-scripts-cli")
 
     @mock.patch('dogen.generator.os.path.exists', return_value=True)
     def test_scripts_dir_found_by_convention(self, mock_patch):
         with self.descriptor as f:
-            f.write("dogen:\n  scripts: custom-scripts".encode())
+            f.write("dogen:\n  scripts_path: custom-scripts".encode())
 
         generator = Generator(self.log, self.descriptor.name, "target")
         generator.configure()
         mock_patch.assert_called_with('custom-scripts')
-        self.assertEqual(generator.scripts, "custom-scripts")
+        self.assertEqual(generator.scripts_path, "custom-scripts")
 
     def test_custom_additional_scripts_in_descriptor(self):
         with self.descriptor as f:
@@ -141,7 +141,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write(cfg.encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
+        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
         generator.configure()
         generator._handle_scripts()
         self.assertEqual(generator.cfg['scripts'][0]['exec'], exec_to_test)
@@ -196,7 +196,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write(cfg.encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
+        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
         generator.configure()
         generator._handle_scripts()
         self.assertEqual(generator.cfg['scripts'][0]['user'], user_to_test)
@@ -250,7 +250,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("name: somecfg\n".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target", scripts="scripts")
+        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
         generator.configure()
         generator._handle_scripts()
         # success if no stack trace thrown

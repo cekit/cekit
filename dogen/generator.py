@@ -16,7 +16,7 @@ from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts=None, additional_scripts=None, without_sources=False, plugins=[], ssl_verify=None):
+    def __init__(self, log, descriptor, output, template=None, scripts_path=None, additional_scripts=None, without_sources=False, plugins=[], ssl_verify=None):
         self.log = log
         self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
         self.descriptor = os.path.realpath(descriptor)
@@ -24,7 +24,7 @@ class Generator(object):
         self.output = output
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.template = template
-        self.scripts = scripts
+        self.scripts_path = scripts_path
         self.additional_scripts = additional_scripts
         self.ssl_verify = ssl_verify
 
@@ -85,13 +85,13 @@ class Generator(object):
         if not os.path.exists(self.descriptor):
             raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % self.descriptor)
 
-        if not self.scripts:
+        if not self.scripts_path:
             # If scripts directory is not provided, see if there is a "scripts"
             # directory next to the descriptor. If found - assume that's the
             # directory containing scripts.
             scripts = os.path.join(os.path.dirname(self.descriptor), "scripts")
             if os.path.exists(scripts) and os.path.isdir(scripts):
-                self.scripts = scripts
+                self.scripts_path = scripts
 
         with open(self.descriptor, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
@@ -119,19 +119,18 @@ class Generator(object):
         if template and not self.template:
             self.template = template
 
-        scripts = dogen_cfg.get('scripts')
+        scripts = dogen_cfg.get('scripts_path')
 
-        if scripts and not self.scripts:
-            self.scripts = scripts
+        if scripts and not self.scripts_path:
+            self.scripts_path = scripts
 
         additional_scripts = dogen_cfg.get('additional_scripts')
 
         if additional_scripts and not self.additional_scripts:
             self.additional_scripts = additional_scripts
 
-        if self.scripts:
-            if not os.path.exists(self.scripts):
-                raise Error("Provided scripts directory '%s' does not exists" % self.scripts)
+        if self.scripts_path and not os.path.exists(self.scripts_path):
+            raise Error("Provided scripts directory '%s' does not exist" % self.scripts_path)
 
     def _handle_scripts(self):
         if not self.cfg.get('scripts'):
@@ -139,7 +138,7 @@ class Generator(object):
 
         for script in self.cfg['scripts']:
             package = script['package']
-            src_path = os.path.join(self.scripts, package)
+            src_path = os.path.join(self.scripts_path, package)
             output_path = os.path.join(self.output, "scripts", package)
 
             possible_exec = os.getenv('DOGEN_SCRIPT_EXEC', DEFAULT_SCRIPT_EXEC)
@@ -210,7 +209,7 @@ class Generator(object):
         if not os.path.exists(self.output):
             os.makedirs(self.output)
 
-        if self.scripts:
+        if self.scripts_path:
             self._handle_scripts()
         else:
             self.log.warn("No scripts will be copied, mistake?")
