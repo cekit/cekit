@@ -38,7 +38,9 @@ class CCT(Plugin):
     def _prepare_modules(self, cfg):
         for module in cfg['cct']['modules']:
             name = None
-            if module['path'][-1] == '/':
+            if 'name' in module:
+                name = module['name']
+            elif module['path'][-1] == '/':
                 name = os.path.basename(module['path'][0:-1])
             elif len(module['path']) > 4 and module['path'][-4:] == ".git":
                 name = os.path.basename(module['path'][0:-4])
