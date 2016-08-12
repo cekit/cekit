@@ -96,11 +96,6 @@ USER {{ script.user }}
 RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 
 {% endfor %}
-
-# Cleanup the scripts directory
-USER root
-RUN rm -rf /tmp/scripts
-
 {% endif %}
 
 # Run cct if needed
@@ -111,6 +106,12 @@ RUN CCT_MODULES_PATH=/tmp/cct/ cct {%if cct.verbose %}-v{% endif %} {% for run i
 # Add cct in command mode as entrypoint
 # you can specify path to changes files in CCT_CHANGES environemnt variable
 ENTRYPOINT ["/usr/bin/cct", "-c"]
+{% endif %}
+
+{%- if scripts %}
+# Cleanup the scripts directory (after cct so cct has access to /tmp/scripts/sources)
+USER root
+RUN rm -rf /tmp/scripts
 {% endif %}
 
 {%- if openshift %}
