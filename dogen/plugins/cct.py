@@ -47,6 +47,9 @@ class CCT(Plugin):
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
 
+        if 'runtime' in cfg['cct']:
+            self.runtime_changes(cfg)
+
     def _prepare_modules(self, cfg):
         for module in cfg['cct']['modules']:
             name = None
@@ -111,4 +114,24 @@ class CCT(Plugin):
             cfg['sources'].extend(dogen_sources)
         except:
             cfg['sources'] = dogen_sources
+
+    def runtime_changes(self, cfg):
+        """
+        Handle configuring CCT for runtime use.
+
+        User may supply a /cct/runtime key which will be written out as
+        instructions for cct to execute at runtime.
+        """
+
+        # write out a cctruntime.yaml file from the /cct/runtime_changes key
+        cfg_file_dir = os.path.join(self.output, "cct")
+        if not os.path.exists(cfg_file_dir):
+            os.makedirs(cfg_file_dir)
+        cfg_file = os.path.join(cfg_file_dir, "cctruntime.yaml")
+        with open(cfg_file, 'w') as f:
+            yaml.dump(cfg['cct']['runtime'], f)
+
+        # adjust cfg object so template adds the above to ENTRYPOINT
+        if not 'runtime_changes' in cfg['cct']:
+            cfg['cct']['runtime_changes'] = "/tmp/cct/cctruntime.yaml"
 

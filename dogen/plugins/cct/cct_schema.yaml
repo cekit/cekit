@@ -12,3 +12,6 @@ map:
   #                       https://github.com/Grokzen/pykwalify/issues/54
   configure:
     type: any
+  runtime_changes: { type: str }
+  # same rationale as for configure
+  runtime: { type: any }
