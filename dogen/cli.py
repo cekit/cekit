@@ -57,7 +57,7 @@ class CLI(object):
 
         parser.add_argument('--without-sources', '--ws', action='store_true', help='Do not process sources, only generate Dockerfile')
         parser.add_argument('--skip-ssl-verification', action='store_true', help='Should we skip SSL verification when retrieving data?')
-        parser.add_argument('--scripts', help='Location of the scripts directory containing script packages.')
+        parser.add_argument('--scripts-path', help='Location of the scripts directory containing script packages.')
         parser.add_argument('--additional-script', action='append', help='Location of additional script (can be url). Can be specified multiple times.')
         parser.add_argument('--template', help='Path to custom template (can be url)')
         parser.add_argument('--plugin', action='append', help='Plugin to be enabled. Can be specified multiple times.')
@@ -87,7 +87,7 @@ class CLI(object):
                     enabled_plugins.append(plugins[plugin])
 
         try:
-            Generator(self.log, args.path, args.output, template=args.template, scripts=args.scripts, additional_scripts=args.additional_script, without_sources=args.without_sources, plugins=enabled_plugins, ssl_verify=ssl_verify).run()
+            Generator(self.log, args.path, args.output, template=args.template, scripts_path=args.scripts_path, additional_scripts=args.additional_script, without_sources=args.without_sources, plugins=enabled_plugins, ssl_verify=ssl_verify).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:
