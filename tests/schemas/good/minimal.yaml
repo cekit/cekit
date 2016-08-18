@@ -1,0 +1,7 @@
+# The minimal permitted configuration
+release: '1'
+version: '1'
+cmd:
+ - whoami
+from: scratch
+name: someimage

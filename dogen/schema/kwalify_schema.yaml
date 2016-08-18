@@ -1,0 +1,67 @@
+# This is a Kwalify Schema, see http://pykwalify.readthedocs.io/ for more information
+map:
+  name:    {type: str, required: True}
+  from:    {type: str, required: True}
+  version: {type: text, required: True}
+  release: {type: text, required: True}
+  description: {type: text}
+  cmd:
+    type: seq
+    sequence:
+      - type: str
+  openshift: {type: bool}
+  labels:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {type: str, required: True}
+          value: {type: str, required: True}
+          description: {type: str}
+  envs:
+    type: map
+    mapping:
+      information:
+        type: seq
+        sequence:
+          - type: map
+            mapping:
+              name: {type: str, required: True}
+              value: {type: any, required: True}
+              description: {type: str}
+      configuration:
+        seq:
+          - map:
+              name: {type: str, required: True}
+              example: {type: any}
+              description: {type: str}
+  ports:
+    seq:
+      - map:
+          value: {type: int, required: True}
+  debugport: {type: int}
+  dogen:
+    map:
+      version: {type: text}
+      ssl_verify: {type: bool}
+      template: {type: str}
+      scripts_path: {type: str}
+      additional_scripts:
+        seq:
+          - {type: str}
+  scripts:
+    seq:
+      - map:
+         package: {type: str}
+         exec: {type: str}
+         user: {type: text}
+  verbose: {type: int}
+  maintainer: {type: str}
+  sources:
+    seq:
+      - map:
+          url: {type: str}
+          hash: {type: str}
+  packages:
+    seq:
+      - {type: str}

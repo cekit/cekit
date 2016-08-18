@@ -9,6 +9,8 @@ import yaml
 import tempfile
 
 from jinja2 import FileSystemLoader, Environment
+from pykwalify.core import Core
+from pykwalify.errors import SchemaError
 
 from dogen.template_helper import TemplateHelper
 from dogen.tools import Tools
@@ -80,10 +82,7 @@ class Generator(object):
         Some Dogen configuration values can be set in the YAML
         descriptor file using the 'dogen' section.
         """
-
-        # Fail early if descriptor file is not found
-        if not os.path.exists(self.descriptor):
-            raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % self.descriptor)
+        self._validate_cfg()
 
         if not self.scripts_path:
             # If scripts directory is not provided, see if there is a "scripts"
@@ -92,9 +91,6 @@ class Generator(object):
             scripts = os.path.join(os.path.dirname(self.descriptor), "scripts")
             if os.path.exists(scripts) and os.path.isdir(scripts):
                 self.scripts_path = scripts
-
-        with open(self.descriptor, 'r') as stream:
-            self.cfg = yaml.safe_load(stream)
 
         dogen_cfg = self.cfg.get('dogen')
 
@@ -185,7 +181,37 @@ class Generator(object):
         for f in repo_files:
             self.cfg['additional_repos'].append(os.path.splitext(os.path.basename(f))[0])
 
+    def _validate_cfg(self):
+        """
+        Open and parse the YAML configuration file and ensure it matches
+        our Schema for a Dogen configuration.
+        """
+        # Fail early if descriptor file is not found
+        if not os.path.exists(self.descriptor):
+            raise Error("Descriptor file '%s' could not be found. Please make sure you specified correct path." % self.descriptor)
+
+        schema_path = os.path.join(self.pwd, "schema", "kwalify_schema.yaml")
+        schema = {}
+        with open(schema_path, 'r') as fh:
+            schema = yaml.safe_load(fh)
+
+        if schema == None:
+            raise Error("couldn't read a valid schema at %s" % schema_path)
+
+        for plugin in self.plugins:
+            plugin.extend_schema(schema)
+
+        with open(self.descriptor, 'r') as stream:
+            self.cfg = yaml.safe_load(stream)
+
+        c = Core(source_data=self.cfg, schema_data=schema)
+        try:
+            c.validate(raise_exception=True)
+        except SchemaError as e:
+            raise Error(e)
+
     def run(self):
+
         # Set Dogen settings if  provided in descriptor
         self.configure()
 

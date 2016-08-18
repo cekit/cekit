@@ -11,3 +11,11 @@ class Plugin(object):
 
     def after_sources(self, **kwargs):
         pass
+
+    def extend_schema(self, schema):
+        """
+        Plugins have an opportunity to extend the schema used to validate
+        the dogen YAML configuration, to support additional keys that the
+        plugin might need.
+        """
+        pass

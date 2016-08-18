@@ -13,6 +13,13 @@ class RPM(Plugin):
         super(RPM, self).__init__(dogen)
         self.rpms_directory = os.path.join(os.path.dirname(self.descriptor), "rpms")
 
+    def extend_schema(self, parent_schema):
+        """
+        Extend the Dogen configuration schema to have a top-level list of
+        strings at the 'rpms:' key
+        """
+        parent_schema['map']['rpms'] = {'seq':[{'type':'str'}],}
+
     def prepare(self, cfg):
         if not os.path.exists(self.rpms_directory):
             return
