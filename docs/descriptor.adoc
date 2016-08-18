@@ -1,0 +1,100 @@
+# Dogen descriptor file
+
+Most important, user facing part of Dogen is the descriptor file. We use YAML format which is easy to read and edit by humans but still machine parseable. By convention we use the `image.yaml` name for.
+
+## General section
+
+This is the general description of the image.
+
+* `name` -- this is the image name without the registry part.
+* `version` -- version of the image.
+* `release` -- also called build number. This value should be bumped every time you build the image. It can be string or integer, or mix of these.
+* `from` -- base image for your image.
+
+```yaml
+name: "jboss-eap-7/eap70-openshift"
+version: "1.4"
+release: "dev"
+from: "jboss-eap-7-tech-preview/eap70:1.2"
+```
+
+## Labels
+
+Every Docker image can be marked with some labels. Dogen makes it easy to do so with the `labels` section.
+
+```yaml
+labels:
+    - name: "io.k8s.description"
+      value: "Platform for building and running JavaEE applications on JBoss EAP 7.0"
+    - name: "io.k8s.display-name"
+      value: "JBoss EAP 7.0"
+```
+
+## Environment variables
+
+Similar to labels -- we can specify environment variables that should be present in the container after running the image. We provide `envs` section for this.
+
+As you can see we have two subsections: `information` and `configuration`. The `information` section is useful to provide environment variables that are meant to be read-only, only providing information. On the other hand the `configuration` section contains environment variables that can (and probably should) be set by the user.
+
+For the `information` envs we just provide `name` and `value`, `description` is optional. For `configuration`, instead of `value`, there is an `example` key which contains an example value. Please note that `description` for configuration envs is required and should be explain what is the variables used for as well as showing the default value (if any).
+
+NOTE: The reason to differentiate between `configuration` and `information` environment variables is that we can use the `image.yaml` as a source to *generate documentation*.
+
+
+```yaml
+envs:
+    information:
+        - name: "STI_BUILDER"
+          value: "jee"
+        - name: "JBOSS_MODULES_SYSTEM_PKGS"
+          value: "org.jboss.logmanager,jdk.nashorn.api"
+    configuration:
+        - name: "OPENSHIFT_KUBE_PING_NAMESPACE"
+          example: "myproject"
+          description: "Clustering project namespace."
+        - name: "OPENSHIFT_KUBE_PING_LABELS"
+          example: "application=eap-app"
+          description: "Clustering labels selector."
+```
+
+## Ports
+
+This section is used to mark which ports should be exposed in the container.
+
+```yaml
+ports:
+    - value: 8443
+    - value: 8778
+```
+
+## Command and entrypoint
+
+You can specify the entrypoint or command that should be used by the container with the `cmd` and `entrypoint`.
+
+NOTE: Both `entrypoint` and `cmd` keys use the exec (array) form of providing its value which is preferred in Docker.
+
+```yaml
+entrypoint:
+    - "/opt/eap/bin/wrapper.sh"
+cmd:
+    - "some cmd"
+    - "argument"
+```
+
+## Packages
+
+If you need to install additional packages you can use the `packages` section where you specify package names to be installed.
+
+
+```yaml
+packages:
+    - mongodb24-mongo-java-driver
+    - postgresql-jdbc
+    - mysql-connector-java
+    - maven
+    - hostname
+```
+
+## Scripts
+
+TBD
