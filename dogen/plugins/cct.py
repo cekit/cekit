@@ -108,7 +108,7 @@ class CCT(Plugin):
         for source in cct_sources:
             dogen_source = {}
             dogen_source['url'] = source_prefix + source['name']
-            dogen_source['md5sum'] = source['md5sum']
+            dogen_source['md5sum'] = source['chksum']
             dogen_sources.append(dogen_source)
         try:
             cfg['sources'].extend(dogen_sources)
