@@ -19,7 +19,7 @@ class CCT(Plugin):
         Read in a schema definition for our part of the config and hook it
         into the parent schema at the cct: top-level key.
         """
-        schema_path = os.path.join(self.dogen.pwd, "plugins", "cct", "cct_schema.yaml")
+        schema_path = os.path.join(self.dogen.pwd, "schema", "cct_schema.yaml")
         schema = {}
         with open(schema_path, 'r') as fh:
             schema = yaml.safe_load(fh)
@@ -49,6 +49,9 @@ class CCT(Plugin):
 
         if 'runtime' in cfg['cct']:
             self.runtime_changes(cfg)
+
+        if not 'user' in cfg['cct']:
+            cfg['cct']['user'] = 'root'
 
     def _prepare_modules(self, cfg):
         for module in cfg['cct']['modules']:

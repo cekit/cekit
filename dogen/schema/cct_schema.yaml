@@ -15,3 +15,4 @@ map:
   runtime_changes: { type: str }
   # same rationale as for configure
   runtime: { type: any }
+  user: { type: any }
