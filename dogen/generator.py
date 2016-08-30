@@ -270,7 +270,7 @@ class Generator(object):
         env.globals['helper'] = TemplateHelper()
         template = env.get_template(os.path.basename(template_file))
 
-        with open(self.dockerfile, 'w') as f:
+        with open(self.dockerfile, 'wb') as f:
             f.write(template.render(self.cfg).encode('utf-8'))
         self.log.debug("Done")
 
