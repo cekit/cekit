@@ -92,6 +92,9 @@ class Generator(object):
             if os.path.exists(scripts) and os.path.isdir(scripts):
                 self.scripts_path = scripts
 
+        if not 'user' in self.cfg:
+            self.cfg['user'] = 0
+
         dogen_cfg = self.cfg.get('dogen')
 
         if not dogen_cfg:

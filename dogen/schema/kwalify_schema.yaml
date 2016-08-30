@@ -5,6 +5,7 @@ map:
   version: {type: text, required: True}
   release: {type: text, required: True}
   description: {type: text}
+  user: {type: text}
   cmd:
     type: seq
     sequence:
