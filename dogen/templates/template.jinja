@@ -69,7 +69,7 @@ RUN yum install -y {% if additional_repos -%} --disablerepo=\* {%- for repo in a
 
 {% if additional_repos %}
 # Remove custom repo files
-RUN rm {% for repo in additional_repos %}/etc/yum.repos.d/{{ repo }}.repo{% endfor %}
+RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endfor %}
 
 {% endif %}
 
