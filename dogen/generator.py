@@ -92,6 +92,9 @@ class Generator(object):
             if os.path.exists(scripts) and os.path.isdir(scripts):
                 self.scripts_path = scripts
 
+        if not 'user' in self.cfg:
+            self.cfg['user'] = 0
+
         dogen_cfg = self.cfg.get('dogen')
 
         if not dogen_cfg:
@@ -267,7 +270,7 @@ class Generator(object):
         env.globals['helper'] = TemplateHelper()
         template = env.get_template(os.path.basename(template_file))
 
-        with open(self.dockerfile, 'w') as f:
+        with open(self.dockerfile, 'wb') as f:
             f.write(template.render(self.cfg).encode('utf-8'))
         self.log.debug("Done")
 

@@ -130,5 +130,6 @@ WORKDIR {{ workdir }}
 
 {% if cmd %}
 # Start the main process
+USER {{ user }}
 CMD {{ helper.cmd(cmd) }}
 {% endif %}
