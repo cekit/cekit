@@ -102,6 +102,7 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 {% if cct %}
 ADD cct /tmp/cct/
 ENV CCT_MODULES_PATH=/tmp/cct/
+USER {{ cct.user }}
 RUN cct {%if cct.verbose %}-v{% endif %} {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
 
 # Add cct in command mode as entrypoint
