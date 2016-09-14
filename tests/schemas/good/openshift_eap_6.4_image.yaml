@@ -2,7 +2,6 @@ name: "jboss-eap-6/eap64-openshift"
 version: "1.4"
 release: "dev"
 from: "jboss-eap-6/eap64:1.3"
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "Platform for building and running JavaEE applications on JBoss EAP 6.4"

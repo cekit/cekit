@@ -10,7 +10,6 @@ map:
     type: seq
     sequence:
       - type: str
-  openshift: {type: bool}
   labels:
     type: seq
     sequence:

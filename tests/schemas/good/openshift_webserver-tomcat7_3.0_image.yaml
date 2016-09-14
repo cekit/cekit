@@ -2,7 +2,6 @@ name: "jboss-webserver-3/webserver30-tomcat7-openshift"
 version: "1.2"
 release: "dev"
 from: "jboss-webserver-3/webserver30-tomcat7"
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "Platform for building and running web applications on JBoss Web Server 3.0 - Tomcat v7"

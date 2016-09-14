@@ -2,7 +2,6 @@ name: "jboss-fuse-6/camel63-openshift"
 version: "1.0"
 release: "dev"
 from: "jboss-fuse-6/fuse63:1.0"
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "Platform for building and running Apache Camel applications on EAP"
