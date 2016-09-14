@@ -98,8 +98,8 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 {% endfor %}
 {% endif %}
 
-# Run cct if needed
 {% if cct %}
+# Run cct if needed
 ADD cct /tmp/cct/
 ENV CCT_MODULES_PATH=/tmp/cct/
 USER {{ cct.user }}
