@@ -2,7 +2,6 @@ name: "redhat-sso-7/sso70-openshift"
 version: "1.3"
 release: "dev"
 from: "redhat-sso-7/sso70:1.4"
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "Platform for running Red Hat SSO"

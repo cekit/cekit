@@ -116,13 +116,6 @@ USER root
 RUN rm -rf /tmp/scripts
 {% endif %}
 
-{%- if openshift %}
-# Switch to the user 185 for OpenShift usage
-USER 185
-{% else %}
-USER jboss
-{% endif %}
-
 {%- if workdir %}
 # Specify the working directory
 WORKDIR {{ workdir }}

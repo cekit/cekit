@@ -1,0 +1,8 @@
+# openshift key no longer supported
+release: '1'
+version: '1'
+openshift: true
+cmd:
+ - whoami
+from: scratch
+name: someimage

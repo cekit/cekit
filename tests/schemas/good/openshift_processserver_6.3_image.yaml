@@ -3,7 +3,6 @@ version: "1.3"
 release: "dev"
 from: "jboss-kieserver-6/kieserver63-openshift:1.3"
 description: "Platform for executing business rules on JBoss BPMS Intelligent Process Server 6.3."
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "Platform for executing business rules on JBoss BPMS Intelligent Process Server 6.3."

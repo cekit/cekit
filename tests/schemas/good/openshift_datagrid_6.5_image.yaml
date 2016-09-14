@@ -2,7 +2,6 @@ name: "jboss-datagrid-6/datagrid65-openshift"
 version: "1.2"
 release: "dev"
 from: "jboss-datagrid-6/datagrid65"
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "Provides a scalable in-memory distributed database designed for fast access to large volumes of data."

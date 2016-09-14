@@ -2,7 +2,6 @@ name: "jboss-amq-6/amq62-openshift"
 version: "1.4"
 release: "dev"
 from: "jboss-amq-6/amq62:1.2"
-openshift: true
 labels:
     - name: "io.k8s.description"
       value: "A reliable messaging platform that supports standard messaging paradigms for a real-time enterprise."
