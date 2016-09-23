@@ -31,6 +31,11 @@ class CCT(Plugin):
         create cct changes yaml file for image.yaml template decscriptor
         it require cct aware template.jinja file
         """
+        # check if cct plugin has any steps to perform (prevent it from raising ugly exceptions)
+        if not 'cct' in cfg:
+            self.log.debug("No cct key in image.yaml - nothing to do")
+            return
+
         if os.path.exists(self.output + '/cct/'):
             shutil.rmtree(self.output + '/cct/')
 
