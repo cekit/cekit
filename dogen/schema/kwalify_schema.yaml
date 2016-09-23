@@ -57,6 +57,7 @@ map:
          user: {type: text}
   verbose: {type: int}
   maintainer: {type: str}
+  workdir: {type: str}
   sources:
     seq:
       - map:
