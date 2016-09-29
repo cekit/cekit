@@ -15,7 +15,7 @@ class DistGitPlugin(Plugin):
         super(DistGitPlugin, self).__init__(dogen)
         self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
 
-    def prepare(self):
+    def prepare(self, cfg):
         self.git.prepare()
         self.git.clean_scripts()
 
@@ -31,7 +31,7 @@ class Git(object):
     def repo_info(path):
 
         with Chdir(path):
-            if not os.path.exists(os.path.join(path, ".git")):
+            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip() != "true":
                 raise Exception("Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
 
             name = os.path.basename(subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip())

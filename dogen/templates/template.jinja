@@ -56,11 +56,11 @@ USER root
 {% if packages or rpms %}
 {% if additional_repos %}
 # Add custom repo files
-ADD scripts/*.repo /etc/yum.repos.d/
+COPY scripts/*.repo /etc/yum.repos.d/
 {% endif %}
 {% if rpms %}
 # Add custom rpm files
-ADD rpms/*.rpm /tmp/rpms/
+COPY rpms/*.rpm /tmp/rpms/
 {% endif %}
 
 # Install required RPMs
@@ -78,7 +78,7 @@ RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endf
 {%- if sources %}
 # Add all required sources to the /tmp/scripts/sources/
 # directory
-ADD \
+COPY \
 {% for source in sources %}
     {{ helper.basename(source.url) }} \
     {% endfor %}
@@ -88,7 +88,7 @@ ADD \
 
 {%- if scripts %}
 # Add scripts used to configure the image
-ADD scripts /tmp/scripts
+COPY scripts /tmp/scripts
 
 # Custom scripts
 {% for script in scripts %}
@@ -100,7 +100,7 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 
 {% if cct %}
 # Run cct if needed
-ADD cct /tmp/cct/
+COPY cct /tmp/cct/
 ENV CCT_MODULES_PATH=/tmp/cct/
 USER {{ cct.user }}
 RUN cct {%if cct.verbose %}-v{% endif %} {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
