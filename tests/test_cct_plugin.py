@@ -14,7 +14,7 @@ class MockDogen():
 class TestCCTPlugin(unittest.TestCase):
     def setUp(self):
         self.workdir = tempfile.mkdtemp(prefix='test_cct_plugin')
-        self.cct = cct.CCT(dogen=MockDogen())
+        self.cct = cct.CCT(dogen=MockDogen(), args=None)
 
     def teardown(self):
         shutil.rmtree(self.workdir)
