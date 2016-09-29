@@ -9,8 +9,8 @@ class RPM(Plugin):
     def info():
         return "rpm","Support for injecting custom rpms"
 
-    def __init__(self, dogen):
-        super(RPM, self).__init__(dogen)
+    def __init__(self, dogen, args):
+        super(RPM, self).__init__(dogen, args)
         self.rpms_directory = os.path.join(os.path.dirname(self.descriptor), "rpms")
 
     def extend_schema(self, parent_schema):

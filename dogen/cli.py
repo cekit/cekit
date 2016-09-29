@@ -43,12 +43,6 @@ class CLI(object):
 
         plugins = self.get_plugins()
 
-        for plugin in plugins:
-            key, description = plugins[plugin].info()
-            epilog += "\n  * %s:\t%s" % (key, description)
-
-        parser.epilog = epilog
-
         parser.add_argument(
             '-v', '--verbose', action='store_true', help='Verbose output')
 
@@ -60,11 +54,16 @@ class CLI(object):
         parser.add_argument('--scripts-path', help='Location of the scripts directory containing script packages.')
         parser.add_argument('--additional-script', action='append', help='Location of additional script (can be url). Can be specified multiple times.')
         parser.add_argument('--template', help='Path to custom template (can be url)')
-        parser.add_argument('--plugin', action='append', help='Plugin to be enabled. Can be specified multiple times.')
 
         parser.add_argument('path', help="Path to yaml descriptor to process")
         parser.add_argument('output', help="Path to directory where generated files should be saved")
 
+        for plugin in plugins:
+            key, description = plugins[plugin].info()
+            epilog += "\n  * %s:\t%s" % (key, description)
+            parser = plugins[plugin].inject_args(parser)
+
+        parser.epilog = epilog
         args = parser.parse_args()
 
         if args.verbose:
@@ -72,22 +71,16 @@ class CLI(object):
         else:
             self.log.setLevel(logging.INFO)
 
-        if args.skip_ssl_verification:
-            ssl_verify = False
-        else:
-            ssl_verify = None
 
         self.log.debug("Running version %s", version)
 
         enabled_plugins = []
 
-        if args.plugin:
-            for plugin in plugins:
-                if plugins[plugin].info()[0] in args.plugin:
-                    enabled_plugins.append(plugins[plugin])
+        for plugin in plugins:
+            enabled_plugins.append(plugins[plugin])
 
         try:
-            Generator(self.log, args.path, args.output, template=args.template, scripts_path=args.scripts_path, additional_scripts=args.additional_script, without_sources=args.without_sources, plugins=enabled_plugins, ssl_verify=ssl_verify).run()
+            Generator(self.log, args=args, plugins=enabled_plugins).run()
         except KeyboardInterrupt as e:
             pass
         except Error as e:

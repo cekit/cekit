@@ -11,8 +11,8 @@ class CCT(Plugin):
     def info():
         return "cct", "Support for configuring images via cct"
 
-    def __init__(self, dogen):
-        super(CCT, self).__init__(dogen)
+    def __init__(self, dogen, args):
+        super(CCT, self).__init__(dogen, args)
 
     def extend_schema(self, parent_schema):
         """
