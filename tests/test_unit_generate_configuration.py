@@ -83,15 +83,6 @@ class TestConfig(unittest.TestCase):
         generator.configure()
         self.assertEqual(generator.template, "cli-template.jinja")
 
-    def test_do_not_skip_ssl_verification_in_cli_true_should_override_descriptor(self):
-        with self.descriptor as f:
-            f.write("dogen:\n  ssl_verify: false".encode())
-        args = self.args
-        args.skip_ssl_verification=False
-        generator = Generator(self.log, args)
-        generator.configure()
-        self.assertTrue(generator.ssl_verify)
-
     def test_do_not_skip_ssl_verification_in_cli_false_should_override_descriptor(self):
         with self.descriptor as f:
             f.write("dogen:\n  ssl_verify: true".encode())

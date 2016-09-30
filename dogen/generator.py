@@ -29,10 +29,9 @@ class Generator(object):
         self.scripts_path = args.scripts_path
         self.additional_scripts = args.additional_script
 
+        ssl_verify = None
         if args.skip_ssl_verification:
             ssl_verify = False
-        else:
-            ssl_verify = None
         self.ssl_verify = ssl_verify
 
         self.plugins = []
