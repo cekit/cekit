@@ -31,8 +31,11 @@ class CLI(object):
             '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         handler.setFormatter(formatter)
         self.log.addHandler(handler)
-        requests_log = logging.getLogger("requests.packages.urllib3")
-        requests_log.setLevel(logging.WARNING)
+
+        for package in ["requests.packages.urllib3", "pykwalify.core", "pykwalify.rule"]:
+            log = logging.getLogger(package)
+            log.setLevel(logging.INFO)
+
         requests.packages.urllib3.disable_warnings()
 
     def run(self):
