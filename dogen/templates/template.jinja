@@ -34,11 +34,11 @@ ENV JBOSS_IMAGE_NAME="{{name}}" \
     {% endif %}
 
 # Labels
-LABEL Name="$JBOSS_IMAGE_NAME" \
-      Version="$JBOSS_IMAGE_VERSION" \
-      Release="$JBOSS_IMAGE_RELEASE" \
-      Architecture="x86_64" \
-      BZComponent="{{ helper.component(name) }}" {%- if labels %} \
+LABEL name="$JBOSS_IMAGE_NAME" \
+      version="$JBOSS_IMAGE_VERSION" \
+      release="$JBOSS_IMAGE_RELEASE" \
+      architecture="x86_64" \
+      com.redhat.component="{{ helper.component(name) }}" {%- if labels %} \
       {% for label in labels %}
       {{ label.name }}="{{ label.value }}" {%- if loop.index < loop.length %} \{% endif %}
 
