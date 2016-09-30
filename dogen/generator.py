@@ -18,22 +18,25 @@ from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
 from dogen.errors import Error
 
 class Generator(object):
-    def __init__(self, log, descriptor, output, template=None, scripts_path=None, additional_scripts=None, without_sources=False, plugins=[], ssl_verify=None):
+    def __init__(self, log, args, plugins=[]):
         self.log = log
         self.pwd = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
-        self.descriptor = os.path.realpath(descriptor)
-        self.without_sources = without_sources
-        self.output = output
+        self.descriptor = os.path.realpath(args.path)
+        self.without_sources = args.without_sources
+        self.output = args.output
         self.dockerfile = os.path.join(self.output, "Dockerfile")
-        self.template = template
-        self.scripts_path = scripts_path
-        self.additional_scripts = additional_scripts
+        self.template = args.template
+        self.scripts_path = args.scripts_path
+        self.additional_scripts = args.additional_script
+
+        ssl_verify = None
+        if args.skip_ssl_verification:
+            ssl_verify = False
         self.ssl_verify = ssl_verify
 
         self.plugins = []
-
         for plugin in plugins:
-            self.plugins.append(plugin(self))
+            self.plugins.append(plugin(self, args))
 
     def _fetch_file(self, location, output=None):
         """

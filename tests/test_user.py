@@ -1,3 +1,4 @@
+import argparse
 import tempfile
 import unittest
 import mock
@@ -28,7 +29,9 @@ class TestUser(unittest.TestCase):
         self.yaml = os.path.join(self.workdir, "image.yaml")
         self.target = os.path.join(self.workdir, "target")
         os.mkdir(self.target)
-
+        self.args = argparse.Namespace(path=self.yaml, output=self.target, without_sources=None,
+                                       template=None, scripts_path=None, additional_script=None,
+                                       skip_ssl_verification=None)
         with open(self.yaml, 'wb') as f:
             f.write(self.basic_config.encode())
 
@@ -44,7 +47,7 @@ class TestUser(unittest.TestCase):
         with open(self.yaml, 'ab') as f:
             f.write("user: 1347".encode())
 
-        generator = Generator(self.log, self.yaml, self.target)
+        generator = Generator(self.log, self.args)
         generator.configure()
         generator.render_from_template()
 
@@ -61,7 +64,7 @@ class TestUser(unittest.TestCase):
         instruction in the Dockerfile, immediately before the CMD,
         defaulting to uid 0.
         """
-        generator = Generator(self.log, self.yaml, self.target)
+        generator = Generator(self.log, self.args)
         generator.configure()
         generator.render_from_template()
 

@@ -1,3 +1,4 @@
+import argparse
 import unittest
 import mock
 import six
@@ -19,12 +20,14 @@ class TestConfig(unittest.TestCase):
         self.log = mock.Mock()
         self.descriptor = tempfile.NamedTemporaryFile(delete=False)
         self.descriptor.write(self.basic_config.encode())
-
+        self.args = argparse.Namespace(path=self.descriptor.name, output="target", without_sources=False,
+                                       template=None, scripts_path=None, additional_script=None,
+                                       skip_ssl_verification=None)
     def tearDown(self):
         os.remove(self.descriptor.name)
 
     def test_default_values(self):
-        self.generator = Generator(self.log, self.descriptor.name, "target")
+        self.generator = Generator(self.log, self.args)
         self.assertEqual(self.generator.output, "target")
         self.assertEqual(self.generator.dockerfile, "target/Dockerfile")
         self.assertEqual(self.generator.descriptor, self.descriptor.name)
@@ -39,7 +42,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  version: 99999.9.9-dev1".encode())
 
-        self.generator = Generator(self.log, self.descriptor.name, "target")
+        self.generator = Generator(self.log, self.args)
 
         with self.assertRaises(Error) as cm:
             self.generator.configure()
@@ -51,7 +54,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  ssl_verify: false".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target")
+        generator = Generator(self.log, self.args)
         generator.configure()
         self.assertFalse(generator.ssl_verify)
 
@@ -59,7 +62,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  ssl_verify: true".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target")
+        generator = Generator(self.log, self.args)
         generator.configure()
         self.assertTrue(generator.ssl_verify)
 
@@ -67,31 +70,25 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  template: custom-template.jinja".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target")
+        generator = Generator(self.log, self.args)
         generator.configure()
         self.assertEqual(generator.template, "custom-template.jinja")
 
     def test_custom_template_in_cli_should_override_in_descriptor(self):
         with self.descriptor as f:
             f.write("dogen:\n  template: custom-template.jinja".encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", template="cli-template.jinja")
+        args = self.args
+        args.template="cli-template.jinja"
+        generator = Generator(self.log, args)
         generator.configure()
         self.assertEqual(generator.template, "cli-template.jinja")
-
-    def test_do_not_skip_ssl_verification_in_cli_true_should_override_descriptor(self):
-        with self.descriptor as f:
-            f.write("dogen:\n  ssl_verify: false".encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", ssl_verify=True)
-        generator.configure()
-        self.assertTrue(generator.ssl_verify)
 
     def test_do_not_skip_ssl_verification_in_cli_false_should_override_descriptor(self):
         with self.descriptor as f:
             f.write("dogen:\n  ssl_verify: true".encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", ssl_verify=False)
+        args = self.args
+        args.skip_ssl_verification=True
+        generator = Generator(self.log, args)
         generator.configure()
         self.assertFalse(generator.ssl_verify)
 
@@ -100,7 +97,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  scripts_path: custom-scripts".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target")
+        generator = Generator(self.log, self.args)
         generator.configure()
         mock_patch.assert_called_with('custom-scripts')
         self.assertEqual(generator.scripts_path, "custom-scripts")
@@ -109,8 +106,9 @@ class TestConfig(unittest.TestCase):
     def test_custom_scripts_dir_in_cli_should_override_in_descriptor(self, mock_patch):
         with self.descriptor as f:
             f.write("dogen:\n  template: custom-scripts".encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="custom-scripts-cli")
+        args = self.args
+        args.scripts_path="custom-scripts-cli"
+        generator = Generator(self.log, args)
         generator.configure()
         mock_patch.assert_called_with('custom-scripts-cli')
         self.assertEqual(generator.scripts_path, "custom-scripts-cli")
@@ -120,7 +118,7 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  scripts_path: custom-scripts".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target")
+        generator = Generator(self.log, self.args)
         generator.configure()
         mock_patch.assert_called_with('custom-scripts')
         self.assertEqual(generator.scripts_path, "custom-scripts")
@@ -129,15 +127,16 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
 
-        generator = Generator(self.log, self.descriptor.name, "target")
+        generator = Generator(self.log, self.args)
         generator.configure()
         self.assertEqual(generator.additional_scripts, ["http://host/somescript"])
 
     def test_custom_additional_scripts_in_cli_should_override_in_descriptor(self):
         with self.descriptor as f:
             f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", additional_scripts=["https://otherhost/otherscript"])
+        args = self.args
+        args.additional_script=["https://otherhost/otherscript"]
+        generator = Generator(self.log, args)
         generator.configure()
         self.assertEqual(generator.additional_scripts, ["https://otherhost/otherscript"])
 
@@ -146,8 +145,9 @@ class TestConfig(unittest.TestCase):
         """Helper method for tests around script exec value"""
         with self.descriptor as f:
             f.write(cfg.encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
+        args = self.args
+        args.scripts_path="scripts"
+        generator = Generator(self.log, args)
         generator.configure()
         generator._handle_scripts()
         self.assertEqual(generator.cfg['scripts'][0]['exec'], exec_to_test)
@@ -202,8 +202,9 @@ class TestConfig(unittest.TestCase):
 
         with self.descriptor as f:
             f.write(cfg.encode())
-
-        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
+        args = self.args
+        args.scripts_path="scripts"
+        generator = Generator(self.log, args)
         generator.configure()
         generator._handle_scripts()
         self.assertEqual(generator.cfg['scripts'][0]['user'], user_to_test)
@@ -255,7 +256,9 @@ class TestConfig(unittest.TestCase):
         "make sure _handle_scripts doesn't blow up when there are no scripts"
 
         self.descriptor.close()
-        generator = Generator(self.log, self.descriptor.name, "target", scripts_path="scripts")
+        args = self.args
+        args.scripts_path="scripts"
+        generator = Generator(self.log, args)
         generator.configure()
         generator._handle_scripts()
         # success if no stack trace thrown

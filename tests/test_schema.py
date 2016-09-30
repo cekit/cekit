@@ -1,3 +1,4 @@
+import argparse
 import unittest
 import mock
 import os
@@ -10,7 +11,10 @@ class TestSchemaMeta(type):
     def __new__(mcls, name, bases, dict):
         def gen_test(path, good):
             def test(self):
-                generator = Generator(self.log, path, "target")
+                args = argparse.Namespace(path=path, output="target", without_sources=None,
+                                          template=None, scripts_path=None, additional_script=None,
+                                          skip_ssl_verification=None)
+                generator = Generator(self.log, args)
                 if good:
                     generator.configure()
                 else:

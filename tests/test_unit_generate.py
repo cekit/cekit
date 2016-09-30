@@ -1,3 +1,4 @@
+import argparse
 import unittest
 import mock
 import tempfile
@@ -19,7 +20,10 @@ class TestGenerateCustomRepoFiles(unittest.TestCase):
             f.write(self.basic_config.encode())
             f.write("dogen:\n  ssl_verify: true".encode())
 
-        self.generator = Generator(self.log, self.descriptor.name, "target")
+        args = argparse.Namespace(path=self.descriptor.name, output="target", without_sources=None,
+                                  template=None, scripts_path=None, additional_script=None,
+                                  skip_ssl_verification=None)
+        self.generator = Generator(self.log, args)
         self.generator.configure()
 
     def tearDown(self):

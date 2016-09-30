@@ -1,3 +1,4 @@
+import argparse
 import unittest
 import mock
 import six
@@ -9,7 +10,10 @@ from dogen.tools import Tools
 class TestURL(unittest.TestCase):
     def setUp(self):
         self.log = mock.Mock()
-        self.generator = Generator(self.log, "image.yaml", "target")
+        args = argparse.Namespace(path="image.yaml", output="target", without_sources=None,
+                                  template=None, scripts_path=None, additional_script=None,
+                                  skip_ssl_verification=None)
+        self.generator = Generator(self.log, args)
 
     def test_local_file(self):
         self.assertFalse(Tools.is_url("a_file.tmp"))
@@ -23,7 +27,10 @@ class TestURL(unittest.TestCase):
 class TestFetchFile(unittest.TestCase):
     def setUp(self):
         self.log = mock.Mock()
-        self.generator = Generator(self.log, "image.yaml", "target")
+        args = argparse.Namespace(path="image.yaml", output="target", without_sources=None,
+                                  template=None, scripts_path=None, additional_script=None,
+                                  skip_ssl_verification=None)
+        self.generator = Generator(self.log, args)
 
     @mock.patch('dogen.generator.requests.get')
     def test_fetching_with_filename(self, mock_requests):
@@ -55,10 +62,17 @@ class TestFetchFile(unittest.TestCase):
 class TestCustomTemplateHandling(unittest.TestCase):
     def setUp(self):
         self.log = mock.Mock()
-        self.generator = Generator(self.log, "image.yaml", "target", template="http://host/custom-template")
+        args = argparse.Namespace(path="image.yaml", output="target", without_sources=None,
+                                  template="http://host/custom-template", scripts_path=None,
+                                  additional_script=None, skip_ssl_verification=None)
+        self.generator = Generator(self.log, args)
 
     def test_do_not_fail_if_no_template_is_provided(self):
-        self.generator = Generator(self.log, "image.yaml", "target")
+        args = argparse.Namespace(path="image.yaml", output="target", without_sources=None,
+                                  template=None, scripts_path=None, additional_script=None,
+                                  skip_ssl_verification=None)
+        self.generator = Generator(self.log, args)
+
         fetch_file_mock = mock.Mock()
         self.generator._fetch_file = fetch_file_mock
 

@@ -1,10 +1,15 @@
 
 class Plugin(object):
-    def __init__(self, dogen):
+    def __init__(self, dogen, args):
         self.dogen = dogen
         self.log = dogen.log
         self.descriptor = dogen.descriptor
         self.output = dogen.output
+        self.args = args
+
+    @staticmethod
+    def inject_args(parser):
+        return parser
 
     def prepare(self, **kwargs):
         pass
