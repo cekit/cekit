@@ -1,7 +1,7 @@
 FROM alpine:3.3
 RUN apk add --update sudo bash py-setuptools git && rm -rf /var/cache/apk/*
 
-ENV DOGEN_VERSION 2.0.0rc3
+ENV DOGEN_VERSION master
 
 # Color the git output by default
 RUN git config --global color.ui true
