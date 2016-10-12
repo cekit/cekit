@@ -283,7 +283,7 @@ class Generator(object):
 
     def handle_sources(self):
         if not 'sources' in self.cfg or self.without_sources:
-            return
+            return []
 
         files = []
 

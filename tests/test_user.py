@@ -55,7 +55,7 @@ class TestUser(unittest.TestCase):
 
         with open(os.path.join(self.target, "Dockerfile"), "r") as f:
             dockerfile = f.read()
-            regex = re.compile(r'.*USER 1347\nCMD.*',  re.MULTILINE)
+            regex = re.compile(r'.*USER 1347\n\nCMD.*',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
     def test_default_cmd_user(self):
@@ -72,5 +72,5 @@ class TestUser(unittest.TestCase):
 
         with open(os.path.join(self.target, "Dockerfile"), "r") as f:
             dockerfile = f.read()
-            regex = re.compile(r'.*USER 0\nCMD.*',  re.MULTILINE)
+            regex = re.compile(r'.*USER 0\n\nCMD.*',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
