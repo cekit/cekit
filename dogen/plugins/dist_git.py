@@ -71,7 +71,6 @@ class Git(object):
             print("")
             self.switch_branch()
 
-
         self.old_version, self.old_release = self.read_version_and_release()
 
     def update(self):
@@ -130,13 +129,13 @@ class Git(object):
         try:
             version = self.read_value(dockerfile, 'JBOSS_IMAGE_VERSION="([\w\.]+)"')
         except:
-            version = self.read_value(dockerfile, 'Version="([\w\.]+)"')
+            version = self.read_value(dockerfile, 'version="([\w\.]+)"')
 
         try:
             release = self.read_value(dockerfile, 'JBOSS_IMAGE_RELEASE="(\d+)"')
         except:
             try:
-                release = self.read_value(dockerfile, 'Release="(\d+)"')
+                release = self.read_value(dockerfile, 'release="(\d+)"')
             except:
                 release = 0
 
@@ -166,6 +165,9 @@ class Git(object):
             subprocess.check_output(["git", "checkout", "-q", "-f", target_branch])
 
     def update_lookaside_cache(self, files):
+        if not files:
+            return
+
         with Chdir(self.path):
             self.log.info("Updating lookaside cache...")
             subprocess.check_output(["rhpkg", "new-sources"] + files)

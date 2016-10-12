@@ -121,8 +121,8 @@ RUN rm -rf /tmp/scripts
 WORKDIR {{ workdir }}
 {% endif %}
 
-{% if cmd %}
-# Start the main process
 USER {{ user }}
+
+{% if cmd %}
 CMD {{ helper.cmd(cmd) }}
 {% endif %}
