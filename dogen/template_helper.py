@@ -31,10 +31,13 @@ class TemplateHelper(object):
         instruction.
         """
 
+        if base_image == "scratch":
+            return base_image
+
         if ':' in base_image:
             return base_image
-        else:
-            return "%s:%s" % (base_image, version)
+
+        return "%s:%s" % (base_image, version)
 
     def envs(self, env_variables):
         """
