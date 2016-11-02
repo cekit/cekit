@@ -9,7 +9,7 @@ fi
 
 DOGEN_REPO=$(dirname $0)/..
 
-tar --exclude hack -cf $DOGEN_REPO/hack/dogen.tar  -C $DOGEN_REPO .
+tar --exclude hack --exclude .git -cf $DOGEN_REPO/hack/dogen.tar  -C $DOGEN_REPO .
 
 docker build -t jboss/dogen$dogen_tag hack/
 
