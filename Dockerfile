@@ -10,8 +10,9 @@ RUN git config --global user.name "dogen"
 # Set default value for the user email address
 RUN git config --global user.email "dogen@jboss.org"
 
-RUN easy_install-2.7 https://github.com/jboss-dockerfiles/dogen/archive/$DOGEN_VERSION.zip
+COPY requirements.txt setup.py setup.cfg launch.sh README.rst /tmp/dogen/
+COPY dogen /tmp/dogen/dogen
 
-ADD launch.sh /
+RUN cd /tmp/dogen && cp launch.sh / && easy_install-2.7 .
 
 ENTRYPOINT ["/launch.sh"]
