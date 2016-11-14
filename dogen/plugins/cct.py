@@ -32,7 +32,7 @@ class CCT(Plugin):
         it require cct aware template.jinja file
         """
         # check if cct plugin has any steps to perform (prevent it from raising ugly exceptions)
-        if not 'cct' in cfg:
+        if 'cct' not in cfg:
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
 
@@ -55,7 +55,7 @@ class CCT(Plugin):
         if 'runtime' in cfg['cct']:
             self.runtime_changes(cfg)
 
-        if not 'user' in cfg['cct']:
+        if 'user' not in cfg['cct']:
             cfg['cct']['user'] = 'root'
 
     def _prepare_modules(self, cfg):
@@ -69,16 +69,18 @@ class CCT(Plugin):
                 name = os.path.basename(module['path'][0:-4])
             else:
                 name = os.path.basename(module['path'])
-            descriptor_dir = os.path.dirname(self.descriptor) + '/cct/'
+            modules_dir = os.path.dirname(self.descriptor) + 'cct'
             # check if module exists in cct dir next to do descriptor
-            if os.path.exists(descriptor_dir + name):
+            if os.path.exists(modules_dir + name):
                 # path exists - I'll just copy it
-                shutil.copytree(descriptor_dir + name,
+                shutil.copytree(modules_dir + name,
                                 self.output + '/cct/' + name)
                 self.log.info("Copied cct module %s." % name)
             else:
                 # clone it to target dir if not exists
                 self.clone_repo(module['path'], self.output + '/cct/' + name)
+                if 'version' in module:
+                    self.clone_repo(module['path'], self.output + '/cct' + name, module['version'])
                 self.log.info("Cloned cct module %s." % name)
             try:
                 self.append_sources(name, cfg)
@@ -101,7 +103,7 @@ class CCT(Plugin):
         sources_path = os.path.join(self.output, "cct", module, "sources.yaml")
 
         if not os.path.exists(sources_path):
-            self.log.debug("no sources defined for module %s" % module)
+            self.log.debug("no sources defined for module %s in path %s" % (module, sources_path))
             return
 
         source_prefix = os.getenv("DOGEN_CCT_SOURCES_PREFIX") or ""
@@ -140,6 +142,5 @@ class CCT(Plugin):
             yaml.dump(cfg['cct']['runtime'], f)
 
         # adjust cfg object so template adds the above to ENTRYPOINT
-        if not 'runtime_changes' in cfg['cct']:
+        if 'runtime_changes' not in cfg['cct']:
             cfg['cct']['runtime_changes'] = "/tmp/cct/cctruntime.yaml"
-

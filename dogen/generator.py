@@ -95,7 +95,7 @@ class Generator(object):
             if os.path.exists(scripts) and os.path.isdir(scripts):
                 self.scripts_path = scripts
 
-        if not 'user' in self.cfg:
+        if 'user' not in self.cfg:
             self.cfg['user'] = 0
 
         dogen_cfg = self.cfg.get('dogen')
@@ -201,7 +201,7 @@ class Generator(object):
         with open(schema_path, 'r') as fh:
             schema = yaml.safe_load(fh)
 
-        if schema == None:
+        if schema is None:
             raise Error("couldn't read a valid schema at %s" % schema_path)
 
         for plugin in self.plugins:
@@ -282,7 +282,7 @@ class Generator(object):
             os.remove(self.template)
 
     def handle_sources(self):
-        if not 'sources' in self.cfg or self.without_sources:
+        if 'sources' not in self.cfg or self.without_sources:
             return []
 
         files = []
@@ -291,7 +291,7 @@ class Generator(object):
             url = source['url']
             basename = os.path.basename(url)
             files.append(basename)
-            filename = ("%s/%s" %(self.output, basename))
+            filename = ("%s/%s" % (self.output, basename))
             passed = False
             try:
                 if os.path.exists(filename):
