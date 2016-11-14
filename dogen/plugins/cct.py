@@ -78,9 +78,10 @@ class CCT(Plugin):
                 self.log.info("Copied cct module %s." % name)
             else:
                 # clone it to target dir if not exists
-                self.clone_repo(module['path'], self.output + '/cct/' + name)
                 if 'version' in module:
-                    self.clone_repo(module['path'], self.output + '/cct' + name, module['version'])
+                    self.clone_repo(module['path'], self.output + '/cct/' + name, module['version'])
+                else:
+                    self.clone_repo(module['path'], self.output + '/cct/' + name)
                 self.log.info("Cloned cct module %s." % name)
             try:
                 self.append_sources(name, cfg)
@@ -88,10 +89,13 @@ class CCT(Plugin):
                 self.log.info("cannot process sources for module %s" % name)
                 self.log.debug("exception: %s" % ex)
 
-    def clone_repo(self, url, path):
+    def clone_repo(self, url, path, version=None):
         try:
             if not os.path.exists(path):
                 subprocess.check_call(["git", "clone", url, path])
+                if version:
+                    self.log.info('Checking out %s revision' %version)
+                    subprocess.check_call(['git', 'checkout', version], cwd=path)
         except Exception as ex:
             self.log.error("cannot clone repo %s into %s: %s", url, path, ex)
 
