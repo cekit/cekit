@@ -10,7 +10,7 @@ RUN git config --global user.name "dogen"
 # Set default value for the user email address
 RUN git config --global user.email "dogen@jboss.org"
 
-COPY requirements.txt setup.py setup.cfg launch.sh README.rst /tmp/dogen/
+COPY requirements.txt setup.py launch.sh README.rst /tmp/dogen/
 COPY dogen /tmp/dogen/dogen
 
 RUN cd /tmp/dogen && cp launch.sh / && easy_install-2.7 .
