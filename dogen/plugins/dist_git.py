@@ -14,13 +14,14 @@ class DistGitPlugin(Plugin):
     @staticmethod
     def inject_args(parser):
         parser.add_argument('--dist-git-enable', action='store_true', help='Enables dist-git plugin')
+        parser.add_argument('--dist-git-assume-yes', action='store_true', help='Skip interactive mode and answer all question with "yes"')
         return parser
 
     def __init__(self, dogen, args):
         super(DistGitPlugin, self).__init__(dogen, args)
         if  not self.args.dist_git_enable:
             return
-        self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
+        self.git = Git(self.log, os.path.dirname(self.descriptor), self.output, self.args.dist_git_assume_yes)
 
     def prepare(self, cfg):
         if not self.args.dist_git_enable:
@@ -51,10 +52,11 @@ class Git(object):
 
         return name, branch, commit
 
-    def __init__(self, log, source, path):
+    def __init__(self, log, source, path, noninteractive=False):
         self.log = log
         self.path = path
         self.dockerfile = os.path.join(self.path, "Dockerfile")
+        self.noninteractive = noninteractive
 
         self.name, self.branch, self.commit = Git.repo_info(path)
         self.source_repo_name, self.source_repo_branch, self.source_repo_commit = Git.repo_info(source)
@@ -208,22 +210,24 @@ class Git(object):
             if diffs: 
                 self.log.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(diffs.splitlines()))
 
-        with Chdir(self.path): 
-            subprocess.call(["git", "status"]) 
-            subprocess.call(["read", "-p", "\nPress any key to see the last commit...", "-n1", "-s"]) 
-            subprocess.call(["git", "show"]) 
+        if not self.noninteractive:
+            with Chdir(self.path):
+                subprocess.call(["git", "status"])
+                subprocess.call(["read", "-p", "\nPress any key to see the last commit...", "-n1", "-s"])
+                subprocess.call(["git", "show"])
  
-        if Tools.decision("Do you want to review your changes?"): 
+        if not (self.noninteractive or Tools.decision("Are you ok with the changes?")):
             with Chdir(self.path): 
                 subprocess.call(["bash"]) 
  
-        if Tools.decision("Do you want to push the commit?"): 
+        if self.noninteractive or Tools.decision("Do you want to push the commit?"):
             print("")
             with Chdir(self.path): 
                 self.log.info("Pushing change to the upstream repository...")
                 subprocess.check_output(["git", "push", "-q"])
                 self.log.info("Change pushed.")
  
-                if Tools.decision("Do you want to execute a build on OSBS?"): 
+                if self.noninteractive or Tools.decision("Do you want to execute a build on OSBS?"):
+                    self.log.info("Executing a build on OSBS...")
                     subprocess.call(["rhpkg", "container-build"])
 
