@@ -13,23 +13,23 @@ class DistGitPlugin(Plugin):
 
     @staticmethod
     def inject_args(parser):
-        parser.add_argument('--enable-dist-git', action='store_true', help='Enables dist-git plugin')
+        parser.add_argument('--dist-git-enable', action='store_true', help='Enables dist-git plugin')
         return parser
 
     def __init__(self, dogen, args):
         super(DistGitPlugin, self).__init__(dogen, args)
-        if  not self.args.enable_dist_git:
+        if  not self.args.dist_git_enable:
             return
         self.git = Git(self.log, os.path.dirname(self.descriptor), self.output)
 
     def prepare(self, cfg):
-        if not self.args.enable_dist_git:
+        if not self.args.dist_git_enable:
             return
         self.git.prepare()
         self.git.clean_scripts()
 
     def after_sources(self, files):
-        if not self.args.enable_dist_git:
+        if not self.args.dist_git_enable:
             return
         self.git.update_lookaside_cache(files)
         self.git.update()
