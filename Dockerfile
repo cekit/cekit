@@ -1,4 +1,4 @@
-FROM alpine:3.3
+FROM alpine:3.5
 RUN apk add --update sudo bash py-setuptools git && rm -rf /var/cache/apk/*
 
 ENV DOGEN_VERSION master
