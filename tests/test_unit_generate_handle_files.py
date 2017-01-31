@@ -41,8 +41,8 @@ class TestFetchFile(unittest.TestCase):
             mock_requests.assert_called_with('https://host/file.tmp', verify=None)
             mock_file().write.assert_called_once_with("file-content")
 
-        self.log.debug.assert_any_call("Fetching 'https://host/file.tmp' file...")
-        self.log.debug.assert_any_call("Fetched file will be saved as 'some-file'...")
+        self.log.info.assert_any_call("Fetching 'https://host/file.tmp' file...")
+        self.log.info.assert_any_call("Fetched file will be saved as 'some-file'...")
 
 
     @mock.patch('dogen.generator.tempfile.mktemp', return_value="tmpfile")
@@ -56,8 +56,8 @@ class TestFetchFile(unittest.TestCase):
             mock_requests.assert_called_with('https://host/file.tmp', verify=None)
             mock_file().write.assert_called_once_with("file-content")
 
-        self.log.debug.assert_any_call("Fetching 'https://host/file.tmp' file...")
-        self.log.debug.assert_any_call("Fetched file will be saved as 'tmpfile'...")
+        self.log.info.assert_any_call("Fetching 'https://host/file.tmp' file...")
+        self.log.info.assert_any_call("Fetched file will be saved as 'tmpfile'...")
 
 class TestCustomTemplateHandling(unittest.TestCase):
     def setUp(self):

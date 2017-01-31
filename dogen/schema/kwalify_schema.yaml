@@ -63,6 +63,7 @@ map:
       - map:
           url: {type: str}
           md5sum: {type: str}
+          target: {type: str}
   packages:
     seq:
       - {type: str}

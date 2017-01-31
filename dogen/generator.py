@@ -48,12 +48,12 @@ class Generator(object):
         self.ssl_verify to False.
         """
 
-        self.log.debug("Fetching '%s' file..." % location)
+        self.log.info("Fetching '%s' file..." % location)
 
         if not output:
             output = tempfile.mktemp("-dogen")
 
-        self.log.debug("Fetched file will be saved as '%s'..." % output)
+        self.log.info("Fetched file will be saved as '%s'..." % os.path.basename(output))
 
         with open(output, 'wb') as f:
             f.write(requests.get(location, verify=self.ssl_verify).content)
@@ -289,7 +289,14 @@ class Generator(object):
 
         for source in self.cfg['sources']:
             url = source['url']
+            target = source.get('target')
+
             basename = os.path.basename(url)
+
+            # In case we specify target name for the artifact - use it
+            if target:
+                basename = target
+
             files.append(basename)
             filename = ("%s/%s" % (self.output, basename))
             passed = False
@@ -297,7 +304,8 @@ class Generator(object):
                 if os.path.exists(filename):
                     self.check_sum(filename, source['md5sum'])
                     passed = True
-            except:
+            except Exception as e:
+                self.log.warn(str(e))
                 passed = False
 
             if not passed:
@@ -306,9 +314,7 @@ class Generator(object):
                     self.log.info("Using '%s' as cached location for sources" % sources_cache)
                     url = "%s/%s" % (sources_cache, basename)
 
-                self.log.info("Downloading '%s'..." % url)
-                with open(filename, 'wb') as f:
-                    f.write(requests.get(url, verify=self.ssl_verify).content)
+                self._fetch_file(url, filename)
                 self.check_sum(filename, source['md5sum'])
 
         return files
