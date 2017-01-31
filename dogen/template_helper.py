@@ -2,10 +2,15 @@ import os
 import re
 
 class TemplateHelper(object):
-    def basename(self, url):
+    def filename(self, source):
         """ Simple helper to return the file specified name """
 
-        return os.path.basename(url)
+        target = source.get('target')
+
+        if target:
+            return target
+
+        return os.path.basename(source.url)
 
     def cmd(self, arr):
         """

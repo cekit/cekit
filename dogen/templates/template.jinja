@@ -80,7 +80,7 @@ RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endf
 # directory
 COPY \
 {% for source in sources %}
-    {{ helper.basename(source.url) }} \
+    {{ helper.filename(source) }} \
     {% endfor %}
     /tmp/scripts/sources/
 
