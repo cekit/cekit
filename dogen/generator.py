@@ -294,11 +294,11 @@ class Generator(object):
             basename = os.path.basename(url)
 
             # In case we specify target name for the artifact - use it
-            if target:
-                basename = target
+            if not target:
+                target = basename
 
             files.append(basename)
-            filename = ("%s/%s" % (self.output, basename))
+            filename = ("%s/%s" % (self.output, target))
             passed = False
             try:
                 if os.path.exists(filename):
