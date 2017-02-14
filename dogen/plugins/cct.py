@@ -56,7 +56,7 @@ class CCT(Plugin):
             out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
             self.log.info("CCT plugin downloaded artifacts")
             self.log.debug(out)
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
             self.log.error("Cannot download artifacts %s" % e.output)
 
         if 'runtime' in cfg['cct']:

@@ -18,9 +18,3 @@ class TestCCTPlugin(unittest.TestCase):
 
     def teardown(self):
         shutil.rmtree(self.workdir)
-
-    def test_default_user_root(self):
-        cfg = { 'cct': { 'configure': '' }}
-        self.cct.prepare(cfg)
-        self.assertTrue('user' in cfg['cct'])
-        self.assertEqual(cfg['cct']['user'], "root")
