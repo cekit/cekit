@@ -58,6 +58,7 @@ class CCT(Plugin):
             self.log.debug(out)
         except subprocess.CalledProcessError as e:
             self.log.error("Cannot download artifacts %s" % e.output)
+            raise e
 
         if 'runtime' in cfg['cct']:
             self.runtime_changes(cfg)
