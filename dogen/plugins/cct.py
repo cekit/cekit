@@ -39,9 +39,6 @@ class CCT(Plugin):
         if os.path.exists(self.output + '/cct/'):
             shutil.rmtree(self.output + '/cct/')
 
-        if 'modules' in cfg['cct']:
-            self._prepare_modules(cfg)
-
         cfg['cct']['run'] = ['cct.yaml']
 
         cfg_file_dir = os.path.join(self.output, "cct")
@@ -52,82 +49,21 @@ class CCT(Plugin):
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
 
+        # run cct with cfg file
+        try:
+            cmd = ['cct', '--modules-dir', cfg_file_dir, '-v', '--fetch-only', cfg_file]
+            self.log.info("Executing %s" % " ".join(cmd))
+            out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            self.log.info("CCT plugin downloaded artifacts")
+            self.log.debug(out)
+        except Exception as e:
+            self.log.error("Cannot download artifacts %s" % e.output)
+
         if 'runtime' in cfg['cct']:
             self.runtime_changes(cfg)
 
         if 'user' not in cfg['cct']:
             cfg['cct']['user'] = 'root'
-
-    def _prepare_modules(self, cfg):
-        for module in cfg['cct']['modules']:
-            name = None
-            if 'name' in module:
-                name = module['name']
-            elif module['path'][-1] == '/':
-                name = os.path.basename(module['path'][0:-1])
-            elif len(module['path']) > 4 and module['path'][-4:] == ".git":
-                name = os.path.basename(module['path'][0:-4])
-            else:
-                name = os.path.basename(module['path'])
-            modules_dir = os.path.dirname(self.descriptor) + 'cct'
-            # check if module exists in cct dir next to do descriptor
-            if os.path.exists(modules_dir + name):
-                # path exists - I'll just copy it
-                shutil.copytree(modules_dir + name,
-                                self.output + '/cct/' + name)
-                self.log.info("Copied cct module %s." % name)
-            else:
-                # clone it to target dir if not exists
-                if 'version' in module:
-                    self.clone_repo(module['path'], self.output + '/cct/' + name, module['version'])
-                else:
-                    self.clone_repo(module['path'], self.output + '/cct/' + name)
-                self.log.info("Cloned cct module %s." % name)
-            try:
-                self.append_sources(name, cfg)
-            except Exception as ex:
-                self.log.info("cannot process sources for module %s" % name)
-                self.log.debug("exception: %s" % ex)
-
-    def clone_repo(self, url, path, version=None):
-        try:
-            if not os.path.exists(path):
-                subprocess.check_call(["git", "clone", url, path])
-                if version:
-                    self.log.info('Checking out %s revision' %version)
-                    subprocess.check_call(['git', 'checkout', version], cwd=path)
-        except Exception as ex:
-            self.log.error("cannot clone repo %s into %s: %s", url, path, ex)
-
-    def append_sources(self, module, cfg):
-        """
-        Extract sources defined within the module, if provided, and merge
-        them with Dogen's master sources list.
-        """
-        sources_path = os.path.join(self.output, "cct", module, "sources.yaml")
-
-        if not os.path.exists(sources_path):
-            self.log.debug("no sources defined for module %s in path %s" % (module, sources_path))
-            return
-
-        source_prefix = os.getenv("DOGEN_CCT_SOURCES_PREFIX") or ""
-        if not source_prefix:
-            self.log.debug("DOGEN_CCT_SOURCES_PREFIX variable is not defined")
-
-        cct_sources = []
-        with open(sources_path) as f:
-            cct_sources = yaml.load(f)
-
-        dogen_sources = []
-        for source in cct_sources:
-            dogen_source = {}
-            dogen_source['url'] = source_prefix + source['name']
-            dogen_source['md5sum'] = source['md5sum']
-            dogen_sources.append(dogen_source)
-        try:
-            cfg['sources'].extend(dogen_sources)
-        except:
-            cfg['sources'] = dogen_sources
 
     def runtime_changes(self, cfg):
         """
