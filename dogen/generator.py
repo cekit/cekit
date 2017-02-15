@@ -184,7 +184,7 @@ class Generator(object):
 
         self.log.debug("Found following additional repo files: %s" % ", ".join(repo_files))
 
-        for f in repo_files:
+        for f in sorted(repo_files):
             self.cfg['additional_repos'].append(os.path.splitext(os.path.basename(f))[0])
 
     def _validate_cfg(self):
