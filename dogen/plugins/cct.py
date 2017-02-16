@@ -1,9 +1,11 @@
 import os
 import yaml
 import subprocess
-import shutil
 
 from dogen.plugin import Plugin
+
+from cct import setup_logging
+from cct.cli.main import CCT_CLI
 
 
 class CCT(Plugin):
@@ -36,9 +38,6 @@ class CCT(Plugin):
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
 
-        if os.path.exists(self.output + '/cct/'):
-            shutil.rmtree(self.output + '/cct/')
-
         cfg['cct']['run'] = ['cct.yaml']
 
         cfg_file_dir = os.path.join(self.output, "cct")
@@ -53,9 +52,14 @@ class CCT(Plugin):
         try:
             cmd = ['cct', '--modules-dir', cfg_file_dir, '-v', '--fetch-only', cfg_file]
             self.log.info("Executing %s" % " ".join(cmd))
-            out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
+            # setup cct to same logging level as dogen
+            setup_logging(level=self.log.getEffectiveLevel())
+
+            cct = CCT_CLI()
+            cct.process_changes([cfg_file], cfg_file_dir, True)
+
             self.log.info("CCT plugin downloaded artifacts")
-            self.log.debug(out)
         except subprocess.CalledProcessError as e:
             self.log.error("Cannot download artifacts %s" % e.output)
             raise e
