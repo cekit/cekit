@@ -1,10 +1,10 @@
+import logging
 import os
 import yaml
 import subprocess
 
 from dogen.plugin import Plugin
 
-from cct import setup_logging
 from cct.cli.main import CCT_CLI
 
 
@@ -54,7 +54,8 @@ class CCT(Plugin):
             self.log.info("Executing %s" % " ".join(cmd))
 
             # setup cct to same logging level as dogen
-            setup_logging(level=self.log.getEffectiveLevel())
+            cct_logger = logging.getLogger("cct")
+            cct_logger.setLevel(self.log.getEffectiveLevel())
 
             cct = CCT_CLI()
             cct.process_changes([cfg_file], cfg_file_dir, True)
