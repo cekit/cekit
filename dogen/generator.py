@@ -297,7 +297,7 @@ class Generator(object):
             if not target:
                 target = basename
 
-            files.append(basename)
+            files.append(target)
             filename = ("%s/%s" % (self.output, target))
             passed = False
             try:
