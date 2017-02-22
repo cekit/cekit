@@ -1,6 +1,7 @@
 import logging
 import os
 import yaml
+import shutil
 import subprocess
 
 from dogen.plugin import Plugin
@@ -48,11 +49,20 @@ class CCT(Plugin):
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
 
-        # run cct with cfg file
-        try:
-            cmd = ['cct', '--modules-dir', cfg_file_dir, '-v', '--fetch-only', cfg_file]
-            self.log.info("Executing %s" % " ".join(cmd))
+        # copy cct modules from
 
+        modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct')
+        if os.path.exists(modules_dir):
+            modules = filter(lambda x: os.path.isdir(os.path.join(modules_dir, x)), os.listdir(modules_dir))
+            for module in modules:
+                target_module = os.path.join(cfg_file_dir, module)
+                if os.path.exists(target_module):
+                    shutil.rmtree(target_module)
+                    self.log.info('Removed existing module dir %s' % target_module)
+                shutil.copytree(os.path.join(modules_dir, module), target_module)
+                self.log.info("Copied module %s to %s" % (module, target_module))
+
+        try:
             # setup cct to same logging level as dogen
             cct_logger = logging.getLogger("cct")
             cct_logger.setLevel(self.log.getEffectiveLevel())
