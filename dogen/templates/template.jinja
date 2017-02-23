@@ -102,7 +102,7 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 # Run cct if needed
 COPY cct /tmp/cct/
 USER {{ cct.user }}
-RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
+RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
 
 # Add cct in command mode as entrypoint
 # you can specify path to changes files in CCT_CHANGES environment variable

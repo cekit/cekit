@@ -45,35 +45,34 @@ class CCT(Plugin):
         if not os.path.exists(cfg_file_dir):
             os.makedirs(cfg_file_dir)
 
+        target_modules_dir = os.path.join(cfg_file_dir, 'modules')
+        if not os.path.exists(target_modules_dir):
+            os.makedirs(target_modules_dir)
+
         cfg_file = os.path.join(cfg_file_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
 
         # copy cct modules from
-
-        modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct')
+        modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct', 'modules')
         if os.path.exists(modules_dir):
             modules = filter(lambda x: os.path.isdir(os.path.join(modules_dir, x)), os.listdir(modules_dir))
             for module in modules:
-                target_module = os.path.join(cfg_file_dir, module)
+                target_module = os.path.join(target_modules_dir, module)
                 if os.path.exists(target_module):
                     shutil.rmtree(target_module)
                     self.log.info('Removed existing module dir %s' % target_module)
                 shutil.copytree(os.path.join(modules_dir, module), target_module)
                 self.log.info("Copied module %s to %s" % (module, target_module))
 
-        try:
-            # setup cct to same logging level as dogen
-            cct_logger = logging.getLogger("cct")
-            cct_logger.setLevel(self.log.getEffectiveLevel())
+        # setup cct to same logging level as dogen
+        cct_logger = logging.getLogger("cct")
+        cct_logger.setLevel(self.log.getEffectiveLevel())
 
-            cct = CCT_CLI()
-            cct.process_changes([cfg_file], cfg_file_dir, True)
+        cct = CCT_CLI()
+        cct.process_changes([cfg_file], target_modules_dir, True)
 
-            self.log.info("CCT plugin downloaded artifacts")
-        except subprocess.CalledProcessError as e:
-            self.log.error("Cannot download artifacts %s" % e.output)
-            raise e
+        self.log.info("CCT plugin downloaded artifacts")
 
         if 'runtime' in cfg['cct']:
             self.runtime_changes(cfg)
