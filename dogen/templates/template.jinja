@@ -86,6 +86,15 @@ COPY \
 
 {% endif %}
 
+{%- if cct %}
+# Copy CCT artifacts
+COPY cct/artifacts /tmp/cct/artifacts
+# Copy CCT configuration file
+COPY cct/cct.yaml /tmp/cct
+# Copy CCT modules
+COPY cct/modules /tmp/cct/modules
+{% endif %}
+
 {%- if scripts %}
 # Add scripts used to configure the image
 COPY scripts /tmp/scripts
@@ -99,8 +108,6 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 {% endif %}
 
 {% if cct %}
-# Run cct if needed
-COPY cct /tmp/cct/
 USER {{ cct.user }}
 RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
 
@@ -110,7 +117,6 @@ ENTRYPOINT ["/usr/bin/cct", {% if cct.runtime_changes -%}"{{ cct.runtime_changes
 {% endif %}
 
 {%- if scripts %}
-# Cleanup the scripts directory (after cct so cct has access to /tmp/scripts/sources)
 USER root
 RUN rm -rf /tmp/scripts
 {% endif %}

@@ -2,7 +2,6 @@ import logging
 import os
 import yaml
 import shutil
-import subprocess
 
 from dogen.plugin import Plugin
 
@@ -46,8 +45,11 @@ class CCT(Plugin):
             os.makedirs(cfg_file_dir)
 
         target_modules_dir = os.path.join(cfg_file_dir, 'modules')
-        if not os.path.exists(target_modules_dir):
-            os.makedirs(target_modules_dir)
+        if os.path.exists(target_modules_dir):
+            shutil.rmtree(target_modules_dir)
+            self.log.debug('Removed existing modules directory: %s' % target_modules_dir)
+
+        os.makedirs(target_modules_dir)
 
         cfg_file = os.path.join(cfg_file_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
@@ -59,9 +61,6 @@ class CCT(Plugin):
             modules = filter(lambda x: os.path.isdir(os.path.join(modules_dir, x)), os.listdir(modules_dir))
             for module in modules:
                 target_module = os.path.join(target_modules_dir, module)
-                if os.path.exists(target_module):
-                    shutil.rmtree(target_module)
-                    self.log.info('Removed existing module dir %s' % target_module)
                 shutil.copytree(os.path.join(modules_dir, module), target_module)
                 self.log.info("Copied module %s to %s" % (module, target_module))
 
