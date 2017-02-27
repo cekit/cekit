@@ -56,7 +56,7 @@ USER root
 {% if packages or rpms %}
 {% if additional_repos %}
 # Add custom repo files
-COPY scripts/*.repo /etc/yum.repos.d/
+COPY repos/*.repo /etc/yum.repos.d/
 {% endif %}
 {% if rpms %}
 # Add custom rpm files
