@@ -175,18 +175,6 @@ class Generator(object):
                 self.log.debug("Copying '%s' file to target scripts directory..." % f)
                 shutil.copy(f, output_scripts)
 
-    def _handle_custom_repo_files(self):
-        self.cfg['additional_repos'] = []
-        repo_files = glob.glob(os.path.join(self.output, "scripts", "*.repo"))
-
-        if not repo_files:
-            return
-
-        self.log.debug("Found following additional repo files: %s" % ", ".join(repo_files))
-
-        for f in sorted(repo_files):
-            self.cfg['additional_repos'].append(os.path.splitext(os.path.basename(f))[0])
-
     def _validate_cfg(self):
         """
         Open and parse the YAML configuration file and ensure it matches
@@ -249,8 +237,6 @@ class Generator(object):
         # Additional scripts (not package scripts)
         if self.additional_scripts:
             self._handle_additional_scripts()
-
-        self._handle_custom_repo_files()
 
         self.render_from_template()
         sources = self.handle_sources()
