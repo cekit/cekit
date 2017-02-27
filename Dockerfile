@@ -1,7 +1,7 @@
 FROM alpine:3.5
-RUN apk add --update sudo bash py-setuptools git && rm -rf /var/cache/apk/*
-
-ENV DOGEN_VERSION master
+RUN apk add --no-cache --update sudo bash git py-lxml py2-yaml py-setuptools libxslt-dev gcc python-dev libxml2-dev musl-dev && \
+    easy_install-2.7 --always-unzip https://github.com/containers-tools/cct/archive/master.zip && \
+    apk del libxslt-dev gcc python-dev libxml2-dev musl-dev
 
 # Color the git output by default
 RUN git config --global color.ui true
