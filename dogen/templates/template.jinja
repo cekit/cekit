@@ -75,22 +75,20 @@ RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endf
 
 {% endif %}
 
-{%- if sources %}
-# Add all required sources to the /tmp/scripts/sources/
+{%- if artifacts %}
+# Add all artifacts to the /tmp/artifacts
 # directory
 COPY \
-{% for source in sources %}
-    {{ helper.filename(source) }} \
+{% for artifact in artifacts.keys()|sort %}
+    {{ artifact }} \
     {% endfor %}
-    /tmp/scripts/sources/
+    /tmp/artifacts/
 
 {% endif %}
 
 {%- if cct %}
-# Copy CCT artifacts
-COPY cct/artifacts /tmp/cct/artifacts
 # Copy CCT configuration file
-COPY cct/cct.yaml /tmp/cct
+COPY cct/cct.yaml /tmp/cct/
 # Copy CCT modules
 COPY cct/modules /tmp/cct/modules
 {% endif %}
@@ -109,7 +107,7 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 
 {% if cct %}
 USER {{ cct.user }}
-RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/cct/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
+RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
 
 # Add cct in command mode as entrypoint
 # you can specify path to changes files in CCT_CHANGES environment variable
@@ -119,6 +117,10 @@ ENTRYPOINT ["/usr/bin/cct", {% if cct.runtime_changes -%}"{{ cct.runtime_changes
 {%- if scripts %}
 USER root
 RUN rm -rf /tmp/scripts
+{% endif %}
+{%- if artifacts %}
+USER root
+RUN rm -rf /tmp/artifacts
 {% endif %}
 
 {%- if workdir %}

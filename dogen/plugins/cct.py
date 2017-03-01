@@ -51,10 +51,6 @@ class CCT(Plugin):
 
         os.makedirs(target_modules_dir)
 
-        target_artifacts_dir = os.path.join(cfg_file_dir, 'artifacts')
-        if not os.path.exists(target_artifacts_dir):
-            os.makedirs(target_artifacts_dir)
-
         cfg_file = os.path.join(cfg_file_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
@@ -73,7 +69,7 @@ class CCT(Plugin):
         cct_logger.setLevel(self.log.getEffectiveLevel())
 
         cct = CCT_CLI()
-        cct.process_changes([cfg_file], target_modules_dir, target_artifacts_dir, True)
+        cfg['artifacts'] = cct.fetch_artifacts([cfg_file], target_modules_dir, self.output)
 
         self.log.info("CCT plugin downloaded artifacts")
 
