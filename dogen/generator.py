@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
-import glob
 import os
 import shutil
 import requests
@@ -239,10 +238,10 @@ class Generator(object):
             self._handle_additional_scripts()
 
         self.render_from_template()
-        sources = self.handle_sources()
+        self.handle_sources()
 
         for plugin in self.plugins:
-            plugin.after_sources(files=sources)
+            plugin.after_sources(files=self.cfg.get('artifacts'))
 
         self.log.info("Finished!")
 
@@ -271,7 +270,7 @@ class Generator(object):
         if 'sources' not in self.cfg or self.without_sources:
             return []
 
-        files = []
+        self.cfg['artifacts'] = {}
 
         for source in self.cfg['sources']:
             url = source['url']
@@ -283,7 +282,6 @@ class Generator(object):
             if not target:
                 target = basename
 
-            files.append(target)
             filename = ("%s/%s" % (self.output, target))
             passed = False
             try:
@@ -303,7 +301,7 @@ class Generator(object):
                 self._fetch_file(url, filename)
                 self.check_sum(filename, source['md5sum'])
 
-        return files
+            self.cfg['artifacts'][target] = "md5:%s" % source['md5sum']
 
     def check_sum(self, filename, checksum):
         self.log.info("Checking '%s' MD5 hash..." % os.path.basename(filename))
