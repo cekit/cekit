@@ -23,15 +23,30 @@ class RPM(Plugin):
     def prepare(self, cfg):
         if not os.path.exists(self.rpms_directory):
             return
-        self.log.info("Injecting custom rpms from %s" %self.rpms_directory)
-        rpms_path = os.path.join(self.output, "rpms")
-        if os.path.exists(rpms_path):
-            shutil.rmtree(rpms_path)
-        shutil.copytree(src=self.rpms_directory, dst=rpms_path)
 
-        rpms = glob.glob(os.path.join(self.output, "rpms", "*.rpm"))
+        rpms = glob.glob(os.path.join(self.rpms_directory, "*.rpm"))
+
+        if not rpms:
+            self.log.debug("No RPMs found to be installed, skipping RPM plugin")
+            return
+
+        target_rpms = glob.glob(os.path.join(self.output, "*.rpm"))
+
+        self.log.debug("Cleaning up target directory from stalled RPMs, to remove: %s" % ", ".join(target_rpms))
+
+        for rpm in target_rpms:
+            os.remove(rpm)
+
+        self.log.debug("Cleaned up.")
+
+        self.log.info("Injecting RPMs from %s" % self.rpms_directory)
+
+        for rpm in rpms:
+            shutil.copy2(rpm, self.output)
 
         self.log.debug("Found following additional rpm files: %s" % ", ".join(rpms))
+
         cfg['rpms'] = []
+
         for f in rpms:
             cfg['rpms'].append(os.path.basename(f))

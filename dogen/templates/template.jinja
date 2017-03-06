@@ -60,7 +60,7 @@ COPY repos/*.repo /etc/yum.repos.d/
 {% endif %}
 {% if rpms %}
 # Add custom rpm files
-COPY rpms/*.rpm /tmp/rpms/
+COPY *.rpm /tmp/rpms/
 {% endif %}
 
 # Install required RPMs
