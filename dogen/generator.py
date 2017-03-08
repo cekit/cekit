@@ -237,8 +237,8 @@ class Generator(object):
         if self.additional_scripts:
             self._handle_additional_scripts()
 
-        self.render_from_template()
         self.handle_sources()
+        self.render_from_template()
 
         for plugin in self.plugins:
             plugin.after_sources(files=self.cfg.get('artifacts'))
