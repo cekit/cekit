@@ -130,6 +130,10 @@ WORKDIR {{ workdir }}
 
 USER {{ user }}
 
+{% if entrypoint %}
+ENTRYPOINT {{ helper.cmd(entrypoint) }}
+{% endif %}
+
 {% if cmd %}
 CMD {{ helper.cmd(cmd) }}
 {% endif %}
