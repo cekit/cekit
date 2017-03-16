@@ -24,11 +24,8 @@ as part of the container's :code:`run` command instruction.
 Examples
 ~~~~~~~~
 
-For image without scripts to be added::
+Assuming your current working directory contains your `image.yaml` file, any scripts
+your `image.yaml` references are in an adjacent subdirectory called `scripts` and you
+want the output written to an adjacent sub-directory named `out`:
 
-    docker run -it --rm -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
-
-For image with scripts to be added::
-
-    docker run -it --rm -v PATH_TO_SCRIPTS_DIR:/scripts:z -v PATH_TO_IMAGE_YAML:/input/image.yaml:z -v PATH_TO_TARGET_DIR:/output:z jboss/dogen:1.0.0
-
+    docker run -it --rm -v $(pwd):/tmp:z dogen:latest --verbose /tmp/image.yaml /tmp/out
