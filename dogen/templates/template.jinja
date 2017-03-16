@@ -109,9 +109,6 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 USER {{ cct.user }}
 RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
 
-# Add cct in command mode as entrypoint
-# you can specify path to changes files in CCT_CHANGES environment variable
-ENTRYPOINT ["/usr/bin/cct", {% if cct.runtime_changes -%}"{{ cct.runtime_changes }}", {% endif -%}"-c"]
 {% endif %}
 
 {%- if scripts %}
@@ -129,6 +126,10 @@ WORKDIR {{ workdir }}
 {% endif %}
 
 USER {{ user }}
+
+{% if entrypoint %}
+ENTRYPOINT {{ helper.cmd(entrypoint) }}
+{% endif %}
 
 {% if cmd %}
 CMD {{ helper.cmd(cmd) }}

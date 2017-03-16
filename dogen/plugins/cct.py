@@ -73,8 +73,13 @@ class CCT(Plugin):
 
         self.log.info("CCT plugin downloaded artifacts")
 
+        cfg['entrypoint'] = ['/usr/bin/cct']
+
         if 'runtime' in cfg['cct']:
             self.runtime_changes(cfg)
+            cfg['entrypoint'].append(cfg['cct']['runtime_changes'])
+
+        cfg['entrypoint'].append("-c")
 
         if 'user' not in cfg['cct']:
             cfg['cct']['user'] = 'root'
@@ -95,6 +100,6 @@ class CCT(Plugin):
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['runtime'], f)
 
-        # adjust cfg object so template adds the above to ENTRYPOINT
+        # adjust cfg object so caller adds the above to ENTRYPOINT
         if 'runtime_changes' not in cfg['cct']:
             cfg['cct']['runtime_changes'] = "/tmp/cct/cctruntime.yaml"

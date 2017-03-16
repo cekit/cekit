@@ -10,7 +10,7 @@ from dogen.generator import Generator
 
 # Generate a Dockerfile, and check what is in it.
 
-class TestUser(unittest.TestCase):
+class TestDockerfile(unittest.TestCase):
 
     # keys that must be present in config file but we don't care about
     # for specific tests
@@ -19,7 +19,7 @@ class TestUser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.log = mock.Mock()
-        cls.workdir = tempfile.mkdtemp(prefix="test_user")
+        cls.workdir = tempfile.mkdtemp(prefix="test_dockerfile")
 
     @classmethod
     def tearDownClass(cls):
@@ -55,7 +55,7 @@ class TestUser(unittest.TestCase):
 
         with open(os.path.join(self.target, "Dockerfile"), "r") as f:
             dockerfile = f.read()
-            regex = re.compile(r'.*USER 1347\n\nCMD.*',  re.MULTILINE)
+            regex = re.compile(r'.*USER 1347\n+CMD.*',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
     def test_default_cmd_user(self):
@@ -72,5 +72,41 @@ class TestUser(unittest.TestCase):
 
         with open(os.path.join(self.target, "Dockerfile"), "r") as f:
             dockerfile = f.read()
-            regex = re.compile(r'.*USER 0\n\nCMD.*',  re.MULTILINE)
+            regex = re.compile(r'.*USER 0\n+CMD.*',  re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
+
+    def test_set_cmd(self):
+        """
+        Test that cmd: is mapped into a CMD instruction
+        """
+        with open(self.yaml, 'ab') as f:
+            f.write("cmd: ['/usr/bin/date']".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.render_from_template()
+
+        self.assertEqual(generator.cfg['cmd'], ['/usr/bin/date'])
+
+        with open(os.path.join(self.target, "Dockerfile"), "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'.*CMD \["/usr/bin/date"\]',  re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
+
+    def test_set_entrypoint(self):
+        """
+        Test that entrypoint: is mapped into a ENTRYPOINT instruction
+        """
+        with open(self.yaml, 'ab') as f:
+            f.write("entrypoint: ['/usr/bin/time']".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.render_from_template()
+
+        self.assertEqual(generator.cfg['entrypoint'], ['/usr/bin/time'])
+
+        with open(os.path.join(self.target, "Dockerfile"), "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'.*ENTRYPOINT \["/usr/bin/time"\]',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)

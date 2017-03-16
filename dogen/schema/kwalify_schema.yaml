@@ -10,6 +10,10 @@ map:
     type: seq
     sequence:
       - type: str
+  entrypoint:
+    type: seq
+    sequence:
+      - type: str
   labels:
     type: seq
     sequence:
