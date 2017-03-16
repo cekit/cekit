@@ -306,6 +306,6 @@ class Generator(object):
     def check_sum(self, filename, checksum):
         self.log.info("Checking '%s' MD5 hash..." % os.path.basename(filename))
         filesum = hashlib.md5(open(filename, 'rb').read()).hexdigest()
-        if filesum != checksum:
+        if filesum.lower() != checksum.lower():
             raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
         self.log.debug("MD5 hash is correct.")
