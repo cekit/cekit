@@ -24,8 +24,8 @@ as part of the container's :code:`run` command instruction.
 Examples
 ~~~~~~~~
 
-Assuming your current working directory contains your `image.yaml` file, any scripts
-your `image.yaml` references are in an adjacent subdirectory called `scripts` and you
-want the output written to an adjacent sub-directory named `out`:
+Assuming your current working directory contains your :code:`image.yaml` file, any scripts
+your :code:`image.yaml` references are in an adjacent subdirectory called :code:`scripts` and you
+want the output written to an adjacent sub-directory named :code:`out`:
 
     docker run -it --rm -v $(pwd):/tmp:z dogen:latest --verbose /tmp/image.yaml /tmp/out
