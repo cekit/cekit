@@ -63,9 +63,10 @@ COPY repos/*.repo /etc/yum.repos.d/
 COPY *.rpm /tmp/rpms/
 {% endif %}
 
-# Install required RPMs
+# Install required RPMs and ensure that the packages were installed
 RUN yum install -y {% if additional_repos -%} --disablerepo=\* {%- for repo in additional_repos %} --enablerepo={{ repo }}{% endfor %}{% endif %} {%- for package in packages %} {{ package }}{% endfor %} {%- for rpm in rpms %} /tmp/rpms/{{ rpm }} {% endfor %} \
-    && yum clean all
+    && yum clean all && \
+    rpm -q {% for package in packages %} {{ package }}{% endfor %}
 
 {% if additional_repos %}
 # Remove custom repo files
