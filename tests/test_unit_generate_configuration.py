@@ -1,8 +1,6 @@
 import argparse
 import unittest
 import mock
-import six
-import tarfile
 import os
 import tempfile
 
@@ -35,7 +33,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(self.generator.scripts_path, None)
         self.assertEqual(self.generator.additional_scripts, None)
         self.assertEqual(self.generator.without_sources, False)
-        # Set to True in the configure() method later 
+        # Set to True in the configure() method later
         self.assertEqual(self.generator.ssl_verify, None)
 
     def test_fail_if_version_mismatch(self):
@@ -319,14 +317,14 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b".encode())
 
-        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/context'})
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
         k.start()
         generator = Generator(self.log, self.args)
         generator.configure()
         generator.handle_sources()
         k.stop()
 
-        mock_fetch_file.assert_called_with('http://cache/context/file.zip', 'target/file.zip')
+        mock_fetch_file.assert_called_with('http://cache/get?md5=e9013fc202c87be48e3b302df10efc4b', 'target/file.zip')
 
     @mock.patch('dogen.generator.Generator.check_sum')
     @mock.patch('dogen.generator.Generator._fetch_file')
@@ -334,11 +332,11 @@ class TestConfig(unittest.TestCase):
         with self.descriptor as f:
             f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b\n    target: target.zip".encode())
 
-        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/context'})
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
         k.start()
         generator = Generator(self.log, self.args)
         generator.configure()
         generator.handle_sources()
         k.stop()
 
-        mock_fetch_file.assert_called_with('http://cache/context/file.zip', 'target/target.zip')
+        mock_fetch_file.assert_called_with('http://cache/get?md5=e9013fc202c87be48e3b302df10efc4b', 'target/target.zip')

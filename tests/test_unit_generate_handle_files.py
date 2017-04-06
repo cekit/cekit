@@ -34,11 +34,15 @@ class TestFetchFile(unittest.TestCase):
 
     @mock.patch('dogen.generator.requests.get')
     def test_fetching_with_filename(self, mock_requests):
-        mock_requests.return_value.content = "file-content"
+        def iter_content(**args):
+            return ["file-content"]
+
+        mock_requests.return_value.status_code = 200
+        mock_requests.return_value.iter_content = iter_content
 
         with mock.patch.object(six.moves.builtins, 'open', mock.mock_open()) as mock_file:
             self.assertEqual(self.generator._fetch_file("https://host/file.tmp", "some-file"), "some-file")
-            mock_requests.assert_called_with('https://host/file.tmp', verify=None)
+            mock_requests.assert_called_with('https://host/file.tmp', verify=None, stream=True)
             mock_file().write.assert_called_once_with("file-content")
 
         self.log.info.assert_any_call("Fetching 'https://host/file.tmp' file...")
@@ -48,12 +52,16 @@ class TestFetchFile(unittest.TestCase):
     @mock.patch('dogen.generator.tempfile.mktemp', return_value="tmpfile")
     @mock.patch('dogen.generator.requests.get')
     def test_fetching_with_tmpfile(self, mock_requests, mock_tempfile):
-        mock_requests.return_value.content = "file-content"
+        def iter_content(**args):
+            return ["file-content"]
+
+        mock_requests.return_value.status_code = 200
+        mock_requests.return_value.iter_content = iter_content
 
         with mock.patch.object(six.moves.builtins, 'open', mock.mock_open()) as mock_file:
             self.assertEqual(self.generator._fetch_file("https://host/file.tmp"), "tmpfile")
             mock_tempfile.assert_called_with("-dogen")
-            mock_requests.assert_called_with('https://host/file.tmp', verify=None)
+            mock_requests.assert_called_with('https://host/file.tmp', verify=None, stream=True)
             mock_file().write.assert_called_once_with("file-content")
 
         self.log.info.assert_any_call("Fetching 'https://host/file.tmp' file...")

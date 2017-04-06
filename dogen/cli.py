@@ -25,7 +25,7 @@ class MyParser(argparse.ArgumentParser):
 class CLI(object):
 
     def __init__(self):
-        self.log = logging.getLogger()
+        self.log = logging.getLogger("dogen")
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
             '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
