@@ -54,8 +54,14 @@ class Generator(object):
 
         self.log.info("Fetched file will be saved as '%s'..." % os.path.basename(output))
 
+        r = requests.get(location, verify=self.ssl_verify, stream=True)
+
+        if r.status_code != 200:
+            raise Exception("Could not download file from %s" % location)
+
         with open(output, 'wb') as f:
-            f.write(requests.get(location, verify=self.ssl_verify).content)
+            for chunk in r.iter_content(chunk_size=1024):
+                f.write(chunk)
 
         return output
 
@@ -294,11 +300,13 @@ class Generator(object):
 
             if not passed:
                 sources_cache = os.environ.get("DOGEN_SOURCES_CACHE")
+
                 if sources_cache:
-                    self.log.info("Using '%s' as cached location for sources" % sources_cache)
-                    url = "%s/%s" % (sources_cache, basename)
+                    url = sources_cache.replace('#hash#', source['md5sum']).replace('#algorithm#', 'md5')
+                    self.log.info("Using '%s' as cached location for artifact" % url)
 
                 self._fetch_file(url, filename)
+
                 self.check_sum(filename, source['md5sum'])
 
             self.cfg['artifacts'][target] = "md5:%s" % source['md5sum']
