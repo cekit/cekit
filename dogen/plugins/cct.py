@@ -5,13 +5,11 @@ import shutil
 
 from dogen.plugin import Plugin
 
-from cct.cli.main import CCT_CLI
-
 
 class CCT(Plugin):
     @staticmethod
     def info():
-        return "cct", "Support for configuring images via cct"
+        return "cct", "Support for configuring images via CCT"
 
     def __init__(self, dogen, args):
         super(CCT, self).__init__(dogen, args)
@@ -37,6 +35,13 @@ class CCT(Plugin):
         if 'cct' not in cfg:
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
+
+        # check if CCT is installed - complain otherwise
+        # we are delaying import because CCT Plugin is not mandatory
+        try:
+            from cct.cli.main import CCT_CLI
+        except ImportError:
+            raise Exception("CCT plugin requires CCT to run - get it from https://github.com/containers-tools/cct")
 
         cfg['cct']['run'] = ['cct.yaml']
 
