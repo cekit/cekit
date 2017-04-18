@@ -5,7 +5,6 @@ import tempfile
 import unittest
 import shutil
 import re
-import sys
 
 from dogen.plugins.repo import Repo
 from dogen.generator import Generator
@@ -45,6 +44,5 @@ class TestPackage(unittest.TestCase):
 
         dockerfile = open(os.path.join(self.target_dir, "Dockerfile")).read()
 
-        sys.stderr.write("\t\t\tDEBUGDEBUG\n{}\n".format(dockerfile))
         self.assertTrue(re.match(r'.*yum install[^\n]+wget', dockerfile, re.DOTALL))
         self.assertTrue(re.match(r'.*rpm -q +wget', dockerfile, re.DOTALL))

@@ -261,6 +261,17 @@ class TestConfig(unittest.TestCase):
         generator._handle_scripts()
         # success if no stack trace thrown
 
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_without_specified_md5sum(self, mock_fetch_file):
+        with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+
+        mock_fetch_file.assert_called_with('http://somehost.com/file.zip', 'target/file.zip')
+
     @mock.patch('dogen.generator.Generator.check_sum')
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources(self, mock_fetch_file, mock_check_sum):
