@@ -292,7 +292,8 @@ class Generator(object):
             passed = False
             try:
                 if os.path.exists(filename):
-                    self.check_sum(filename, source['md5sum'])
+                    if source.get('md5sum'):
+                        self.check_sum(filename, source['md5sum'])
                     passed = True
             except Exception as e:
                 self.log.warn(str(e))
@@ -307,9 +308,11 @@ class Generator(object):
 
                 self._fetch_file(url, filename)
 
-                self.check_sum(filename, source['md5sum'])
-
-            self.cfg['artifacts'][target] = "md5:%s" % source['md5sum']
+                if source.get('md5sum'):
+                    self.check_sum(filename, source['md5sum'])
+                    self.cfg['artifacts'][target] = "md5:%s" % source['md5sum']
+                else:
+                    self.cfg['artifacts'][target] = None
 
     def check_sum(self, filename, checksum):
         self.log.info("Checking '%s' MD5 hash..." % os.path.basename(filename))
