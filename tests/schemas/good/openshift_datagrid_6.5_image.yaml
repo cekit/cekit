@@ -151,16 +151,16 @@ scripts:
       user: 185
 sources:
     - url: http://redacted/jolokia-jvm-1.3.2.redhat-1-agent.jar
-      md5sum: 1b996b9083f537917b307309b0e2f16d
+      md5: 1b996b9083f537917b307309b0e2f16d
     - url: http://redacted/javax.json-1.0.4.jar
-      md5sum: 569870f975deeeb6691fcb9bc02a9555
+      md5: 569870f975deeeb6691fcb9bc02a9555
     - url: http://redacted/jboss-logmanager-ext-1.0.0.Alpha2-redhat-1.jar
-      md5sum: 7c743e35463db5f55f415dd666d705c5
+      md5: 7c743e35463db5f55f415dd666d705c5
     - url: http://redacted/openshift-ping-common-1.0.0.Final-redhat-1.jar
-      md5sum: bafa4db7efe4082d76cde2fa9499bf84
+      md5: bafa4db7efe4082d76cde2fa9499bf84
     - url: http://redacted/openshift-ping-dns-1.0.0.Final-redhat-1.jar
-      md5sum: 71bbfdf795a2c65e4473df242f765490
+      md5: 71bbfdf795a2c65e4473df242f765490
     - url: http://redacted/openshift-ping-kube-1.0.0.Final-redhat-1.jar
-      md5sum: 145add030a89c3ed588dce27b0f24999
+      md5: 145add030a89c3ed588dce27b0f24999
     - url: http://redacted/oauth-20100527.jar
-      md5sum: 91c7c70579f95b7ddee95b2143a49b41
+      md5: 91c7c70579f95b7ddee95b2143a49b41

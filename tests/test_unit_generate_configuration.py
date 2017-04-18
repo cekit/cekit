@@ -276,6 +276,19 @@ class TestConfig(unittest.TestCase):
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources(self, mock_fetch_file, mock_check_sum):
         with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+
+        mock_fetch_file.assert_called_with('http://somehost.com/file.zip', 'target/file.zip')
+        mock_check_sum.assert_called_with('target/file.zip', 'e9013fc202c87be48e3b302df10efc4b', 'md5')
+
+    @mock.patch('dogen.generator.Generator.check_sum')
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_with_deprecated_md5sum(self, mock_fetch_file, mock_check_sum):
+        with self.descriptor as f:
             f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b".encode())
 
         generator = Generator(self.log, self.args)
@@ -283,13 +296,40 @@ class TestConfig(unittest.TestCase):
         generator.handle_sources()
 
         mock_fetch_file.assert_called_with('http://somehost.com/file.zip', 'target/file.zip')
+        mock_check_sum.assert_called_with('target/file.zip', 'e9013fc202c87be48e3b302df10efc4b', 'md5')
+
+    @mock.patch('dogen.generator.Generator.check_sum')
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_with_sha1(self, mock_fetch_file, mock_check_sum):
+        with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    sha1: 105bfe02a86ba69be5506cd559a54c4b252fb132".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+
+        mock_fetch_file.assert_called_with('http://somehost.com/file.zip', 'target/file.zip')
+        mock_check_sum.assert_called_with('target/file.zip', '105bfe02a86ba69be5506cd559a54c4b252fb132', 'sha1')
+
+    @mock.patch('dogen.generator.Generator.check_sum')
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_with_sha256(self, mock_fetch_file, mock_check_sum):
+        with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    sha256: 9912afca5a08e9e05174c5fbb7a9a1510283d5952f90796c6a3e8bc78217e2fb".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+
+        mock_fetch_file.assert_called_with('http://somehost.com/file.zip', 'target/file.zip')
+        mock_check_sum.assert_called_with('target/file.zip', '9912afca5a08e9e05174c5fbb7a9a1510283d5952f90796c6a3e8bc78217e2fb', 'sha256')
 
     @mock.patch('dogen.generator.os.path.exists', return_value=True)
     @mock.patch('dogen.generator.Generator.check_sum')
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources_when_local_file_exists_and_is_correct(self, mock_fetch_file, mock_check_sum, mock_path):
         with self.descriptor as f:
-            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b".encode())
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b".encode())
 
         generator = Generator(self.log, self.args)
         generator.configure()
@@ -302,7 +342,7 @@ class TestConfig(unittest.TestCase):
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources_when_local_file_exists_and_is_broken(self, mock_fetch_file, mock_check_sum, mock_path):
         with self.descriptor as f:
-            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b".encode())
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b".encode())
 
         generator = Generator(self.log, self.args)
         generator.configure()
@@ -314,7 +354,7 @@ class TestConfig(unittest.TestCase):
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources_with_target_filename(self, mock_fetch_file, mock_check_sum):
         with self.descriptor as f:
-            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b\n    target: target.zip".encode())
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b\n    target: target.zip".encode())
 
         generator = Generator(self.log, self.args)
         generator.configure()
@@ -326,7 +366,7 @@ class TestConfig(unittest.TestCase):
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources_with_cache_url(self, mock_fetch_file, mock_check_sum):
         with self.descriptor as f:
-            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b".encode())
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b".encode())
 
         k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
         k.start()
@@ -341,7 +381,7 @@ class TestConfig(unittest.TestCase):
     @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources_with_cache_url_and_target_filename(self, mock_fetch_file, mock_check_sum):
         with self.descriptor as f:
-            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b\n    target: target.zip".encode())
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b\n    target: target.zip".encode())
 
         k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
         k.start()
@@ -351,3 +391,18 @@ class TestConfig(unittest.TestCase):
         k.stop()
 
         mock_fetch_file.assert_called_with('http://cache/get?md5=e9013fc202c87be48e3b302df10efc4b', 'target/target.zip')
+
+    @mock.patch('dogen.generator.Generator.check_sum')
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_with_cache_url_with_filename_to_replace(self, mock_fetch_file, mock_check_sum):
+        with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b\n    target: target.zip".encode())
+
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/#filename#'})
+        k.start()
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+        k.stop()
+
+        mock_fetch_file.assert_called_with('http://cache/file.zip', 'target/target.zip')

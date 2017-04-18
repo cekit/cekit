@@ -67,6 +67,9 @@ map:
       - map:
           url: {type: str}
           md5sum: {type: str}
+          md5: {type: str}
+          sha1: {type: str}
+          sha256: {type: str}
           target: {type: str}
   packages:
     seq:

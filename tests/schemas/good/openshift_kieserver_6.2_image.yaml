@@ -130,11 +130,11 @@ scripts:
       exec: configure.sh
 sources:
     - url: http://redacted/jboss-bpmsuite-6.2.1.GA-redhat-2-deployable-eap6.x.zip
-      md5sum: b63c7dfe82a44a140cce3a824c8c2e90
+      md5: b63c7dfe82a44a140cce3a824c8c2e90
     - url: http://redacted/openshift-kieserver-common-1.0.2.Final-redhat-1.jar
-      md5sum: 5858103206d0bcc4695aad38a7430c75
+      md5: 5858103206d0bcc4695aad38a7430c75
     - url: http://redacted/openshift-kieserver-jms-1.0.2.Final-redhat-1.jar
-      md5sum: 4a80b12399c49a1d274bbd1c62b49b65
+      md5: 4a80b12399c49a1d274bbd1c62b49b65
     - url: http://redacted/openshift-kieserver-web-1.0.2.Final-redhat-1.jar
-      md5sum: adf602d027020b30cc5743d3d5d8e2f7
+      md5: adf602d027020b30cc5743d3d5d8e2f7
 

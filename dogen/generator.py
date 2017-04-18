@@ -16,6 +16,8 @@ from dogen.tools import Tools
 from dogen import version, DEFAULT_SCRIPT_EXEC, DEFAULT_SCRIPT_USER
 from dogen.errors import Error
 
+SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
+
 class Generator(object):
     def __init__(self, log, args, plugins=[]):
         self.log = log
@@ -289,11 +291,29 @@ class Generator(object):
                 target = basename
 
             filename = ("%s/%s" % (self.output, target))
+
             passed = False
+            algorithm = None
+
+            md5sum = source.get('md5sum')
+
+            if md5sum:
+                self.log.warn("The 'md5sum' key is deprecated, please use 'md5' for %s. Or better switch to sha256 or sha1." % url)
+
+                # Backwards compatibility for md5sum
+                if not source.get('md5'):
+                    source['md5'] = md5sum
+
+            for supported_algorithm in SUPPORTED_HASH_ALGORITHMS:
+                if not source.get(supported_algorithm):
+                    continue
+
+                algorithm = supported_algorithm
+                break
+
             try:
-                if os.path.exists(filename):
-                    if source.get('md5sum'):
-                        self.check_sum(filename, source['md5sum'])
+                if os.path.exists(filename) and algorithm:
+                    self.check_sum(filename, source[algorithm], algorithm)
                     passed = True
             except Exception as e:
                 self.log.warn(str(e))
@@ -303,20 +323,32 @@ class Generator(object):
                 sources_cache = os.environ.get("DOGEN_SOURCES_CACHE")
 
                 if sources_cache:
-                    url = sources_cache.replace('#hash#', source['md5sum']).replace('#algorithm#', 'md5')
+                    url = sources_cache.replace('#filename#', basename)
+
+                    if algorithm:
+                        url = url.replace('#hash#', source[algorithm]).replace('#algorithm#', algorithm)
+
                     self.log.info("Using '%s' as cached location for artifact" % url)
 
                 self._fetch_file(url, filename)
 
-                if source.get('md5sum'):
-                    self.check_sum(filename, source['md5sum'])
-                    self.cfg['artifacts'][target] = "md5:%s" % source['md5sum']
+                if algorithm:
+                    self.check_sum(filename, source[algorithm], algorithm)
+                    self.cfg['artifacts'][target] = "%s:%s" % (algorithm, source[algorithm])
                 else:
                     self.cfg['artifacts'][target] = None
 
-    def check_sum(self, filename, checksum):
-        self.log.info("Checking '%s' MD5 hash..." % os.path.basename(filename))
-        filesum = hashlib.md5(open(filename, 'rb').read()).hexdigest()
+    def check_sum(self, filename, checksum, algorithm):
+        self.log.info("Checking '%s' %s hash..." % (os.path.basename(filename), algorithm))
+
+        hash = getattr(hashlib, algorithm)()
+
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                hash.update(chunk)
+        filesum = hash.hexdigest()
+
         if filesum.lower() != checksum.lower():
-            raise Exception("The md5sum computed for the '%s' file ('%s') doesn't match the '%s' value" % (filename, filesum, checksum))
+            raise Exception("The %s computed for the '%s' file ('%s') doesn't match the '%s' value" % (algorithm, filename, filesum, checksum))
+
         self.log.debug("MD5 hash is correct.")
