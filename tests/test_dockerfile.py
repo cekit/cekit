@@ -110,3 +110,21 @@ class TestDockerfile(unittest.TestCase):
             dockerfile = f.read()
             regex = re.compile(r'.*ENTRYPOINT \["/usr/bin/time"\]',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
+
+    def test_volumes(self):
+        """
+        Test that cmd: is mapped into a CMD instruction
+        """
+        with open(self.yaml, 'ab') as f:
+            f.write("volumes:\n  - '/var/lib'\n  - '/usr/lib'".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.render_from_template()
+
+        self.assertEqual(generator.cfg['volumes'], ['/var/lib', '/usr/lib'])
+
+        with open(os.path.join(self.target, "Dockerfile"), "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]',  re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
