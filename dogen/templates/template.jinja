@@ -121,6 +121,12 @@ USER root
 RUN rm -rf /tmp/artifacts
 {% endif %}
 
+{%- if volumes %}
+{% for volume in volumes %}
+VOLUME ["{{ volume }}"]
+{% endfor %}
+{% endif %}
+
 {%- if workdir %}
 # Specify the working directory
 WORKDIR {{ workdir }}

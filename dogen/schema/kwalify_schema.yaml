@@ -43,6 +43,9 @@ map:
     seq:
       - map:
           value: {type: int, required: True}
+  volumes:
+      seq:
+        - {type: str, required: True}
   debugport: {type: int}
   dogen:
     map:
