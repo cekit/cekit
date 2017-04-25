@@ -287,6 +287,37 @@ class TestConfig(unittest.TestCase):
 
     @mock.patch('dogen.generator.Generator.check_sum')
     @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_with_multiple_hashes(self, mock_fetch_file, mock_check_sum):
+        with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b\n    sha1: 105bfe02a86ba69be5506cd559a54c4b252fb132".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+
+        mock_fetch_file.assert_called_with('http://somehost.com/file.zip', 'target/file.zip')
+        calls = [mock.call('target/file.zip', '105bfe02a86ba69be5506cd559a54c4b252fb132', 'sha1'), mock.call('target/file.zip', 'e9013fc202c87be48e3b302df10efc4b', 'md5')]
+        mock_check_sum.assert_has_calls(calls)
+
+    @mock.patch('dogen.generator.Generator.check_sum')
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_handling_sources_with_multiple_hashes_and_cache_url(self, mock_fetch_file, mock_check_sum):
+        with self.descriptor as f:
+            f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5: e9013fc202c87be48e3b302df10efc4b\n    sha1: 105bfe02a86ba69be5506cd559a54c4b252fb132".encode())
+
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
+        k.start()
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.handle_sources()
+        k.stop()
+
+        mock_fetch_file.assert_called_with('http://cache/get?sha1=105bfe02a86ba69be5506cd559a54c4b252fb132', 'target/file.zip')
+        calls = [mock.call('target/file.zip', '105bfe02a86ba69be5506cd559a54c4b252fb132', 'sha1'), mock.call('target/file.zip', 'e9013fc202c87be48e3b302df10efc4b', 'md5')]
+        mock_check_sum.assert_has_calls(calls)
+
+    @mock.patch('dogen.generator.Generator.check_sum')
+    @mock.patch('dogen.generator.Generator._fetch_file')
     def test_handling_sources_with_deprecated_md5sum(self, mock_fetch_file, mock_check_sum):
         with self.descriptor as f:
             f.write("sources:\n  - url: http://somehost.com/file.zip\n    md5sum: e9013fc202c87be48e3b302df10efc4b".encode())

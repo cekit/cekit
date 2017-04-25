@@ -293,7 +293,7 @@ class Generator(object):
             filename = ("%s/%s" % (self.output, target))
 
             passed = False
-            algorithm = None
+            algorithms = []
 
             md5sum = source.get('md5sum')
 
@@ -308,12 +308,12 @@ class Generator(object):
                 if not source.get(supported_algorithm):
                     continue
 
-                algorithm = supported_algorithm
-                break
+                algorithms.append(supported_algorithm)
 
             try:
-                if os.path.exists(filename) and algorithm:
-                    self.check_sum(filename, source[algorithm], algorithm)
+                if os.path.exists(filename) and algorithms:
+                    for algorithm in algorithms:
+                        self.check_sum(filename, source[algorithm], algorithm)
                     passed = True
             except Exception as e:
                 self.log.warn(str(e))
@@ -325,16 +325,20 @@ class Generator(object):
                 if sources_cache:
                     url = sources_cache.replace('#filename#', basename)
 
-                    if algorithm:
-                        url = url.replace('#hash#', source[algorithm]).replace('#algorithm#', algorithm)
+                    if algorithms:
+                        if len(algorithms) > 1:
+                            self.log.warn("You specified multiple algorithms for '%s' url, but only '%s' will be used to fetch it from cache" % (url, algorithms[0]))
+
+                        url = url.replace('#hash#', source[algorithms[0]]).replace('#algorithm#', algorithms[0])
 
                     self.log.info("Using '%s' as cached location for artifact" % url)
 
                 self._fetch_file(url, filename)
 
-                if algorithm:
-                    self.check_sum(filename, source[algorithm], algorithm)
-                    self.cfg['artifacts'][target] = "%s:%s" % (algorithm, source[algorithm])
+                if algorithms:
+                    for algorithm in algorithms:
+                        self.check_sum(filename, source[algorithm], algorithm)
+                    self.cfg['artifacts'][target] = "%s:%s" % (algorithms[0], source[algorithms[0]])
                 else:
                     self.cfg['artifacts'][target] = None
 
