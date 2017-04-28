@@ -338,9 +338,11 @@ class Generator(object):
                 if algorithms:
                     for algorithm in algorithms:
                         self.check_sum(filename, source[algorithm], algorithm)
-                    self.cfg['artifacts'][target] = "%s:%s" % (algorithms[0], source[algorithms[0]])
-                else:
-                    self.cfg['artifacts'][target] = None
+
+            if algorithms:
+                self.cfg['artifacts'][target] = "%s:%s" % (algorithms[0], source[algorithms[0]])
+            else:
+                self.cfg['artifacts'][target] = None
 
     def check_sum(self, filename, checksum, algorithm):
         self.log.info("Checking '%s' %s hash..." % (os.path.basename(filename), algorithm))
