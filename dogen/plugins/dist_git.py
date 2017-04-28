@@ -27,7 +27,7 @@ class DistGitPlugin(Plugin):
         if not self.args.dist_git_enable:
             return
         self.git.prepare()
-        self.git.clean()
+        self.git.clean_scripts()
 
     def after_sources(self, files):
         if not self.args.dist_git_enable:
@@ -85,7 +85,7 @@ class Git(object):
         self.update_value("JBOSS_IMAGE_RELEASE", new_release)
         self.update_dist_git(new_version, new_release)
 
-    def clean(self):
+    def clean_scripts(self):
         """ Removes the scripts directory from staging and disk """
         shutil.rmtree(os.path.join(self.path, "scripts"), ignore_errors=True)
 
@@ -177,8 +177,12 @@ class Git(object):
 
     def update_dist_git(self, version, release):
         with Chdir(self.path):
-            # Add everything
-            subprocess.check_call(["git", "add", "."])
+            # Add new Dockerfile
+            subprocess.check_call(["git", "add", "Dockerfile"])
+
+            # Add the scripts directory if it exists
+            if os.path.exists(os.path.join(self.path, "scripts")):
+                subprocess.check_call(["git", "add", "scripts"])
 
         commit_msg = "Sync"
 
