@@ -3,7 +3,7 @@ map:
   name:    {type: str, required: True}
   from:    {type: str, required: True}
   version: {type: text, required: True}
-  release: {type: text, required: True}
+  release: {type: text}
   description: {type: text}
   user: {type: text}
   cmd:
