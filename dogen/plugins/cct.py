@@ -1,8 +1,11 @@
 import logging
 import os
 import yaml
+import requests
 import shutil
+import sys
 
+from zipfile import ZipFile
 from dogen.plugin import Plugin
 
 
@@ -26,6 +29,30 @@ class CCT(Plugin):
 
         parent_schema['map']['cct'] = schema
 
+    def setup_cct(self, version):
+        cctdist = '%s/.dogen/plugin/cct/%s/%s.zip' % (os.path.expanduser('~'), version, version)
+        cct_runtime = '%s/.dogen/plugin/cct/%s/cct.zip' % (os.path.expanduser('~'), version)
+        if os.path.exists(cctdist):
+            return cct_runtime
+
+        os.makedirs(os.path.dirname(cctdist))
+
+        ccturl = 'https://github.com/containers-tools/cct/archive/%s.zip' % version
+        with open(cctdist, 'wb') as f:
+            f.write(requests.get(ccturl, verify=self.dogen.ssl_verify).content)
+
+        ZipFile(cctdist).extractall(os.path.dirname(cctdist))
+
+        content_root = os.path.join(os.path.dirname(cctdist), 'cct-%s' % version)
+        with ZipFile(cct_runtime, "w") as zf:
+            zf.write(os.path.join(content_root, '__main__.py'), '__main__.py')
+            for root, directory, files in os.walk(os.path.join(content_root, 'cct')):
+                for f in files:
+                    arc_file = os.path.join(root, f)
+                    zf.write(arc_file, arc_file[len(content_root):])
+
+        return cct_runtime
+
     def prepare(self, cfg):
         """
         create cct changes yaml file for image.yaml template decscriptor
@@ -36,27 +63,35 @@ class CCT(Plugin):
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
 
+        version = cfg['cct']['version'] if 'version' in cfg['cct'] else 'master'
+
+        cct_runtime = self.setup_cct(version)
+
+        sys.path.append(cct_runtime)
         # check if CCT is installed - complain otherwise
         # we are delaying import because CCT Plugin is not mandatory
         try:
             from cct.cli.main import CCT_CLI
         except ImportError:
-            raise Exception("CCT plugin requires CCT to run - get it from https://github.com/containers-tools/cct")
+            raise Exception("CCT was not set succesfully up!")
 
         cfg['cct']['run'] = ['cct.yaml']
 
-        cfg_file_dir = os.path.join(self.output, "cct")
-        if not os.path.exists(cfg_file_dir):
-            os.makedirs(cfg_file_dir)
+        cct_dir = os.path.join(self.output, "cct")
 
-        target_modules_dir = os.path.join(cfg_file_dir, 'modules')
+        if not os.path.exists(cct_dir):
+            os.makedirs(cct_dir)
+
+        shutil.copy(cct_runtime, cct_dir)
+
+        target_modules_dir = os.path.join(cct_dir, 'modules')
         if os.path.exists(target_modules_dir):
             shutil.rmtree(target_modules_dir)
             self.log.debug('Removed existing modules directory: %s' % target_modules_dir)
 
         os.makedirs(target_modules_dir)
 
-        cfg_file = os.path.join(cfg_file_dir, "cct.yaml")
+        cfg_file = os.path.join(cct_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['configure'], f)
 
@@ -98,10 +133,10 @@ class CCT(Plugin):
         """
 
         # write out a cctruntime.yaml file from the /cct/runtime_changes key
-        cfg_file_dir = os.path.join(self.output, "cct")
-        if not os.path.exists(cfg_file_dir):
-            os.makedirs(cfg_file_dir)
-        cfg_file = os.path.join(cfg_file_dir, "cctruntime.yaml")
+        cct_dir = os.path.join(self.output, "cct")
+        if not os.path.exists(cct_dir):
+            os.makedirs(cct_dir)
+        cfg_file = os.path.join(cct_dir, "cctruntime.yaml")
         with open(cfg_file, 'w') as f:
             yaml.dump(cfg['cct']['runtime'], f)
 

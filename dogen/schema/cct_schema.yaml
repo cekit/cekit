@@ -15,6 +15,7 @@ map:
   configure:
     type: any
   runtime_changes: { type: str }
+  version: { type: str }
   # same rationale as for configure
   runtime: { type: any }
   user: { type: any }

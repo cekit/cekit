@@ -86,6 +86,7 @@ COPY \
 {% endif %}
 
 {%- if cct %}
+COPY cct/cct.zip /opt/cct.zip
 # Copy CCT configuration file
 COPY cct/cct.yaml /tmp/cct/
 # Copy CCT modules
@@ -106,7 +107,8 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 
 {% if cct %}
 USER {{ cct.user }}
-RUN cct {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %}
+
+RUN python /opt/cct.zip {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %} && rm /opt/cct.zip
 
 {% endif %}
 
