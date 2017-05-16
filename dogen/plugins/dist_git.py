@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import subprocess
 
@@ -27,7 +26,7 @@ class DistGitPlugin(Plugin):
         if not self.args.dist_git_enable:
             return
         self.git.prepare()
-        self.git.clean_scripts()
+        self.git.clean()
 
     def after_sources(self, files):
         if not self.args.dist_git_enable:
@@ -73,75 +72,16 @@ class Git(object):
             print("")
             self.switch_branch()
 
-        self.old_version, self.old_release = self.read_version_and_release()
-
-    def update(self):
-        new_version, release = self.read_version_and_release()
-        new_release = int(self.old_release) + 1
-
-        self.log.info("New release will be: %s-%s." % (new_version, new_release))
-
-        # Bump the release environment variable
-        self.update_value("JBOSS_IMAGE_RELEASE", new_release)
-        self.update_dist_git(new_version, new_release)
-
-    def clean_scripts(self):
-        """ Removes the scripts directory from staging and disk """
+    def clean(self):
+        """ Removes old generated scripts """
         shutil.rmtree(os.path.join(self.path, "scripts"), ignore_errors=True)
+        shutil.rmtree(os.path.join(self.path, "repos"), ignore_errors=True)
 
         with Chdir(self.path):
-            if os.path.exists("scripts"):
-                self.log.info("Removing old scripts directory")
-                subprocess.check_output(["git", "rm", "-rf", "scripts"])
-
-    def read_dockerfile(self):
-        with open(self.dockerfile, 'r') as f:
-            return f.read()
-
-    def read_value(self, dockerfile, exp):
-        pattern = re.compile(exp)
-        match = pattern.search(dockerfile)
-        if match:
-            return match.group(1)
-
-        raise Exception("Could not find the '%s' pattern in %s" % (exp, dockerfile))
-
-    def update_value(self, env, value):
-        """
-        This fnction updates the value of the selected environment variable
-        or label that is set in the following pattern: env="[TO_REPLACE]".
-        """
-
-        # Read Dockerfile
-        dockerfile = self.read_dockerfile()
-
-        with open(self.dockerfile, 'w') as f:
-            f.write(re.sub("(?<=%s=\")(.*)(?=\")" % env, str(value), dockerfile))
-
-    def read_version_and_release(self):
-        # If there is no Dockerfile, there are no old versions
-        if not os.path.exists(self.dockerfile):
-            return None, 0
-
-        # Read *already existing* Dockerfile
-        dockerfile = self.read_dockerfile()
-
-        # Read envs from Dockerfile
-        # Used to bump the release label and fill the commit message later
-        try:
-            version = self.read_value(dockerfile, 'JBOSS_IMAGE_VERSION="([\w\.]+)"')
-        except:
-            version = self.read_value(dockerfile, 'version="([\w\.]+)"')
-
-        try:
-            release = self.read_value(dockerfile, 'JBOSS_IMAGE_RELEASE="(\d+)"')
-        except:
-            try:
-                release = self.read_value(dockerfile, 'release="(\d+)"')
-            except:
-                release = 0
-
-        return version, release
+            for d in ["scripts", "repos"]:
+                if os.path.exists(d):
+                    self.log.info("Removing old '%s' directory" % d)
+                    subprocess.check_output(["git", "rm", "-rf", d])
 
     def switch_branch(self):
 
@@ -175,14 +115,14 @@ class Git(object):
             subprocess.check_output(["rhpkg", "new-sources"] + artifacts.keys())
             self.log.info("Update finished.")
 
-    def update_dist_git(self, version, release):
+    def update(self):
         with Chdir(self.path):
             # Add new Dockerfile
             subprocess.check_call(["git", "add", "Dockerfile"])
 
-            # Add the scripts directory if it exists
-            if os.path.exists(os.path.join(self.path, "scripts")):
-                subprocess.check_call(["git", "add", "scripts"])
+            for d in ["scripts", "repos"]:
+                if os.path.exists(os.path.join(self.path, d)):
+                    subprocess.check_call(["git", "add", d])
 
         commit_msg = "Sync"
 
