@@ -192,8 +192,6 @@ class Git(object):
         if self.source_repo_commit:
             commit_msg += ", commit %s" % self.source_repo_commit
 
-        commit_msg += ", release %s-%s" % (version, release)
-
         with Chdir(self.path):
             # Commit the change
             self.log.info("Commiting with message: '%s'" % commit_msg)
