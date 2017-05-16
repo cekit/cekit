@@ -18,6 +18,26 @@ class Repo(Plugin):
         super(Repo, self).__init__(dogen, args)
 
         self.repo_dir = self.args.repo_files_dir
+        self.repo_files = []
+
+    def after_sources(self, files):
+        if not self.repo_files:
+            return
+
+        target_repos_dir = os.path.join(self.output, "repos")
+
+        if os.path.exists(target_repos_dir):
+            shutil.rmtree(target_repos_dir)
+
+        os.makedirs(target_repos_dir)
+
+        self.log.info("Copying custom repo files from '%s' directory..." % self.repo_dir)
+
+        for f in sorted(self.repo_files):
+            self.log.debug("Copying %s repo file..." % os.path.basename(f))
+            shutil.copy2(f, target_repos_dir)
+
+        self.log.debug("Done.")
 
     def prepare(self, cfg):
         if not self.repo_dir:
@@ -37,19 +57,8 @@ class Repo(Plugin):
             self.log.warn("No repo files found in the '%s' directory" % self.repo_dir)
             return
 
-        target_repos_dir = os.path.join(self.output, "repos")
-
-        if os.path.exists(target_repos_dir):
-            shutil.rmtree(target_repos_dir)
-
-        os.makedirs(target_repos_dir)
-        cfg['additional_repos'] = []
-
-        self.log.info("Copying custom repo files from '%s' directory..." % self.repo_dir)
+        self.cfg = cfg
+        self.cfg['additional_repos'] = []
 
         for f in sorted(self.repo_files):
-            self.log.debug("Copying %s repo file..." % os.path.basename(f))
-            shutil.copy2(f, target_repos_dir)
-            cfg['additional_repos'].append(os.path.splitext(os.path.basename(f))[0])
-
-        self.log.debug("Done.")
+            self.cfg['additional_repos'].append(os.path.splitext(os.path.basename(f))[0])
