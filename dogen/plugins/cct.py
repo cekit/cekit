@@ -32,7 +32,10 @@ class CCT(Plugin):
     def setup_cct(self, version):
         cctdist = '%s/.dogen/plugin/cct/%s/%s.zip' % (os.path.expanduser('~'), version, version)
         cct_runtime = '%s/.dogen/plugin/cct/%s/cct.zip' % (os.path.expanduser('~'), version)
-        if os.path.exists(cctdist):
+        if version == 'master':
+            # we dont care if it doesnt exist - so we ignore errors here
+            shutil.rmtree('%s/.dogen/plugin/cct/%s/' % (os.path.expanduser('~'), version), ignore_errors=True)
+        elif os.path.exists(cctdist):
             return cct_runtime
 
         os.makedirs(os.path.dirname(cctdist))
@@ -113,13 +116,11 @@ class CCT(Plugin):
 
         self.log.info("CCT plugin downloaded artifacts")
 
-        cfg['entrypoint'] = ['/usr/bin/cct']
-
         if 'runtime' in cfg['cct']:
+            cfg['entrypoint'] = ['/usr/bin/cct']
             self.runtime_changes(cfg)
             cfg['entrypoint'].append(cfg['cct']['runtime_changes'])
-
-        cfg['entrypoint'].append("-c")
+            cfg['entrypoint'].append("-c")
 
         if 'user' not in cfg['cct']:
             cfg['cct']['user'] = 'root'
