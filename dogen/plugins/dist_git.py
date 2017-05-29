@@ -25,14 +25,39 @@ class DistGitPlugin(Plugin):
     def prepare(self, cfg):
         if not self.args.dist_git_enable:
             return
-        self.git.prepare()
-        self.git.clean()
+
+        with Chdir(self.output):
+            self.git.prepare()
+            self.git.clean()
 
     def after_sources(self, files):
         if not self.args.dist_git_enable:
             return
-        self.git.update_lookaside_cache(files)
-        self.git.update()
+
+        with Chdir(self.output):
+            self.update_lookaside_cache(files)
+            self.git.add()
+
+            if self.git.stage_modified():
+                self.git.commit()
+                self.git.push()
+            else:
+                self.log.info("No changes made to the code, commiting skipped")
+
+            self.build()
+
+    def update_lookaside_cache(self, artifacts):
+        if not artifacts:
+            return
+
+        self.log.info("Updating lookaside cache...")
+        subprocess.check_output(["rhpkg", "new-sources"] + artifacts.keys())
+        self.log.info("Update finished.")
+
+    def build(self):
+        if self.args.dist_git_assume_yes or Tools.decision("Do you want to execute a build on OSBS?"):
+            self.log.info("Executing container build on OSBS...")
+            subprocess.call(["rhpkg", "container-build"])
 
 class Git(object):
     """
@@ -57,15 +82,22 @@ class Git(object):
         self.dockerfile = os.path.join(self.path, "Dockerfile")
         self.noninteractive = noninteractive
 
-        self.name, self.branch, self.commit = Git.repo_info(path)
+        self.name, self.branch, _ = Git.repo_info(path)
         self.source_repo_name, self.source_repo_branch, self.source_repo_commit = Git.repo_info(source)
+
+    def stage_modified(self):
+        # Check if there are any files in stage (return code 1). If there are no files
+        # (return code 0) it means that this is a rebuild, so skip commiting
+        if subprocess.call(["git", "diff-index", "--quiet", "--cached", "HEAD"]):
+            return True
+
+        return False
 
     def prepare(self):
         self.log.debug("Resetting git repository...")
 
         # Reset all changes first - nothing should be done by hand
-        with Chdir(self.path):
-            subprocess.check_output(["git", "reset", "--hard"])
+        subprocess.check_output(["git", "reset", "--hard"])
 
         # Just check if the target branch is correct
         if not Tools.decision("You are currently working on the '%s' branch, is this what you want?" % self.branch):
@@ -77,17 +109,13 @@ class Git(object):
         shutil.rmtree(os.path.join(self.path, "scripts"), ignore_errors=True)
         shutil.rmtree(os.path.join(self.path, "repos"), ignore_errors=True)
 
-        with Chdir(self.path):
-            for d in ["scripts", "repos"]:
-                if os.path.exists(d):
-                    self.log.info("Removing old '%s' directory" % d)
-                    subprocess.check_output(["git", "rm", "-rf", d])
+        for d in ["scripts", "repos"]:
+            if os.path.exists(d):
+                self.log.info("Removing old '%s' directory" % d)
+                subprocess.check_output(["git", "rm", "-rf", d])
 
     def switch_branch(self):
-
-        with Chdir(self.path):
-            branches = subprocess.check_output(["git", "for-each-ref", "--format=%(refname)", "refs/heads"])
-
+        branches = subprocess.check_output(["git", "for-each-ref", "--format=%(refname)", "refs/heads"])
         branches = [b.strip().split("/")[-1] for b in branches.splitlines()]
 
         self.log.info("Available branches:")
@@ -101,29 +129,19 @@ class Git(object):
             print("")
             self.switch_branch()
 
-        with Chdir(self.path):
-            # Checkout the correct branch
-            self.log.info("Switching to '%s' branch" % target_branch)
-            subprocess.check_output(["git", "checkout", "-q", "-f", target_branch])
+        # Checkout the correct branch
+        self.log.info("Switching to '%s' branch" % target_branch)
+        subprocess.check_output(["git", "checkout", "-q", "-f", target_branch])
 
-    def update_lookaside_cache(self, artifacts):
-        if not artifacts:
-            return
+    def add(self):
+        # Add new Dockerfile
+        subprocess.check_call(["git", "add", "Dockerfile"])
 
-        with Chdir(self.path):
-            self.log.info("Updating lookaside cache...")
-            subprocess.check_output(["rhpkg", "new-sources"] + artifacts.keys())
-            self.log.info("Update finished.")
+        for d in ["scripts", "repos"]:
+            if os.path.exists(os.path.join(self.path, d)):
+                subprocess.check_call(["git", "add", d])
 
-    def update(self):
-        with Chdir(self.path):
-            # Add new Dockerfile
-            subprocess.check_call(["git", "add", "Dockerfile"])
-
-            for d in ["scripts", "repos"]:
-                if os.path.exists(os.path.join(self.path, d)):
-                    subprocess.check_call(["git", "add", d])
-
+    def commit(self):
         commit_msg = "Sync"
 
         if self.source_repo_name:
@@ -132,39 +150,30 @@ class Git(object):
         if self.source_repo_commit:
             commit_msg += ", commit %s" % self.source_repo_commit
 
-        with Chdir(self.path):
-            # Commit the change
-            self.log.info("Commiting with message: '%s'" % commit_msg)
-            subprocess.check_output(["git", "commit", "-m", commit_msg])
+        # Commit the change
+        self.log.info("Commiting with message: '%s'" % commit_msg)
+        subprocess.check_output(["git", "commit", "-m", commit_msg])
 
+        untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard"])
 
-            untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard"])
+        if untracked:
+            self.log.warn("There are following untracked files: %s. Please review your commit." % ", ".join(untracked.splitlines()))
 
-            if untracked:
-                self.log.warn("There are following untracked files: %s. Please review your commit." % ", ".join(untracked.splitlines()))
+        diffs = subprocess.check_output(["git", "diff-files", "--name-only"])
 
-            diffs = subprocess.check_output(["git", "diff-files", "--name-only"])
-
-            if diffs:
-                self.log.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(diffs.splitlines()))
+        if diffs:
+            self.log.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(diffs.splitlines()))
 
         if not self.noninteractive:
-            with Chdir(self.path):
-                subprocess.call(["git", "status"])
-                subprocess.call(["git", "show"])
+            subprocess.call(["git", "status"])
+            subprocess.call(["git", "show"])
 
         if not (self.noninteractive or Tools.decision("Are you ok with the changes?")):
-            with Chdir(self.path):
-                subprocess.call(["bash"])
+            subprocess.call(["bash"])
 
+    def push(self):
         if self.noninteractive or Tools.decision("Do you want to push the commit?"):
             print("")
-            with Chdir(self.path):
-                self.log.info("Pushing change to the upstream repository...")
-                subprocess.check_output(["git", "push", "-q"])
-                self.log.info("Change pushed.")
-
-                if self.noninteractive or Tools.decision("Do you want to execute a build on OSBS?"):
-                    self.log.info("Executing a build on OSBS...")
-                    subprocess.call(["rhpkg", "container-build"])
-
+            self.log.info("Pushing change to the upstream repository...")
+            subprocess.check_output(["git", "push", "-q"])
+            self.log.info("Change pushed.")
