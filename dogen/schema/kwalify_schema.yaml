@@ -43,10 +43,11 @@ map:
     seq:
       - map:
           value: {type: int, required: True}
+          expose: {type: bool}
+          description: {type: str}
   volumes:
       seq:
         - {type: str, required: True}
-  debugport: {type: int}
   dogen:
     map:
       version: {type: text}

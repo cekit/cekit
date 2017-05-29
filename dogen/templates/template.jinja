@@ -45,7 +45,7 @@ LABEL name="$JBOSS_IMAGE_NAME" \
 
 {% if ports %}
 # Exposed ports
-EXPOSE {%- for port in ports %} {{ port.value }}{% endfor %}
+EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
 
 {% endif %}
 
