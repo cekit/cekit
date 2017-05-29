@@ -63,3 +63,17 @@ class TemplateHelper(object):
 
         return envs
 
+    def ports(self, available_ports):
+        """
+        Combines all ports that should be added to the
+        Dockerfile into one array
+        """
+
+        port_list = []
+
+        for p in available_ports:
+            if p.get('expose', True):
+                port_list.append(p.get('value'))
+
+        return port_list
+
