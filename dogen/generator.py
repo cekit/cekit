@@ -357,4 +357,4 @@ class Generator(object):
         if filesum.lower() != checksum.lower():
             raise Exception("The %s computed for the '%s' file ('%s') doesn't match the '%s' value" % (algorithm, filename, filesum, checksum))
 
-        self.log.debug("MD5 hash is correct.")
+        self.log.debug("Hash is correct.")
