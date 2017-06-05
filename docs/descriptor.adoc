@@ -140,5 +140,18 @@ scripts:
       user: 185
 ```
 
-## TBD Volumes
-## TBD Dogen
+## Volumes
+
+In case you want to define link:https://docs.docker.com/engine/reference/builder/#volume[volumes] for your image, just use the `volumes` section!
+
+```yaml
+volumes:
+    - "/opt/eap/standalone"
+```
+
+## Dogen
+
+The `dogen` section is special. It contains instructions to the Dogen tool itself.
+
+* `version` -- Pin the image descriptor to the specific version of Dogen. In case the Dogen version you run and the specified version are different -- generation will be interrupted
+* `template` -- Specify the template location. It can be an URL. By default template provided with Dogen is used. You can override both by using the `--template` argument in CLI.
