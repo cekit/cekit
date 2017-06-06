@@ -160,3 +160,19 @@ class TestDockerfile(unittest.TestCase):
             dockerfile = f.read()
             regex = re.compile(r'LABEL name=\"\$JBOSS_IMAGE_NAME\" \\\s+version=\"\$JBOSS_IMAGE_VERSION\" \\\s+architecture=\"x86_64\" \\\s+com.redhat.component=\"someimage\" \\\s+maintainer=\"Marek Goldmann\"',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
+
+    # https://github.com/jboss-dockerfiles/dogen/issues/137
+    def test_generating_description_label(self):
+        with open(self.yaml, 'ab') as f:
+            f.write("description: This is a nice image".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.render_from_template()
+
+        self.assertEqual(generator.cfg['labels'], [{'name': 'description', 'value': 'This is a nice image'}])
+
+        with open(os.path.join(self.target, "Dockerfile"), "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'LABEL name=\"\$JBOSS_IMAGE_NAME\" \\\s+version=\"\$JBOSS_IMAGE_VERSION\" \\\s+architecture=\"x86_64\" \\\s+com.redhat.component=\"someimage\" \\\s+description=\"This is a nice image\"',  re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
