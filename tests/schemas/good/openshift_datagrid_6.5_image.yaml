@@ -14,72 +14,70 @@ labels:
     - name: "io.openshift.s2i.scripts-url"
       value: "image:///usr/local/s2i"
 envs:
-    information:
-        - name: "JBOSS_MODULES_SYSTEM_PKGS"
-          value: "org.jboss.logmanager"
-    configuration:
-        - name: "OPENSHIFT_KUBE_PING_NAMESPACE"
-          example: "myproject"
-          description: "Clustering project namespace."
-        - name: "OPENSHIFT_KUBE_PING_LABELS"
-          example: "application=eap-app"
-          description: "Clustering labels selector."
-        - name: "JAVA_OPTS_APPEND"
-          example: "-Dfoo=bar"
-        - name: "JGROUPS_CLUSTER_PASSWORD"
-          example: "miR0JaDR"
-          description: "A password to control access to the JGroup. Needs to be set consistently cluster-wide. The image default is to use the `OPENSHIFT_KUBE_PING_LABELS` variable value, however the JBoss application templates generate and supply a random value."
-        - name: CACHE_NAMES
-          description: "List of caches to configure. Defaults to default,memcached"
-          example: "addressbook,addressbook_indexed"
-        - name: DEFAULT_CACHE
-          description: "Indicates the default cache for this cache container."
-          example: "addressbook"
-        - name: CACHE_CONTAINER_START
-          description: "Should this cache container be started on server startup, or lazily when requested by a service or deployment. Defaults to LAZY"
-          example: "EAGER"
-        - name: CACHE_CONTAINER_STATISTICS
-          description: "Determines whether or not the cache container should collect statistics. Disable for optimal performance. Default is true"
-          example: "false"
-        - name: TRANSPORT_LOCK_TIMEOUT
-          description: "Infinispan uses a distributed lock to maintain a coherent transaction log during state transfer or remd5suming, which means that only one cache can be doing state transfer or rehashing at the same time. This constraint is in place because more than one cache could be involved in a transaction. This timeout controls the time to wait to acquire a distributed lock. Defaults to 240000"
-          example: "120000"
-        - name: CONTAINER_SECURITY_IDENTITY_ROLE_MAPPER
-          description: "Set a role mapper for this cache container. Valid values are: identity-role-mapper,common-name-role-mapper,cluster-role-mapper,custom-role-mapper"
-          example: "identity-role-mapper"
-        - name: CONTAINER_SECURITY_CUSTOM_ROLE_MAPPER_CLASS
-          description: "Class of the custom principal to role mapper"
-          example: "com.acme.CustomRoleMapper"
-        - name: CONTAINER_SECURITY_ROLES
-          description: "Defines role names and assigns permissions to them."
-          example: "admin=ALL,reader=READ,writer=WRITE"
-        - name: INFINISPAN_CONNECTORS
-          description: "Comma separated list of connectors to configure. Defaults to hotrod,memcached,rest. Beware, if you enable authorization or authentication on your cache you should remove memcached as the protocol is insecure."
-          example: "hotrod"
-        - name: HOTROD_SERVICE_NAME
-          description: "Name of the OpenShift service used to expose HotRod externally."
-          example: "DATAGRID_APP_HOTROD"
-        - name: HOTROD_AUTHENTICATION
-          description: "If defined the hotrod-connectors will be configured with authentication in the ApplicationRealm."
-          example: "true"
-        - name: HOTROD_ENCRYPTION
-          description: "If defined the hotrod-connectors will be configured with encryption in the ApplicationRealm."
-          example: "true"
-        - name: ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH
-          description: "Whether to require client certificate authentication. Defaults to false."
-          example: "true"
-        - name: MEMCACHED_CACHE
-          description: "The name of the cache to use for the Memcached connector."
-          example: "memcached"
-        - name: REST_SECURITY_DOMAIN
-          description: "The security domain to use for authentication/authorization purposes. Defaults to none (no authentication)"
-          example: "other"
-        - name: "USERNAME"
-          example: "openshift"
-          description: "Username for JDG user"
-        - name: "PASSWORD"
-          example: "p@ssw0rd"
-          description: "Password for JDG user"
+    - name: "JBOSS_MODULES_SYSTEM_PKGS"
+      value: "org.jboss.logmanager"
+    - name: "OPENSHIFT_KUBE_PING_NAMESPACE"
+      example: "myproject"
+      description: "Clustering project namespace."
+    - name: "OPENSHIFT_KUBE_PING_LABELS"
+      example: "application=eap-app"
+      description: "Clustering labels selector."
+    - name: "JAVA_OPTS_APPEND"
+      example: "-Dfoo=bar"
+    - name: "JGROUPS_CLUSTER_PASSWORD"
+      example: "miR0JaDR"
+      description: "A password to control access to the JGroup. Needs to be set consistently cluster-wide. The image default is to use the `OPENSHIFT_KUBE_PING_LABELS` variable value, however the JBoss application templates generate and supply a random value."
+    - name: CACHE_NAMES
+      description: "List of caches to configure. Defaults to default,memcached"
+      example: "addressbook,addressbook_indexed"
+    - name: DEFAULT_CACHE
+      description: "Indicates the default cache for this cache container."
+      example: "addressbook"
+    - name: CACHE_CONTAINER_START
+      description: "Should this cache container be started on server startup, or lazily when requested by a service or deployment. Defaults to LAZY"
+      example: "EAGER"
+    - name: CACHE_CONTAINER_STATISTICS
+      description: "Determines whether or not the cache container should collect statistics. Disable for optimal performance. Default is true"
+      example: "false"
+    - name: TRANSPORT_LOCK_TIMEOUT
+      description: "Infinispan uses a distributed lock to maintain a coherent transaction log during state transfer or remd5suming, which means that only one cache can be doing state transfer or rehashing at the same time. This constraint is in place because more than one cache could be involved in a transaction. This timeout controls the time to wait to acquire a distributed lock. Defaults to 240000"
+      example: "120000"
+    - name: CONTAINER_SECURITY_IDENTITY_ROLE_MAPPER
+      description: "Set a role mapper for this cache container. Valid values are: identity-role-mapper,common-name-role-mapper,cluster-role-mapper,custom-role-mapper"
+      example: "identity-role-mapper"
+    - name: CONTAINER_SECURITY_CUSTOM_ROLE_MAPPER_CLASS
+      description: "Class of the custom principal to role mapper"
+      example: "com.acme.CustomRoleMapper"
+    - name: CONTAINER_SECURITY_ROLES
+      description: "Defines role names and assigns permissions to them."
+      example: "admin=ALL,reader=READ,writer=WRITE"
+    - name: INFINISPAN_CONNECTORS
+      description: "Comma separated list of connectors to configure. Defaults to hotrod,memcached,rest. Beware, if you enable authorization or authentication on your cache you should remove memcached as the protocol is insecure."
+      example: "hotrod"
+    - name: HOTROD_SERVICE_NAME
+      description: "Name of the OpenShift service used to expose HotRod externally."
+      example: "DATAGRID_APP_HOTROD"
+    - name: HOTROD_AUTHENTICATION
+      description: "If defined the hotrod-connectors will be configured with authentication in the ApplicationRealm."
+      example: "true"
+    - name: HOTROD_ENCRYPTION
+      description: "If defined the hotrod-connectors will be configured with encryption in the ApplicationRealm."
+      example: "true"
+    - name: ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH
+      description: "Whether to require client certificate authentication. Defaults to false."
+      example: "true"
+    - name: MEMCACHED_CACHE
+      description: "The name of the cache to use for the Memcached connector."
+      example: "memcached"
+    - name: REST_SECURITY_DOMAIN
+      description: "The security domain to use for authentication/authorization purposes. Defaults to none (no authentication)"
+      example: "other"
+    - name: "USERNAME"
+      example: "openshift"
+      description: "Username for JDG user"
+    - name: "PASSWORD"
+      example: "p@ssw0rd"
+      description: "Password for JDG user"
 ports:
     - value: 8443
     - value: 8778

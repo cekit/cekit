@@ -11,11 +11,10 @@ labels:
     - name: "io.openshift.tags"
       value: "builder,processserver,processserver6"
 envs:
-    information:
-        - name: "KIE_SERVER_BPM_UI_DISABLED"
-          value: "true"
-          description: "The BPM UI capability is disabled in this image."
-        - name: "KIE_SERVER_BRP_DISABLED"
-          value: "true"
-          description: "The BRP capability is disabled in this image."
+    - name: "KIE_SERVER_BPM_UI_DISABLED"
+      value: "true"
+      description: "The BPM UI capability is disabled in this image."
+    - name: "KIE_SERVER_BRP_DISABLED"
+      value: "true"
+      description: "The BRP capability is disabled in this image."
 

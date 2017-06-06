@@ -176,3 +176,17 @@ class TestDockerfile(unittest.TestCase):
             dockerfile = f.read()
             regex = re.compile(r'LABEL name=\"\$JBOSS_IMAGE_NAME\" \\\s+version=\"\$JBOSS_IMAGE_VERSION\" \\\s+architecture=\"x86_64\" \\\s+com.redhat.component=\"someimage\" \\\s+description=\"This is a nice image\"',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
+
+    # https://github.com/jboss-dockerfiles/dogen/issues/127
+    def test_generating_env_variables(self):
+        with open(self.yaml, 'ab') as f:
+            f.write("envs:\n  - name: INFO_ENV\n    value: 0\n  - name: CONFIG_ENV\n    example: 1234\n  - name: COMBINED_ENV\n    value: set_value\n    example: example_value\n    description: This is a description".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.render_from_template()
+
+        with open(os.path.join(self.target, "Dockerfile"), "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'ENV JBOSS_IMAGE_NAME=\"someimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+INFO_ENV=\"0\" \\\s+COMBINED_ENV=\"set_value\" \n',  re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
