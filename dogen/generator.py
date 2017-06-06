@@ -226,6 +226,15 @@ class Generator(object):
         self.log.info("Finished!")
 
     def render_from_template(self):
+        maintainer = self.cfg.get('maintainer')
+
+        # https://github.com/jboss-dockerfiles/dogen/issues/129
+        if maintainer:
+            if not self.cfg.get('labels'):
+                self.cfg['labels'] = []
+
+            self.cfg['labels'].append({'name': 'maintainer', 'value': maintainer})
+
         if self.template:
             template_file = self.template
         else:

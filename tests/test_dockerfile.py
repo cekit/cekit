@@ -131,9 +131,6 @@ class TestDockerfile(unittest.TestCase):
 
     # https://github.com/jboss-dockerfiles/dogen/issues/124
     def test_debug_port(self):
-        """
-        Test that cmd: is mapped into a CMD instruction
-        """
         with open(self.yaml, 'ab') as f:
             f.write("ports:\n  - value: 8080\n  - value: 9999\n    expose: False".encode())
 
@@ -146,4 +143,20 @@ class TestDockerfile(unittest.TestCase):
         with open(os.path.join(self.target, "Dockerfile"), "r") as f:
             dockerfile = f.read()
             regex = re.compile(r'.*EXPOSE 8080$',  re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
+
+    # https://github.com/jboss-dockerfiles/dogen/issues/129
+    def test_generating_maintainer_label(self):
+        with open(self.yaml, 'ab') as f:
+            f.write("maintainer: Marek Goldmann".encode())
+
+        generator = Generator(self.log, self.args)
+        generator.configure()
+        generator.render_from_template()
+
+        self.assertEqual(generator.cfg['labels'], [{'name': 'maintainer', 'value': 'Marek Goldmann'}])
+
+        with open(os.path.join(self.target, "Dockerfile"), "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'LABEL name=\"\$JBOSS_IMAGE_NAME\" \\\s+version=\"\$JBOSS_IMAGE_VERSION\" \\\s+architecture=\"x86_64\" \\\s+com.redhat.component=\"someimage\" \\\s+maintainer=\"Marek Goldmann\"',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)

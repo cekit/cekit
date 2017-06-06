@@ -18,11 +18,6 @@
 
 FROM {{ helper.base_image(from, version) }}
 
-{% if maintainer %}
-MAINTAINER {{ maintainer }}
-
-{% endif -%}
-
 # Environment variables
 ENV JBOSS_IMAGE_NAME="{{name}}" \
     JBOSS_IMAGE_VERSION="{{version}}" {% if helper.envs(envs) %}\{% for env in helper.envs(envs) %}
