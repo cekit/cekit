@@ -55,7 +55,6 @@ class CLI(object):
         parser.add_argument('--without-sources', '--ws', action='store_true', help='Do not process sources, only generate Dockerfile')
         parser.add_argument('--skip-ssl-verification', action='store_true', help='Should we skip SSL verification when retrieving data?')
         parser.add_argument('--scripts-path', help='Location of the scripts directory containing script packages.')
-        parser.add_argument('--additional-script', action='append', help='Location of additional script (can be url). Can be specified multiple times.')
         parser.add_argument('--template', help='Path to custom template (can be url)')
 
         parser.add_argument('path', help="Path to yaml descriptor to process")

@@ -19,8 +19,7 @@ class TestConfig(unittest.TestCase):
         self.descriptor = tempfile.NamedTemporaryFile(delete=False)
         self.descriptor.write(self.basic_config.encode())
         self.args = argparse.Namespace(path=self.descriptor.name, output="target", without_sources=False,
-                                       template=None, scripts_path=None, additional_script=None,
-                                       skip_ssl_verification=None)
+                                       template=None, scripts_path=None, skip_ssl_verification=None)
     def tearDown(self):
         os.remove(self.descriptor.name)
 
@@ -31,7 +30,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(self.generator.descriptor, self.descriptor.name)
         self.assertEqual(self.generator.template, None)
         self.assertEqual(self.generator.scripts_path, None)
-        self.assertEqual(self.generator.additional_scripts, None)
         self.assertEqual(self.generator.without_sources, False)
         # Set to True in the configure() method later
         self.assertEqual(self.generator.ssl_verify, None)
@@ -120,23 +118,6 @@ class TestConfig(unittest.TestCase):
         generator.configure()
         mock_patch.assert_called_with('custom-scripts')
         self.assertEqual(generator.scripts_path, "custom-scripts")
-
-    def test_custom_additional_scripts_in_descriptor(self):
-        with self.descriptor as f:
-            f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
-
-        generator = Generator(self.log, self.args)
-        generator.configure()
-        self.assertEqual(generator.additional_scripts, ["http://host/somescript"])
-
-    def test_custom_additional_scripts_in_cli_should_override_in_descriptor(self):
-        with self.descriptor as f:
-            f.write("dogen:\n  additional_scripts:\n    - http://host/somescript".encode())
-        args = self.args
-        args.additional_script=["https://otherhost/otherscript"]
-        generator = Generator(self.log, args)
-        generator.configure()
-        self.assertEqual(generator.additional_scripts, ["https://otherhost/otherscript"])
 
     @mock.patch('dogen.generator.os.path.exists', return_value=True)
     def helper_test_script_exec(self, exec_to_test, cfg, mock_patch):

@@ -28,7 +28,6 @@ class Generator(object):
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.template = args.template
         self.scripts_path = args.scripts_path
-        self.additional_scripts = args.additional_script
 
         ssl_verify = None
         if args.skip_ssl_verification:
@@ -133,11 +132,6 @@ class Generator(object):
         if scripts and not self.scripts_path:
             self.scripts_path = scripts
 
-        additional_scripts = dogen_cfg.get('additional_scripts')
-
-        if additional_scripts and not self.additional_scripts:
-            self.additional_scripts = additional_scripts
-
         if self.scripts_path and not os.path.exists(self.scripts_path):
             raise Error("Provided scripts directory '%s' does not exist" % self.scripts_path)
 
@@ -163,24 +157,6 @@ class Generator(object):
                 self.log.info("Copying package '%s'..." % package)
                 shutil.copytree(src=src_path, dst=output_path)
                 self.log.debug("Done.")
-
-    def _handle_additional_scripts(self):
-        self.log.info("Additional scripts provided, installing them...")
-        output_scripts = os.path.join(self.output, "scripts")
-
-        if not os.path.exists(output_scripts):
-            os.makedirs(output_scripts)
-
-        for f in self.additional_scripts:
-            self.log.debug("Handling '%s' file..." % f)
-            if Tools.is_url(f):
-                self._fetch_file(f, os.path.join(output_scripts, os.path.basename(f)))
-            else:
-                if not (os.path.exists(f) and os.path.isfile(f)):
-                    raise Error("File '%s' does not exist. Please make sure you specified correct path to a file when specifying additional scripts." % f)
-
-                self.log.debug("Copying '%s' file to target scripts directory..." % f)
-                shutil.copy(f, output_scripts)
 
     def _validate_cfg(self):
         """
@@ -240,10 +216,6 @@ class Generator(object):
             self._handle_scripts()
         else:
             self.log.warn("No scripts will be copied, mistake?")
-
-        # Additional scripts (not package scripts)
-        if self.additional_scripts:
-            self._handle_additional_scripts()
 
         self.handle_sources()
         self.render_from_template()
