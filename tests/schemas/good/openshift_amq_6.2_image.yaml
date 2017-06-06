@@ -51,10 +51,10 @@ scripts:
     - package: os-amq-permissions
       exec: install.sh
 sources:
-    - url: http://redacted/jolokia-jvm-1.3.2.redhat-1-agent.jar
+    - artifact: http://redacted/jolokia-jvm-1.3.2.redhat-1-agent.jar
       md5: 1b996b9083f537917b307309b0e2f16d
-    - url: http://redacted/openshift-activemq-plugin-1.0.0.Final-redhat-1.jar
+    - artifact: http://redacted/openshift-activemq-plugin-1.0.0.Final-redhat-1.jar
       md5: 325fbbaff0f7dbea42203346d9c3bf98
-    - url: http://redacted/jboss-dmr-1.2.2.Final-redhat-1.jar
+    - artifact: http://redacted/jboss-dmr-1.2.2.Final-redhat-1.jar
       md5: 8df4cbf6f39c3bce21de16ad708084d5
 

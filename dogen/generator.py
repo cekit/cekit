@@ -58,7 +58,7 @@ class Generator(object):
         r = requests.get(location, verify=self.ssl_verify, stream=True)
 
         if r.status_code != 200:
-            raise Exception("Could not download file from %s" % location)
+            raise Error("Could not download file from %s" % location)
 
         with open(output, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
@@ -253,10 +253,23 @@ class Generator(object):
         self.cfg['artifacts'] = {}
 
         for source in self.cfg['sources']:
-            url = source['url']
-            target = source.get('target')
+            url = source.get('url')
+            artifact = source.get('artifact')
 
-            basename = os.path.basename(url)
+            if url:
+                self.log.warn("The 'url' key is deprecated, please use 'artifact' for specifying the %s artifact location" % url)
+
+                if artifact:
+                    self.log.warn("You specified both: 'artifact' and 'url' for a source file, 'artifact': will be used: %s" % artifact)
+                else:
+                    # Backward compatibility
+                    artifact = url
+
+            if not artifact:
+                raise Error("Artifact location for one or more sources was not provided, please check your image descriptor!")
+
+            basename = os.path.basename(artifact)
+            target = source.get('target')
 
             # In case we specify target name for the artifact - use it
             if not target:
@@ -270,7 +283,7 @@ class Generator(object):
             md5sum = source.get('md5sum')
 
             if md5sum:
-                self.log.warn("The 'md5sum' key is deprecated, please use 'md5' for %s. Or better switch to sha256 or sha1." % url)
+                self.log.warn("The 'md5sum' key is deprecated, please use 'md5' for %s. Or better switch to sha256 or sha1." % artifact)
 
                 # Backwards compatibility for md5sum
                 if not source.get('md5'):
@@ -295,17 +308,17 @@ class Generator(object):
                 sources_cache = os.environ.get("DOGEN_SOURCES_CACHE")
 
                 if sources_cache:
-                    url = sources_cache.replace('#filename#', basename)
+                    artifact = sources_cache.replace('#filename#', basename)
 
                     if algorithms:
                         if len(algorithms) > 1:
-                            self.log.warn("You specified multiple algorithms for '%s' url, but only '%s' will be used to fetch it from cache" % (url, algorithms[0]))
+                            self.log.warn("You specified multiple algorithms for '%s' artifact, but only '%s' will be used to fetch it from cache" % (artifact, algorithms[0]))
 
-                        url = url.replace('#hash#', source[algorithms[0]]).replace('#algorithm#', algorithms[0])
+                        artifact = artifact.replace('#hash#', source[algorithms[0]]).replace('#algorithm#', algorithms[0])
 
-                    self.log.info("Using '%s' as cached location for artifact" % url)
+                    self.log.info("Using '%s' as cached location for artifact" % artifact)
 
-                self._fetch_file(url, filename)
+                self._fetch_file(artifact, filename)
 
                 if algorithms:
                     for algorithm in algorithms:
@@ -327,6 +340,6 @@ class Generator(object):
         filesum = hash.hexdigest()
 
         if filesum.lower() != checksum.lower():
-            raise Exception("The %s computed for the '%s' file ('%s') doesn't match the '%s' value" % (algorithm, filename, filesum, checksum))
+            raise Error("The %s computed for the '%s' file ('%s') doesn't match the '%s' value" % (algorithm, filename, filesum, checksum))
 
         self.log.debug("Hash is correct.")
