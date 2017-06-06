@@ -54,9 +54,6 @@ map:
       ssl_verify: {type: bool}
       template: {type: str}
       scripts_path: {type: str}
-      additional_scripts:
-        seq:
-          - {type: str}
   scripts:
     seq:
       - map:
