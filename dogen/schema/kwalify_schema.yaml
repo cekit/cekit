@@ -60,7 +60,6 @@ map:
          package: {type: str}
          exec: {type: str}
          user: {type: text}
-  verbose: {type: int}
   maintainer: {type: str}
   workdir: {type: str}
   sources:
