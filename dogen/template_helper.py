@@ -10,7 +10,7 @@ class TemplateHelper(object):
         if target:
             return target
 
-        return os.path.basename(source['url'])
+        return os.path.basename(source['artifact'])
 
     def cmd(self, arr):
         """

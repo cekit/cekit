@@ -93,11 +93,11 @@ scripts:
       user: 185
       exec: configure.sh
 sources:
-    - url: http://redacted/jolokia-jvm-1.3.2.redhat-1-agent.jar
+    - artifact: http://redacted/jolokia-jvm-1.3.2.redhat-1-agent.jar
       md5: 1b996b9083f537917b307309b0e2f16d
-    - url: http://redacted/json-smart-1.1.1.jar
+    - artifact: http://redacted/json-smart-1.1.1.jar
       md5: c382c9109020d001b96329c2057ba933
-    - url: http://redacted/commons-lang-2.6.0.redhat-4.jar
+    - artifact: http://redacted/commons-lang-2.6.0.redhat-4.jar
       md5: 0da0fbfb0ff2160df3a4832d28003361
-    - url: http://redacted/jsonevent-layout-1.7-redhat-1.jar
+    - artifact: http://redacted/jsonevent-layout-1.7-redhat-1.jar
       md5: 08f9aa037ac91c4aaa0d5dabf143a60e
