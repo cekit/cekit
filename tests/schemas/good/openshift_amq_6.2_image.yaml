@@ -12,19 +12,18 @@ labels:
     - name: "io.openshift.s2i.scripts-url"
       value: "image:///usr/local/s2i"
 envs:
-    configuration:
-        - name: AMQ_MESH_SERVICE_NAME
-          example: broker-amq-tcp
-        - name: AMQ_MESH_DISCOVERY_TYPE
-          example: kube
-        - name: AMQ_MESH_SERVICE_NAMESPACE
-          example: my-project
-        - name: AMQ_SPLIT
-          example: true
-          description: "Allow multiple instances to share the same Persistent Volume.  If set to true each instance will use a separate area within the Persistent Volume as its data directory.  Default is unset."
-        - name: AMQ_LOCK_TIMEOUT
-          example: 30
-          description: "If allowing multiple instances to share the same Persistent Volume then wait for this timeout period (seconds) to see if an existing server will terminate before moving to the next instance.  Default is 30 seconds."
+    - name: AMQ_MESH_SERVICE_NAME
+      example: broker-amq-tcp
+    - name: AMQ_MESH_DISCOVERY_TYPE
+      example: kube
+    - name: AMQ_MESH_SERVICE_NAMESPACE
+      example: my-project
+    - name: AMQ_SPLIT
+      example: true
+      description: "Allow multiple instances to share the same Persistent Volume.  If set to true each instance will use a separate area within the Persistent Volume as its data directory.  Default is unset."
+    - name: AMQ_LOCK_TIMEOUT
+      example: 30
+      description: "If allowing multiple instances to share the same Persistent Volume then wait for this timeout period (seconds) to see if an existing server will terminate before moving to the next instance.  Default is 30 seconds."
 ports:
     - value: 8778
     - value: 5672

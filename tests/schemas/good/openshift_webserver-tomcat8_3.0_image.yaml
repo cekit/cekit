@@ -14,31 +14,29 @@ labels:
     - name: "io.openshift.s2i.scripts-url"
       value: "image:///usr/local/s2i"
 envs:
-    information:
-        - name: "STI_BUILDER"
-          value: "jee"
-    configuration:
-        - name: JWS_ADMIN_USERNAME
-          example: jwsadmin
-        - name: JWS_ADMIN_PASSWORD
-          example: p5sw0rdd
-        - name: JWS_HTTPS_CERTIFICATE_DIR
-          example: /opt/webserver/conf
-        - name: JWS_HTTPS_CERTIFICATE
-          example: server.crt
-        - name: JWS_HTTPS_CERTIFICATE_KEY
-          example: server.key
-        - name: JWS_HTTPS_CERTIFICATE_PASSWORD
-          example: $tr0nGPaSs?
-        - name: CATALINA_OPTS_APPEND
-          example: -Dfoo=bar
-        - name: JWS_REALM_USERTABLE
-        - name: JWS_REALM_USERNAME_COL
-        - name: JWS_REALM_USERCRED_COL
-        - name: JWS_REALM_USERROLE_TABLE
-        - name: JWS_REALM_ROLENAME_COL
-        - name: DB_SERVICE_PREFIX_MAPPING
-          example: test-postgresql=TEST_POSTGRESQL,test-mysql=TEST_MYSQL
+    - name: "STI_BUILDER"
+      value: "jee"
+    - name: JWS_ADMIN_USERNAME
+      example: jwsadmin
+    - name: JWS_ADMIN_PASSWORD
+      example: p5sw0rdd
+    - name: JWS_HTTPS_CERTIFICATE_DIR
+      example: /opt/webserver/conf
+    - name: JWS_HTTPS_CERTIFICATE
+      example: server.crt
+    - name: JWS_HTTPS_CERTIFICATE_KEY
+      example: server.key
+    - name: JWS_HTTPS_CERTIFICATE_PASSWORD
+      example: $tr0nGPaSs?
+    - name: CATALINA_OPTS_APPEND
+      example: -Dfoo=bar
+    - name: JWS_REALM_USERTABLE
+    - name: JWS_REALM_USERNAME_COL
+    - name: JWS_REALM_USERCRED_COL
+    - name: JWS_REALM_USERROLE_TABLE
+    - name: JWS_REALM_ROLENAME_COL
+    - name: DB_SERVICE_PREFIX_MAPPING
+      example: test-postgresql=TEST_POSTGRESQL,test-mysql=TEST_MYSQL
 ports:
     - value: 8443
     - value: 8778

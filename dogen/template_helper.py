@@ -52,14 +52,9 @@ class TemplateHelper(object):
 
         envs = []
 
-        if 'information' in env_variables:
-            for e in env_variables['information']:
-                envs.append(e)
-
-        if 'configuration' in env_variables:
-            for e in env_variables['configuration']:
-                if 'value' in e:
-                    envs.append(e)
+        for env in env_variables:
+            if env.get('value') is not None:
+                envs.append(env)
 
         return envs
 
