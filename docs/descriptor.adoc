@@ -40,26 +40,27 @@ labels:
 
 Similar to labels -- we can specify environment variables that should be present in the container after running the image. We provide `envs` section for this.
 
-As you can see we have two subsections: `information` and `configuration`. The `information` section is useful to provide environment variables that are meant to be read-only and only providing some information. On the other hand the `configuration` section contains environment variables that can (and probably should) be set by the user.
+Environment variables can be divided into two types:
 
-For the `information` envs we just provide `name` and `value`, `description` is optional. For `configuration`, instead of `value`, there is an `example` key which contains an example value. Please note that `description` for configuration envs is required and should be explain what is the variables used for as well as showing the default value (if any).
+1. *Information environment variables* -- these are set and available in the image. This type of envirpnment variables provide information to the image user. In most cases such environment variables are not meant to be modified.
+2. *Configuration environment variables* -- this type of variables are just a hint to the image user that such environment variables can be set. Such enviromnent variables should provide also an example usage (`example`) and short description (`description`).
 
-NOTE: The reason to differentiate between `configuration` and `information` environment variables is that we can use the `image.yaml` as a source to *generate documentation*.
+You can also have both: environment variable with a value set and at the same time an example value that could be set to it. This suggest the user that this environment variable could be redefined.
+
+NOTE: Configuration environment variables (without value) are not generated in the resulting Dockerfile. These can be used instead as a source for generating documentation.
 
 ```yaml
 envs:
-    information:
-        - name: "STI_BUILDER"
-          value: "jee"
-        - name: "JBOSS_MODULES_SYSTEM_PKGS"
-          value: "org.jboss.logmanager,jdk.nashorn.api"
-    configuration:
-        - name: "OPENSHIFT_KUBE_PING_NAMESPACE"
-          example: "myproject"
-          description: "Clustering project namespace."
-        - name: "OPENSHIFT_KUBE_PING_LABELS"
-          example: "application=eap-app"
-          description: "Clustering labels selector."
+    - name: "STI_BUILDER"
+      value: "jee"
+    - name: "JBOSS_MODULES_SYSTEM_PKGS"
+      value: "org.jboss.logmanager,jdk.nashorn.api"
+    - name: "OPENSHIFT_KUBE_PING_NAMESPACE"
+      example: "myproject"
+      description: "Clustering project namespace."
+    - name: "OPENSHIFT_KUBE_PING_LABELS"
+      example: "application=eap-app"
+      description: "Clustering labels selector."
 ```
 
 ## Ports
