@@ -48,12 +48,12 @@ class Generator(object):
         self.ssl_verify to False.
         """
 
-        self.log.info("Fetching '%s' file..." % location)
+        self.log.debug("Fetching '%s' file..." % location)
 
         if not output:
             output = tempfile.mktemp("-dogen")
 
-        self.log.info("Fetched file will be saved as '%s'..." % os.path.basename(output))
+        self.log.debug("Fetched file will be saved as '%s'..." % os.path.basename(output))
 
         r = requests.get(location, verify=self.ssl_verify, stream=True)
 
@@ -261,7 +261,11 @@ class Generator(object):
         if 'sources' not in self.cfg or self.without_sources:
             return []
 
+        self.log.info("Handling artifacts...")
         self.cfg['artifacts'] = {}
+
+        sources_cache = os.environ.get("DOGEN_SOURCES_CACHE")
+        self.log.debug("Source cache will be used for all artifacts")
 
         for source in self.cfg['sources']:
             url = source.get('url')
@@ -278,6 +282,8 @@ class Generator(object):
 
             if not artifact:
                 raise Error("Artifact location for one or more sources was not provided, please check your image descriptor!")
+
+            self.log.info("Handling artifact '%s'" % artifact)
 
             basename = os.path.basename(artifact)
             target = source.get('target')
@@ -312,24 +318,28 @@ class Generator(object):
                         self.check_sum(filename, source[algorithm], algorithm)
                     passed = True
             except Exception as e:
-                self.log.warn(str(e))
+                self.log.debug(str(e))
+                self.log.warn("Local file doesn't match provided checksum, artifact '%s' will be downloaded again" % artifact)
                 passed = False
 
             if not passed:
-                sources_cache = os.environ.get("DOGEN_SOURCES_CACHE")
 
                 if sources_cache:
-                    artifact = sources_cache.replace('#filename#', basename)
+                    cached_artifact = sources_cache.replace('#filename#', basename)
 
                     if algorithms:
                         if len(algorithms) > 1:
                             self.log.warn("You specified multiple algorithms for '%s' artifact, but only '%s' will be used to fetch it from cache" % (artifact, algorithms[0]))
 
-                        artifact = artifact.replace('#hash#', source[algorithms[0]]).replace('#algorithm#', algorithms[0])
+                        cached_artifact = cached_artifact.replace('#hash#', source[algorithms[0]]).replace('#algorithm#', algorithms[0])
 
-                    self.log.info("Using '%s' as cached location for artifact" % artifact)
-
-                self._fetch_file(artifact, filename)
+                    try:
+                        self._fetch_file(cached_artifact, filename)
+                    except Exception as e:
+                        self.log.warn("Could not download artifact from cached location: '%s': %s. Please make sure you set the correct value for DOGEN_SOURCES_CACHE (currently: '%s')." % (cached_artifact, str(e), sources_cache))
+                        self._download_source(artifact, filename, source.get('hint'))
+                else:
+                    self._download_source(artifact, filename, source.get('hint'))
 
                 if algorithms:
                     for algorithm in algorithms:
@@ -338,10 +348,24 @@ class Generator(object):
             if algorithms:
                 self.cfg['artifacts'][target] = "%s:%s" % (algorithms[0], source[algorithms[0]])
             else:
+                self.log.warn("No checksum was specified for artifact '%s'!" % artifact)
                 self.cfg['artifacts'][target] = None
 
+    def _download_source(self, artifact, filename, hint=None):
+        if Tools.is_url(artifact):
+            self.log.warn("Trying to download the '%s' artifact from original location" % artifact)
+            try:
+                self._fetch_file(artifact, filename)
+            except Exception as e:
+                raise Error("Could not download artifact from orignal location, reason: %s" % str(e))
+        else:
+            if hint:
+                self.log.info(hint)
+                self.log.info("Please download the '%s' artifact manually and save it as '%s'" % (artifact, filename))
+            raise Error("Artifact '%s' could not be fetched!" % artifact)
+
     def check_sum(self, filename, checksum, algorithm):
-        self.log.info("Checking '%s' %s hash..." % (os.path.basename(filename), algorithm))
+        self.log.debug("Checking '%s' %s hash..." % (os.path.basename(filename), algorithm))
 
         hash = getattr(hashlib, algorithm)()
 

@@ -3,3 +3,4 @@ Jinja2>=2.8
 requests>=2.8.1
 six>=1.10.0
 pykwalify>=1.5.1
+colorlog>=2.10.0
