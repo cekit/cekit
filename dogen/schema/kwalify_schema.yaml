@@ -64,6 +64,7 @@ map:
           sha1: {type: str}
           sha256: {type: str}
           target: {type: str}
+          hint: {type: str}
   packages:
     seq:
       - {type: str}

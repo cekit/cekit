@@ -1,6 +1,7 @@
 import argparse
 import unittest
 import mock
+import os
 import six
 
 from dogen.generator import Generator
@@ -45,8 +46,8 @@ class TestFetchFile(unittest.TestCase):
             mock_requests.assert_called_with('https://host/file.tmp', verify=None, stream=True)
             mock_file().write.assert_called_once_with("file-content")
 
-        self.log.info.assert_any_call("Fetching 'https://host/file.tmp' file...")
-        self.log.info.assert_any_call("Fetched file will be saved as 'some-file'...")
+        self.log.debug.assert_any_call("Fetching 'https://host/file.tmp' file...")
+        self.log.debug.assert_any_call("Fetched file will be saved as 'some-file'...")
 
 
     @mock.patch('dogen.generator.tempfile.mktemp', return_value="tmpfile")
@@ -64,8 +65,8 @@ class TestFetchFile(unittest.TestCase):
             mock_requests.assert_called_with('https://host/file.tmp', verify=None, stream=True)
             mock_file().write.assert_called_once_with("file-content")
 
-        self.log.info.assert_any_call("Fetching 'https://host/file.tmp' file...")
-        self.log.info.assert_any_call("Fetched file will be saved as 'tmpfile'...")
+        self.log.debug.assert_any_call("Fetching 'https://host/file.tmp' file...")
+        self.log.debug.assert_any_call("Fetched file will be saved as 'tmpfile'...")
 
 class TestCustomTemplateHandling(unittest.TestCase):
     def setUp(self):
@@ -113,3 +114,76 @@ class TestCustomTemplateHandling(unittest.TestCase):
 
         fetch_file_mock.assert_called_with("http://host/custom-template")
         self.assertEqual(self.generator.template, "some-tmp-file")
+
+class TestHandleSources(unittest.TestCase):
+    def setUp(self):
+        self.log = mock.Mock()
+        args = argparse.Namespace(path="image.yaml", output="target", without_sources=None,
+                                  template="http://host/custom-template", scripts_path=None,
+                                  additional_script=None, skip_ssl_verification=None)
+        self.generator = Generator(self.log, args)
+
+    def test_fetch_artifact_without_url_should_fail(self):
+        self.generator.cfg = {'sources': [{'artifact': 'jboss-eap.zip'}]}
+
+        with self.assertRaises(Error) as cm:
+            self.generator.handle_sources()
+
+        self.assertEquals(str(cm.exception), "Artifact 'jboss-eap.zip' could not be fetched!")
+
+    @mock.patch('dogen.generator.Generator._fetch_file', side_effect=Error("Blah"))
+    def test_fetch_artifact_should_fail_when_fetching_fails(self, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'http://jboss-eap.zip'}]}
+
+        with self.assertRaises(Error) as cm:
+            self.generator.handle_sources()
+
+        self.assertEquals(str(cm.exception), "Could not download artifact from orignal location, reason: Blah")
+
+    @mock.patch('dogen.generator.Generator._fetch_file', side_effect=[Error("cached"), Error("original")])
+    def test_fetch_artifact_should_fail_when_cached_download_failed_and_original_failed_too(self, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
+
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
+        k.start()
+
+        with self.assertRaises(Error) as cm:
+            self.generator.handle_sources()
+
+        k.stop()
+
+        self.assertEquals(str(cm.exception), "Could not download artifact from orignal location, reason: original")
+        mock_fetch_file.assert_has_calls([mock.call('http://cache/get?#algorithm#=#hash#', 'target/jboss-eap.zip'), mock.call('http://host.com/jboss-eap.zip', 'target/jboss-eap.zip')])
+
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_fetch_artifact_should_fetch_file_from_cache(self, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
+
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#filename#'})
+        k.start()
+        self.generator.handle_sources()
+        k.stop()
+
+        # No checksum provided and computed
+        self.assertEquals(self.generator.cfg['artifacts'], {'jboss-eap.zip': None})
+        mock_fetch_file.assert_called_with('http://cache/get?jboss-eap.zip', 'target/jboss-eap.zip')
+
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_fetch_artifact_should_fetch_file(self, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
+        self.generator.handle_sources()
+        # No checksum provided and computed
+        self.assertEquals(self.generator.cfg['artifacts'], {'jboss-eap.zip': None})
+        mock_fetch_file.assert_called_with('http://host.com/jboss-eap.zip', 'target/jboss-eap.zip')
+
+    @mock.patch('dogen.generator.Generator._fetch_file', side_effect=[Error("cached"), None])
+    def test_fetch_artifact_should_download_from_original_location_if_cached_location_failed(self, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
+
+        k = mock.patch.dict(os.environ, {'DOGEN_SOURCES_CACHE':'http://cache/get?#algorithm#=#hash#'})
+        k.start()
+        self.generator.handle_sources()
+        k.stop()
+
+        self.assertEquals(self.generator.cfg['artifacts'], {'jboss-eap.zip': None})
+        mock_fetch_file.assert_has_calls([mock.call('http://cache/get?#algorithm#=#hash#', 'target/jboss-eap.zip'), mock.call('http://host.com/jboss-eap.zip', 'target/jboss-eap.zip')])

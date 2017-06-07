@@ -14,6 +14,7 @@ from dogen.version import version
 from dogen.errors import Error
 from dogen.plugin import Plugin
 
+import colorlog
 
 class MyParser(argparse.ArgumentParser):
 
@@ -25,14 +26,15 @@ class MyParser(argparse.ArgumentParser):
 class CLI(object):
 
     def __init__(self):
-        self.log = logging.getLogger("dogen")
+        formatter = colorlog.ColoredFormatter(
+            '%(log_color)s%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         handler.setFormatter(formatter)
+
+        self.log = logging.getLogger("dogen")
         self.log.addHandler(handler)
 
-        for package in ["requests.packages.urllib3", "pykwalify.core", "pykwalify.rule"]:
+        for package in ["requests.packages.urllib3", "pykwalify.rule"]:
             log = logging.getLogger(package)
             log.setLevel(logging.INFO)
 
@@ -86,7 +88,10 @@ class CLI(object):
         except KeyboardInterrupt as e:
             pass
         except Error as e:
-            self.log.exception(e)
+            if args.verbose:
+                self.log.exception(e)
+            else:
+                self.log.error(str(e))
             sys.exit(1)
 
     def get_plugins(self):
