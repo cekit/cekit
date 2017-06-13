@@ -156,6 +156,17 @@ class TestHandleSources(unittest.TestCase):
         mock_fetch_file.assert_has_calls([mock.call('http://cache/get?#algorithm#=#hash#', 'target/jboss-eap.zip'), mock.call('http://host.com/jboss-eap.zip', 'target/jboss-eap.zip')])
 
     @mock.patch('dogen.generator.Generator._fetch_file')
+    def test_fetch_artifact_should_fail_with_nice_message_when_artifact_without_url_is_not_found_locally(self, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'jboss-eap.zip'}]}
+
+        with self.assertRaises(Error) as cm:
+            self.generator.handle_sources()
+
+        self.assertEquals(str(cm.exception), "Artifact 'jboss-eap.zip' could not be fetched!")
+        mock_fetch_file.assert_not_called()
+        self.log.info.assert_any_call("Please download the 'jboss-eap.zip' artifact manually and save it as 'target/jboss-eap.zip'")
+
+    @mock.patch('dogen.generator.Generator._fetch_file')
     def test_fetch_artifact_should_fetch_file_from_cache(self, mock_fetch_file):
         self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
 
@@ -169,7 +180,8 @@ class TestHandleSources(unittest.TestCase):
         mock_fetch_file.assert_called_with('http://cache/get?jboss-eap.zip', 'target/jboss-eap.zip')
 
     @mock.patch('dogen.generator.Generator._fetch_file')
-    def test_fetch_artifact_should_fetch_file(self, mock_fetch_file):
+    @mock.patch('dogen.generator.os.path.exists', return_value=False)
+    def test_fetch_artifact_should_fetch_file(self, mock_path_exists, mock_fetch_file):
         self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
         self.generator.handle_sources()
         # No checksum provided and computed
@@ -187,3 +199,12 @@ class TestHandleSources(unittest.TestCase):
 
         self.assertEquals(self.generator.cfg['artifacts'], {'jboss-eap.zip': None})
         mock_fetch_file.assert_has_calls([mock.call('http://cache/get?#algorithm#=#hash#', 'target/jboss-eap.zip'), mock.call('http://host.com/jboss-eap.zip', 'target/jboss-eap.zip')])
+
+    @mock.patch('dogen.generator.Generator._fetch_file')
+    @mock.patch('dogen.generator.os.path.exists', return_value=True)
+    def test_fetch_artifact_should_not_fetch_file_if_exists(self, mock_path_exists, mock_fetch_file):
+        self.generator.cfg = {'sources': [{'artifact': 'http://host.com/jboss-eap.zip'}]}
+        self.generator.handle_sources()
+        # No checksum provided and computed
+        self.assertEquals(self.generator.cfg['artifacts'], {'jboss-eap.zip': None})
+        mock_fetch_file.assert_not_called()
