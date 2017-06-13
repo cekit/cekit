@@ -313,9 +313,10 @@ class Generator(object):
                 algorithms.append(supported_algorithm)
 
             try:
-                if os.path.exists(filename) and algorithms:
-                    for algorithm in algorithms:
-                        self.check_sum(filename, source[algorithm], algorithm)
+                if os.path.exists(filename):
+                    if algorithms:
+                        for algorithm in algorithms:
+                            self.check_sum(filename, source[algorithm], algorithm)
                     passed = True
             except Exception as e:
                 self.log.debug(str(e))
@@ -361,7 +362,7 @@ class Generator(object):
         else:
             if hint:
                 self.log.info(hint)
-                self.log.info("Please download the '%s' artifact manually and save it as '%s'" % (artifact, filename))
+            self.log.info("Please download the '%s' artifact manually and save it as '%s'" % (artifact, filename))
             raise Error("Artifact '%s' could not be fetched!" % artifact)
 
     def check_sum(self, filename, checksum, algorithm):
