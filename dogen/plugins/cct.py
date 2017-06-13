@@ -116,6 +116,17 @@ class CCT(Plugin):
         if 'user' not in cfg['cct']:
             cfg['cct']['user'] = 'root'
 
+        self.install_cct_requirements(cfg)
+
+    def install_cct_requirements(self, cfg):
+        """Ensure that CCT's Python module requirements are installed in the image."""
+        if "packages" not in cfg:
+            cfg["packages"] = []
+        for pkg in ['PyYAML']:
+            if pkg not in cfg["packages"]:
+                self.log.debug("adding {} to packages list".format(pkg))
+                cfg["packages"].append(pkg)
+
     def runtime_changes(self, cfg):
         """
         Handle configuring CCT for runtime use.
