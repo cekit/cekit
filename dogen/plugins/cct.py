@@ -5,7 +5,6 @@ import requests
 import shutil
 import sys
 
-from zipfile import ZipFile
 from dogen.plugin import Plugin
 
 
@@ -30,31 +29,23 @@ class CCT(Plugin):
         parent_schema['map']['cct'] = schema
 
     def setup_cct(self, version):
-        cctdist = '%s/.dogen/plugin/cct/%s/%s.zip' % (os.path.expanduser('~'), version, version)
-        cct_runtime = '%s/.dogen/plugin/cct/%s/cct.zip' % (os.path.expanduser('~'), version)
+        cctdist = '%s/.dogen/plugin/cct/%s/cct.zip' % (os.path.expanduser('~'), version)
         if version == 'master':
             # we dont care if it doesnt exist - so we ignore errors here
             shutil.rmtree('%s/.dogen/plugin/cct/%s/' % (os.path.expanduser('~'), version), ignore_errors=True)
         elif os.path.exists(cctdist):
-            return cct_runtime
+            return cctdist
 
         os.makedirs(os.path.dirname(cctdist))
+        ccturl = 'https://github.com/containers-tools/cct/releases/download/%s/cct.zip' % version
 
-        ccturl = 'https://github.com/containers-tools/cct/archive/%s.zip' % version
         with open(cctdist, 'wb') as f:
-            f.write(requests.get(ccturl, verify=self.dogen.ssl_verify).content)
+            req = requests.get(ccturl, verify=self.dogen.ssl_verify)
+            if req.status_code != 200:
+                raise Exception("CCT cannot be downloaded from url:'%s' , status:'%s'" % (ccturl, req.status_code))
+            f.write(req.content)
 
-        ZipFile(cctdist).extractall(os.path.dirname(cctdist))
-
-        content_root = os.path.join(os.path.dirname(cctdist), 'cct-%s' % version)
-        with ZipFile(cct_runtime, "w") as zf:
-            zf.write(os.path.join(content_root, '__main__.py'), '__main__.py')
-            for root, directory, files in os.walk(os.path.join(content_root, 'cct')):
-                for f in files:
-                    arc_file = os.path.join(root, f)
-                    zf.write(arc_file, arc_file[len(content_root):])
-
-        return cct_runtime
+        return cctdist
 
     def prepare(self, cfg):
         """
@@ -66,7 +57,7 @@ class CCT(Plugin):
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
 
-        version = cfg['cct']['version'] if 'version' in cfg['cct'] else 'master'
+        version = cfg['cct']['version'] if 'version' in cfg['cct'] else '0.2.0'
 
         cct_runtime = self.setup_cct(version)
 
