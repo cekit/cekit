@@ -103,7 +103,7 @@ RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
 {% if cct %}
 USER {{ cct.user }}
 
-RUN python /opt/cct.zip {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %} && rm /opt/cct.zip
+RUN python /opt/cct.zip {%if cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ {% for run in cct.run %} /tmp/cct/{{ run }} {% endfor %} && rm /opt/cct.zip && rm -rf /tmp/cct
 
 {% endif %}
 
