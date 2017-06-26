@@ -34,7 +34,7 @@ class Repo(Plugin):
         self.log.info("Copying custom repo files from '%s' directory..." % self.repo_dir)
 
         for f in sorted(self.repo_files):
-            self.log.debug("Copying %s repo file..." % os.path.basename(f))
+            self.log.info("Copying %s repo file..." % os.path.basename(f))
             shutil.copy2(f, target_repos_dir)
 
         self.log.debug("Done.")
