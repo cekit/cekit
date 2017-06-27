@@ -57,7 +57,7 @@ class CCT(Plugin):
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
 
-        version = cfg['cct']['version'] if 'version' in cfg['cct'] else '0.2.0'
+        version = cfg['cct']['version'] if 'version' in cfg['cct'] else '0.3.0'
 
         cct_runtime = self.setup_cct(version)
 
@@ -66,6 +66,7 @@ class CCT(Plugin):
         # we are delaying import because CCT Plugin is not mandatory
         try:
             from cct.cli.main import CCT_CLI
+            from cct import cfg as cct_cfg
         except ImportError:
             raise Exception("CCT was not set succesfully up!")
 
@@ -102,9 +103,11 @@ class CCT(Plugin):
         cct_logger = logging.getLogger("cct")
         cct_logger.setLevel(self.log.getEffectiveLevel())
 
+        cct_cfg.dogen = True
         cct = CCT_CLI()
-        cfg['artifacts'] = cct.fetch_artifacts([cfg_file], target_modules_dir, self.output)
-
+        cct.process_changes([cfg_file], target_modules_dir, self.output)
+	cfg['sources'] += cct_cfg.artifacts
+	print cfg['sources']
         self.log.info("CCT plugin downloaded artifacts")
 
         if 'runtime' in cfg['cct']:
