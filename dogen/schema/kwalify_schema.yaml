@@ -52,7 +52,6 @@ map:
             map:
               repo: { type: str, required: True }
               branch: { type: str, required: True }
-              assume_yes: { type: bool }
   scripts:
     seq:
       - map:

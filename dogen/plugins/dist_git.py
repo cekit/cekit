@@ -35,12 +35,11 @@ class DistGitPlugin(Plugin):
         if dist_git_cfg:
             self.repo = dist_git_cfg.get('repo')
             self.branch = dist_git_cfg.get('branch')
-            self.assume_yes = dist_git_cfg.get('assume_yes', False)
 
         if not (self.repo and self.branch):
             raise Exception("Dit-git plugin was activated, but repository and branch was not correctly provided")
 
-        self.git = Git(self.log, self.output, os.path.dirname(self.descriptor), self.repo, self.branch, self.assume_yes)
+        self.git = Git(self.log, self.output, os.path.dirname(self.descriptor), self.repo, self.branch, self.args.dist_git_assume_yes)
 
         self.git.prepare()
         self.git.clean()
@@ -70,7 +69,7 @@ class DistGitPlugin(Plugin):
         self.log.info("Update finished.")
 
     def build(self):
-        if self.assume_yes or Tools.decision("Do you want to execute a build on OSBS?"):
+        if self.args.dist_git_assume_yes or Tools.decision("Do you want to execute a build on OSBS?"):
             self.log.info("Executing container build on OSBS...")
             subprocess.call(["rhpkg", "container-build"])
 
