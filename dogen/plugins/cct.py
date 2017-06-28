@@ -16,18 +16,6 @@ class CCT(Plugin):
     def __init__(self, dogen, args):
         super(CCT, self).__init__(dogen, args)
 
-    def extend_schema(self, parent_schema):
-        """
-        Read in a schema definition for our part of the config and hook it
-        into the parent schema at the cct: top-level key.
-        """
-        schema_path = os.path.join(self.dogen.pwd, "schema", "cct_schema.yaml")
-        schema = {}
-        with open(schema_path, 'r') as fh:
-            schema = yaml.safe_load(fh)
-
-        parent_schema['map']['cct'] = schema
-
     def setup_cct(self, version):
         cctdist = '%s/.dogen/plugin/cct/%s/cct.zip' % (os.path.expanduser('~'), version)
         if version == 'master':
@@ -47,6 +35,15 @@ class CCT(Plugin):
 
         return cctdist
 
+    def get_cct_plugin(self, cfg):
+        if 'dogen' not in cfg:
+            cfg['dogen'] = {}
+        if 'plugins' not in cfg['dogen']:
+            cfg['dogen']['plugins'] = {}
+        if 'cct' not in cfg['dogen']['plugins']:
+            cfg['dogen']['plugins']['cct'] = {}
+        return cfg['dogen']['plugins']['cct']
+
     def prepare(self, cfg):
         """
         create cct changes yaml file for image.yaml template decscriptor
@@ -57,7 +54,17 @@ class CCT(Plugin):
             self.log.debug("No cct key in image.yaml - nothing to do")
             return
 
-        version = cfg['cct']['version'] if 'version' in cfg['cct'] else '0.3.0'
+        cct_config = self.get_cct_plugin(cfg)
+
+        version = '0.3.0'
+        if 'version' in cct_config:
+            version = cct_config['version']
+
+        if 'user' not in cct_config:
+            cct_config['user'] = 'root'
+
+        if 'verbose' not in cct_config:
+            cct_config['verbose'] = 1
 
         cct_runtime = self.setup_cct(version)
 
@@ -69,8 +76,6 @@ class CCT(Plugin):
             from cct import cfg as cct_cfg
         except ImportError:
             raise Exception("CCT was not set succesfully up!")
-
-        cfg['cct']['run'] = ['cct.yaml']
 
         cct_dir = os.path.join(self.output, "cct")
 
@@ -88,7 +93,7 @@ class CCT(Plugin):
 
         cfg_file = os.path.join(cct_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
-            yaml.dump(cfg['cct']['configure'], f)
+            yaml.dump(cfg['cct'], f)
 
         # copy cct modules from
         modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct', 'modules')
@@ -106,18 +111,14 @@ class CCT(Plugin):
         cct_cfg.dogen = True
         cct = CCT_CLI()
         cct.process_changes([cfg_file], target_modules_dir, self.output)
-	cfg['sources'] += cct_cfg.artifacts
-	print cfg['sources']
-        self.log.info("CCT plugin downloaded artifacts")
+        cfg['sources'] += cct_cfg.artifacts
+        self.log.info("CCT plugin reported to dogen")
 
-        if 'runtime' in cfg['cct']:
+        if 'cct_runtime' in cfg:
             cfg['entrypoint'] = ['/usr/bin/cct']
             self.runtime_changes(cfg)
-            cfg['entrypoint'].append(cfg['cct']['runtime_changes'])
+            cfg['entrypoint'].append(cfg['cct_runtime'])
             cfg['entrypoint'].append("-c")
-
-        if 'user' not in cfg['cct']:
-            cfg['cct']['user'] = 'root'
 
         self.install_cct_requirements(cfg)
 
@@ -144,7 +145,7 @@ class CCT(Plugin):
             os.makedirs(cct_dir)
         cfg_file = os.path.join(cct_dir, "cctruntime.yaml")
         with open(cfg_file, 'w') as f:
-            yaml.dump(cfg['cct']['runtime'], f)
+            yaml.dump(cfg['cct_runtime'], f)
 
         # adjust cfg object so caller adds the above to ENTRYPOINT
         if 'runtime_changes' not in cfg['cct']:
