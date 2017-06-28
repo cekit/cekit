@@ -64,7 +64,7 @@ class CCT(Plugin):
             cct_config['user'] = 'root'
 
         if 'verbose' not in cct_config:
-            cct_config['verbose'] = 1
+            cct_config['verbose'] = True
 
         cct_runtime = self.setup_cct(version)
 
@@ -112,7 +112,7 @@ class CCT(Plugin):
         cct = CCT_CLI()
         cct.process_changes([cfg_file], target_modules_dir, self.output)
         cfg['sources'] += cct_cfg.artifacts
-        self.log.info("CCT plugin reported to dogen")
+        self.log.info("CCT plugin reported artifacts to dogen")
 
         if 'cct_runtime' in cfg:
             cfg['entrypoint'] = ['/usr/bin/cct']
