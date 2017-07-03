@@ -91,13 +91,13 @@ class CCT(Plugin):
 
         os.makedirs(target_modules_dir)
 
-        local_modules_dir = os.path.join(os.path.dirname(self.descriptor),'cct')
+        local_modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct')
         self.log.debug('Found existing modules in directory: %s' % local_modules_dir)
         if os.path.exists(local_modules_dir):
             for module in os.listdir(local_modules_dir):
-                self.log.info('Using cached module %s.' % module)
-                shutil.copytree(os.path.join(local_modules_dir, module),
-                                os.path.join(target_modules_dir, module))
+                module_path = os.path.join(local_modules_dir, module)
+                self.log.info("Using cached module '%s' from path '%s'" % (module, module_path))
+                shutil.copytree(module_path, os.path.join(target_modules_dir, module))
 
         cfg_file = os.path.join(cct_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
