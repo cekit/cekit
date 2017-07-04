@@ -91,17 +91,27 @@ class CCT(Plugin):
 
         os.makedirs(target_modules_dir)
 
+        cfg_file = os.path.join(cct_dir, "cct.yaml")
+        with open(cfg_file, 'w') as f:
+            yaml.dump(cfg['cct'], f)
+
         local_modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct')
-        self.log.debug('Found existing modules in directory: %s' % local_modules_dir)
+
+        # setup cct to same logging level as dogen
+        cct_logger = logging.getLogger("cct")
+        cct_logger.setLevel(self.log.getEffectiveLevel())
+
+        cct_cfg.dogen = True
+        cct = CCT_CLI()
+        cct.process_changes([cfg_file], local_modules_dir, self.output)
+        cfg['sources'] += cct_cfg.artifacts
+        self.log.info("CCT plugin reported artifacts to dogen")
+
         if os.path.exists(local_modules_dir):
             for module in os.listdir(local_modules_dir):
                 module_path = os.path.join(local_modules_dir, module)
                 self.log.info("Using cached module '%s' from path '%s'" % (module, module_path))
                 shutil.copytree(module_path, os.path.join(target_modules_dir, module))
-
-        cfg_file = os.path.join(cct_dir, "cct.yaml")
-        with open(cfg_file, 'w') as f:
-            yaml.dump(cfg['cct'], f)
 
         # copy cct modules from
         modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct', 'modules')
@@ -111,16 +121,6 @@ class CCT(Plugin):
                 target_module = os.path.join(target_modules_dir, module)
                 shutil.copytree(os.path.join(modules_dir, module), target_module)
                 self.log.info("Copied module %s to %s" % (module, target_module))
-
-        # setup cct to same logging level as dogen
-        cct_logger = logging.getLogger("cct")
-        cct_logger.setLevel(self.log.getEffectiveLevel())
-
-        cct_cfg.dogen = True
-        cct = CCT_CLI()
-        cct.process_changes([cfg_file], target_modules_dir, self.output)
-        cfg['sources'] += cct_cfg.artifacts
-        self.log.info("CCT plugin reported artifacts to dogen")
 
         if 'cct_runtime' in cfg:
             cfg['entrypoint'] = ['/usr/bin/cct']
