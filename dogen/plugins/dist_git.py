@@ -55,7 +55,7 @@ class DistGitPlugin(Plugin):
                 self.git.commit()
                 self.git.push()
             else:
-                self.log.info("No changes made to the code, commiting skipped")
+                self.log.info("No changes made to the code, committing skipped")
 
             self.build()
 
@@ -101,7 +101,7 @@ class Git(object):
 
     def stage_modified(self):
         # Check if there are any files in stage (return code 1). If there are no files
-        # (return code 0) it means that this is a rebuild, so skip commiting
+        # (return code 0) it means that this is a rebuild, so skip committing
         if subprocess.call(["git", "diff-index", "--quiet", "--cached", "HEAD"]):
             return True
 
