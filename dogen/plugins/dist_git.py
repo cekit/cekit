@@ -114,6 +114,12 @@ class Git(object):
                 subprocess.check_output(["git", "fetch"])
                 subprocess.check_output(["git", "checkout", "-f", self.branch])
                 subprocess.check_output(["git", "reset", "--hard", "origin/%s" % self.branch])
+                if not subprocess.call(["git", "ls-files", "--error-unmatch", "cct"],
+                                       stdout=open(os.devnull, 'w'),
+                                       stderr=subprocess.STDOUT):
+                    subprocess.check_call(["git", "rm", "-rf", "cct"],
+                                          stdout=open(os.devnull, 'w'),
+                                          stderr=subprocess.STDOUT)
             self.log.debug("Changes pulled")
         else:
             self.log.info("Cloning %s git repository (%s branch)..." % (self.repo, self.branch))
@@ -135,7 +141,7 @@ class Git(object):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
 
-        for d in ["scripts", "repos"]:
+        for d in ["scripts", "repos", "cct"]:
             if os.path.exists(os.path.join(self.output, d)):
                 subprocess.check_call(["git", "add", d])
 

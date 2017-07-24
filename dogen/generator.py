@@ -217,6 +217,9 @@ class Generator(object):
         else:
             self.log.warn("No scripts will be copied, mistake?")
 
+        for plugin in self.plugins:
+            plugin.before_sources(cfg=self.cfg)
+
         self.handle_sources()
         self.render_from_template()
 

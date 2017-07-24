@@ -44,7 +44,7 @@ class CCT(Plugin):
             cfg['dogen']['plugins']['cct'] = {}
         return cfg['dogen']['plugins']['cct']
 
-    def prepare(self, cfg):
+    def before_sources(self, cfg):
         """
         create cct changes yaml file for image.yaml template decscriptor
         it require cct aware template.jinja file
@@ -81,15 +81,12 @@ class CCT(Plugin):
 
         if not os.path.exists(cct_dir):
             os.makedirs(cct_dir)
-
         shutil.copy(cct_runtime, cct_dir)
 
         target_modules_dir = os.path.join(cct_dir, 'modules')
         if os.path.exists(target_modules_dir):
             shutil.rmtree(target_modules_dir)
-            self.log.debug('Removed existing modules directory: %s' % target_modules_dir)
-
-        os.makedirs(target_modules_dir)
+            os.makedirs(target_modules_dir)
 
         cfg_file = os.path.join(cct_dir, "cct.yaml")
         with open(cfg_file, 'w') as f:
@@ -97,30 +94,28 @@ class CCT(Plugin):
 
         local_modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct')
 
+        if os.path.exists(local_modules_dir) and not self.args.dist_git_enable:
+            for module in os.listdir(local_modules_dir):
+                module_path = os.path.join(local_modules_dir, module)
+                self.log.info("Using cached module '%s' from path '%s'" % (module, module_path))
+                shutil.copytree(module_path, os.path.join(target_modules_dir, module))
+
         # setup cct to same logging level as dogen
         cct_logger = logging.getLogger("cct")
         cct_logger.setLevel(self.log.getEffectiveLevel())
 
         cct_cfg.dogen = True
         cct = CCT_CLI()
-        cct.process_changes([cfg_file], local_modules_dir, self.output)
+
+        cct.process_changes([cfg_file], target_modules_dir, self.output)
+
         cfg['sources'] += cct_cfg.artifacts
         self.log.info("CCT plugin reported artifacts to dogen")
 
-        if os.path.exists(local_modules_dir):
-            for module in os.listdir(local_modules_dir):
-                module_path = os.path.join(local_modules_dir, module)
-                self.log.info("Using cached module '%s' from path '%s'" % (module, module_path))
-                shutil.copytree(module_path, os.path.join(target_modules_dir, module))
-
-        # copy cct modules from
-        modules_dir = os.path.join(os.path.dirname(self.descriptor), 'cct', 'modules')
-        if os.path.exists(modules_dir):
-            modules = filter(lambda x: os.path.isdir(os.path.join(modules_dir, x)), os.listdir(modules_dir))
-            for module in modules:
-                target_module = os.path.join(target_modules_dir, module)
-                shutil.copytree(os.path.join(modules_dir, module), target_module)
-                self.log.info("Copied module %s to %s" % (module, target_module))
+        for root, dirs, _ in os.walk(target_modules_dir):
+            for d in dirs:
+                if d == '.git':
+                    shutil.rmtree(os.path.join(root, d))
 
         if 'cct_runtime' in cfg:
             cfg['entrypoint'] = ['/usr/bin/cct']

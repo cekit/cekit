@@ -14,6 +14,9 @@ class Plugin(object):
     def prepare(self, **kwargs):
         pass
 
+    def before_sources(selg, **kwargs):
+        pass
+
     def after_sources(self, **kwargs):
         pass
 
