@@ -116,7 +116,7 @@ class Git(object):
             with Chdir(self.output):
                 self.log.info("Pulling latest changes in repo %s..." % self.repo)
                 subprocess.check_output(["git", "fetch"])
-                subprocess.check_output(["git", "checkout", "-f", self.branch])
+                subprocess.check_output(["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
                 subprocess.check_output(["git", "reset", "--hard", "origin/%s" % self.branch])
             self.log.debug("Changes pulled")
         else:

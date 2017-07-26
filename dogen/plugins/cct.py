@@ -56,7 +56,7 @@ class CCT(Plugin):
 
         cct_config = self.get_cct_plugin(cfg)
 
-        version = '0.3.0'
+        version = '0.4.0'
         if 'version' in cct_config:
             version = cct_config['version']
 
