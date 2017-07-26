@@ -104,6 +104,7 @@ class CCT(Plugin):
         # setup cct to same logging level as dogen
         cct_setup_logging()
         cct_logger = logging.getLogger("cct")
+        cct_logger.handlers = self.log.handlers
         cct_logger.setLevel(self.log.getEffectiveLevel())
 
         cct_cfg.dogen = True
