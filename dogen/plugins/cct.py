@@ -72,6 +72,7 @@ class CCT(Plugin):
         # check if CCT is installed - complain otherwise
         # we are delaying import because CCT Plugin is not mandatory
         try:
+            from cct import setup_logging as cct_setup_logging
             from cct.cli.main import CCT_CLI
             from cct import cfg as cct_cfg
         except ImportError:
@@ -101,6 +102,7 @@ class CCT(Plugin):
                 shutil.copytree(module_path, os.path.join(target_modules_dir, module))
 
         # setup cct to same logging level as dogen
+        cct_setup_logging()
         cct_logger = logging.getLogger("cct")
         cct_logger.setLevel(self.log.getEffectiveLevel())
 
