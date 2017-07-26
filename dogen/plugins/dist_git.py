@@ -14,6 +14,7 @@ class DistGitPlugin(Plugin):
     def inject_args(parser):
         parser.add_argument('--dist-git-enable', action='store_true', help='Enables dist-git plugin')
         parser.add_argument('--dist-git-assume-yes', action='store_true', help='Skip interactive mode and answer all question with "yes"')
+        parser.add_argument('--dist-git-scratch', action='store_true', help='Scratch build')
         return parser
 
     def __init__(self, dogen, args):
@@ -70,7 +71,10 @@ class DistGitPlugin(Plugin):
     def build(self):
         if self.args.dist_git_assume_yes or Tools.decision("Do you want to execute a build on OSBS?"):
             self.log.info("Executing container build on OSBS...")
-            subprocess.call(["rhpkg", "container-build"])
+            cmd = ["rhpkg", "container-build"]
+            if self.args.dist_git_scratch:
+                cmd.append('--scratch')
+            subprocess.call(cmd)
 
 class Git(object):
     """
