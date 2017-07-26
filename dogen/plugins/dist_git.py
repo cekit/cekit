@@ -121,22 +121,13 @@ class Git(object):
             self.log.debug("Repository %s cloned" % self.repo)
 
     def clean(self):
-        """ Removes old generated scripts """
+        """ Removes old generated scripts, repos and cct directories """
         with Chdir(self.output):
-            shutil.rmtree(os.path.join(self.output, "scripts"), ignore_errors=True)
-            shutil.rmtree(os.path.join(self.output, "repos"), ignore_errors=True)
-
-            for d in ["scripts", "repos"]:
+            for d in ["scripts", "repos", "cct"]:
                 if os.path.exists(d):
                     self.log.info("Removing old '%s' directory" % d)
                     subprocess.check_output(["git", "rm", "-rf", d])
 
-            if not subprocess.call(["git", "ls-files", "--error-unmatch", "cct"],
-                                   stdout=open(os.devnull, 'w'),
-                                   stderr=subprocess.STDOUT):
-                subprocess.check_call(["git", "rm", "-rf", "cct"],
-                                      stdout=open(os.devnull, 'w'),
-                                      stderr=subprocess.STDOUT)
     def add(self):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
