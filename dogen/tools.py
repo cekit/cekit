@@ -1,41 +1,26 @@
+import logging
 import os
+import requests
 import subprocess
+import urllib
 
-from six.moves import urllib
+from dogen.errors import DogenError
 
-class Chdir(object):
 
-    """ Context manager for changing the current working directory """
+logger = logging.getLogger("dogen")
 
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
 
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
+def fetch_artifact(url, directory=os.getcwd(), ssl_verify=True):
+    destination = os.path.join(directory, os.path.basename(url))
+    logger.debug("Fetching '%s' as %s" % (url, destination))
 
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
+    res = requests.get(url, verify=ssl_verify, stream=True)
+    if res.status_code != 200:
+        raise DogenError("Could not download file from %s" % url)
+    with open(destination, 'wb') as f:
+        for chunk in res.iter_content(chunk_size=1024):
+            f.write(chunk)
+    return destination
 
-class Tools(object):
-    @staticmethod
-    def repo_info(path):
 
-        with Chdir(path):
-            name = os.path.basename(subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip())
-            branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
-            commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
-
-        return name, branch, commit
-
-    @staticmethod
-    def decision(question):
-        if raw_input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
-            return True
-
-        return False
-
-    @staticmethod
-    def is_url(location):
-        """ Checks if provided path is a URL """
-        return bool(urllib.parse.urlparse(location).netloc)
+artifact_fetcher = fetch_artifact

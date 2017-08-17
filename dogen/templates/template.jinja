@@ -46,18 +46,14 @@ EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
 
 USER root
 
-{% if packages or rpms %}
+{% if packages %}
 {% if additional_repos %}
 # Add custom repo files
 COPY repos/*.repo /etc/yum.repos.d/
 {% endif %}
-{% if rpms %}
-# Add custom rpm files
-COPY *.rpm /tmp/rpms/
-{% endif %}
 
 # Install required RPMs and ensure that the packages were installed
-RUN yum install -y {% if additional_repos -%} --disablerepo=\* {%- for repo in additional_repos %} --enablerepo={{ repo }}{% endfor %}{% endif %} {%- for package in packages %} {{ package }}{% endfor %} {%- for rpm in rpms %} /tmp/rpms/{{ rpm }} {% endfor %} \
+RUN yum install -y {% if additional_repos -%} --disablerepo=\* {%- for repo in additional_repos %} --enablerepo={{ repo }}{% endfor %}{% endif %} {%- for package in packages %} {{ package }}{% endfor %} \
     && yum clean all && \
     rpm -q {% for package in packages %} {{ package }}{% endfor %}
 
@@ -73,41 +69,26 @@ RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endf
 # Add all artifacts to the /tmp/artifacts
 # directory
 COPY \
-{% for artifact in artifacts.keys()|sort %}
-    {{ artifact }} \
+{% for artifact in artifacts %}
+    {{ artifact.name }} \
     {% endfor %}
     /tmp/artifacts/
 
 {% endif %}
 
-{%- if cct %}
-COPY cct/cct.zip /opt/cct.zip
-# Copy CCT configuration file
-COPY cct/cct.yaml /tmp/cct/
-# Copy CCT modules
-COPY cct/modules /tmp/cct/modules
-{% endif %}
-
-{%- if scripts %}
+{%- if execute %}
 # Add scripts used to configure the image
-COPY scripts /tmp/scripts
+COPY modules /tmp/scripts
 
 # Custom scripts
-{% for script in scripts %}
-USER {{ script.user }}
-RUN [ "bash", "-x", "/tmp/scripts/{{ script.package }}/{{ script.exec }}" ]
+{% for exec in execute %}
+USER {{ exec.user }}
+RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.execute }}" ]
 
 {% endfor %}
 {% endif %}
 
-{% if cct %}
-USER {{ dogen.plugins.cct.user }}
-
-RUN python /opt/cct.zip {%if dogen.plugins.cct.verbose %}-v{% endif %} --modules-dir /tmp/cct/modules/ --artifacts-dir /tmp/artifacts/ /tmp/cct/cct.yaml && rm /opt/cct.zip && rm -rf /tmp/cct
-
-{% endif %}
-
-{%- if scripts %}
+{%- if execute %}
 USER root
 RUN rm -rf /tmp/scripts
 {% endif %}
