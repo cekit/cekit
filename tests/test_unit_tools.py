@@ -22,7 +22,7 @@ class TestArtifact(unittest.TestCase):
         helpers.artifact_fetcher_disable_ssl_check()
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.name = 'file'
-        artifact.url = 'dummy'
+        artifact.artifact = 'dummy'
         artifact.fetch()
         mock.assert_called_with('dummy', stream=True, verify=False)
         tools.Artifact.ssl_verify = True
@@ -31,7 +31,7 @@ class TestArtifact(unittest.TestCase):
     def test_fetching_bad_status_code(self, mock):
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.name = 'file'
-        artifact.url = 'dummy'
+        artifact.artifact = 'dummy'
         with self.assertRaises(DogenError):
             artifact.fetch()
 
