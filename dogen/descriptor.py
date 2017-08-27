@@ -86,7 +86,8 @@ class Descriptor(object):
         if "labels" not in self.descriptor:
             self.descriptor['labels'] = []
         if "description" in self.descriptor:
-            self.descriptor['labels'].append(self.descriptor['description'])
+            self.descriptor['labels'].append({'name': 'description',
+                                              'value': self.descriptor['description']})
 
 
 def merge_dictionaries(dict1, dict2):
