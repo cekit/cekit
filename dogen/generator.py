@@ -59,10 +59,10 @@ class Generator(object):
         if 'artifacts' not in self.descriptor:
             return
         artifacts = self.descriptor['artifacts']
-        if artifacts:
-            for artifact in artifacts:
-                # FIXME hashes, hints, etc ...
-                tools.artifact_fetcher(artifact['artifact'])
+        for artifact_dict in artifacts:
+            artifact = tools.Artifact(artifact_dict)
+            artifact.fetch()
+            artifact.check_sums()
 
     def render_dockerfile(self, template_file):
         """ Renders Dockerfile to $target/image/Dockerfile

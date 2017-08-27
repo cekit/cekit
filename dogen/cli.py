@@ -5,8 +5,6 @@ import os
 import logging
 import sys
 
-from functools import partial
-
 from dogen import tools
 from dogen.log import setup_logging
 from dogen.errors import DogenError
@@ -14,7 +12,7 @@ from dogen.generator import Generator
 from dogen.module import discover_modules, copy_image_module_to_repository
 from dogen.version import version
 
-# we shoudl try to move this to json
+#FIXME we shoudl try to move this to json
 setup_logging()
 logger = logging.getLogger('dogen')
 
@@ -53,6 +51,9 @@ class Dogen(object):
                                                  'template.jinja'),
                             help='Path to custom template (can be url)')
 
+        parser.add_argument('--repo-files-dir',
+                            help='Provides path to directory with *.repo files that should be used to install rpms')
+
         parser.add_argument('descriptor_path',
                             help="Path to yaml descriptor to process")
 
@@ -64,9 +65,9 @@ class Dogen(object):
 
     def run(self):
 
-        tools.artifact_fetcher = partial(tools.fetch_artifact,
-                                         directory=self.args.target,
-                                         ssl_verify=not self.args.skip_ssl_verification)
+        tools.Artifact.ssl_verify = not self.args.skip_ssl_verification
+        tools.Artifact.target_dir = os.path.join(self.args.target,
+                                                 'image')
 
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
