@@ -94,9 +94,9 @@ class Dogen(object):
             pass
         except DogenError as e:
             if self.args.verbose:
-                self.log.exception(e)
+                logger.exception(e)
             else:
-                self.log.error(str(e))
+                logger.error(str(e))
             sys.exit(1)
 
 
