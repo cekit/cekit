@@ -8,11 +8,14 @@ import sys
 from functools import partial
 
 from dogen import tools
+from dogen.log import setup_logging
 from dogen.errors import DogenError
 from dogen.generator import Generator
 from dogen.module import discover_modules, copy_image_module_to_repository
 from dogen.version import version
 
+# we shoudl try to move this to json
+setup_logging()
 logger = logging.getLogger('dogen')
 
 
@@ -96,5 +99,8 @@ class Dogen(object):
             sys.exit(1)
 
 
-if __name__ == "__main__":
+def run():
     Dogen().parse_args().run()
+
+if __name__ == "__main__":
+    run()
