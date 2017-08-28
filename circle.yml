@@ -4,21 +4,25 @@ general:
 
 machine:
   python:
+  pre:
+    - pyenv install --list
+  post:
+    - pyenv install 2.7.11
+    - pyenv install 3.5.1
+    - pyenv global 2.7.11 3.5.1
   services:
     - docker
   environment:
     CI: true
 
 dependencies:
-  pre:
-    - sudo apt-get update; sudo apt-get install python2.7-dev python3.4-dev
   post:
     - docker version
     - docker info
 
 test:
   override:
-    - case $CIRCLE_NODE_INDEX in 0) make test-py27 ;; 1) make test-py34 ;; esac:
+    - case $CIRCLE_NODE_INDEX in 0) make test-py27 ;; 1) make test-py35 ;; esac:
         parallel: true
   post:
     - make ci-publish-junit
