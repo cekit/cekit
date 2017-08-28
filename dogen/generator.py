@@ -62,7 +62,7 @@ class Generator(object):
         for artifact_dict in artifacts:
             artifact = tools.Artifact(artifact_dict)
             artifact.fetch()
-            artifact.check_sums()
+            artifact.verify()
 
     def render_dockerfile(self, template_file):
         """ Renders Dockerfile to $target/image/Dockerfile

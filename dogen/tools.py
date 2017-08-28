@@ -47,7 +47,7 @@ class Artifact(object):
                             .replace('#hash#', self.sums[alg]))
                 break
 
-    def check_sums(self):
+    def verify(self):
         """ Checks all defined check_sums for an aritfact """
         if not self.check_integrity:
             return True

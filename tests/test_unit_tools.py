@@ -35,17 +35,17 @@ class TestArtifact(unittest.TestCase):
         with self.assertRaises(DogenError):
             artifact.fetch()
 
-    def test_artifact_check_sums_disabled(self):
+    def test_artifact_verify_disabled_integrity_check(self):
         tools.Artifact.check_integrity = False
         artifact = tools.Artifact.__new__(tools.Artifact)
-        self.assertTrue(artifact.check_sums())
+        self.assertTrue(artifact.verify())
         tools.Artifact.check_integrity = True
 
     @mock.patch('dogen.tools.Artifact._check_sum')
-    def test_artifact_check_sums(self, mock):
+    def test_artifact_verify(self, mock):
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.sums = {'sha256': 'justamocksum'}
-        artifact.check_sums()
+        artifact.verify()
         mock.assert_called_with('sha256', 'justamocksum')
 
     def test_generated_url_with_cacher(self):
