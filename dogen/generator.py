@@ -66,6 +66,12 @@ class Generator(object):
             artifact.fetch()
             artifact.verify()
 
+    def override(self, overrides_path):
+        logger.info("Using overrides file from '%s'." % overrides_path)
+        descriptor = Descriptor(overrides_path, 'overrides').process()
+        descriptor.merge(self.effective_descriptor)
+        self.effective_descriptor = descriptor
+
     def render_dockerfile(self, template_file):
         """ Renders Dockerfile to $target/image/Dockerfile
 

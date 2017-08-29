@@ -41,6 +41,9 @@ class Dogen(object):
                             action='version',
                             help='Show version and exit', version=version)
 
+        parser.add_argument('--overrides',
+                            help='Path to a file containing overrides.')
+
         parser.add_argument('--skip-ssl-verification',
                             action='store_true',
                             help='Should we skip SSL verification when retrieving data?')
@@ -90,6 +93,8 @@ class Dogen(object):
                                   self.args.target)
             generator.prepare_modules()
             generator.prepare_repositories(self.args.repo_files_dir)
+            if self.args.overrides:
+                generator.override(self.args.overrides)
             generator.render_dockerfile(self.args.template)
             generator.fetch_artifacts()
         except KeyboardInterrupt as e:
