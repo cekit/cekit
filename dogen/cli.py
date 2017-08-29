@@ -88,6 +88,7 @@ class Dogen(object):
             generator = Generator(self.args.descriptor_path,
                                   self.args.target)
             generator.prepare_modules()
+            generator.prepare_repositories(self.args.repo_files_dir)
             generator.render_dockerfile(self.args.template)
             generator.fetch_artifacts()
         except KeyboardInterrupt as e:

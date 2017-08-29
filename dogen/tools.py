@@ -1,6 +1,9 @@
+import glob
 import hashlib
 import logging
 import os
+import shutil
+
 import requests
 
 from dogen.errors import DogenError
@@ -91,3 +94,21 @@ class Artifact(object):
             for chunk in res.iter_content(chunk_size=1024):
                 f.write(chunk)
         return self
+
+
+def prepare_external_repositories(repo_files_dir, image_dir):
+    if not os.path.exists(repo_files_dir):
+        raise DogenError("Directory '%s' with additional repository definitions doesn't exist!"
+                         % repo_files_dir)
+
+    added_repos = []
+    repo_files = glob.glob(os.path.join(repo_files_dir, "*.repo"))
+    target_dir = os.path.join(image_dir, 'repos')
+    os.makedirs(target_dir)
+
+    for f in repo_files:
+        logger.info("Copying %s repo file..." % os.path.basename(f))
+        shutil.copy2(f, target_dir)
+        added_repos.append(os.path.splitext(os.path.basename(f))[0])
+
+    return added_repos

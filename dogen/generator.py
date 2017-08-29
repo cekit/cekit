@@ -82,3 +82,10 @@ class Generator(object):
         with open(dockerfile, 'wb') as f:
             f.write(template.render(self.effective_descriptor.descriptor).encode('utf-8'))
         logger.debug("Done")
+
+    def prepare_repositories(self, repo_files_dir):
+        """Udates descriptor with added repositories"""
+        self.descriptor['additional_repos'] = \
+            tools.prepare_external_repositories(repo_files_dir,
+                                                os.path.join(self.target,
+                                                             'image'))
