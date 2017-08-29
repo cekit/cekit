@@ -70,7 +70,7 @@ class Descriptor(object):
         """
         for execute in self.descriptor['execute']:
             module = self.descriptor['name']
-            execute['directory'] = os.path.basename(self.directory)
+            execute['directory'] = module
             execute['name'] = "%s-%s" % (module,
                                          execute['execute'])
             if 'user' not in execute:
