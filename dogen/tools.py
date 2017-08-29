@@ -5,6 +5,8 @@ import os
 import shutil
 
 import requests
+import yaml
+from pykwalify.core import Core
 
 from dogen.errors import DogenError
 
@@ -123,3 +125,40 @@ def cleanup(target):
         if os.path.exists(d):
             logger.debug("Removing dirty directory: '%s'" % d)
             shutil.rmtree(d)
+
+
+def load_descriptor(descriptor_path, schema_type):
+    """ parses descriptor and validate it against requested schema type
+
+    Args:
+      schema_type - type of schema (module/image)
+      descriptor_path - path to image/modules descriptor to be validated
+
+    Returns validated schema
+    """
+    logger.debug("Loading %s descriptor from path '%s'."
+                 % (schema_type,
+                    descriptor_path))
+    schema_name = '%s_schema.yaml' % schema_type
+    schema_path = os.path.join(os.path.dirname(__file__),
+                               'schema',
+                               schema_name)
+    if not os.path.exists(schema_path):
+        raise DogenError('Cannot locate schema for %s.' % schema_type)
+
+    schema = {}
+    with open(schema_path, 'r') as fh:
+        schema = yaml.safe_load(fh)
+
+    if not os.path.exists(descriptor_path):
+        raise DogenError('Cannot find provided descriptor file')
+
+    descriptor = {}
+    with open(descriptor_path, 'r') as fh:
+        descriptor = yaml.safe_load(fh)
+
+    core = Core(source_data=descriptor, schema_data=schema)
+    try:
+        return core.validate(raise_exception=True)
+    except Exception as ex:
+        raise DogenError("Cannot validate schema", ex)

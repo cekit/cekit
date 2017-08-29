@@ -100,7 +100,7 @@ class Module():
     descriptor_path: A path to module descriptor file.
     """
     def __init__(self, descriptor_path):
-        self.descriptor = Descriptor(descriptor_path).process()
+        self.descriptor = Descriptor(descriptor_path, 'module').process()
         # FIXME schema check
         self.name = self.descriptor['name']
         self.path = os.path.dirname(descriptor_path)

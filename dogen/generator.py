@@ -5,17 +5,18 @@ import os
 
 from jinja2 import Environment, FileSystemLoader
 
+from dogen import tools
 from dogen.descriptor import Descriptor
 from dogen.module import copy_module_to_target
 from dogen.template_helper import TemplateHelper
-from dogen import tools
+
 
 logger = logging.getLogger('dogen')
 
 
 class Generator(object):
     def __init__(self, descriptor_path, target):
-        self.descriptor = Descriptor(descriptor_path).process()
+        self.descriptor = Descriptor(descriptor_path, 'image').process()
         self.target = target
         self.effective_descriptor = self.descriptor
 
@@ -23,6 +24,7 @@ class Generator(object):
         """
         Prepare module to be used for Dockerfile generation.
         This means:
+
         1. Place module to args.target/image/modules/ directory
         2. Fetch its artifacts to target/image/sources directory
         3. Merge modules descriptor with iamge descriptor

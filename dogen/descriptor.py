@@ -1,9 +1,9 @@
 import logging
 import os
-import yaml
 
-from dogen.errors import DogenError
 from dogen import DEFAULT_USER
+from dogen.errors import DogenError
+from dogen.tools import load_descriptor
 
 logger = logging.getLogger('dogen')
 
@@ -12,13 +12,12 @@ class Descriptor(object):
     """ Representes a module/image descriptor
     Args:
       descriptor_path - a path to the image/module descriptor
+      descriptor_type - a type of descriptor (image/module)
     """
 
-    def __init__(self, descriptor_path):
-        # FIXME schema validation
+    def __init__(self, descriptor_path, descriptor_type):
         self.directory = os.path.dirname(descriptor_path)
-        with open(descriptor_path, 'r') as f:
-            self.descriptor = yaml.safe_load(f)
+        self.descriptor = load_descriptor(descriptor_path, descriptor_type)
 
     def __getitem__(self, key):
         return self.descriptor[key]

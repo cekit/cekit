@@ -1,4 +1,5 @@
-# This is a Kwalify Schema, see http://pykwalify.readthedocs.io/ for more information
+# This is a Kwalify Schema for image descriptor.
+# See http://pykwalify.readthedocs.io/ for more information
 map:
   name:    {type: str, required: True}
   from:    {type: str, required: True}
@@ -37,46 +38,29 @@ map:
           value: {type: int, required: True}
           expose: {type: bool}
           description: {type: str}
-  volumes:
-      seq:
-        - {type: str, required: True}
   dogen:
     map:
+      name: {type: text}
       version: {type: text}
       ssl_verify: {type: bool}
       template: {type: str}
       scripts_path: {type: str}
-      plugins:
-        map:
-          dist_git:
-            map:
-              repo: { type: str, required: True }
-              branch: { type: str, required: True }
-          cct:
-            map:
-              user: { type: str }
-              version: { type: str }
-              verbose: { type: bool }
-  scripts:
-    seq:
-      - map:
-         package: {type: str}
-         exec: {type: str}
-         user: {type: text}
-  cct: {type: any}
   maintainer: {type: str}
   workdir: {type: str}
-  sources:
+  artifacts:
     seq:
       - map:
-          url: {type: str} # deprecated, use artifact
-          artifact: {type: str}
-          md5sum: {type: str} # deprecated, use md5
+          artifact: {type: str, required: True}
           md5: {type: str}
           sha1: {type: str}
           sha256: {type: str}
-          target: {type: str}
           hint: {type: str}
   packages:
     seq:
       - {type: str}
+  modules:
+    seq:
+      - map:
+          name: {type: str, required: True}
+          version: {type: str}
+
