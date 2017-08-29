@@ -76,6 +76,7 @@ class Dogen(object):
 
         logger.debug("Running version %s", version)
         try:
+            tools.cleanup(self.args.target)
             copy_image_module_to_repository(
                 os.path.join(os.path.dirname(self.args.descriptor_path),
                              'modules'),

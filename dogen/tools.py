@@ -112,3 +112,14 @@ def prepare_external_repositories(repo_files_dir, image_dir):
         added_repos.append(os.path.splitext(os.path.basename(f))[0])
 
     return added_repos
+
+
+def cleanup(target):
+    """ Prepates target/image directory to be regenerated."""
+    dirs_to_clean = [os.path.join(target, 'image', 'modules'),
+                     os.path.join(target, 'image', 'repos'),
+                     os.path.join(target, 'repo')]
+    for d in dirs_to_clean:
+        if os.path.exists(d):
+            logger.debug("Removing dirty directory: '%s'" % d)
+            shutil.rmtree(d)
