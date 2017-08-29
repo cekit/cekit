@@ -15,10 +15,12 @@ logger = logging.getLogger('dogen')
 
 
 class Generator(object):
-    def __init__(self, descriptor_path, target):
+    def __init__(self, descriptor_path, target, overrides):
         self.descriptor = Descriptor(descriptor_path, 'image').process()
         self.target = target
         self.effective_descriptor = self.descriptor
+        if overrides:
+            self.effective_descriptor = self.override(overrides)
 
     def prepare_modules(self, descriptor=None):
         """
@@ -70,7 +72,7 @@ class Generator(object):
         logger.info("Using overrides file from '%s'." % overrides_path)
         descriptor = Descriptor(overrides_path, 'overrides').process()
         descriptor.merge(self.effective_descriptor)
-        self.effective_descriptor = descriptor
+        return descriptor
 
     def render_dockerfile(self, template_file):
         """ Renders Dockerfile to $target/image/Dockerfile

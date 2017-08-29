@@ -90,11 +90,10 @@ class Dogen(object):
             discover_modules(os.path.join(self.args.target, 'repo'))
 
             generator = Generator(self.args.descriptor_path,
-                                  self.args.target)
+                                  self.args.target,
+                                  self.args.overrides)
             generator.prepare_modules()
             generator.prepare_repositories(self.args.repo_files_dir)
-            if self.args.overrides:
-                generator.override(self.args.overrides)
             generator.render_dockerfile(self.args.template)
             generator.fetch_artifacts()
         except KeyboardInterrupt as e:
