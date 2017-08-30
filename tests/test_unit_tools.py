@@ -26,6 +26,7 @@ class TestArtifact(unittest.TestCase):
         artifact.fetch()
         mock.assert_called_with('dummy', stream=True, verify=False)
         tools.Artifact.ssl_verify = True
+        os.remove('file')
 
     @mock.patch('requests.get', return_value=res_bad_status)
     def test_fetching_bad_status_code(self, mock):
@@ -34,6 +35,17 @@ class TestArtifact(unittest.TestCase):
         artifact.artifact = 'dummy'
         with self.assertRaises(DogenError):
             artifact.fetch()
+
+    @mock.patch('requests.get', return_value=res)
+    def test_fetching_file_exists(self, mock):
+        with open('file', 'w') as f:
+            pass
+        artifact = tools.Artifact.__new__(tools.Artifact)
+        artifact.name = 'file'
+        artifact.artifact = 'dummy'
+        artifact.fetch()
+        mock.assert_not_called()
+        os.remove('file')
 
     def test_artifact_verify_disabled_integrity_check(self):
         tools.Artifact.check_integrity = False
@@ -64,7 +76,3 @@ class TestArtifact(unittest.TestCase):
         artifact._generate_url()
         self.assertEqual(artifact.artifact,
                          artifact.url)
-        
-        
-
-        

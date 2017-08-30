@@ -87,6 +87,11 @@ class Artifact(object):
         """ Fetches the artifact to the artifact dir """
         self._generate_url()
         destination = os.path.join(self.target_dir, self.name)
+        # If the artifacts exist just return - we dont care if sum is correct here
+        if os.path.exists(destination):
+            logger.debug("Using fetched artifact '%s' for '%s'. " % (destination,
+                                                                     self.name))
+            return self
         logger.debug("Fetching '%s' as %s" % (self.url, destination))
 
         res = requests.get(self.url, verify=self.ssl_verify, stream=True)
