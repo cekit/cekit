@@ -15,7 +15,7 @@ res_bad_status = requests.Response()
 res_bad_status.status_code = 500
 
 
-class TestArtifact(unittest.TestCase):
+class TestTools(unittest.TestCase):
 
     @mock.patch('requests.get', return_value=res)
     def test_fetching_disable_ssl_verify(self, mock):
@@ -76,3 +76,10 @@ class TestArtifact(unittest.TestCase):
         artifact._generate_url()
         self.assertEqual(artifact.artifact,
                          artifact.url)
+
+    def test_is_repo_url_path(self):
+        self.assertFalse(tools.is_repo_url('/home/user/repo'))
+
+    def test_is_repo_url_url(self):
+        self.assertTrue(tools.is_repo_url('git@github.com:jboss-dockerfiles/dogen.git'))
+        self.assertTrue(tools.is_repo_url('https://github.com/jboss-dockerfiles/dogen.git'))

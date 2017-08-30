@@ -15,6 +15,11 @@ SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
 logger = logging.getLogger('dogen')
 
 
+def is_repo_url(url):
+    """ Dogen assumes any absolute path is not url """
+    return not url.startswith('/')
+
+
 class Artifact(object):
     """A class representing artifact """
     ssl_verify = True

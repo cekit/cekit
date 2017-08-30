@@ -9,10 +9,10 @@ from dogen import tools
 from dogen.log import setup_logging
 from dogen.errors import DogenError
 from dogen.generator import Generator
-from dogen.module import discover_modules, copy_image_module_to_repository, get_image_dependencies
+from dogen.module import discover_modules, copy_modules_to_repository, get_dependencies
 from dogen.version import version
 
-#FIXME we shoudl try to move this to json
+# FIXME we shoudl try to move this to json
 setup_logging()
 logger = logging.getLogger('dogen')
 
@@ -80,7 +80,7 @@ class Dogen(object):
         logger.debug("Running version %s", version)
         try:
             tools.cleanup(self.args.target)
-            copy_image_module_to_repository(
+            copy_modules_to_repository(
                 os.path.join(os.path.dirname(self.args.descriptor_path),
                              'modules'),
                 os.path.join(self.args.target,
@@ -94,9 +94,8 @@ class Dogen(object):
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)
-            get_image_dependencies(generator.effective_descriptor,
-                                   os.path.join(self.args.target,
-                                                'repo'))
+            get_dependencies(generator.effective_descriptor, os.path.join(self.args.target,
+                                                                          'repo'))
 
             # We have all overrided repo fetch so we can discover modules
             # and process its dependency trees

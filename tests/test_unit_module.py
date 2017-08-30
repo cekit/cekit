@@ -8,11 +8,11 @@ from dogen import module
 class TestModuleFetching(unittest.TestCase):
 
     def test_repository_dir_is_constructed_properly(self, mock):
-        self.assertEqual(module.fetch_module_repository('url/repo', 'ref', 'dir'),
+        self.assertEqual(module.clone_module_repository('url/repo', 'ref', 'dir'),
                          'dir/repo-ref')
 
     def test_git_clone(self, mock):
-        module.fetch_module_repository('url', 'ref', 'dir')
+        module.clone_module_repository('url', 'ref', 'dir')
         mock.assert_called_with(['git',
                                  'clone',
                                  '--depth',
