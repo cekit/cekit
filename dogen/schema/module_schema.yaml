@@ -57,3 +57,8 @@ map:
       - map:
           name: {type: str, required: True}
           version: {type: str}
+  dependencies:
+    seq:
+      - map:
+          url: {type: str, required: True}
+          ref: {type: str}

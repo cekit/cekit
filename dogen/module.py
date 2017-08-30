@@ -54,6 +54,20 @@ def copy_module_to_target(name, version, target):
             return module
     raise DogenError("Cannot find requested module: '%s'" % name)
 
+def get_image_dependencies(descriptor, base_dir):
+    """ Go throug a list of dependencies in an image descriptor
+    and fetch them.
+
+    Arguments:
+      descriptor - image descriptor
+      base_dir - root directory for dependencies
+    """
+    if 'dependencies' not in descriptor:
+        return
+    for dependency in descriptor['dependencies']:
+        fetch_module_repository(dependency['url'],
+                                dependency['ref'],
+                                base_dir)
 
 def fetch_module_repository(url, ref, base_dir):
     """ Clones a git repository containing cct modules.
@@ -84,7 +98,7 @@ def fetch_module_repository(url, ref, base_dir):
 def discover_modules(repo_dir):
     """ Looks through the directory trees for modules descriptor.
     When module is find, it create dogen.module.Module instance
-    and add this instance to the dogen.module.modles list.
+    and add this instance to the dogen.module.modules list.
     """
     for modules_dir, _, files in os.walk(repo_dir):
         if 'module.yaml' in files:

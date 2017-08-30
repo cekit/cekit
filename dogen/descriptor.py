@@ -39,6 +39,8 @@ class Descriptor(object):
             self._process_execute()
         if 'ports' in self.descriptor:
             self._process_ports()
+        if 'dependencies' in self.descriptor:
+            self._process_dependencies()
         self._process_labels()
         return self
 
@@ -76,9 +78,15 @@ class Descriptor(object):
                 execute['user'] = DEFAULT_USER
 
     def _process_ports(self):
-        """ Generate name attribue for ports """
+        """ Generate name attribute for ports """
         for port in self.descriptor['ports']:
             port['name'] = port['value']
+
+    def _process_dependencies(self):
+        """ Generate name attribute for dependencies """
+        for dependency in self.descriptor['dependencies']:
+            if 'name' not in dependency:
+                dependency['name'] = os.path.basename(dependency['url'])
 
     def _process_labels(self):
         """ Generate labels from dogen keys """

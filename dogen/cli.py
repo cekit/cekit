@@ -9,7 +9,7 @@ from dogen import tools
 from dogen.log import setup_logging
 from dogen.errors import DogenError
 from dogen.generator import Generator
-from dogen.module import discover_modules, copy_image_module_to_repository
+from dogen.module import discover_modules, copy_image_module_to_repository, get_image_dependencies
 from dogen.version import version
 
 #FIXME we shoudl try to move this to json
@@ -87,11 +87,21 @@ class Dogen(object):
                              'repo',
                              'modules'))
 
-            discover_modules(os.path.join(self.args.target, 'repo'))
-
+            # We need to construct Generator first, because we need overrides
+            # merged in
             generator = Generator(self.args.descriptor_path,
                                   self.args.target,
                                   self.args.overrides)
+
+            # Now we can fetch repositories of modules (we have all overrides)
+            get_image_dependencies(generator.effective_descriptor,
+                                   os.path.join(self.args.target,
+                                                'repo'))
+
+            # We have all overrided repo fetch so we can discover modules
+            # and process its dependency trees
+            discover_modules(os.path.join(self.args.target, 'repo'))
+
             generator.prepare_modules()
             generator.prepare_repositories(self.args.repo_files_dir)
             generator.render_dockerfile(self.args.template)
