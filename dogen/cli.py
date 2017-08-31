@@ -44,13 +44,6 @@ class Dogen(object):
         parser.add_argument('--overrides',
                             help='Path to a file containing overrides.')
 
-        parser.add_argument('--skip-ssl-verification',
-                            action='store_true',
-                            help='Should we skip SSL verification when retrieving data?')
-
-        parser.add_argument('--repo-files-dir',
-                            help='Provides path to directory with *.repo files that should be used to install rpms')
-
         parser.add_argument('descriptor_path',
                             help="Path to yaml descriptor to process")
 
@@ -62,7 +55,6 @@ class Dogen(object):
 
     def run(self):
 
-        tools.Artifact.ssl_verify = not self.args.skip_ssl_verification
         tools.Artifact.target_dir = os.path.join(self.args.target,
                                                  'image')
 
@@ -73,6 +65,7 @@ class Dogen(object):
 
         logger.debug("Running version %s", version)
         try:
+            tools.cfg = tools.parse_cfg()
             tools.cleanup(self.args.target)
             copy_modules_to_repository(
                 os.path.join(os.path.dirname(self.args.descriptor_path),
@@ -96,7 +89,7 @@ class Dogen(object):
             discover_modules(os.path.join(self.args.target, 'repo'))
 
             generator.prepare_modules()
-            generator.prepare_repositories(self.args.repo_files_dir)
+            generator.prepare_repositories()
             generator.render_dockerfile()
             generator.fetch_artifacts()
         except KeyboardInterrupt as e:

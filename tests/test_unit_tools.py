@@ -19,7 +19,8 @@ class TestTools(unittest.TestCase):
 
     @mock.patch('requests.get', return_value=res)
     def test_fetching_disable_ssl_verify(self, mock):
-        helpers.artifact_fetcher_disable_ssl_check()
+        tools.cfg['common'] = {}
+        tools.cfg['common']['ssl_verify'] = "False"
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.name = 'file'
         artifact.artifact = 'dummy'
@@ -27,6 +28,7 @@ class TestTools(unittest.TestCase):
         mock.assert_called_with('dummy', stream=True, verify=False)
         tools.Artifact.ssl_verify = True
         os.remove('file')
+        tools.cfg = {}
 
     @mock.patch('requests.get', return_value=res_bad_status)
     def test_fetching_bad_status_code(self, mock):
@@ -61,14 +63,15 @@ class TestTools(unittest.TestCase):
         mock.assert_called_with('sha256', 'justamocksum')
 
     def test_generated_url_with_cacher(self):
-        os.environ['DOGEN_ARTIFACT_CACHE'] = '#filename#,#algorithm#,#hash#'
+        tools.cfg['artifact'] = {}
+        tools.cfg['artifact']['cache_url'] = '#filename#,#algorithm#,#hash#'
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.sums = {'sha256': 'justamocksum'}
         artifact.name = 'file'
         artifact._generate_url()
         self.assertEqual(artifact.url,
                          'file,sha256,justamocksum')
-        del os.environ['DOGEN_ARTIFACT_CACHE']
+        tools.cfg = {}
 
     def test_generated_url_without_cacher(self):
         artifact = tools.Artifact.__new__(tools.Artifact)

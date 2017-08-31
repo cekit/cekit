@@ -1,9 +1,11 @@
-import glob
+try:
+    import ConfigParser as configparser
+except:
+    import configparser
 import hashlib
 import logging
 import os
 import shutil
-
 import requests
 import yaml
 from pykwalify.core import Core
@@ -14,6 +16,14 @@ from dogen.errors import DogenError
 SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
 logger = logging.getLogger('dogen')
 
+cfg = {}
+
+
+def parse_cfg():
+    cp = configparser.ConfigParser()
+    cp.read(os.path.expanduser('~/.concreate'))
+    return cp._sections
+
 
 def is_repo_url(url):
     """ Dogen assumes any absolute path is not url """
@@ -22,7 +32,6 @@ def is_repo_url(url):
 
 class Artifact(object):
     """A class representing artifact """
-    ssl_verify = True
     check_integrity = True
     target_dir = ""
 
@@ -44,7 +53,7 @@ class Artifact(object):
           #algorithm# - replace by an algorithm family
           #hash# - artifact hash
         """
-        cache = os.getenv("DOGEN_ARTIFACT_CACHE", "")
+        cache = cfg.get('artifact', {}).get('cache_url', None)
         if not cache:
             self.url = self.artifact
             return
@@ -97,32 +106,41 @@ class Artifact(object):
             logger.debug("Using fetched artifact '%s' for '%s'. " % (destination,
                                                                      self.name))
             return self
-        logger.debug("Fetching '%s' as %s" % (self.url, destination))
-
-        res = requests.get(self.url, verify=self.ssl_verify, stream=True)
-        if res.status_code != 200:
-            raise DogenError("Could not download file from %s" % self.url)
-        with open(destination, 'wb') as f:
-            for chunk in res.iter_content(chunk_size=1024):
-                f.write(chunk)
+        download_file(self.url, destination)
         return self
 
 
-def prepare_external_repositories(repo_files_dir, image_dir):
-    if not os.path.exists(repo_files_dir):
-        raise DogenError("Directory '%s' with additional repository definitions doesn't exist!"
-                         % repo_files_dir)
+def download_file(url, destination):
+    """ Downloads a file from url and save it as destination """
+    logger.debug("Fetching '%s' as %s" % (url, destination))
 
+    verify = cfg.get('common', {}).get('ssl_verify', True)
+    if str(verify).lower() == 'false':
+        verify = False
+
+    res = requests.get(url, verify=verify, stream=True)
+    if res.status_code != 200:
+        raise DogenError("Could not download file from %s" % url)
+    with open(destination, 'wb') as f:
+        for chunk in res.iter_content(chunk_size=1024):
+            f.write(chunk)
+
+
+def prepare_external_repositories(image_dir):
+    """ Fetch repository definitions from provided urls """
     added_repos = []
-    repo_files = glob.glob(os.path.join(repo_files_dir, "*.repo"))
+    repo_file_urls = cfg.get('repository', {}).get('urls', None)
+    if not repo_file_urls:
+        return added_repos
+
     target_dir = os.path.join(image_dir, 'repos')
     os.makedirs(target_dir)
 
-    for f in repo_files:
-        logger.info("Copying %s repo file..." % os.path.basename(f))
-        shutil.copy2(f, target_dir)
-        added_repos.append(os.path.splitext(os.path.basename(f))[0])
-
+    for url in repo_file_urls.split(','):
+        url = url.strip()
+        download_file(url, os.path.join(target_dir,
+                                        os.path.basename(url)))
+        added_repos.append(os.path.splitext(os.path.basename(url))[0])
     return added_repos
 
 
