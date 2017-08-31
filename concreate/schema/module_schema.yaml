@@ -1,0 +1,64 @@
+# This is a Kwalify Schema for module descriptor.
+# See http://pykwalify.readthedocs.io/ for more information
+map:
+  name:    {type: str, required: True}
+  version: {type: text}
+  description: {type: text}
+  cmd:
+    type: seq
+    sequence:
+      - type: str
+  entrypoint:
+    type: seq
+    sequence:
+      - type: str
+  labels:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {type: str, required: True}
+          value: {type: str, required: True}
+          description: {type: str}
+  envs:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {type: str, required: True}
+          value: {type: any}
+          example: {type: any}
+          description: {type: str}
+  ports:
+    seq:
+      - map:
+          value: {type: int, required: True}
+          expose: {type: bool}
+          description: {type: str}
+  workdir: {type: str}
+  artifacts:
+    seq:
+      - map:
+          artifact: {type: str, required: True}
+          md5: {type: str}
+          sha1: {type: str}
+          sha256: {type: str}
+          hint: {type: str}
+  packages:
+    seq:
+      - {type: str}
+  execute:
+    seq:
+      - map:
+          execute: {type: str, required: True}
+          user: {type: str}
+  modules:
+    seq:
+      - map:
+          name: {type: str, required: True}
+          version: {type: str}
+  dependencies:
+    seq:
+      - map:
+          url: {type: str, required: True}
+          ref: {type: str}

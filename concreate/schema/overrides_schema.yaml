@@ -1,0 +1,63 @@
+# This is a Kwalify Schema for overrides.
+# See http://pykwalify.readthedocs.io/ for more information
+map:
+  name:    {type: str}
+  from:    {type: str}
+  version: {type: text}
+  release: {type: text}
+  description: {type: text}
+  user: {type: text}
+  cmd:
+    type: seq
+    sequence:
+      - type: str
+  entrypoint:
+    type: seq
+    sequence:
+      - type: str
+  labels:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {type: str}
+          value: {type: str}
+          description: {type: str}
+  envs:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          name: {type: str}
+          value: {type: any}
+          example: {type: any}
+          description: {type: str}
+  ports:
+    seq:
+      - map:
+          value: {type: int}
+          expose: {type: bool}
+          description: {type: str}
+  maintainer: {type: str}
+  workdir: {type: str}
+  artifacts:
+    seq:
+      - map:
+          artifact: {type: str}
+          md5: {type: str}
+          sha1: {type: str}
+          sha256: {type: str}
+          hint: {type: str}
+  packages:
+    seq:
+      - {type: str}
+  modules:
+    seq:
+      - map:
+          name: {type: str}
+          version: {type: str}
+  dependencies:
+    seq:
+      - map:
+          url: {type: str, required: True}
+          ref: {type: str}
