@@ -74,13 +74,16 @@ class Generator(object):
         descriptor.merge(self.effective_descriptor)
         return descriptor
 
-    def render_dockerfile(self, template_file):
+    def render_dockerfile(self):
         """ Renders Dockerfile to $target/image/Dockerfile
 
         Args:
           template_file - a path to jinja2 template file
         """
         logger.info("Rendering Dockerfile...")
+        template_file = os.path.join(os.path.dirname(__file__),
+                                     'templates',
+                                     'template.jinja')
         loader = FileSystemLoader(os.path.dirname(template_file))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()

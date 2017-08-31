@@ -14,12 +14,6 @@ basic_config = {'release': 1,
                 'cmd': 'whoami',
                 'from': 'scratch',
                 'name': 'testimage'}
-template_path = os.path.join(os.path.dirname(__file__),
-                             '..',
-                             'dogen',
-                             'templates',
-                             'template.jinja')
-
 
     # Generate a Dockerfile, and check what is in it.
 class TestDockerfile(unittest.TestCase):
@@ -57,7 +51,7 @@ class TestDockerfile(unittest.TestCase):
         USER instruction in the Dockerfile, immediately before the CMD.
         """
         self.descriptor['user'] = 1347
-        self.generator.render_dockerfile(template_path)
+        self.generator.render_dockerfile()
 
         
         with open(self.dockerfile, "r") as f:
@@ -71,7 +65,7 @@ class TestDockerfile(unittest.TestCase):
         Test that cmd: is mapped into a CMD instruction
         """
         self.descriptor['cmd'] = ['/usr/bin/date']
-        self.generator.render_dockerfile(template_path)
+        self.generator.render_dockerfile()
 
         with open(os.path.join(self.dockerfile), "r") as f:
             dockerfile = f.read()
@@ -84,7 +78,7 @@ class TestDockerfile(unittest.TestCase):
         Test that entrypoint: is mapped into a ENTRYPOINT instruction
         """
         self.descriptor['entrypoint'] = ['/usr/bin/time']
-        self.generator.render_dockerfile(template_path)
+        self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()
@@ -97,7 +91,7 @@ class TestDockerfile(unittest.TestCase):
         Test that cmd: is mapped into a CMD instruction
         """
         self.descriptor['volumes'] = ['/var/lib', '/usr/lib']
-        self.generator.render_dockerfile(template_path)
+        self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()
@@ -110,7 +104,7 @@ class TestDockerfile(unittest.TestCase):
                                    {'expose': False,
                                     'value': 9999}]
         
-        self.generator.render_dockerfile(template_path)
+        self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()
@@ -126,7 +120,7 @@ class TestDockerfile(unittest.TestCase):
                                     'example': 'example_value',
                                     'description': 'This is a description'}]
 
-        self.generator.render_dockerfile(template_path)
+        self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()

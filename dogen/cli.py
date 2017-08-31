@@ -48,12 +48,6 @@ class Dogen(object):
                             action='store_true',
                             help='Should we skip SSL verification when retrieving data?')
 
-        parser.add_argument('--template',
-                            default=os.path.join(os.path.dirname(__file__),
-                                                 'templates',
-                                                 'template.jinja'),
-                            help='Path to custom template (can be url)')
-
         parser.add_argument('--repo-files-dir',
                             help='Provides path to directory with *.repo files that should be used to install rpms')
 
@@ -103,7 +97,7 @@ class Dogen(object):
 
             generator.prepare_modules()
             generator.prepare_repositories(self.args.repo_files_dir)
-            generator.render_dockerfile(self.args.template)
+            generator.render_dockerfile()
             generator.fetch_artifacts()
         except KeyboardInterrupt as e:
             pass
