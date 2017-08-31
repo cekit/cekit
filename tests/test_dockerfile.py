@@ -6,8 +6,8 @@ import os
 import re
 import shutil
 
-from dogen.generator import Generator
-from dogen.descriptor import Descriptor
+from concreate.generator import Generator
+from concreate.descriptor import Descriptor
 
 basic_config = {'release': 1,
                 'version': 1,
@@ -98,7 +98,7 @@ class TestDockerfile(unittest.TestCase):
             regex = re.compile(r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
-    # https://github.com/jboss-dockerfiles/dogen/issues/124
+    # https://github.com/jboss-dockerfiles/concreate/issues/124
     def test_debug_port(self):
         self.descriptor['ports'] = [{'value': 8080},
                                    {'expose': False,
@@ -111,7 +111,7 @@ class TestDockerfile(unittest.TestCase):
             regex = re.compile(r'.*EXPOSE 8080$',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
-    # https://github.com/jboss-dockerfiles/dogen/issues/127
+    # https://github.com/jboss-dockerfiles/concreate/issues/127
     def test_generating_env_variables(self):
         self.descriptor['envs'] = [{'name': 'CONFIG_ENV',
                                     'example': 1234},

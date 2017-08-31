@@ -3,9 +3,8 @@ import os
 import requests
 import unittest
 
-from dogen import tools
-from dogen.errors import DogenError
-from tests import helpers
+from concreate import tools
+from concreate.errors import ConcreateError
 
 res = requests.Response()
 res.status_code = 200
@@ -35,7 +34,7 @@ class TestTools(unittest.TestCase):
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.name = 'file'
         artifact.artifact = 'dummy'
-        with self.assertRaises(DogenError):
+        with self.assertRaises(ConcreateError):
             artifact.fetch()
 
     @mock.patch('requests.get', return_value=res)
@@ -55,7 +54,7 @@ class TestTools(unittest.TestCase):
         self.assertTrue(artifact.verify())
         tools.Artifact.check_integrity = True
 
-    @mock.patch('dogen.tools.Artifact._check_sum')
+    @mock.patch('concreate.tools.Artifact._check_sum')
     def test_artifact_verify(self, mock):
         artifact = tools.Artifact.__new__(tools.Artifact)
         artifact.sums = {'sha256': 'justamocksum'}
@@ -84,5 +83,5 @@ class TestTools(unittest.TestCase):
         self.assertFalse(tools.is_repo_url('/home/user/repo'))
 
     def test_is_repo_url_url(self):
-        self.assertTrue(tools.is_repo_url('git@github.com:jboss-dockerfiles/dogen.git'))
-        self.assertTrue(tools.is_repo_url('https://github.com/jboss-dockerfiles/dogen.git'))
+        self.assertTrue(tools.is_repo_url('git@github.com:jboss-dockerfiles/concreate.git'))
+        self.assertTrue(tools.is_repo_url('https://github.com/jboss-dockerfiles/concreate.git'))

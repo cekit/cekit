@@ -1,7 +1,7 @@
 import mock
 import unittest
 
-from dogen import module
+from concreate import module
 
 
 @mock.patch('subprocess.check_output')
@@ -27,12 +27,12 @@ class TestModuleFetching(unittest.TestCase):
 @mock.patch('os.walk', return_value=[('dir', None, ['module.yaml'])])
 class TestModuleDiscovery(unittest.TestCase):
 
-    @mock.patch('dogen.module.Module')
+    @mock.patch('concreate.module.Module')
     def test_module_discovery(self, mod, _):
         module.discover_modules('repo')
         mod.assert_called_with('dir/module.yaml')
 
-    @mock.patch('dogen.module.Module')
+    @mock.patch('concreate.module.Module')
     def test_module_is_added_to_modules(self, mod, _):
         module.modules = []
         module.discover_modules('repo')

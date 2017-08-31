@@ -38,13 +38,6 @@ map:
           value: {type: int, required: True}
           expose: {type: bool}
           description: {type: str}
-  dogen:
-    map:
-      name: {type: text}
-      version: {type: text}
-      ssl_verify: {type: bool}
-      template: {type: str}
-      scripts_path: {type: str}
   maintainer: {type: str}
   workdir: {type: str}
   artifacts:

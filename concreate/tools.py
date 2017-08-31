@@ -10,11 +10,11 @@ import requests
 import yaml
 from pykwalify.core import Core
 
-from dogen.errors import DogenError
+from concreate.errors import ConcreateError
 
 
 SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
-logger = logging.getLogger('dogen')
+logger = logging.getLogger('concreate')
 
 cfg = {}
 
@@ -26,7 +26,7 @@ def parse_cfg():
 
 
 def is_repo_url(url):
-    """ Dogen assumes any absolute path is not url """
+    """ Concreate assumes any absolute path is not url """
     return not url.startswith('/')
 
 
@@ -46,9 +46,8 @@ class Artifact(object):
 
     def _generate_url(self):
         """ Adjust url to use artifact cache if needed.
-        Environment variable "DOGEN_ARTIFACT_CACHE" is used
-        to create url for cacher.
-        it can contain:
+        
+        It can replace:
           #filename# - replaced by a basename of file
           #algorithm# - replace by an algorithm family
           #hash# - artifact hash
@@ -92,7 +91,7 @@ class Artifact(object):
         chksum = hash_function.hexdigest()
 
         if chksum.lower() != expected_chksum.lower():
-            raise DogenError("The %s computed for the '%s' file ('%s') doesn't match the '%s' value"
+            raise ConcreateError("The %s computed for the '%s' file ('%s') doesn't match the '%s' value"
                              % (algorithm, self.name, chksum, expected_chksum))
 
         logger.debug("Hash is correct.")
@@ -120,7 +119,7 @@ def download_file(url, destination):
 
     res = requests.get(url, verify=verify, stream=True)
     if res.status_code != 200:
-        raise DogenError("Could not download file from %s" % url)
+        raise ConcreateError("Could not download file from %s" % url)
     with open(destination, 'wb') as f:
         for chunk in res.iter_content(chunk_size=1024):
             f.write(chunk)
@@ -172,14 +171,14 @@ def load_descriptor(descriptor_path, schema_type):
                                'schema',
                                schema_name)
     if not os.path.exists(schema_path):
-        raise DogenError('Cannot locate schema for %s.' % schema_type)
+        raise ConcreateError('Cannot locate schema for %s.' % schema_type)
 
     schema = {}
     with open(schema_path, 'r') as fh:
         schema = yaml.safe_load(fh)
 
     if not os.path.exists(descriptor_path):
-        raise DogenError('Cannot find provided descriptor file')
+        raise ConcreateError('Cannot find provided descriptor file')
 
     descriptor = {}
     with open(descriptor_path, 'r') as fh:
@@ -189,4 +188,4 @@ def load_descriptor(descriptor_path, schema_type):
     try:
         return core.validate(raise_exception=True)
     except Exception as ex:
-        raise DogenError("Cannot validate schema", ex)
+        raise ConcreateError("Cannot validate schema", ex)

@@ -31,7 +31,7 @@ def setup_logging():
     handler_out.setFormatter(formatter)
     handler_err.setFormatter(formatter)
 
-    logger = logging.getLogger("dogen")
+    logger = logging.getLogger("concreate")
     logger.addHandler(handler_out)
     logger.addHandler(handler_err)
 

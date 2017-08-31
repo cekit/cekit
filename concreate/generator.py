@@ -5,13 +5,13 @@ import os
 
 from jinja2 import Environment, FileSystemLoader
 
-from dogen import tools
-from dogen.descriptor import Descriptor
-from dogen.module import copy_module_to_target
-from dogen.template_helper import TemplateHelper
+from concreate import tools
+from concreate.descriptor import Descriptor
+from concreate.module import copy_module_to_target
+from concreate.template_helper import TemplateHelper
 
 
-logger = logging.getLogger('dogen')
+logger = logging.getLogger('concreate')
 
 
 class Generator(object):

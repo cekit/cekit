@@ -2,6 +2,6 @@
 class Error(Exception):
     pass
 
-class DogenError(Error):
+class ConcreateError(Error):
     pass
 

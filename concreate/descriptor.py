@@ -1,11 +1,11 @@
 import logging
 import os
 
-from dogen import DEFAULT_USER
-from dogen.errors import DogenError
-from dogen.tools import load_descriptor
+from concreate import DEFAULT_USER
+from concreate.errors import ConcreateError
+from concreate.tools import load_descriptor
 
-logger = logging.getLogger('dogen')
+logger = logging.getLogger('concreate')
 
 
 class Descriptor(object):
@@ -49,13 +49,13 @@ class Descriptor(object):
         and duplicit values are kept
 
         Args:
-          descriptor - a dogen descritor
+          descriptor - a concreate descritor
         """
         try:
             self.descriptor = merge_dictionaries(self.descriptor, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
-            raise DogenError("Dictionary is missing 'name' keyword")
+            raise ConcreateError("Dictionary is missing 'name' keyword")
 
     def _process_artifacsts(self):
         """ Processes descriptor artifacts section and generate default
@@ -89,7 +89,7 @@ class Descriptor(object):
                 dependency['name'] = os.path.basename(dependency['url'])
 
     def _process_labels(self):
-        """ Generate labels from dogen keys """
+        """ Generate labels from concreate keys """
         if "labels" not in self.descriptor:
             self.descriptor['labels'] = []
         if "description" in self.descriptor:
@@ -141,7 +141,7 @@ def merge_lists(list1, list2):
                     if v2['name'] == v1['name']:
                         merge_dictionaries(v1, v2)
         elif isinstance(v2, list):
-            raise DogenError("Cannot merge list of lists")
+            raise ConcreateError("Cannot merge list of lists")
         else:
             if v2 not in list1:
                 list1.append(v2)

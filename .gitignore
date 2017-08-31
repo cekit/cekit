@@ -2,7 +2,7 @@ dist
 *.pyc
 *.swp
 target
-dogen.egg-info
+concreate.egg-info
 build
 setup.cfg
 build.sh

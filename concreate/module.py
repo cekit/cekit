@@ -3,11 +3,11 @@ import subprocess
 import logging
 import shutil
 
-from dogen.descriptor import Descriptor
-from dogen.errors import DogenError
-from dogen import tools
+from concreate.descriptor import Descriptor
+from concreate.errors import ConcreateError
+from concreate import tools
 
-logger = logging.getLogger('dogen')
+logger = logging.getLogger('concreate')
 # importable list of all modules
 modules = []
 
@@ -54,7 +54,7 @@ def copy_module_to_target(name, version, target):
             shutil.copytree(module.path, dest)
             module.path = dest
             return module
-    raise DogenError("Cannot find requested module: '%s'" % name)
+    raise ConcreateError("Cannot find requested module: '%s'" % name)
 
 
 def get_dependencies(descriptor, base_dir):
@@ -104,14 +104,14 @@ def clone_module_repository(url, ref, base_dir):
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         return target_dir
     except Exception as ex:
-        # exception is fatal we be logged before Dogen dies
-        raise DogenError('Cannot fetch module repository: %s' % ex, ex)
+        # exception is fatal we be logged before Concreate dies
+        raise ConcreateError('Cannot fetch module repository: %s' % ex, ex)
 
 
 def discover_modules(repo_dir):
     """ Looks through the directory trees for modules descriptor.
-    When module is find, it create dogen.module.Module instance
-    and add this instance to the dogen.module.modules list.
+    When module is find, it create concreate.module.Module instance
+    and add this instance to the concreate.module.modules list.
     """
     for modules_dir, _, files in os.walk(repo_dir):
         if 'module.yaml' in files:

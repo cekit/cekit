@@ -1,4 +1,4 @@
-from dogen.version import version
+from concreate.version import version
 
 
 __version__ = version

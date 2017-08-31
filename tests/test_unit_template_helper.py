@@ -1,9 +1,9 @@
 import tempfile
 import unittest
 
-from dogen.template_helper import TemplateHelper
-from dogen.errors import Error
-from dogen.version import version
+from concreate.template_helper import TemplateHelper
+from concreate.errors import Error
+from concreate.version import version
 
 class TestConfig(unittest.TestCase):
     def setUp(self):

@@ -1,7 +1,7 @@
 import unittest
 
-from dogen import descriptor
-from dogen.errors import DogenError
+from concreate import descriptor
+from concreate.errors import ConcreateError
 
 class TestMergingDictionaries(unittest.TestCase):
 
@@ -43,7 +43,7 @@ class TestMergingLists(unittest.TestCase):
     def test_merging_plain_list_oflist(self):
         list1 = [1,2,3]
         list2 = [3,4,[]]
-        with self.assertRaises(DogenError):
+        with self.assertRaises(ConcreateError):
             descriptor.merge_lists(list1, list2)
 
     def test_merging_list_of_dictionaries(self):

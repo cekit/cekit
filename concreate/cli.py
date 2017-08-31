@@ -5,16 +5,16 @@ import os
 import logging
 import sys
 
-from dogen import tools
-from dogen.log import setup_logging
-from dogen.errors import DogenError
-from dogen.generator import Generator
-from dogen.module import discover_modules, copy_modules_to_repository, get_dependencies
-from dogen.version import version
+from concreate import tools
+from concreate.log import setup_logging
+from concreate.errors import ConcreateError
+from concreate.generator import Generator
+from concreate.module import discover_modules, copy_modules_to_repository, get_dependencies
+from concreate.version import version
 
 # FIXME we shoudl try to move this to json
 setup_logging()
-logger = logging.getLogger('dogen')
+logger = logging.getLogger('concreate')
 
 
 class MyParser(argparse.ArgumentParser):
@@ -24,7 +24,7 @@ class MyParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-class Dogen(object):
+class Concreate(object):
     """ Main application """
 
     def parse_args(self):
@@ -94,7 +94,7 @@ class Dogen(object):
             generator.fetch_artifacts()
         except KeyboardInterrupt as e:
             pass
-        except DogenError as e:
+        except ConcreateError as e:
             if self.args.verbose:
                 logger.exception(e)
             else:
@@ -103,7 +103,7 @@ class Dogen(object):
 
 
 def run():
-    Dogen().parse_args().run()
+    Concreate().parse_args().run()
 
 if __name__ == "__main__":
     run()
