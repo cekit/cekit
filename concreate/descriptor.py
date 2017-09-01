@@ -20,10 +20,17 @@ class Descriptor(object):
         self.directory = os.path.dirname(descriptor_path)
         self.descriptor = load_descriptor(descriptor_path, descriptor_type)
         if descriptor_type == 'image':
-            if self.descriptor['schema_version'] != schema_version:
-                raise ConcreateError("Schema '%s' is not supported by current version"
-                                     " please install Concreate '%s'"
-                                     % (schema_version, schema_version))
+            self.check_schema_version()
+
+    def check_schema_version(self):
+        """ Check supported schema version """
+        if self.descriptor['schema_version'] != schema_version:
+            raise ConcreateError("Schema version: '%s' is not supported by current version."
+                                 " This version supports schema version: '%s' only."
+                                 " To build this image please install concreate version: '%s'"
+                                 % (schema_version,
+                                    self.descriptor['schema_version'],
+                                    schema_version))
 
     def __getitem__(self, key):
         return self.descriptor[key]

@@ -32,6 +32,16 @@ class TestMergingDictionaries(unittest.TestCase):
                          descriptor.merge_dictionaries(dict1, dict2))
 
 class TestMergingLists(unittest.TestCase):
+    def test_descriptor_schema_version(self):
+        img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
+        img_descriptor.descriptor = {'schema_version': 1}
+        img_descriptor.check_schema_version()
+
+    def test_descriptor_schema_version_bad_version(self):
+        img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
+        img_descriptor.descriptor = {'schema_version': 123}
+        with self.assertRaises(ConcreateError):
+            img_descriptor.check_schema_version()
     
     def test_merging_plain_lists(self):
         list1 = [1,2,3]
