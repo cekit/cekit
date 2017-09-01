@@ -4,6 +4,7 @@ import os
 from concreate import DEFAULT_USER
 from concreate.errors import ConcreateError
 from concreate.tools import load_descriptor
+from concreate.version import schema_version
 
 logger = logging.getLogger('concreate')
 
@@ -18,6 +19,11 @@ class Descriptor(object):
     def __init__(self, descriptor_path, descriptor_type):
         self.directory = os.path.dirname(descriptor_path)
         self.descriptor = load_descriptor(descriptor_path, descriptor_type)
+        if descriptor_type == 'image':
+            if self.descriptor['schema_version'] != schema_version:
+                raise ConcreateError("Schema '%s' is not supported by current version"
+                                     " please install Concreate '%s'"
+                                     % (schema_version, schema_version))
 
     def __getitem__(self, key):
         return self.descriptor[key]
