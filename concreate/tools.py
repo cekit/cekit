@@ -46,7 +46,7 @@ class Artifact(object):
 
     def _generate_url(self):
         """ Adjust url to use artifact cache if needed.
-        
+
         It can replace:
           #filename# - replaced by a basename of file
           #algorithm# - replace by an algorithm family
@@ -92,20 +92,27 @@ class Artifact(object):
 
         if chksum.lower() != expected_chksum.lower():
             raise ConcreateError("The %s computed for the '%s' file ('%s') doesn't match the '%s' value"
-                             % (algorithm, self.name, chksum, expected_chksum))
+                                 % (algorithm, self.name, chksum, expected_chksum))
 
         logger.debug("Hash is correct.")
 
     def fetch(self):
         """ Fetches the artifact to the artifact dir """
         self._generate_url()
-        destination = os.path.join(self.target_dir, self.name)
-        # If the artifacts exist just return - we dont care if sum is correct here
-        if os.path.exists(destination):
-            logger.debug("Using fetched artifact '%s' for '%s'. " % (destination,
-                                                                     self.name))
-            return self
-        download_file(self.url, destination)
+
+        if os.path.exists(self.filename):
+            try:
+                self.verify()
+                logger.debug("Using fetched artifact '%s' for '%s'. " % (self.filename,
+                                                                         self.name))
+                return self
+            except ConcreateError:
+                # Artifact available locally is not correct.
+                # We need to download it again.
+                pass
+
+        download_file(self.url, self.filename)
+        self.verify()
         return self
 
 
