@@ -1,11 +1,9 @@
 import os
-import subprocess
 import logging
 import shutil
 
 from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
-from concreate import tools
 
 logger = logging.getLogger('concreate')
 # importable list of all modules
@@ -65,47 +63,13 @@ def get_dependencies(descriptor, base_dir):
       descriptor - image descriptor
       base_dir - root directory for dependencies
     """
+    logger.debug("Retrieving dependencies for %s" % (descriptor['name']))
     if 'dependencies' not in descriptor:
+        logger.debug("No dependencies specified in descriptor")
         return
-    for dependency in descriptor['dependencies']:
-        if tools.is_repo_url(dependency['url']):
-            # we asume url are git repositories
-            clone_module_repository(dependency['url'],
-                                    dependency['ref'],
-                                    base_dir)
-        else:
-            target_dir = os.path.join(base_dir,
-                                      os.path.basename(dependency['url']))
-            copy_modules_to_repository(dependency['url'], target_dir)
-
-
-def clone_module_repository(url, ref, base_dir):
-    """ Clones a git repository containing cct modules.
-    Repository is clonde to args.target/repo/name-ref directory
-
-    If the repository is local it will be copied insted of cloned.
-
-    Arguments:
-    url: url for git repository of modules
-    ref: git reference to checkout
-    base_dir: parent directory where git repo will be cloned
-
-    Returns directory where module was cloned
-    """
-    try:
-        target_dir = os.path.join(base_dir,
-                                  "%s-%s" % (os.path.basename(url), ref))
-        if os.path.exists(target_dir):
-            logger.debug("Module repository '%s' is already cloned, skipping" % url)
-            return target_dir
-        # FIXME if url is local path - lets copy it instead (for local development)
-        cmd = ['git', 'clone', '--depth', '1', url, target_dir, '-b', ref]
-        logger.debug("Running '%s'" % ' '.join(cmd))
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        return target_dir
-    except Exception as ex:
-        # exception is fatal we be logged before Concreate dies
-        raise ConcreateError('Cannot fetch module repository: %s' % ex, ex)
+    for dependency in descriptor['dependencies'].values():
+        logger.debug("Downloading dependency %s" % (dependency.name))
+        dependency.copy(base_dir)
 
 
 def discover_modules(repo_dir):

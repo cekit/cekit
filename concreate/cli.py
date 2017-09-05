@@ -9,7 +9,7 @@ from concreate import tools
 from concreate.log import setup_logging
 from concreate.errors import ConcreateError
 from concreate.generator import Generator
-from concreate.module import discover_modules, copy_modules_to_repository, get_dependencies
+from concreate.module import discover_modules, get_dependencies
 from concreate.version import version
 
 # FIXME we shoudl try to move this to json
@@ -62,9 +62,6 @@ class Concreate(object):
 
         self.args = parser.parse_args()
 
-        tools.Artifact.target_dir = os.path.join(self.args.target,
-                                                 'image')
-
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
@@ -78,12 +75,6 @@ class Concreate(object):
         try:
             tools.cfg = tools.parse_cfg()
             tools.cleanup(self.args.target)
-            copy_modules_to_repository(
-                os.path.join(os.path.dirname(self.args.descriptor),
-                             'modules'),
-                os.path.join(self.args.target,
-                             'repo',
-                             'modules'))
 
             # We need to construct Generator first, because we need overrides
             # merged in

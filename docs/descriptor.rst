@@ -20,31 +20,48 @@ the image build process.
 
 Artifacts section is meant exactly for this. *Concreate will automatically
 fetch any artifacts* specified in this section
-and check their consistency by comptuting checksum of
-the downloaded file and comparing it with the desired value.
+and check their consistency by computing checksum of
+the downloaded file and comparing it with the desired value.  The output name
+for downloaded resources will match the ``name`` attribute, which defaults to
+the base name of the file/URL.  Artifact locations may be specified as ``url``s,
+``file``s or ``git`` references.
 
 .. code:: yaml
 
     artifacts:
-        - artifact: https://github.com/rhuss/jolokia/releases/download/v1.3.6/jolokia-1.3.6-bin.tar.gz
+          # file will be downloaded and verified
+          # default "name" would be identical to this
+        - name: jolokia-1.3.6-bin.tar.gz
+          url: https://github.com/rhuss/jolokia/releases/download/v1.3.6/jolokia-1.3.6-bin.tar.gz
           md5: 75e5b5ba0b804cd9def9f20a70af649f
+
+          # file exists on local machine relative to this file.  checksum will be verified
+          # "name" attribute defaults to: "hawkular-javaagent-1.0.0.CR4-redhat-1-shaded.jar"
+        - file: local-artifacts/hawkular-javaagent-1.0.0.CR4-redhat-1-shaded.jar
+          md5: e133776c76a474ed46ac88c856eabe34
+
+          # git project will be cloned
+          # "name" attribute defaults to "project"
+        - git:
+              url: https://github.com/organization/project
+              ref: master
 
 .. note::
 
     Currently supported algorithms are: md5, sha1 and sha256.
 
 For artifacts that are not publicly available Concreate provides a way to
-add a hint from there such artifact could be downloaded.
+add a description detailing a location from which the artifact can be obtained.
 
 .. code:: yaml
 
     artifacts:
-        - artifact: jboss-eap-6.4.0.zip
+        - file: jboss-eap-6.4.0.zip
           md5: 9a5d37631919a111ddf42ceda1a9f0b5
-          hint: "Artifact is available on Customer Portal: https://access.redhat.com/jbossnetwork/restricted/softwareDetail.html?softwareId=37393&product=appplatform&version=6.4&downloadType=distributions"
+          description: "Artifact is available on Customer Portal: https://access.redhat.com/jbossnetwork/restricted/softwareDetail.html?softwareId=37393&product=appplatform&version=6.4&downloadType=distributions"
 
-If Concreate is not able to download an artifact and this artifacts has a ``hint`` defined -- the build
-will be failed but a message with the defined hint will be printed together with information where to place
+If Concreate is not able to download an artifact and this artifact has a ``description`` defined -- the build
+will fail but a message with the description will be printed together with information on where to place
 the manually downloaded artifact.
 
 
@@ -62,9 +79,24 @@ Command that should be executed by the container at run time.
 ``dependencies``
 ----------------
 
-.. todo::
+Dependencies specify repositories containing modules that are to be incorporated
+into the image.  These repositories may be ``git`` repositories or directories
+on the local ``file`` system.  ``concreate`` will scan the repositories for
+``module.xml`` files, which are used to encapsulate image details that may be
+incorporated into multiple images.  See :ref:`here <modules>` for more detailed
+information related to modules.
 
-    Write this section
+.. code:: yaml
+
+    dependencies:
+          # "java" modules pulled from Java image project
+        - name: java
+          git:
+              url: https://github.com/jboss-container-images/redhat-openjdk-18-openshift-image
+              ref: 1.0
+          # "eap" modules pulled locally from "modules" directory, collocated with this image.yaml
+        - name: eap
+          file: modules
 
 ``description``
 ---------------
