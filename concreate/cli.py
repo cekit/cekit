@@ -18,6 +18,7 @@ logger = logging.getLogger('concreate')
 
 
 class MyParser(argparse.ArgumentParser):
+
     def error(self, message):
         self.print_help()
         sys.stderr.write('\nError: %s\n' % message)
@@ -27,7 +28,7 @@ class MyParser(argparse.ArgumentParser):
 class Concreate(object):
     """ Main application """
 
-    def parse_args(self):
+    def run(self):
         parser = MyParser(
             description='Dockerfile generator tool',
             formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -35,25 +36,31 @@ class Concreate(object):
         parser.add_argument('-v',
                             '--verbose',
                             action='store_true',
-                            help='Verbose output')
+                            help='verbose output')
 
         parser.add_argument('--version',
                             action='version',
-                            help='Show version and exit', version=version)
+                            help='show version and exit', version=version)
 
-        parser.add_argument('--overrides',
-                            help='Path to a file containing overrides.')
+        subparsers = parser.add_subparsers()
 
-        parser.add_argument('descriptor_path',
-                            help="Path to yaml descriptor to process")
+        parser_build = subparsers.add_parser(
+            'build', help='build container image')
 
-        parser.add_argument('target',
-                            help="Path to directory where generated files should be saved")
+        parser_build.add_argument('--overrides',
+                                  help='path to a file containing overrides')
+
+        parser_build.add_argument('--target',
+                                  default="target",
+                                  help="path to directory where to generate sources")
+
+        parser_build.add_argument('descriptor',
+                                  default="image.yaml",
+                                  help="path to image descriptor file, default: image.yaml")
+
+        parser_build.set_defaults(func=self.build)
 
         self.args = parser.parse_args()
-        return self
-
-    def run(self):
 
         tools.Artifact.target_dir = os.path.join(self.args.target,
                                                  'image')
@@ -64,11 +71,15 @@ class Concreate(object):
             logger.setLevel(logging.INFO)
 
         logger.debug("Running version %s", version)
+
+        self.args.func()
+
+    def build(self):
         try:
             tools.cfg = tools.parse_cfg()
             tools.cleanup(self.args.target)
             copy_modules_to_repository(
-                os.path.join(os.path.dirname(self.args.descriptor_path),
+                os.path.join(os.path.dirname(self.args.descriptor),
                              'modules'),
                 os.path.join(self.args.target,
                              'repo',
@@ -76,7 +87,7 @@ class Concreate(object):
 
             # We need to construct Generator first, because we need overrides
             # merged in
-            generator = Generator(self.args.descriptor_path,
+            generator = Generator(self.args.descriptor,
                                   self.args.target,
                                   self.args.overrides)
 
@@ -92,6 +103,8 @@ class Concreate(object):
             generator.prepare_repositories()
             generator.render_dockerfile()
             generator.fetch_artifacts()
+            generator.build()
+
         except KeyboardInterrupt as e:
             pass
         except ConcreateError as e:
@@ -103,7 +116,7 @@ class Concreate(object):
 
 
 def run():
-    Concreate().parse_args().run()
+    Concreate().run()
 
 if __name__ == "__main__":
     run()
