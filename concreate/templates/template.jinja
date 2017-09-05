@@ -69,7 +69,7 @@ RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endf
 # Add all artifacts to the /tmp/artifacts
 # directory
 COPY \
-{% for artifact in artifacts %}
+{% for artifact in artifacts.values() %}
     {{ artifact.name }} \
     {% endfor %}
     /tmp/artifacts/

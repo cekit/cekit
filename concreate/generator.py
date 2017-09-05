@@ -62,12 +62,15 @@ class Generator(object):
         """ Goes through artifacts section of image descriptor
         and fetches all of them
         """
+        logger.debug("Fetching artifacts")
         if 'artifacts' not in self.descriptor:
+            logger.debug("No artifacts to fetch")
             return
+        target_dir = os.path.join(self.target, 'image')
         artifacts = self.descriptor['artifacts']
-        for artifact_dict in artifacts:
-            artifact = tools.Artifact(artifact_dict)
-            artifact.fetch()
+        for artifact in artifacts.values():
+            logger.debug("Fetching artifact %s" % (artifact.name))
+            artifact.copy(target_dir)
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)

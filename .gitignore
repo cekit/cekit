@@ -11,3 +11,6 @@ build.sh
 .cache
 htmlcov
 docs/_build
+.pydevproject
+.project
+.settings/
