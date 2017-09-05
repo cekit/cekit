@@ -2,11 +2,14 @@ try:
     import ConfigParser as configparser
 except:
     import configparser
-import hashlib
 import logging
 import os
 import shutil
 import requests
+try:
+    import urllib.parse as urlparse
+except:
+    import urlparse
 import yaml
 from pykwalify.core import Core
 
@@ -25,112 +28,30 @@ def parse_cfg():
     return cp._sections
 
 
-def is_repo_url(url):
-    """ Concreate assumes any absolute path is not url """
-    return not url.startswith('/')
-
-
-class Artifact(object):
-    """A class representing artifact """
-    check_integrity = True
-    target_dir = ""
-
-    def __init__(self, artifact_dict):
-        self.artifact = artifact_dict['artifact']
-        self.name = artifact_dict['name']
-        self.sums = {}
-        self.filename = os.path.join(self.target_dir, self.name)
-        for alg in SUPPORTED_HASH_ALGORITHMS:
-            if alg in artifact_dict:
-                self.sums[alg] = artifact_dict[alg]
-
-    def _generate_url(self):
-        """ Adjust url to use artifact cache if needed.
-
-        It can replace:
-          #filename# - replaced by a basename of file
-          #algorithm# - replace by an algorithm family
-          #hash# - artifact hash
-        """
-        cache = cfg.get('artifact', {}).get('cache_url', None)
-        if not cache:
-            self.url = self.artifact
-            return
-
-        for alg in SUPPORTED_HASH_ALGORITHMS:
-            if alg in self.sums:
-                logger.debug("Using %s to fetch artifacts from cacher." % alg)
-                self.url = (cache.replace('#filename#', self.name)
-                            .replace('#algorithm#', alg)
-                            .replace('#hash#', self.sums[alg]))
-                break
-
-    def verify(self):
-        """ Checks all defined check_sums for an aritfact """
-        if not self.check_integrity:
-            return True
-        for algorithm, chksum in self.sums.items():
-            self._check_sum(algorithm, chksum)
-        return True
-
-    def _check_sum(self, algorithm, expected_chksum):
-        """ Check that file chksum is correct
-
-        Args:
-          alg - algorithm which will be used for diget
-          expected_chksum - checksum which artifact must mathc
-        """
-
-        logger.debug("Checking '%s' %s hash..." % (self.name, algorithm))
-
-        hash_function = getattr(hashlib, algorithm)()
-
-        with open(self.filename, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                hash_function.update(chunk)
-        chksum = hash_function.hexdigest()
-
-        if chksum.lower() != expected_chksum.lower():
-            raise ConcreateError("The %s computed for the '%s' file ('%s') doesn't match the '%s' value"
-                                 % (algorithm, self.name, chksum, expected_chksum))
-
-        logger.debug("Hash is correct.")
-
-    def fetch(self):
-        """ Fetches the artifact to the artifact dir """
-        self._generate_url()
-
-        if os.path.exists(self.filename):
-            try:
-                self.verify()
-                logger.debug("Using fetched artifact '%s' for '%s'. " % (self.filename,
-                                                                         self.name))
-                return self
-            except ConcreateError:
-                # Artifact available locally is not correct.
-                # We need to download it again.
-                pass
-
-        download_file(self.url, self.filename)
-        self.verify()
-        return self
-
-
 def download_file(url, destination):
     """ Downloads a file from url and save it as destination """
     logger.debug("Fetching '%s' as %s" % (url, destination))
 
-    verify = cfg.get('common', {}).get('ssl_verify', True)
-    if str(verify).lower() == 'false':
-        verify = False
+    parsedUrl = urlparse.urlparse(url)
 
-    res = requests.get(url, verify=verify, stream=True)
-    if res.status_code != 200:
-        raise ConcreateError("Could not download file from %s" % url)
-    with open(destination, 'wb') as f:
-        for chunk in res.iter_content(chunk_size=1024):
-            f.write(chunk)
+    if parsedUrl.scheme == 'file' or not parsedUrl.scheme:
+        if os.path.isdir(parsedUrl.path):
+            shutil.copytree(parsedUrl.path, destination)
+        else:
+            shutil.copy(parsedUrl.path, destination)
+    elif parsedUrl.scheme == 'http' or parsedUrl.scheme == 'https':
+        verify = cfg.get('common', {}).get('ssl_verify', True)
+        if str(verify).lower() == 'false':
+            verify = False
 
+        res = requests.get(url, verify=verify, stream=True)
+        if res.status_code != 200:
+            raise ConcreateError("Could not download file from %s" % url)
+        with open(destination, 'wb') as f:
+            for chunk in res.iter_content(chunk_size=1024):
+                f.write(chunk)
+    else:
+        raise ConcreateError("Unsupported URL scheme: %s" % (url))
 
 def prepare_external_repositories(image_dir):
     """ Fetch repository definitions from provided urls """
@@ -195,4 +116,5 @@ def load_descriptor(descriptor_path, schema_type):
     try:
         return core.validate(raise_exception=True)
     except Exception as ex:
-        raise ConcreateError("Cannot validate schema", ex)
+        raise ConcreateError("Cannot validate schema: %s" % (descriptor_path),
+                             ex)
