@@ -2,11 +2,13 @@
 
 import logging
 import os
+import subprocess
 
 from jinja2 import Environment, FileSystemLoader
 
 from concreate import tools
 from concreate.descriptor import Descriptor
+from concreate.errors import ConcreateError
 from concreate.module import copy_module_to_target
 from concreate.template_helper import TemplateHelper
 
@@ -101,3 +103,27 @@ class Generator(object):
         self.descriptor['additional_repos'] = \
             tools.prepare_external_repositories(os.path.join(self.target,
                                                              'image'))
+
+    def build(self):
+        """
+        After the source siles are generated, the container image can be built.
+        We're using Docker to build the image currently.
+
+        Built image will be avaialbe under two tags:
+
+            1. version defined in the image descriptor
+            2. 'latest'
+        """
+        # Desired tag of the image
+        tag = "%s:%s" % (self.effective_descriptor['name'], self.effective_descriptor['version'])
+        latest_tag = "%s:latest" % self.effective_descriptor['name']
+
+        logger.info("Building %s container image..." % tag)
+
+        ret = subprocess.call(["docker", "build", "-t", tag, "-t", latest_tag, os.path.join(self.target, 'image')])
+
+        if ret == 0:
+            logger.info("Image built and available under following tags: %s and %s" % (tag, latest_tag))
+        else:
+            raise ConcreateError("Image build failed, see logs above.")
+
