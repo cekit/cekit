@@ -68,7 +68,6 @@ class Generator(object):
         for artifact_dict in artifacts:
             artifact = tools.Artifact(artifact_dict)
             artifact.fetch()
-            artifact.verify()
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
