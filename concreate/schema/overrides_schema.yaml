@@ -38,7 +38,6 @@ map:
           value: {type: int}
           expose: {type: bool}
           description: {type: str}
-  maintainer: {type: str}
   workdir: {type: str}
   artifacts:
     seq:
