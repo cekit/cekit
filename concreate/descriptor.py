@@ -44,6 +44,12 @@ class Descriptor(object):
     def items(self):
         return self.descriptor.items()
 
+    def label(self, key):
+        for l in self.descriptor['labels']:
+            if l['name'] == key:
+                return l
+        return None
+
     def process(self):
         """ Prepare descriptor to be used by generating defaults """
         if 'artifacts' in self.descriptor:
@@ -105,9 +111,27 @@ class Descriptor(object):
         """ Generate labels from concreate keys """
         if "labels" not in self.descriptor:
             self.descriptor['labels'] = []
-        if "description" in self.descriptor:
-            self.descriptor['labels'].append({'name': 'description',
-                                              'value': self.descriptor['description']})
+
+        # The description key available in image descriptor's
+        # root is added as labels to the image
+        key = 'description'
+
+        # If we define the label in the image descriptor
+        # we should *not* override it with value from
+        # the root's key
+        if key in self.descriptor and not self.label(key):
+            value = self.descriptor[key]
+            self.descriptor['labels'].append({'name': key, 'value': value})
+
+        # Last - if there is no 'summary' label added to image descriptor
+        # we should use the value of the 'description' key and create
+        # a 'summary' label with it's content. If there is even that
+        # key missing - we should not add anything.
+        description = self.label('description')
+
+        if not self.label('summary') and description:
+            self.descriptor['labels'].append(
+                {'name': 'summary', 'value': description['value']})
 
 
 def merge_dictionaries(dict1, dict2):
