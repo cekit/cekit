@@ -3,6 +3,7 @@ import unittest
 from concreate import descriptor
 from concreate.errors import ConcreateError
 
+
 class TestMergingDictionaries(unittest.TestCase):
 
     def test_merging_plain_dictionaries(self):
@@ -18,10 +19,10 @@ class TestMergingDictionaries(unittest.TestCase):
 
     def test_merging_emdedded_dictionaires(self):
         dict1 = {'a': 1,
-                 'b': { 'b1': 10,
-                        'b2': 20}}
-        dict2 = {'b': { 'b2': 50,
-                        'b3': 30},
+                 'b': {'b1': 10,
+                       'b2': 20}}
+        dict2 = {'b': {'b2': 50,
+                       'b3': 30},
                  'c': 3}
         expected = {'a': 1,
                     'b': {'b1': 10,
@@ -31,7 +32,9 @@ class TestMergingDictionaries(unittest.TestCase):
         self.assertEqual(expected,
                          descriptor.merge_dictionaries(dict1, dict2))
 
+
 class TestMergingLists(unittest.TestCase):
+
     def test_descriptor_schema_version(self):
         img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
         img_descriptor.descriptor = {'schema_version': 1}
@@ -42,17 +45,17 @@ class TestMergingLists(unittest.TestCase):
         img_descriptor.descriptor = {'schema_version': 123}
         with self.assertRaises(ConcreateError):
             img_descriptor.check_schema_version()
-    
+
     def test_merging_plain_lists(self):
-        list1 = [1,2,3]
-        list2 = [2,3,4,5]
-        expected = [1,2,3,4,5]
+        list1 = [1, 2, 3]
+        list2 = [2, 3, 4, 5]
+        expected = [1, 2, 3, 4, 5]
         self.assertEqual(descriptor.merge_lists(list1, list2),
                          expected)
-    
+
     def test_merging_plain_list_oflist(self):
-        list1 = [1,2,3]
-        list2 = [3,4,[]]
+        list1 = [1, 2, 3]
+        list2 = [3, 4, []]
         with self.assertRaises(ConcreateError):
             descriptor.merge_lists(list1, list2)
 
