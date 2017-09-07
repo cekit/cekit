@@ -10,3 +10,4 @@ build.sh
 .coverage
 .cache
 htmlcov
+docs/_build
