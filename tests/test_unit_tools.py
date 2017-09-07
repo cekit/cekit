@@ -15,6 +15,7 @@ res_bad_status.status_code = 500
 
 
 class TestTools(unittest.TestCase):
+
     def setUp(self):
         tools.cfg = {}
 
@@ -57,7 +58,8 @@ class TestTools(unittest.TestCase):
         """
         with open('file', 'w') as f:
             pass
-        artifact = tools.Artifact({'name': 'file', 'artifact': 'dummy', 'md5': '123456'})
+        artifact = tools.Artifact(
+            {'name': 'file', 'artifact': 'dummy', 'md5': '123456'})
         with self.assertRaises(ConcreateError):
             # Checksum will fail, because the "downloaded" file
             # will not have md5 equal to 123456. We need investigate
@@ -101,5 +103,7 @@ class TestTools(unittest.TestCase):
         self.assertFalse(tools.is_repo_url('/home/user/repo'))
 
     def test_is_repo_url_url(self):
-        self.assertTrue(tools.is_repo_url('git@github.com:jboss-dockerfiles/concreate.git'))
-        self.assertTrue(tools.is_repo_url('https://github.com/jboss-dockerfiles/concreate.git'))
+        self.assertTrue(tools.is_repo_url(
+            'git@github.com:jboss-dockerfiles/concreate.git'))
+        self.assertTrue(tools.is_repo_url(
+            'https://github.com/jboss-dockerfiles/concreate.git'))
