@@ -15,7 +15,9 @@ basic_config = {'release': 1,
                 'from': 'scratch',
                 'name': 'testimage'}
 
-    # Generate a Dockerfile, and check what is in it.
+# Generate a Dockerfile, and check what is in it.
+
+
 class TestDockerfile(unittest.TestCase):
 
     @classmethod
@@ -40,7 +42,6 @@ class TestDockerfile(unittest.TestCase):
         self.generator.target = self.target
         self.generator.effective_descriptor = Descriptor.__new__(Descriptor)
         self.generator.effective_descriptor.descriptor = self.descriptor
-        
 
     def tearDown(self):
         shutil.rmtree(self.target)
@@ -53,7 +54,6 @@ class TestDockerfile(unittest.TestCase):
         self.descriptor['user'] = 1347
         self.generator.render_dockerfile()
 
-        
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()
             regex = re.compile(r'.*USER 1347\n+CMD.*',
@@ -95,15 +95,16 @@ class TestDockerfile(unittest.TestCase):
 
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()
-            regex = re.compile(r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]',  re.MULTILINE)
+            regex = re.compile(
+                r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
     # https://github.com/jboss-dockerfiles/concreate/issues/124
     def test_debug_port(self):
         self.descriptor['ports'] = [{'value': 8080},
-                                   {'expose': False,
-                                    'value': 9999}]
-        
+                                    {'expose': False,
+                                     'value': 9999}]
+
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -124,5 +125,6 @@ class TestDockerfile(unittest.TestCase):
 
         with open(self.dockerfile, "r") as f:
             dockerfile = f.read()
-            regex = re.compile(r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n',  re.MULTILINE)
+            regex = re.compile(
+                r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
