@@ -12,4 +12,5 @@ Concreate helps to build container images from image definition files.
 
     descriptor
     modules
+    configuration
 
