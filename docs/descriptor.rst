@@ -156,6 +156,25 @@ it -- we should set the ``expose`` flag to ``false`` (``true`` by default).
         - value: 8778
           expose: false
 
+``workdir``
+-----------
+
+Sets the current working directory of the entrypoint process in the container.
+
+.. code:: yaml
+
+    workdir: "/home/jboss"
+
+``user``
+--------
+
+Specifies the user (can be username or uid) that should be used to launch the entrypoint
+process.
+
+.. code:: yaml
+
+    user: "alice"
+
 ``cmd``
 -------
 ``entrypoint``
