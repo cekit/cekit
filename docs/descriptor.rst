@@ -58,7 +58,11 @@ Here you specify the schema version of the descriptor. This influences what vers
 ``description``
 ---------------
 
-Short summary of the image -- also used to create the ``description`` label.
+Short summary of the image.
+
+Value of the ``description`` key is added to the image as two labels: ``description``
+and ``summary`` unless such labels are already defined in the image descriptor's
+:ref:`labels` section.
 
 .. code:: yaml
 
@@ -73,6 +77,8 @@ The user that should be used to launch the main process in the container. Can be
 
     user: "alice"
 
+.. _labels:
+
 ``labels``
 ----------
 
@@ -86,9 +92,9 @@ Every image can include labels. Concreate makes it easy to do so with the ``labe
 
     labels:
         - name: "io.k8s.description"
-        value: "Platform for building and running JavaEE applications on JBoss EAP 7.0"
+          value: "Platform for building and running JavaEE applications on JBoss EAP 7.0"
         - name: "io.k8s.display-name"
-        value: "JBoss EAP 7.0"
+          value: "JBoss EAP 7.0"
 
 ``envs``
 ----------
