@@ -42,23 +42,23 @@ class Concreate(object):
                             action='version',
                             help='show version and exit', version=version)
 
-        subparsers = parser.add_subparsers()
+        parser.add_argument('--overrides',
+                            help='path to a file containing overrides')
 
-        parser_build = subparsers.add_parser(
-            'build', help='build container image')
+        parser.add_argument('--target',
+                            default="target",
+                            help="path to directory where to generate sources, \
+                                default: 'target' directory in current working directory")
 
-        parser_build.add_argument('--overrides',
-                                  help='path to a file containing overrides')
+        parser.add_argument('--descriptor',
+                            default="image.yaml",
+                            help="path to image descriptor file, default: image.yaml")
 
-        parser_build.add_argument('--target',
-                                  default="target",
-                                  help="path to directory where to generate sources")
-
-        parser_build.add_argument('descriptor',
-                                  default="image.yaml",
-                                  help="path to image descriptor file, default: image.yaml")
-
-        parser_build.set_defaults(func=self.build)
+        parser.add_argument('commands',
+                            nargs='+',
+                            choices=['generate', 'build'],
+                            help="commands that should be executed, \
+                                you can specify multiple commands")
 
         self.args = parser.parse_args()
 
@@ -72,9 +72,6 @@ class Concreate(object):
 
         logger.debug("Running version %s", version)
 
-        self.args.func()
-
-    def build(self):
         try:
             tools.cfg = tools.parse_cfg()
             tools.cleanup(self.args.target)
@@ -99,11 +96,14 @@ class Concreate(object):
             # and process its dependency trees
             discover_modules(os.path.join(self.args.target, 'repo'))
 
-            generator.prepare_modules()
-            generator.prepare_repositories()
-            generator.render_dockerfile()
-            generator.fetch_artifacts()
-            generator.build()
+            if 'generate' in self.args.commands:
+                # In case both: 'generate' and 'build' are specified
+                # Make sure we only run generate once (as part of 'build')
+                if 'build' not in self.args.commands:
+                    self.generate(generator)
+
+            if 'build' in self.args.commands:
+                self.build(generator)
 
         except KeyboardInterrupt as e:
             pass
@@ -113,6 +113,16 @@ class Concreate(object):
             else:
                 logger.error(str(e))
             sys.exit(1)
+
+    def generate(self, generator):
+        generator.prepare_modules()
+        generator.prepare_repositories()
+        generator.render_dockerfile()
+        generator.fetch_artifacts()
+
+    def build(self, generator):
+        self.generate(generator)
+        generator.build()
 
 
 def run():
