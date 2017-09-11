@@ -5,7 +5,6 @@ map:
   from:    {type: str, required: True}
   version: {type: text, required: True}
   schema_version:  {type: int, required: True}
-  release: {type: text}
   description: {type: text}
   user: {type: text}
   cmd:

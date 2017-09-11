@@ -4,7 +4,6 @@ map:
   name:    {type: str}
   from:    {type: str}
   version: {type: text}
-  release: {type: text}
   description: {type: text}
   user: {type: text}
   cmd:
