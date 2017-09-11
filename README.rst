@@ -18,7 +18,7 @@ Features
 Status
 ------
 
-This project is currently in development. Initial release should be avaialble shortly. Support for multiple target platforms is planned in future, but currently only Docker is supported.
+This project is currently in development. Initial release should be available shortly. Support for multiple target platforms is planned in future, but currently only Docker is supported.
 
 Installation
 ------------

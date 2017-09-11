@@ -1,15 +1,15 @@
 Configuration file
 ==================
 
-Concreate can be configured using a configuration file. We use
+Concreate can be configured using a configuration file. We use the
 properties file format.
 
-Concreate will look for this file in ``~/.concreate`` path.
+Concreate will look for this file at the path `~/.concreate``.
 
 Configuration file sections
 ---------------------------
 
-Below you can find description of avaialble sections together with options described in details.
+Below you can find description of available sections together with options described in detail.
 
 ``[common]``
 ^^^^^^^^^^^^
@@ -74,8 +74,8 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 ``urls``
 """""""""
 
-The ``urls`` setting in the ``reposository`` section can be used to define YUM/DNF repository files
-that should be added to image at build time.
+The ``urls`` setting in the ``repository`` section can be used to define YUM/DNF repository files
+that should be added to the image at build time.
 
 In case you have YUM/DNF repo files that you want to put to the ``/etc/yum.repos.d`` directory to enable additional
 repositories Concreate can handle it for you automatically.
