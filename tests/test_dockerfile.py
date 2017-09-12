@@ -1,7 +1,5 @@
-import argparse
 import tempfile
 import unittest
-import mock
 import os
 import re
 import shutil
@@ -11,7 +9,7 @@ from concreate.descriptor import Descriptor
 
 basic_config = {'release': 1,
                 'version': 1,
-                'cmd': 'whoami',
+                'run': {'cmd': 'whoami'},
                 'from': 'scratch',
                 'name': 'testimage'}
 
@@ -48,10 +46,11 @@ class TestDockerfile(unittest.TestCase):
 
     def test_set_cmd_user(self):
         """
-        Ensure that setting a user in the YAML generates a corresponding
+        Ensure that setting 'user' in 'run' section in the YAML generates a corresponding
         USER instruction in the Dockerfile, immediately before the CMD.
         """
-        self.descriptor['user'] = 1347
+        self.descriptor['run']['user'] = 1347
+        self.generator.effective_descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -60,11 +59,25 @@ class TestDockerfile(unittest.TestCase):
                                re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
+    def test_default_cmd_user(self):
+        """
+        Make sure we use 'root' user to run the CMD/ENTRYPOINT process, if it not defined.
+        """
+        self.generator.effective_descriptor.process()
+        self.generator.render_dockerfile()
+
+        with open(self.dockerfile, "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'.*USER root\n+CMD.*',
+                               re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
+
     def test_set_cmd(self):
         """
-        Test that cmd: is mapped into a CMD instruction
+        Test that run/cmd: is mapped into a CMD instruction
         """
-        self.descriptor['cmd'] = ['/usr/bin/date']
+        self.descriptor['run']['cmd'] = ['/usr/bin/date']
+        self.generator.effective_descriptor.process()
         self.generator.render_dockerfile()
 
         with open(os.path.join(self.dockerfile), "r") as f:
@@ -75,9 +88,10 @@ class TestDockerfile(unittest.TestCase):
 
     def test_set_entrypoint(self):
         """
-        Test that entrypoint: is mapped into a ENTRYPOINT instruction
+        Test that run/entrypoint: is mapped into a ENTRYPOINT instruction
         """
-        self.descriptor['entrypoint'] = ['/usr/bin/time']
+        self.descriptor['run']['entrypoint'] = ['/usr/bin/time']
+        self.generator.effective_descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -86,11 +100,26 @@ class TestDockerfile(unittest.TestCase):
                                re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
 
+    def test_set_workdir(self):
+        """
+        Test that run/workdir is mapped into a WORKDIR instruction
+        """
+        self.descriptor['run']['workdir'] = "/home/jboss"
+        self.generator.effective_descriptor.process()
+        self.generator.render_dockerfile()
+
+        with open(self.dockerfile, "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'.*WORKDIR /home/jboss',
+                               re.MULTILINE)
+            self.assertRegexpMatches(dockerfile, regex)
+
     def test_volumes(self):
         """
         Test that cmd: is mapped into a CMD instruction
         """
         self.descriptor['volumes'] = ['/var/lib', '/usr/lib']
+        self.generator.effective_descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -105,6 +134,7 @@ class TestDockerfile(unittest.TestCase):
                                     {'expose': False,
                                      'value': 9999}]
 
+        self.generator.effective_descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -121,6 +151,7 @@ class TestDockerfile(unittest.TestCase):
                                     'example': 'example_value',
                                     'description': 'This is a description'}]
 
+        self.generator.effective_descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
