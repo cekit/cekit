@@ -42,11 +42,11 @@ class Generator(object):
 
         # If descriptor doesn't requires any module we can start merging descriptors
         # and fetching artifacts. There ibs nothing left to do except for this
-        if 'modules' not in descriptor:
+        if 'modules' not in descriptor or 'install' not in descriptor['modules']:
             self.effective_descriptor.merge(descriptor)
             return
 
-        for module in descriptor['modules']:
+        for module in descriptor['modules']['install']:
             version = None
             if 'version' in module:
                 version = module['version']
