@@ -23,8 +23,8 @@ fetch any artifacts* specified in this section
 and check their consistency by computing checksum of
 the downloaded file and comparing it with the desired value.  The output name
 for downloaded resources will match the ``name`` attribute, which defaults to
-the base name of the file/URL.  Artifact locations may be specified as ``url``s,
-``file``s or ``git`` references.
+the base name of the file/URL. Artifact locations may be specified as ``url``\s,
+``file``\s or ``git`` references.
 
 .. code:: yaml
 
@@ -64,18 +64,6 @@ If Concreate is not able to download an artifact and this artifact has a ``descr
 will fail but a message with the description will be printed together with information on where to place
 the manually downloaded artifact.
 
-
-``cmd``
--------
-
-Command that should be executed by the container at run time.
-
-.. code:: yaml
-
-    cmd:
-        - "some cmd"
-        - "argument"
-
 ``dependencies``
 ----------------
 
@@ -110,16 +98,6 @@ and ``summary`` unless such labels are already defined in the image descriptor's
 .. code:: yaml
 
     description: "Red Hat JBoss Enterprise Application 7.0 - An application platform for hosting your apps that provides an innovative modular, cloud-ready architecture, powerful management and automation, and world class developer productivity."
-
-``entrypoint``
---------------
-
-Entrypoint that should be executed by the container at run time.
-
-.. code:: yaml
-
-    entrypoint:
-        - "/opt/eap/bin/wrapper.sh"
 
 ``envs``
 ----------
@@ -247,6 +225,71 @@ it -- we should set the ``expose`` flag to ``false`` (``true`` by default).
         - value: 8778
           expose: false
 
+``run``
+-------
+
+The ``run`` section encapsulates instructions related to launching main process
+in the container including: ``cmd``, ``entrypoint``, ``user`` and ``workdir``.
+All subsections are described later in this paragraph.
+
+Below you can find full example that uses every possible option.
+
+.. code:: yaml
+
+    run:
+        cmd:
+            - "argument1"
+            - "argument2"
+        entrypoint:
+            - "/opt/eap/bin/wrapper.sh"
+        user: "alice"
+        workdir: "/home/jboss"
+
+
+``cmd``
+^^^^^^^
+
+Command that should be executed by the container at run time.
+
+.. code:: yaml
+
+    run:
+        cmd:
+            - "some cmd"
+            - "argument"
+
+``entrypoint``
+^^^^^^^^^^^^^^
+
+Entrypoint that should be executed by the container at run time.
+
+.. code:: yaml
+
+    run:
+        entrypoint:
+            - "/opt/eap/bin/wrapper.sh"
+
+``user``
+^^^^^^^^
+
+Specifies the user (can be username or uid) that should be used to launch the entrypoint
+process.
+
+.. code:: yaml
+
+    run:
+        user: "alice"
+
+``workdir``
+^^^^^^^^^^^
+
+Sets the current working directory of the entrypoint process in the container.
+
+.. code:: yaml
+
+    run:
+        workdir: "/home/jboss"
+
 ``schema_version``
 ------------------
 
@@ -257,26 +300,6 @@ Here you specify the schema version of the descriptor. This influences what vers
 .. code:: yaml
 
     schema_version: 1
-
-``user``
---------
-
-Specifies the user (can be username or uid) that should be used to launch the entrypoint
-process.
-
-.. code:: yaml
-
-    user: "alice"
-
-
-``workdir``
------------
-
-Sets the current working directory of the entrypoint process in the container.
-
-.. code:: yaml
-
-    workdir: "/home/jboss"
 
 ``version``
 -----------

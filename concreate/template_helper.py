@@ -1,7 +1,9 @@
 import os
 import re
 
+
 class TemplateHelper(object):
+
     def filename(self, source):
         """ Simple helper to return the file specified name """
 
@@ -71,4 +73,3 @@ class TemplateHelper(object):
                 port_list.append(p.get('value'))
 
         return port_list
-

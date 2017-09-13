@@ -103,17 +103,19 @@ VOLUME ["{{ volume }}"]
 {% endfor %}
 {% endif %}
 
-{%- if workdir %}
+
+USER {{ run['user'] }}
+{%- if run %}
+{%- if 'workdir' in run %}
 # Specify the working directory
-WORKDIR {{ workdir }}
+WORKDIR {{ run['workdir'] }}
 {% endif %}
 
-USER {{ user }}
-
-{% if entrypoint %}
-ENTRYPOINT {{ helper.cmd(entrypoint) }}
+{% if 'entrypoint' in run %}
+ENTRYPOINT {{ helper.cmd(run['entrypoint']) }}
 {% endif %}
 
-{% if cmd %}
-CMD {{ helper.cmd(cmd) }}
+{% if 'cmd' in run %}
+CMD {{ helper.cmd(run['cmd']) }}
+{% endif %}
 {% endif %}
