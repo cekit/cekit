@@ -63,6 +63,7 @@ class Descriptor(object):
             self._process_ports()
         if 'dependencies' in self.descriptor:
             self._process_dependencies()
+        self._process_run()
         self._process_labels()
         return self
 
@@ -100,6 +101,15 @@ class Descriptor(object):
                                          execute['execute'])
             if 'user' not in execute:
                 execute['user'] = DEFAULT_USER
+
+    def _process_run(self):
+        """ Make sure the user is set for cmd/entrypoint  """
+
+        if 'run' not in self.descriptor:
+            self.descriptor['run'] = {}
+
+        if 'user' not in self.descriptor['run']:
+            self.descriptor['run']['user'] = DEFAULT_USER
 
     def _process_ports(self):
         """ Generate name attribute for ports """
