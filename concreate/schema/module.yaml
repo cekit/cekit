@@ -1,0 +1,8 @@
+# To be merged with common.yaml
+map:
+  version: {type: text, required: False}
+  execute:
+    seq:
+      - map:
+          execute: {type: str, required: True}
+          user: {type: str}
