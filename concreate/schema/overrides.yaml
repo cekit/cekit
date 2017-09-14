@@ -1,0 +1,5 @@
+# To be merged with common.yaml
+map:
+  name: {type: str, required: False}
+  from: {type: str, required: False}
+  version: {type: text, required: False}
