@@ -75,7 +75,7 @@ class Descriptor(object):
           descriptor - a concreate descritor
         """
         try:
-            self.descriptor = merge_dictionaries(self.descriptor, descriptor)
+            self.descriptor = tools.merge_dictionaries(self.descriptor, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise ConcreateError("Dictionary is missing 'name' keyword")
@@ -309,52 +309,3 @@ class GitResource(Resource):
         return target
 
 
-def merge_dictionaries(dict1, dict2):
-    """ Merges two dictionaries handling embedded lists and
-    dictionaries.
-    In a case of simple type, values from dict1 are preserved.
-
-    Args:
-      dict1, dict2 dictionaries to merge
-
-    Return merged dictionaries
-    """
-    for k2, v2 in dict2.items():
-        if k2 not in dict1:
-            dict1[k2] = v2
-        else:
-            if isinstance(v2, list):
-                dict1[k2] = merge_lists(dict1[k2], v2)
-            elif isinstance(v2, dict):
-                dict1[k2] = merge_dictionaries(dict1[k2], v2)
-            else:
-                # if the type is int or strings we do nothing
-                # its already in dict1
-                pass
-    return dict1
-
-
-def merge_lists(list1, list2):
-    """ Merges two lists handling embedded dictionaries via 'name' as a key
-    In a case of simple type values are appended.
-
-    Args:
-      list1, list2 - list to merge
-
-    Returns merged list
-    """
-    list1_dicts = [x for x in list1 if isinstance(x, dict)]
-    for v2 in list2:
-        if isinstance(v2, dict):
-            if v2['name'] not in [x['name'] for x in list1_dicts]:
-                list1.append(v2)
-            else:
-                for v1 in list1_dicts:
-                    if v2['name'] == v1['name']:
-                        merge_dictionaries(v1, v2)
-        elif isinstance(v2, list):
-            raise ConcreateError("Cannot merge list of lists")
-        else:
-            if v2 not in list1:
-                list1.append(v2)
-    return list1
