@@ -159,11 +159,11 @@ class Resource(object):
     def new(resource, base_dir=os.getcwd()):
         if 'git' in resource:
             return GitResource(resource)
-        elif 'file' in resource:
-            directory = resource['file']
+        elif 'path' in resource:
+            directory = resource['path']
             if not os.path.isabs(directory):
-                resource['file'] = os.path.join(base_dir, directory)
-            return FileResource(resource)
+                resource['path'] = os.path.join(base_dir, directory)
+            return PathResource(resource)
         elif 'url' in resource:
             return UrlResource(resource)
         raise ValueError("Resource type is not supported: %s" (resource))
@@ -247,18 +247,18 @@ class Resource(object):
         logger.debug("Hash is correct.")
 
 
-class FileResource(Resource):
+class PathResource(Resource):
     def __init__(self, descriptor):
         if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['file'])
-        super(FileResource, self).__init__(descriptor)
-        self.file = descriptor['file']
+            descriptor['name'] = os.path.basename(descriptor['path'])
+        super(PathResource, self).__init__(descriptor)
+        self.path = descriptor['path']
 
     def _copy_impl(self, target):
-        if (os.path.isdir(self.file)):
-            shutil.copytree(self.file, target)
+        if (os.path.isdir(self.path)):
+            shutil.copytree(self.path, target)
         else:
-            shutil.copy(self.file, target)
+            shutil.copy(self.path, target)
         return target
 
 
