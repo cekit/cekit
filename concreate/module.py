@@ -63,13 +63,14 @@ def get_dependencies(descriptor, base_dir):
       descriptor - image descriptor
       base_dir - root directory for dependencies
     """
-    logger.debug("Retrieving dependencies for %s" % (descriptor['name']))
-    if 'dependencies' not in descriptor:
-        logger.debug("No dependencies specified in descriptor")
+    logger.debug("Retrieving module repositories for '%s'" % (descriptor['name']))
+
+    if not descriptor.module_repositories:
+        logger.debug("No module repostiories specified in descriptor")
         return
-    for dependency in descriptor['dependencies'].values():
-        logger.debug("Downloading dependency %s" % (dependency.name))
-        dependency.copy(base_dir)
+
+    for repo in descriptor.module_repositories.values():
+        repo.copy(base_dir)
 
 
 def discover_modules(repo_dir):
@@ -101,5 +102,4 @@ class Module():
         Arguments:
         repo_root: A parent directory where repositories will be cloned in
         """
-        if 'dependencies' in self.descriptor:
-            get_dependencies(self.descriptor['dependencies'], repo_root)
+        get_dependencies(self.descriptor, repo_root)
