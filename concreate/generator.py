@@ -114,7 +114,9 @@ class Generator(object):
         added_repos = []
         repo_file_urls = tools.cfg.get('repository', {}).get('urls', None)
 
-        if not repo_file_urls:
+        # If no repo files were defined or there are no packages to install,
+        # skip handling additional repo files
+        if not repo_file_urls or not self.effective_descriptor.get('packages'):
             return added_repos
 
         logger.info("Handling additional repository files...")
