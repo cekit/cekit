@@ -96,6 +96,7 @@ class Concreate(object):
             if 'build' in self.args.commands:
                 self.build(generator)
 
+            logger.info("Finished!")
         except KeyboardInterrupt as e:
             pass
         except ConcreateError as e:
