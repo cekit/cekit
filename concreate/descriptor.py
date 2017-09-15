@@ -78,7 +78,8 @@ class Descriptor(object):
           descriptor - a concreate descritor
         """
         try:
-            self.descriptor = tools.merge_dictionaries(self.descriptor, descriptor)
+            self.descriptor = tools.merge_dictionaries(
+                self.descriptor, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise ConcreateError("Dictionary is missing 'name' keyword")
@@ -120,6 +121,14 @@ class Descriptor(object):
             port['name'] = port['value']
 
     def _process_module_repositories(self):
+        local_modules = os.path.join(self.directory, 'modules')
+
+        # If a directory called 'modules' is found next to the image descriptor
+        # scan it for modules.
+        if os.path.isdir(local_modules):
+            self.module_repositories['modules'] = Resource.new(
+                {'path': local_modules}, self.directory)
+
         for repo in self.descriptor.get('modules', {}).get('repositories', []):
             resource = Resource.new(repo, self.directory)
             self.module_repositories[resource.name] = resource
@@ -149,5 +158,3 @@ class Descriptor(object):
         if not self.label('summary') and description:
             self.descriptor['labels'].append(
                 {'name': 'summary', 'value': description['value']})
-
-
