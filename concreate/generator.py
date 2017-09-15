@@ -18,6 +18,7 @@ logger = logging.getLogger('concreate')
 
 
 class Generator(object):
+
     def __init__(self, descriptor_path, target, overrides):
         self.descriptor = Descriptor(descriptor_path, 'image').process()
         self.target = target
@@ -106,29 +107,43 @@ class Generator(object):
                                   'image',
                                   'Dockerfile')
         with open(dockerfile, 'wb') as f:
-            f.write(template.render(self.effective_descriptor.descriptor).encode('utf-8'))
+            f.write(template.render(
+                self.effective_descriptor.descriptor).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
     def prepare_repositories(self):
         """Udates descriptor with added repositories"""
+        configured_repositories = tools.cfg.get('repositories', {})
+
+        # We need to remove the custom "__name__" element before we can show
+        # which repository keys are defined in the configuration
+        configured_repository_names = configured_repositories.keys()
+        configured_repository_names.remove('__name__')
+
         added_repos = []
-        repo_file_urls = tools.cfg.get('repository', {}).get('urls', None)
-
-        # If no repo files were defined or there are no packages to install,
-        # skip handling additional repo files
-        if not repo_file_urls or not self.effective_descriptor.get('packages'):
-            return added_repos
-
-        logger.info("Handling additional repository files...")
         target_dir = os.path.join(self.target, 'image', 'repos')
         os.makedirs(target_dir)
 
-        for url in repo_file_urls.split(','):
-            Resource.new({'url': url}).copy(target_dir)
-            added_repos.append(os.path.splitext(os.path.basename(url))[0])
+        for repo in self.effective_descriptor.get('packages', {}).get('repositories', []):
+            if repo not in configured_repositories:
+                raise ConcreateError("Package repository '%s' used in descriptor is not "
+                                     "available in Concreate configuration file. "
+                                     "Available repositories: %s"
+                                     % (repo, configured_repository_names))
 
-        self.descriptor['additional_repos'] = added_repos
-        logger.debug("Additional repository files handled")
+            urls = configured_repositories[repo]
+
+            if urls:
+                logger.info("Handling additional repository files...")
+
+                for url in urls.split(','):
+                    Resource.new({'url': url}).copy(target_dir)
+                    added_repos.append(os.path.splitext(
+                        os.path.basename(url))[0])
+
+                logger.debug("Additional repository files handled")
+
+                self.effective_descriptor['additional_repos'] = added_repos
 
     def build(self):
         """
@@ -141,15 +156,17 @@ class Generator(object):
             2. 'latest'
         """
         # Desired tag of the image
-        tag = "%s:%s" % (self.effective_descriptor['name'], self.effective_descriptor['version'])
+        tag = "%s:%s" % (self.effective_descriptor[
+                         'name'], self.effective_descriptor['version'])
         latest_tag = "%s:latest" % self.effective_descriptor['name']
 
         logger.info("Building %s container image..." % tag)
 
-        ret = subprocess.call(["docker", "build", "-t", tag, "-t", latest_tag, os.path.join(self.target, 'image')])
+        ret = subprocess.call(["docker", "build", "-t", tag,
+                               "-t", latest_tag, os.path.join(self.target, 'image')])
 
         if ret == 0:
-            logger.info("Image built and available under following tags: %s and %s" % (tag, latest_tag))
+            logger.info("Image built and available under following tags: %s and %s" % (
+                tag, latest_tag))
         else:
             raise ConcreateError("Image build failed, see logs above.")
-

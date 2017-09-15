@@ -208,24 +208,43 @@ Image name without the registry part.
 
     name: "jboss-eap-7/eap70-openshift"
 
+.. _descriptor_packages:
+
 ``packages``
 ------------
 
-If you need to install additional packages you can use the ``packages``
-section where you specify package names to be installed.
-
-.. todo::
-
-    Adding repo files
+To install additional RPM packages you can use the ``packages``
+section where you specify package names and repositories to be used.
 
 .. code:: yaml
 
     packages:
-        - mongodb24-mongo-java-driver
-        - postgresql-jdbc
-        - mysql-connector-java
-        - maven
-        - hostname
+        repositories:
+            - jboss-default
+        install:
+            - mongodb24-mongo-java-driver
+            - postgresql-jdbc
+            - mysql-connector-java
+            - maven
+            - hostname
+
+Packages are defined in the ``install`` subsection.
+
+To be able to define private repositories that you want to use at build time
+we have the ``repositories`` subsection. You can define repository `keys`
+that should be enabled. In image descriptor you only define what to use.
+Actual definition for these repositories takes place in :ref:`Concreate configuration file <configuration_repositories>`.
+
+.. code::
+
+    [repositories]
+    jboss-ocp=http://host/jboss-rhel-os.repo,http://host/jboss-rhel-ocp.repo,http://host/jboss-rhel-rhscl.repo
+    other-repos=http://otherhost.com/osme.repo
+
+.. note::
+
+    Multiple url's can be separated with comma.
+
 
 ``ports``
 ---------
