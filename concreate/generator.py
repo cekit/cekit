@@ -10,6 +10,7 @@ from concreate import tools
 from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
 from concreate.module import copy_module_to_target
+from concreate.resource import Resource
 from concreate.template_helper import TemplateHelper
 
 
@@ -23,6 +24,8 @@ class Generator(object):
         self.effective_descriptor = self.descriptor
         if overrides:
             self.effective_descriptor = self.override(overrides)
+
+        logger.info("Initializing image descriptor...")
 
     def prepare_modules(self, descriptor=None):
         """
@@ -42,11 +45,15 @@ class Generator(object):
 
         # If descriptor doesn't requires any module we can start merging descriptors
         # and fetching artifacts. There ibs nothing left to do except for this
-        if 'modules' not in descriptor:
+        modules = descriptor.get('modules', {}).get('install', {})
+
+        if not modules:
             self.effective_descriptor.merge(descriptor)
             return
 
-        for module in descriptor['modules']:
+        logger.info("Handling modules...")
+
+        for module in modules:
             version = None
             if 'version' in module:
                 version = module['version']
@@ -58,19 +65,21 @@ class Generator(object):
             self.prepare_modules(req_module.descriptor)
             self.effective_descriptor.merge(descriptor)
 
+        logger.debug("Modules handled")
+
     def fetch_artifacts(self):
         """ Goes through artifacts section of image descriptor
         and fetches all of them
         """
-        logger.debug("Fetching artifacts")
         if 'artifacts' not in self.descriptor:
             logger.debug("No artifacts to fetch")
             return
+        logger.info("Handling artifacts...")
         target_dir = os.path.join(self.target, 'image')
         artifacts = self.descriptor['artifacts']
         for artifact in artifacts.values():
-            logger.debug("Fetching artifact %s" % (artifact.name))
             artifact.copy(target_dir)
+        logger.debug("Artifacts handled")
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
@@ -98,13 +107,26 @@ class Generator(object):
                                   'Dockerfile')
         with open(dockerfile, 'wb') as f:
             f.write(template.render(self.effective_descriptor.descriptor).encode('utf-8'))
-        logger.debug("Done")
+        logger.debug("Dockerfile rendered")
 
     def prepare_repositories(self):
         """Udates descriptor with added repositories"""
-        self.descriptor['additional_repos'] = \
-            tools.prepare_external_repositories(os.path.join(self.target,
-                                                             'image'))
+        added_repos = []
+        repo_file_urls = tools.cfg.get('repository', {}).get('urls', None)
+
+        if not repo_file_urls:
+            return added_repos
+
+        logger.info("Handling additional repository files...")
+        target_dir = os.path.join(self.target, 'image', 'repos')
+        os.makedirs(target_dir)
+
+        for url in repo_file_urls.split(','):
+            Resource.new({'url': url}).copy(target_dir)
+            added_repos.append(os.path.splitext(os.path.basename(url))[0])
+
+        self.descriptor['additional_repos'] = added_repos
+        logger.debug("Additional repository files handled")
 
     def build(self):
         """

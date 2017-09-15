@@ -35,14 +35,6 @@ map:
       entrypoint:
           seq:
             - type: str
-  modules:
-    seq:
-      - map:
-          name: {type: str, required: True}
-          version: {type: str}
-  packages:
-    seq:
-      - {type: str}
   artifacts: &RESOURCES
     seq:
       - map:
@@ -58,4 +50,14 @@ map:
           sha256: {type: str}
           description: {type: str}
         assert: "val['git'] is not None or val['path'] is not None or val['url] is not None"
-  dependencies: *RESOURCES
+  modules:
+    map:
+      repositories: *RESOURCES
+      install:
+        seq:
+          - map:
+              name: {type: str, required: True}
+              version: {type: str}
+  packages:
+    seq:
+      - {type: str}
