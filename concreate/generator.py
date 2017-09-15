@@ -43,10 +43,10 @@ class Generator(object):
         if not descriptor:
             descriptor = self.descriptor
 
-        # If descriptor doesn't requires any module we can start merging descriptors
-        # and fetching artifacts. There ibs nothing left to do except for this
         modules = descriptor.get('modules', {}).get('install', {})
 
+        # If descriptor doesn't requires any module we can start merging descriptors
+        # and fetching artifacts. There is nothing left to do except for this
         if not modules:
             self.effective_descriptor.merge(descriptor)
             return
