@@ -1,3 +1,5 @@
+.. _image_descriptor:
+
 Image descriptor file
 =====================
 
@@ -62,28 +64,6 @@ add a description detailing a location from which the artifact can be obtained.
 If Concreate is not able to download an artifact and this artifact has a ``description`` defined -- the build
 will fail but a message with the description will be printed together with information on where to place
 the manually downloaded artifact.
-
-``dependencies``
-----------------
-
-Dependencies specify repositories containing modules that are to be incorporated
-into the image. These repositories may be ``git`` repositories or directories
-on the local file system (``path``).  Concreate will scan the repositories for
-``module.xml`` files, which are used to encapsulate image details that may be
-incorporated into multiple images. See :ref:`here <modules>` for more detailed
-information related to modules.
-
-.. code:: yaml
-
-    dependencies:
-          # "java" modules pulled from Java image project
-        - name: java
-          git:
-              url: https://github.com/jboss-container-images/redhat-openjdk-18-openshift-image
-              ref: 1.0
-          # "eap" modules pulled locally from "modules" directory, collocated with this image.yaml
-        - name: eap
-          path: modules
 
 ``description``
 ---------------
@@ -177,7 +157,44 @@ Every image can include labels. Concreate makes it easy to do so with the ``labe
 ``modules``
 -----------
 
-Modules are discussed in details :ref:`here <modules>`.
+.. note::
+
+    Modules are discussed in details :ref:`here <modules>`.
+
+Module repositories
+^^^^^^^^^^^^^^^^^^^
+
+Module repositories specify location of modules that are to be incorporated
+into the image. These repositories may be ``git`` repositories or directories
+on the local file system (``path``). Concreate will scan the repositories for
+``module.xml`` files, which are used to encapsulate image details that may be
+incorporated into multiple images.
+
+.. code:: yaml
+
+    modules:
+      repositories:
+          # Modules pulled from Java image project on GitHub
+        - git:
+              url: https://github.com/jboss-container-images/redhat-openjdk-18-openshift-image
+              ref: 1.0
+
+          # Modules pulled locally from "custom-modules" directory, collocated with image descriptor
+        - path: custom-modules
+
+Module installation
+^^^^^^^^^^^^^^^^^^^
+
+The ``install`` section is used to define what modules should be installed in the image
+in what order. Name used to specify the module is the ``name`` field from the module
+descriptor.
+
+.. code:: yaml
+
+    modules:
+      install:
+          - name: xpaas.java
+          - name: xpaas.amq.install
 
 
 ``name``
