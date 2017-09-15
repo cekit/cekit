@@ -40,6 +40,7 @@ class TestDockerfile(unittest.TestCase):
         self.generator.target = self.target
         self.generator.effective_descriptor = Descriptor.__new__(Descriptor)
         self.generator.effective_descriptor.descriptor = self.descriptor
+        self.generator.effective_descriptor.directory = '/tmp'
 
     def tearDown(self):
         shutil.rmtree(self.target)
