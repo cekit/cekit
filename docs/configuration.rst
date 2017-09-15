@@ -4,30 +4,25 @@ Configuration file
 Concreate can be configured using a configuration file. We use the
 properties file format.
 
-Concreate will look for this file at the path `~/.concreate``.
-
-Configuration file sections
----------------------------
+Concreate will look for this file at the path ``~/.concreate``.
 
 Below you can find description of available sections together with options described in detail.
 
 ``[common]``
-^^^^^^^^^^^^
+------------
 
 ``ssl_verify``
-""""""""""""""
+^^^^^^^^^^^^^^
 
 Controls verification of SSL certificates for example when downloading artifacts. Default: ``True``.
 
 .. code::
 
+    [common]
     ssl_verify = False
 
-``[artifact]``
-^^^^^^^^^^^^^^
-
 ``cache_url``
-""""""""""""""
+^^^^^^^^^^^^^
 
 Specifies a different location that could be used to fetch artifacts. Usually this is a URL to some cache service.
 By default it is not set.
@@ -52,6 +47,7 @@ If we set the ``cache_url`` parameter in following way:
 
 .. code::
 
+    [common]
     cache_url = http://cache.host.com/fetch?#algorithm#=#hash#
 
 The JBoss EAP artifact will be fetched from: ``http://cache.host.com/fetch?md5=cd02482daa0398bf5500e1628d28179a``.
@@ -60,6 +56,7 @@ And if we do it like this:
 
 .. code::
 
+    [common]
     cache_url = http://cache.host.com/cache/#filename#
 
 The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss-eap-7.0.0.zip``.
@@ -69,10 +66,10 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
     In all cases digest will be computed from the downloaded file and compared with the expected value.
 
 ``[repository]``
-^^^^^^^^^^^^^^^^
+----------------
 
 ``urls``
-"""""""""
+^^^^^^^^
 
 The ``urls`` setting in the ``repository`` section can be used to define YUM/DNF repository files
 that should be added to the image at build time.
@@ -93,3 +90,10 @@ There are a few rules about repositories added that way:
 2. Repo file name should be the same as the repo id in the repository (the name between square brackets).
 3. There should be only one repository per file.
 4. Only added repositories will be enabled during install of packages, all other repositories (including default) will be disabled.
+
+Example
+
+.. code::
+
+    [repository]
+    urls = http://host.com/some.repo,http://otherhost/other.repo
