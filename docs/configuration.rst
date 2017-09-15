@@ -65,19 +65,39 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 
     In all cases digest will be computed from the downloaded file and compared with the expected value.
 
-``[repository]``
-----------------
+.. _configuration_repositories:
 
-``urls``
-^^^^^^^^
+``[repositories]``
+-------------------
 
-The ``urls`` setting in the ``repository`` section can be used to define YUM/DNF repository files
+The ``repository`` section can be used to define YUM/DNF repository files
 that should be added to the image at build time.
+
+.. code::
+
+    [repositories]
+    jboss-ocp=http://host/jboss-rhel-os.repo,http://host/jboss-rhel-ocp.repo,http://host/jboss-rhel-rhscl.repo
+    other-repos=http://otherhost.com/osme.repo
 
 In case you have YUM/DNF repo files that you want to put to the ``/etc/yum.repos.d`` directory to enable additional
 repositories Concreate can handle it for you automatically.
 
-Concreate will copy all repo files defined in the ``urls`` parameter to ``/etc/yum.repos.d`` directory and
+Repositories are defined using custom keys that could be later referenced in the :ref:`image descriptor's
+packages section <descriptor_packages>`, under ``repositories``.
+
+.. code:: yaml
+
+    packages:
+        repositories:
+            - jboss-ocp
+        install:
+            - mongodb24-mongo-java-driver
+            - postgresql-jdbc
+            - mysql-connector-java
+            - maven
+            - hostname
+
+Concreate will copy all repo files to ``/etc/yum.repos.d`` directory and
 enable them to be used while installing packages listed in the packages section.
 
 At the end of the image build process Concreate removes newly added repo files from the ``/etc/yum.repos.d``
@@ -91,9 +111,3 @@ There are a few rules about repositories added that way:
 3. There should be only one repository per file.
 4. Only added repositories will be enabled during install of packages, all other repositories (including default) will be disabled.
 
-Example
-
-.. code::
-
-    [repository]
-    urls = http://host.com/some.repo,http://otherhost/other.repo
