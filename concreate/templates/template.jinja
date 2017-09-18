@@ -83,7 +83,7 @@ COPY modules /tmp/scripts
 # Custom scripts
 {% for exec in execute %}
 USER {{ exec.user }}
-RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.execute }}" ]
+RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
 
 {% endfor %}
 {% endif %}
