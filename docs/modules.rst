@@ -33,9 +33,9 @@ as defined.
 
     execute:
           # The install.sh file will be executed first as root user
-        - execute: install.sh
+        - script: install.sh
           # Then the redefine.sh file will be executed as jboss user
-        - execute: redefine.sh
+        - script: redefine.sh
           user: jboss
 
 .. note::
