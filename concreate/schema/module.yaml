@@ -4,5 +4,5 @@ map:
   execute:
     seq:
       - map:
-          execute: {type: str, required: True}
+          script: {type: str}
           user: {type: str}

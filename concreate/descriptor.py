@@ -87,7 +87,7 @@ class Descriptor(object):
             module = self.descriptor['name']
             execute['directory'] = module
             execute['name'] = "%s-%s" % (module,
-                                         execute['execute'])
+                                         execute['script'])
             if 'user' not in execute:
                 execute['user'] = DEFAULT_USER
 
