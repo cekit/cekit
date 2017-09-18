@@ -4,6 +4,7 @@ import shutil
 
 from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
+from concreate.resource import Resource
 
 logger = logging.getLogger('concreate')
 # importable list of all modules
@@ -65,13 +66,15 @@ def get_dependencies(descriptor, base_dir):
     """
     logger.debug("Retrieving module repositories for '%s'" % (descriptor['name']))
 
-    if not descriptor.module_repositories:
+    module_repositories = descriptor.get('modules', {}).get('repositories', [])
+
+    if not module_repositories:
         logger.debug("No module repostiories specified in descriptor")
         return
 
-    for repo in descriptor.module_repositories.values():
-        repo.copy(base_dir)
-
+    for repo in module_repositories:
+        resource = Resource.new(repo, descriptor.directory)
+        resource.copy(base_dir)
 
 def discover_modules(repo_dir):
     """ Looks through the directory trees for modules descriptor.

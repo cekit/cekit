@@ -162,11 +162,11 @@ class Generator(object):
 
         logger.info("Building %s container image..." % tag)
 
-        ret = subprocess.call(["docker", "build", "-t", tag,
-                               "-t", latest_tag, os.path.join(self.target, 'image')])
+        try:
+            subprocess.check_call(["docker", "build", "-t", tag,
+                                   "-t", latest_tag, os.path.join(self.target, 'image')])
 
-        if ret == 0:
-            logger.info("Image built and available under following tags: %s and %s" % (
-                tag, latest_tag))
-        else:
+            logger.info("Image built and available under following tags: %s and %s"
+                        % (tag, latest_tag))
+        except:
             raise ConcreateError("Image build failed, see logs above.")

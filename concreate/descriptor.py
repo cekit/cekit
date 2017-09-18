@@ -24,8 +24,6 @@ class Descriptor(object):
         if descriptor_type == 'image':
             self.check_schema_version()
 
-        self.module_repositories = {}
-
     def check_schema_version(self):
         """ Check supported schema version """
         if self.descriptor['schema_version'] != schema_version:
@@ -65,7 +63,7 @@ class Descriptor(object):
             self._process_execute()
         if 'ports' in self.descriptor:
             self._process_ports()
-        self._process_module_repositories()
+        self._process_modules()
         self._process_run()
         self._process_labels()
         return self
@@ -120,18 +118,22 @@ class Descriptor(object):
         for port in self.descriptor['ports']:
             port['name'] = port['value']
 
-    def _process_module_repositories(self):
-        local_modules = os.path.join(self.directory, 'modules')
+    def _process_modules(self):
+        """
+        If a 'modules' directory is found next to descriptor -
+        add it as a module repository.
+        """
+        modules = self.descriptor.get('modules', {})
+        repositories = modules.get('repositories', [])
+        local_modules_path = os.path.join(self.directory, 'modules')
 
         # If a directory called 'modules' is found next to the image descriptor
         # scan it for modules.
-        if os.path.isdir(local_modules):
-            self.module_repositories['modules'] = Resource.new(
-                {'path': local_modules}, self.directory)
+        if os.path.isdir(local_modules_path):
+            repositories.append({'path': local_modules_path, 'name': 'modules'})
 
-        for repo in self.descriptor.get('modules', {}).get('repositories', []):
-            resource = Resource.new(repo, self.directory)
-            self.module_repositories[resource.name] = resource
+        modules['repositories'] = repositories
+        self.descriptor['modules'] = modules
 
     def _process_labels(self):
         """ Generate labels from concreate keys """
