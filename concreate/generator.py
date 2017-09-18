@@ -22,9 +22,9 @@ class Generator(object):
     def __init__(self, descriptor_path, target, overrides):
         self.descriptor = Descriptor(descriptor_path, 'image').process()
         self.target = target
-        self.effective_descriptor = self.descriptor
+
         if overrides:
-            self.effective_descriptor = self.override(overrides)
+            self.descriptor = self.override(overrides)
 
         logger.info("Initializing image descriptor...")
 
@@ -49,7 +49,7 @@ class Generator(object):
         # If descriptor doesn't requires any module we can start merging descriptors
         # and fetching artifacts. There is nothing left to do except for this
         if not modules:
-            self.effective_descriptor.merge(descriptor)
+            self.descriptor.merge(descriptor)
             return
 
         logger.info("Handling modules...")
@@ -64,28 +64,31 @@ class Generator(object):
                                                os.path.join(self.target, 'image', 'modules'))
             # If there is any required module it needs to be prepared too
             self.prepare_modules(req_module.descriptor)
-            self.effective_descriptor.merge(descriptor)
+            self.descriptor.merge(descriptor)
 
         logger.debug("Modules handled")
 
-    def fetch_artifacts(self):
+    def prepare_artifacts(self):
         """ Goes through artifacts section of image descriptor
         and fetches all of them
         """
         if 'artifacts' not in self.descriptor:
             logger.debug("No artifacts to fetch")
             return
+
         logger.info("Handling artifacts...")
         target_dir = os.path.join(self.target, 'image')
-        artifacts = self.descriptor['artifacts']
-        for artifact in artifacts.values():
-            artifact.copy(target_dir)
+
+        for artifact in self.descriptor['artifacts']:
+            resource = Resource.new(artifact, self.descriptor.directory)
+            resource.copy(target_dir)
+            artifact['name'] = resource.name
         logger.debug("Artifacts handled")
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
         descriptor = Descriptor(overrides_path, 'overrides').process()
-        descriptor.merge(self.effective_descriptor)
+        descriptor.merge(self.descriptor)
         return descriptor
 
     def render_dockerfile(self):
@@ -108,7 +111,7 @@ class Generator(object):
                                   'Dockerfile')
         with open(dockerfile, 'wb') as f:
             f.write(template.render(
-                self.effective_descriptor.descriptor).encode('utf-8'))
+                self.descriptor.descriptor).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
     def prepare_repositories(self):
@@ -124,7 +127,7 @@ class Generator(object):
         target_dir = os.path.join(self.target, 'image', 'repos')
         os.makedirs(target_dir)
 
-        for repo in self.effective_descriptor.get('packages', {}).get('repositories', []):
+        for repo in self.descriptor.get('packages', {}).get('repositories', []):
             if repo not in configured_repositories:
                 raise ConcreateError("Package repository '%s' used in descriptor is not "
                                      "available in Concreate configuration file. "
@@ -143,7 +146,7 @@ class Generator(object):
 
                 logger.debug("Additional repository files handled")
 
-                self.effective_descriptor['additional_repos'] = added_repos
+                self.descriptor['additional_repos'] = added_repos
 
     def build(self):
         """
@@ -156,9 +159,9 @@ class Generator(object):
             2. 'latest'
         """
         # Desired tag of the image
-        tag = "%s:%s" % (self.effective_descriptor[
-                         'name'], self.effective_descriptor['version'])
-        latest_tag = "%s:latest" % self.effective_descriptor['name']
+        tag = "%s:%s" % (self.descriptor[
+                         'name'], self.descriptor['version'])
+        latest_tag = "%s:latest" % self.descriptor['name']
 
         logger.info("Building %s container image..." % tag)
 

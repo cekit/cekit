@@ -80,8 +80,7 @@ class Concreate(object):
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)
-            get_dependencies(generator.effective_descriptor, os.path.join(self.args.target,
-                                                                          'repo'))
+            get_dependencies(generator.descriptor, os.path.join(self.args.target, 'repo'))
 
             # We have all overrided repo fetch so we can discover modules
             # and process its dependency trees
@@ -107,10 +106,10 @@ class Concreate(object):
             sys.exit(1)
 
     def generate(self, generator):
+        generator.prepare_artifacts()
         generator.prepare_modules()
         generator.prepare_repositories()
         generator.render_dockerfile()
-        generator.fetch_artifacts()
 
     def build(self, generator):
         self.generate(generator)
