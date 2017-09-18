@@ -1,10 +1,12 @@
 Concreate
 =========
 
-Container image creation tool.
+.. image:: docs/concreate.jpg
 
 About
 -----
+
+Container image creation tool.
 
 Concreate helps to build container images from image definition files.
 
@@ -23,20 +25,7 @@ This project is currently in development. Initial release should be available sh
 Installation
 ------------
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Concreate. If you are on Fedora/RHEL please install the ``python-virtualenv`` package. If you use different operating system please consult your package namager of choice for the correct package name.
-
-.. code-block:: bash
-
-    # Prepare virtual environment
-    virtualenv ~/concreate
-    source ~/concreate/bin/activate
-
-    # Install Concreate
-    # Execute the same command to upgrade to latest version
-    pip install -U concreate
-
-    # Now you are able to run Concreate
-    concreate --help
+Please refer to `documentation <http://concreate.readthedocs.io/en/develop/installation.html>`_.
 
 Requirements
 ^^^^^^^^^^^^
@@ -51,7 +40,7 @@ Please refer to the ``concreate --help`` output.
 Documentation
 -------------
 
-Documentation is available in the `docs <docs/>`_ directory.
+`Documentation is available here <http://concreate.readthedocs.io/en/develop/>`_.
 
 History
 -------
