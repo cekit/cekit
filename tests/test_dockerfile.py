@@ -38,9 +38,9 @@ class TestDockerfile(unittest.TestCase):
         # prepare Generator + inject required deps
         self.generator = Generator.__new__(Generator)
         self.generator.target = self.target
-        self.generator.effective_descriptor = Descriptor.__new__(Descriptor)
-        self.generator.effective_descriptor.descriptor = self.descriptor
-        self.generator.effective_descriptor.directory = '/tmp'
+        self.generator.descriptor = Descriptor.__new__(Descriptor)
+        self.generator.descriptor.descriptor = self.descriptor
+        self.generator.descriptor.directory = '/tmp'
 
     def tearDown(self):
         shutil.rmtree(self.target)
@@ -51,7 +51,7 @@ class TestDockerfile(unittest.TestCase):
         USER instruction in the Dockerfile, immediately before the CMD.
         """
         self.descriptor['run']['user'] = 1347
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -64,7 +64,7 @@ class TestDockerfile(unittest.TestCase):
         """
         Make sure we use 'root' user to run the CMD/ENTRYPOINT process, if it not defined.
         """
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -78,7 +78,7 @@ class TestDockerfile(unittest.TestCase):
         Test that run/cmd: is mapped into a CMD instruction
         """
         self.descriptor['run']['cmd'] = ['/usr/bin/date']
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(os.path.join(self.dockerfile), "r") as f:
@@ -92,7 +92,7 @@ class TestDockerfile(unittest.TestCase):
         Test that run/entrypoint: is mapped into a ENTRYPOINT instruction
         """
         self.descriptor['run']['entrypoint'] = ['/usr/bin/time']
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -106,7 +106,7 @@ class TestDockerfile(unittest.TestCase):
         Test that run/workdir is mapped into a WORKDIR instruction
         """
         self.descriptor['run']['workdir'] = "/home/jboss"
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -120,7 +120,7 @@ class TestDockerfile(unittest.TestCase):
         Test that cmd: is mapped into a CMD instruction
         """
         self.descriptor['volumes'] = ['/var/lib', '/usr/lib']
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -135,7 +135,7 @@ class TestDockerfile(unittest.TestCase):
                                     {'expose': False,
                                      'value': 9999}]
 
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:
@@ -152,7 +152,7 @@ class TestDockerfile(unittest.TestCase):
                                     'example': 'example_value',
                                     'description': 'This is a description'}]
 
-        self.generator.effective_descriptor.process()
+        self.generator.descriptor.process()
         self.generator.render_dockerfile()
 
         with open(self.dockerfile, "r") as f:

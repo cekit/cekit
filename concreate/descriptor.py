@@ -4,7 +4,6 @@ import os
 
 from concreate import DEFAULT_USER, tools
 from concreate.errors import ConcreateError
-from concreate.resource import Resource
 from concreate.version import schema_version
 
 logger = logging.getLogger('concreate')
@@ -57,8 +56,6 @@ class Descriptor(object):
 
     def process(self):
         """ Prepare descriptor to be used by generating defaults """
-        if 'artifacts' in self.descriptor:
-            self._process_artifacts()
         if 'execute' in self.descriptor:
             self._process_execute()
         if 'ports' in self.descriptor:
@@ -81,16 +78,6 @@ class Descriptor(object):
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise ConcreateError("Dictionary is missing 'name' keyword")
-
-    def _process_artifacts(self):
-        """ Processes descriptor artifacts section and generate default
-        value 'name' for each artifact which doesnt have 'name' specified.
-        """
-        artifacts = {}
-        for artifact in self.descriptor['artifacts']:
-            resource = Resource.new(artifact, self.directory)
-            artifacts[resource.name] = resource
-        self.descriptor['artifacts'] = artifacts
 
     def _process_execute(self):
         """ Prepares executables of modules to contian all needed data like,
