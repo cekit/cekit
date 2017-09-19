@@ -11,23 +11,6 @@ logger = logging.getLogger('concreate')
 modules = []
 
 
-def copy_modules_to_repository(src, dst):
-    """ This is temporary function which copies modules
-    located next to the image decriptor to common
-    modules repository (args.target/repo)
-
-    Arguments:
-    src - path to the modules dir to be copied
-    dst - destination of the modules directory
-    """
-    if os.path.exists(dst):
-        # if the path exists here we should remove it
-        shutil.rmtree(dst)
-    if os.path.exists(src):
-        logger.debug("Copying modules repo from '%s' to '%s'." % (src, dst))
-        shutil.copytree(src, dst)
-
-
 def copy_module_to_target(name, version, target):
     """ Copies a module from args.target/repo/... directory into
     args.target/image/modules/... and update module path to be

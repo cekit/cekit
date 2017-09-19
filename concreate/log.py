@@ -5,7 +5,7 @@ import colorlog
 import requests.packages.urllib3
 
 
-#Source: http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
+# Source: http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
 # Adjusted
 class SingleLevelFilter(logging.Filter):
     def __init__(self, passlevel, reject):
@@ -17,6 +17,7 @@ class SingleLevelFilter(logging.Filter):
             return (record.levelno > self.passlevel)
         else:
             return (record.levelno <= self.passlevel)
+
 
 def setup_logging():
     handler_out = logging.StreamHandler(sys.stdout)
