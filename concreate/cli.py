@@ -106,9 +106,9 @@ class Concreate(object):
             sys.exit(1)
 
     def generate(self, generator):
-        generator.prepare_artifacts()
         generator.prepare_modules()
         generator.prepare_repositories()
+        generator.prepare_artifacts()
         generator.render_dockerfile()
 
     def build(self, generator):
