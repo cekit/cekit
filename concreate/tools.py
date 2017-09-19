@@ -124,6 +124,9 @@ def merge_lists(list1, list2):
     list1_dicts = [x for x in list1 if isinstance(x, dict)]
     for v2 in list2:
         if isinstance(v2, dict):
+            if 'name' not in v2:
+                raise KeyError("The 'name' key was not found in dict: %s" % v2)
+
             if v2['name'] not in [x['name'] for x in list1_dicts]:
                 list1.append(v2)
             else:
