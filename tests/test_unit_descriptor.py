@@ -12,13 +12,13 @@ class TestDescriptor(unittest.TestCase):
     def test_descriptor_schema_version(self):
         img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
         img_descriptor.descriptor = {'schema_version': 1}
-        img_descriptor.check_schema_version()
+        img_descriptor.check_schema_version("dummy/path")
 
     def test_descriptor_schema_version_bad_version(self):
         img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
         img_descriptor.descriptor = {'schema_version': 123}
         with self.assertRaises(ConcreateError):
-            img_descriptor.check_schema_version()
+            img_descriptor.check_schema_version("dummy/path")
 
 
 class TestLabels(unittest.TestCase):

@@ -1,3 +1,10 @@
 # To be merged with common.yaml
 map:
   from: {type: str, required: True}
+  version: {type: text, required: False}
+  execute:
+    seq:
+      - map:
+          script: {type: str}
+          user: {type: str}
+  source: {type: str}

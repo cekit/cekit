@@ -2,6 +2,7 @@
 
 import logging
 import os
+import shutil
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -21,7 +22,7 @@ class Generator(object):
     def __init__(self, descriptor_path, target, overrides):
 
         self.descriptor = Descriptor(descriptor_path, 'image').process()
-        self.target = target
+        self.target = os.path.abspath(target)
 
         if overrides:
             self.descriptor = self.override(overrides)
@@ -54,6 +55,35 @@ class Generator(object):
         """
         if not descriptor:
             descriptor = self.descriptor
+            if 'source' in descriptor:
+                # copy image source
+                ignored_paths = set()
+                ignored_paths.add(str(self.target))
+                for repo in descriptor.get('modules', {}).get('repositories', {}):
+                    if 'path' in repo:
+                        repo_path = repo['path']
+                        if not os.path.isabs(repo_path):
+                            repo_path = str(os.path.join(descriptor.directory,
+                                                         repo_path))
+                        ignored_paths.add(repo_path)
+                logger.debug("Ignored paths for source copy: %s"
+                             % (ignored_paths))
+
+                def filtered_paths(path, names):
+                    ignore = []
+                    for name in names:
+                        if str(os.path.join(path, name)) in ignored_paths:
+                            ignore.append(name)
+                    return ignore
+
+                source_directory = os.path.join(descriptor['source'],
+                                                descriptor.directory)
+                target_directory = os.path.join(self.target, 'image', 'modules',
+                                                descriptor['name'])
+                logger.debug("Copying image source %s to %s"
+                             % (descriptor.directory, target_directory))
+                shutil.copytree(source_directory, target_directory,
+                                ignore=filtered_paths)
 
         modules = descriptor.get('modules', {}).get('install', {})
 
@@ -90,10 +120,8 @@ class Generator(object):
         logger.info("Handling artifacts...")
         target_dir = os.path.join(self.target, 'image')
 
-        for artifact in self.descriptor['artifacts']:
-            resource = Resource.new(artifact, self.descriptor.directory)
-            resource.copy(target_dir)
-            artifact['name'] = resource.name
+        for artifact in self.descriptor['artifacts'].values():
+            artifact.copy(target_dir)
         logger.debug("Artifacts handled")
 
     def override(self, overrides_path):
