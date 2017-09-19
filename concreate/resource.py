@@ -34,9 +34,10 @@ class Resource(object):
         raise ValueError("Resource type is not supported: %s" (resource))
 
     def __init__(self, descriptor):
+        self.description = None
         self.name = descriptor['name']
         if 'description' in descriptor:
-            self.desription = descriptor['description']
+            self.description = descriptor['description']
         self.checksums = {}
         for algorithm in self.SUPPORTED_HASH_ALGORITHMS:
             if algorithm in descriptor:
@@ -70,9 +71,13 @@ class Resource(object):
         try:
             self._copy_impl(target)
         except Exception as ex:
+            logger.warn("Concreate is not able to fetch resource '%s' automatically. You can manually place required artifact as '%s'" % (self.name, target))
+
+            if self.description:
+                logger.info(self.description)
+
             # exception is fatal we be logged before Concreate dies
-            raise ConcreateError('Error copying resource: %s' % (self.name),
-                                 ex)
+            raise ConcreateError("Error copying resource: '%s'. See logs for more info." % self.name, ex)
 
         self.__verify(target)
 
@@ -166,18 +171,20 @@ class PathResource(Resource):
 
     def _copy_impl(self, target):
         if not os.path.exists(self.path):
-            cache = tools.cfg.get('artifact', {}).get('cache_url', None)
+            cache = tools.cfg.get('common', {}).get('cache_url', None)
 
             # If cache_url is specified in Concreate configuration
             # file - try to fetch the 'path' artifact from cacher
             # even if it was not defined as 'url'.
             if cache:
-                self._download_file(self.path, target)
-                return target
+                try:
+                    self._download_file(self.path, target)
+                    return target
+                except Exception as ex:
+                    logger.exception(ex)
+                    raise ConcreateError("Could not download resource '%s' from cache" % self.name)
             else:
-                raise ConcreateError(
-                    "Requested path resource: '%s' does not exist. \
-                            Make sure you provided correct path." % self.path)
+                raise ConcreateError("Could not copy resource '%s', source path does not exist. Make sure you provided correct path" % self.name)
 
         if os.path.isdir(self.path):
             shutil.copytree(self.path, target)

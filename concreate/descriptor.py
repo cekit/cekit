@@ -2,6 +2,7 @@ import logging
 import os
 
 from concreate import DEFAULT_USER, tools
+from concreate.resource import Resource
 from concreate.errors import ConcreateError
 from concreate.version import schema_version
 
@@ -59,6 +60,7 @@ class Descriptor(object):
             self._process_execute()
         if 'ports' in self.descriptor:
             self._process_ports()
+        self._process_artifacts()
         self._process_modules()
         self._process_run()
         self._process_labels()
@@ -76,7 +78,7 @@ class Descriptor(object):
                 self.descriptor, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
-            raise ConcreateError("Dictionary is missing 'name' keyword")
+            raise ConcreateError("Cannot merge descriptors, see log message for more information")
 
     def _process_execute(self):
         """ Prepares executables of modules to contian all needed data like,
@@ -103,6 +105,21 @@ class Descriptor(object):
         """ Generate name attribute for ports """
         for port in self.descriptor['ports']:
             port['name'] = port['value']
+
+    def _process_artifacts(self):
+        """ Makes sure every artifact has 'name' set """
+
+        artifacts = self.descriptor.get('artifacts', [])
+
+        for artifact in artifacts:
+            if 'name' not in artifact:
+                # This is suboptimal, but at this point we cannot reuse created
+                # resource object. We do create it only to retrieve the name
+                # of the artifact. We do this because we can have different types
+                # of resources (path, url, etc).
+                artifact['name'] = Resource.new(artifact, self.directory).name
+
+        self.descriptor['artifacts'] = artifacts
 
     def _process_modules(self):
         """
