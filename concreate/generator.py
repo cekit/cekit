@@ -182,11 +182,17 @@ class Generator(object):
                     os.makedirs(target_dir)
                 logger.info("Handling additional repository files...")
 
-                for url in urls.split(','):
-                    Resource.new({'url': url}).copy(target_dir)
-                    added_repos.append(os.path.splitext(
-                        os.path.basename(url))[0])
+                try:
+                    cwd = os.getcwd()
+                    os.chdir(os.path.abspath(os.path.dirname(tools.cfg.file)))
+                    for url in urls.split(','):
+                        Resource.new({'url': url}).copy(target_dir)
+                        added_repos.append(os.path.splitext(
+                            os.path.basename(url))[0])
 
-                logger.debug("Additional repository files handled")
+                    logger.debug("Additional repository files handled")
 
-                self.descriptor['additional_repos'] = added_repos
+                    self.descriptor['additional_repos'] = added_repos
+                finally:
+                    os.chdir(cwd)
+

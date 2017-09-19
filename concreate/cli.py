@@ -78,6 +78,10 @@ class Concreate(object):
                             default="image.yaml",
                             help="path to image descriptor file, default: image.yaml")
 
+        parser.add_argument('--config',
+                            default="~/.concreate",
+                            help="path to concreate configuration file, default: ~/.concreate")
+
         parser.add_argument('commands',
                             nargs='+',
                             choices=['generate', 'build'],
@@ -94,7 +98,8 @@ class Concreate(object):
         logger.debug("Running version %s", version)
 
         try:
-            tools.cfg = tools.parse_cfg()
+            tools.init_cfg(self.args.config)
+            logger.debug("concreate configuration: %s" % (tools.cfg))
             tools.cleanup(self.args.target)
 
             # We need to construct Generator first, because we need overrides

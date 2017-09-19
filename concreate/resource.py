@@ -146,6 +146,7 @@ class Resource(object):
         parsedUrl = urlparse(url)
 
         if parsedUrl.scheme == 'file' or not parsedUrl.scheme:
+            logger.debug("Copying file url from: %s" % (parsedUrl.path))
             if os.path.isdir(parsedUrl.path):
                 shutil.copytree(parsedUrl.path, destination)
             else:

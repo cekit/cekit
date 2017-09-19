@@ -1,0 +1,33 @@
+name: "redhat-concreate-1/concreate-openshift"
+description: "Source To Image (S2I) builder for images defined with concreate image.yaml files"
+version: "1.0"
+schema_version: 1
+
+from: "jboss/base-rhel7:latest"
+
+labels:
+- name: "io.openshift.s2i.scripts-url"
+  value: "image:///usr/libexec/s2i"
+- name: io.openshift.s2i.destination
+  value: "/tmp"
+
+run:
+  user: 185
+  workdir: "/home/jboss"
+  cmd:
+  - "/usr/libexec/s2i/run"
+
+packages:
+  repositories:
+  - jboss-rhel-os.repo
+  - jboss-rhel-server-extras.repo
+  install:
+  - python-setuptools
+  - git
+  - docker
+
+source: .
+
+execute:
+- script: image/install-concreate
+- script: image/build-image

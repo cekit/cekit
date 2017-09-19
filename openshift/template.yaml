@@ -1,0 +1,141 @@
+kind: Template
+apiVersion: v1
+labels:
+  template: concreate-s2i
+message: A new image has been added to your project.
+metadata:
+  annotations:
+    description: Create concreate based images using OpenShift S2I.
+    iconClass: icon-jboss
+    "openshift.io/display-name": Concreate 1.0
+    tags: xpaas, concreate
+    version: "1.0"
+  name: concreate-s2i
+objects:
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: ${IMAGE_NAME}-source
+    labels:
+      concreate: ${IMAGE_NAME}-${IMAGE_TAG}
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: ${IMAGE_NAME}
+    labels:
+      concreate: ${IMAGE_NAME}-${IMAGE_TAG}
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: ${IMAGE_NAME}-source-${IMAGE_TAG}
+    labels:
+      concreate: ${IMAGE_NAME}-${IMAGE_TAG}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${IMAGE_NAME}-source:${IMAGE_TAG}
+    source:
+      secrets:
+      - secret:
+          name: concreate-config
+        destinationDir: /etc/concreate
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${SOURCE_REPOSITORY_REF}
+        uri: ${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        forcePull: true
+        from:
+          kind: ImageStreamTag
+          name: concreate:1.0
+          namespace: ${IMAGE_STREAM_NAMESPACE}
+        env:
+        - name: CONCREATE_CFG_PATH
+          value: /etc/concreate/.concreate
+      type: Source
+    triggers:
+    - type: GitHub
+      github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+    - type: Generic
+      generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+    - type: ConfigChange
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: ${IMAGE_NAME}-${IMAGE_TAG}
+    labels:
+      concreate: ${IMAGE_NAME}-${IMAGE_TAG}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${IMAGE_NAME}:${IMAGE_TAG}
+    source:
+      images:
+      - from:
+          kind: ImageStreamTag
+          name: ${IMAGE_NAME}-source:${IMAGE_TAG}
+        paths:
+        - sourcePath: /home/jboss/target/image/.
+          destinationDir: .
+      secrets:
+      - secret:
+          name: package-repos
+        destinationDir: repos
+      type: Image
+    strategy:
+      dockerStrategy:
+      type: Docker
+    triggers:
+    - type: ImageChange
+      imageChange:
+        from:
+          kind: ImageStreamTag
+          name: ${IMAGE_NAME}-source:${IMAGE_TAG}
+    - type: Generic
+      generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+    - type: ConfigChange
+parameters:
+- name: IMAGE_NAME
+  displayName: Image Name
+  description: The name for the image.
+  required: true
+- name: IMAGE_TAG
+  description: The tag for the image.
+  displayName: Image Tag
+  value: latest
+  required: true
+- name: SOURCE_REPOSITORY_URL
+  displayName: Git Repository URL
+  description: Git source URI for application
+  value: https://github.com/jboss-container-images/
+  required: true
+- name: SOURCE_REPOSITORY_REF
+  displayName: Git Reference
+  description: Git branch/tag reference
+- name: CONTEXT_DIR
+  displayName: Context Directory
+  description: Path within Git project to build; empty for root project directory.
+- name: IMAGE_STREAM_NAMESPACE
+  displayName: ImageStream Namespace
+  description: Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project."
+  value: openshift
+  required: true
+- name: GITHUB_WEBHOOK_SECRET
+  displayName: Github Webhook Secret
+  description: GitHub trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  required: true
+- name: GENERIC_WEBHOOK_SECRET
+  displayName: Generic Webhook Secret
+  description: Generic build trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  required: true

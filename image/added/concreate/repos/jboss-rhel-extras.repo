@@ -1,0 +1,6 @@
+[jboss-rhel-extras]
+name=Red Hat RHEL7 extras repo
+baseurl=
+enabled=1
+gpgcheck=1
+gpgkey=

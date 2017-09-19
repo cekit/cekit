@@ -16,10 +16,14 @@ logger = logging.getLogger('concreate')
 cfg = {}
 
 
-def parse_cfg():
+def init_cfg(config_file):
+    config_file = os.path.expanduser(config_file)
+    logger.info("Using concreate configuration file: %s" % (config_file))
     cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser('~/.concreate'))
-    return cp._sections
+    cp.read(config_file)
+    global cfg
+    cfg = cp._sections
+    cfg.file = config_file
 
 
 def cleanup(target):

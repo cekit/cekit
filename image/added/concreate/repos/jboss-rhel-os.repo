@@ -1,0 +1,6 @@
+[jboss-rhel-os]
+name=Red Hat RHEL7 repo
+baseurl=
+enabled=1
+gpgcheck=1
+gpgkey=
