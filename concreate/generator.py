@@ -20,6 +20,7 @@ logger = logging.getLogger('concreate')
 class Generator(object):
 
     def __init__(self, descriptor_path, target, overrides):
+
         self.descriptor = Descriptor(descriptor_path, 'image').process()
         self.target = target
 
@@ -150,28 +151,42 @@ class Generator(object):
 
                 self.descriptor['additional_repos'] = added_repos
 
-    def build(self):
+    def build(self, build_tags=[]):
         """
         After the source siles are generated, the container image can be built.
         We're using Docker to build the image currently.
 
-        Built image will be avaialbe under two tags:
+        Built container image will be availablie under two tags by default:
 
             1. version defined in the image descriptor
             2. 'latest'
-        """
-        # Desired tag of the image
-        tag = "%s:%s" % (self.descriptor[
-                         'name'], self.descriptor['version'])
-        latest_tag = "%s:latest" % self.descriptor['name']
 
-        logger.info("Building %s container image..." % tag)
+        This can be changed by specifying the tags in CLI using --build-tags option.
+        """
+
+        cmd = ["docker", "build"]
+        tags = ["%s:%s" % (self.descriptor['name'], self.descriptor[
+                           'version']), "%s:latest" % self.descriptor['name']]
+
+        # Custom tags for the container image
+        if build_tags:
+            logger.debug("Custom tags for container image specified: %s" %
+                         ", ".join(build_tags))
+            tags = build_tags
+
+        for tag in tags:
+            cmd.extend(["-t", tag])
+
+        logger.info("Building container image...")
+
+        cmd.append(os.path.join(self.target, 'image'))
+
+        logger.debug("Running Docker build: '%s'" % " ".join(cmd))
 
         try:
-            subprocess.check_call(["docker", "build", "-t", tag,
-                                   "-t", latest_tag, os.path.join(self.target, 'image')])
+            subprocess.check_call(cmd)
 
-            logger.info("Image built and available under following tags: %s and %s"
-                        % (tag, latest_tag))
+            logger.info(
+                "Image built and available under following tags: %s" % ", ".join(tags))
         except:
             raise ConcreateError("Image build failed, see logs above.")

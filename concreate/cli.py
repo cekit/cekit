@@ -42,6 +42,14 @@ class Concreate(object):
                             action='version',
                             help='show version and exit', version=version)
 
+        build_group = parser.add_argument_group(
+            'build', "Arguments valid for the 'build' target")
+
+        build_group.add_argument('--build-tag',
+                                 dest='build_tags',
+                                 action='append',
+                                 help='tag to assign to the built image, can be used multiple times')
+
         parser.add_argument('--overrides',
                             help='path to a file containing overrides')
 
@@ -80,7 +88,8 @@ class Concreate(object):
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)
-            get_dependencies(generator.descriptor, os.path.join(self.args.target, 'repo'))
+            get_dependencies(generator.descriptor,
+                             os.path.join(self.args.target, 'repo'))
 
             # We have all overrided repo fetch so we can discover modules
             # and process its dependency trees
@@ -113,7 +122,7 @@ class Concreate(object):
 
     def build(self, generator):
         self.generate(generator)
-        generator.build()
+        generator.build(self.args.build_tags)
 
 
 def run():
