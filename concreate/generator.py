@@ -121,9 +121,7 @@ class Generator(object):
         # We need to remove the custom "__name__" element before we can show
         # which repository keys are defined in the configuration
         configured_repository_names = configured_repositories.keys()
-
-        if '__name__' in configured_repository_names:
-            configured_repository_names.remove('__name__')
+        configured_repository_names.remove('__name__')
 
         added_repos = []
         target_dir = os.path.join(self.target, 'image', 'repos')

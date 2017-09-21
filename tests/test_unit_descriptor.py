@@ -1,9 +1,11 @@
+import mock
 import os
 import tempfile
 import unittest
 import yaml
 
 from concreate import descriptor
+from concreate import tools
 from concreate.errors import ConcreateError
 
 
@@ -73,3 +75,5 @@ class TestLabels(unittest.TestCase):
             'description').get('value'), 'description value')
         self.assertEqual(img_descriptor.label(
             'summary').get('value'), 'summary value')
+
+
