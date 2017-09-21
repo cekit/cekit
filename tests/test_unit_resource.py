@@ -1,7 +1,6 @@
 
 import mock
 import os
-import requests
 import unittest
 
 from concreate import resource
@@ -33,18 +32,40 @@ class TestGitResource(unittest.TestCase):
 
 
 class TestUrlResource(unittest.TestCase):
-    res = requests.Response()
+    res = mock.Mock()
     res.status_code = 200
     res.iter_content = lambda chunk_size: [b'test']
 
-    res_bad_status = requests.Response()
+    res_bad_status = mock.Mock()
     res_bad_status.status_code = 500
+
+    ctx = mock.Mock()
 
     def setUp(self):
         tools.cfg = {}
+        self.ctx.check_hostname = True
+        self.ctx.verify_mode = 1
 
-    @mock.patch('requests.get', return_value=res)
-    def test_fetching_disable_ssl_verify(self, mock):
+    def tearDown(self):
+        if os.path.exists('file'):
+            os.remove('file')
+
+    @mock.patch('concreate.resource.ssl.create_default_context', return_value=ctx)
+    @mock.patch('concreate.resource.urlopen', return_value=res)
+    def test_fetching_with_ssl_verify(self, mock_urlopen, mock_ssl):
+        res = resource.UrlResource(
+            {'name': 'file', 'url': 'https:///dummy'})
+        try:
+            res.copy()
+        except:
+            pass
+        mock_urlopen.assert_called_with('https:///dummy', context=self.ctx)
+        self.assertEquals(self.ctx.check_hostname, True)
+        self.assertEquals(self.ctx.verify_mode, 1)
+
+    @mock.patch('concreate.resource.ssl.create_default_context', return_value=ctx)
+    @mock.patch('concreate.resource.urlopen', return_value=res)
+    def test_fetching_disable_ssl_verify(self, mock_urlopen, mock_ssl):
         tools.cfg['common'] = {}
         tools.cfg['common']['ssl_verify'] = "False"
         res = resource.UrlResource(
@@ -53,20 +74,21 @@ class TestUrlResource(unittest.TestCase):
             res.copy()
         except:
             pass
-        mock.assert_called_with('https:///dummy', stream=True, verify=False)
+        mock_urlopen.assert_called_with('https:///dummy', context=self.ctx)
+        self.assertEquals(self.ctx.check_hostname, False)
+        self.assertEquals(self.ctx.verify_mode, 0)
         tools.cfg['common']['ssl_verify'] = "True"
-        os.remove('file')
         tools.cfg = {}
 
-    @mock.patch('requests.get', return_value=res_bad_status)
-    def test_fetching_bad_status_code(self, mock):
+    @mock.patch('concreate.resource.urlopen', return_value=res)
+    def test_fetching_bad_status_code(self, mock_urlopen):
         res = resource.UrlResource(
             {'name': 'file', 'url': 'http:///dummy'})
         with self.assertRaises(ConcreateError):
             res.copy()
 
-    @mock.patch('requests.get', return_value=res)
-    def test_fetching_file_exists_but_used_as_is(self, mock):
+    @mock.patch('concreate.resource.urlopen', return_value=res)
+    def test_fetching_file_exists_but_used_as_is(self, mock_urlopen):
         """
         It should not download the file, because we didn't
         specify any hash algorithm, so integrity checking is
@@ -77,11 +99,11 @@ class TestUrlResource(unittest.TestCase):
         res = resource.UrlResource(
             {'name': 'file', 'url': 'http:///dummy'})
         res.copy()
-        mock.assert_not_called()
-        os.remove('file')
+        mock_urlopen.assert_not_called()
 
-    @mock.patch('requests.get', return_value=res)
-    def test_fetching_file_exists_fetched_again(self, mock):
+    @mock.patch('concreate.resource.ssl.create_default_context', return_value='context')
+    @mock.patch('concreate.resource.urlopen', return_value=res)
+    def test_fetching_file_exists_fetched_again(self, mock_urlopen, mock_ssl):
         """
         It should download the file again, because available
         file locally doesn't match checksum.
@@ -95,8 +117,7 @@ class TestUrlResource(unittest.TestCase):
             # will not have md5 equal to 123456. We need investigate
             # mocking of requests get calls to do it properly
             res.copy()
-        mock.assert_called_with('http:///dummy', verify=True, stream=True)
-        os.remove('file')
+        mock_urlopen.assert_called_with('http:///dummy', context='context')
 
     def test_resource_verify_disabled_integrity_check(self):
         resource.Resource.check_integrity = False

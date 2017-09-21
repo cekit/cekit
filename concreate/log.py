@@ -2,7 +2,6 @@ import logging
 import sys
 
 import colorlog
-import requests.packages.urllib3
 
 
 # Source: http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
@@ -36,8 +35,6 @@ def setup_logging():
     logger.addHandler(handler_out)
     logger.addHandler(handler_err)
 
-    for package in ["requests.packages.urllib3", "pykwalify.rule"]:
+    for package in ["pykwalify.rule"]:
         log = logging.getLogger(package)
         log.setLevel(logging.INFO)
-
-    requests.packages.urllib3.disable_warnings()
