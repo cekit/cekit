@@ -2,7 +2,6 @@
 
 import logging
 import os
-import subprocess
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -29,9 +28,12 @@ class Generator(object):
 
         logger.info("Initializing image descriptor...")
 
+    def get_tags(self):
+        return ["%s:%s" % (self.descriptor['name'], self.descriptor[
+            'version']), "%s:latest" % self.descriptor['name']]
+
     def prepare_modules(self, descriptor=None):
-        """
-        Prepare module to be used for Dockerfile generation.
+        """Prepare module to be used for Dockerfile generation.
         This means:
 
         1. Place module to args.target/image/modules/ directory
@@ -70,7 +72,7 @@ class Generator(object):
         logger.debug("Modules handled")
 
     def prepare_artifacts(self):
-        """ Goes through artifacts section of image descriptor
+        """Goes through artifacts section of image descriptor
         and fetches all of them
         """
         if 'artifacts' not in self.descriptor:
@@ -93,7 +95,7 @@ class Generator(object):
         return descriptor
 
     def render_dockerfile(self):
-        """ Renders Dockerfile to $target/image/Dockerfile
+        """Renders Dockerfile to $target/image/Dockerfile
 
         Args:
           template_file - a path to jinja2 template file
@@ -128,7 +130,6 @@ class Generator(object):
 
         added_repos = []
         target_dir = os.path.join(self.target, 'image', 'repos')
-        os.makedirs(target_dir)
 
         for repo in self.descriptor.get('packages', {}).get('repositories', []):
             if repo not in configured_repositories:
@@ -140,6 +141,9 @@ class Generator(object):
             urls = configured_repositories[repo]
 
             if urls:
+                # we need to do this in this cycle to prevent creation of empty dir
+                if not os.path.exists(target_dir):
+                    os.makedirs(target_dir)
                 logger.info("Handling additional repository files...")
 
                 for url in urls.split(','):
@@ -150,43 +154,3 @@ class Generator(object):
                 logger.debug("Additional repository files handled")
 
                 self.descriptor['additional_repos'] = added_repos
-
-    def build(self, build_tags=[]):
-        """
-        After the source siles are generated, the container image can be built.
-        We're using Docker to build the image currently.
-
-        Built container image will be availablie under two tags by default:
-
-            1. version defined in the image descriptor
-            2. 'latest'
-
-        This can be changed by specifying the tags in CLI using --build-tags option.
-        """
-
-        cmd = ["docker", "build"]
-        tags = ["%s:%s" % (self.descriptor['name'], self.descriptor[
-                           'version']), "%s:latest" % self.descriptor['name']]
-
-        # Custom tags for the container image
-        if build_tags:
-            logger.debug("Custom tags for container image specified: %s" %
-                         ", ".join(build_tags))
-            tags = build_tags
-
-        for tag in tags:
-            cmd.extend(["-t", tag])
-
-        logger.info("Building container image...")
-
-        cmd.append(os.path.join(self.target, 'image'))
-
-        logger.debug("Running Docker build: '%s'" % " ".join(cmd))
-
-        try:
-            subprocess.check_call(cmd)
-
-            logger.info(
-                "Image built and available under following tags: %s" % ", ".join(tags))
-        except:
-            raise ConcreateError("Image build failed, see logs above.")

@@ -12,7 +12,7 @@ modules = []
 
 
 def copy_module_to_target(name, version, target):
-    """ Copies a module from args.target/repo/... directory into
+    """Copies a module from args.target/repo/... directory into
     args.target/image/modules/... and update module path to be
     the new location
 
@@ -40,7 +40,7 @@ def copy_module_to_target(name, version, target):
 
 
 def get_dependencies(descriptor, base_dir):
-    """ Go throug a list of dependencies in an image descriptor
+    """Go throug a list of dependencies in an image descriptor
     and fetch them.
 
     Arguments:
@@ -59,8 +59,9 @@ def get_dependencies(descriptor, base_dir):
         resource = Resource.new(repo, descriptor.directory)
         resource.copy(base_dir)
 
+
 def discover_modules(repo_dir):
-    """ Looks through the directory trees for modules descriptor.
+    """Looks through the directory trees for modules descriptor.
     When module is find, it create concreate.module.Module instance
     and add this instance to the concreate.module.modules list.
     """
@@ -72,7 +73,7 @@ def discover_modules(repo_dir):
 
 
 class Module():
-    """ Represents a module.
+    """Represents a module.
 
     Constructor arguments:
     descriptor_path: A path to module descriptor file.
