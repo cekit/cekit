@@ -59,13 +59,6 @@ class Generator(object):
                 # copy image source
                 ignored_paths = set()
                 ignored_paths.add(str(self.target))
-                for repo in descriptor.get('modules', {}).get('repositories', {}):
-                    if 'path' in repo:
-                        repo_path = repo['path']
-                        if not os.path.isabs(repo_path):
-                            repo_path = str(os.path.join(descriptor.directory,
-                                                         repo_path))
-                        ignored_paths.add(repo_path)
                 logger.debug("Ignored paths for source copy: %s"
                              % (ignored_paths))
 
