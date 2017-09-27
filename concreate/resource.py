@@ -44,9 +44,9 @@ class Resource(object):
                 self.checksums[algorithm] = descriptor[algorithm]
 
     def _copy_impl(self, target):
-        raise NotImplementedError("Implement _copy_impl() for Resource: "
-                                  + self.__module__ + "."
-                                  + type(self).__name__)
+        raise NotImplementedError("Implement _copy_impl() for Resource: " +
+                                  self.__module__ + "." +
+                                  type(self).__name__)
 
     def target_file_name(self):
         return os.path.basename(self.name)
