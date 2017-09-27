@@ -23,7 +23,9 @@ You can execute image build by running:
 * ``--build-engine`` -- a builder engine to use ``osbs`` or ``docker``
 * ``--build-tag`` -- an image tag used for build image (can be specified multiple times)
 * ``--build-osbs-release`` -- perform a OSBS release build
-* ``--build-tech-preview`` -- updates JBOSS_IMAGE_NAME variable to contain '-tech-preview' suffix in family part of the image name
+* ``--build-tech-preview`` -- updates image descriptor ``name`` key to contain '-tech-preview' suffix in family part of the image name
+  
+  **Example**: If your ``name`` in image descriptor is: '*jboss-eap-7/eap7*', generated name will be: '*jboss-eap-7-tech-preview/eap7*'.
 
 ``Docker build``
 ^^^^^^^^^^^^^^^^
