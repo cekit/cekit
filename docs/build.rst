@@ -23,7 +23,7 @@ You can execute image build by running:
 * ``--build-engine`` -- a builder engine to use ``osbs`` or ``docker``
 * ``--build-tag`` -- an image tag used for build image (can be specified multiple times)
 * ``--build-osbs-release`` -- perform a OSBS release build
-
+* ``--tech-preview`` -- updates JBOSS_IMAGE_NAME variable to contain '-tech-preview' suffix in family part of the image name
 
 ``Docker build``
 ^^^^^^^^^^^^^^^^

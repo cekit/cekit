@@ -30,8 +30,11 @@ class Generator(object):
 
     def generate_tech_preview(self):
         name = self.descriptor.get('name')
-        family, name = name.split('/')
-        self.descriptor['name'] = "%s-tech-preview/%s" % (family, name)
+        if '/' in name:
+            family, name = name.split('/')
+            self.descriptor['name'] = "%s-tech-preview/%s" % (family, name)
+        else:
+            self.descriptor['name'] = "%s-tech-preview" % name
 
     def get_tags(self):
         return ["%s:%s" % (self.descriptor['name'], self.descriptor[
