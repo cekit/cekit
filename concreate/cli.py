@@ -60,8 +60,11 @@ class Concreate(object):
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
                                  action='store_true',
-                                 default=False,
-                                 help='execute OSBS release build.')
+                                 help='execute OSBS release build')
+
+        build_group.add_argument('--build-tech-preview',
+                                 action='store_true',
+                                 help='perform tech preview build')
 
         parser.add_argument('--overrides',
                             help='path to a file containing overrides')
@@ -120,6 +123,8 @@ class Concreate(object):
                 generator.prepare_modules()
                 generator.prepare_repositories()
                 generator.prepare_artifacts()
+                if self.args.build_tech_preview:
+                    generator.generate_tech_preview()
                 generator.render_dockerfile()
 
             if 'build' in self.args.commands:

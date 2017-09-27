@@ -5,7 +5,7 @@ import re
 class TemplateHelper(object):
 
     def filename(self, source):
-        """ Simple helper to return the file specified name """
+        """Simple helper to return the file specified name"""
 
         target = source.get('target')
 
@@ -15,8 +15,7 @@ class TemplateHelper(object):
         return os.path.basename(source['artifact'])
 
     def cmd(self, arr):
-        """
-        Generates array of commands that could be used like this:
+        """Generates array of commands that could be used like this:
         CMD {{ helper.cmd(cmd) }}
         """
 
@@ -26,15 +25,15 @@ class TemplateHelper(object):
         return "[%s]" % ', '.join(ret)
 
     def component(self, name):
-        """
-        Returns the vomponent name based on the image name
-        """
+        """Returns the component name based on the image name"""
 
-        return "%s" % re.sub(r'^(.*)/(.*)$', r'\1-\2-docker', name)
+        regex = re.sub(r'^(.*)/(.*)$', r'\1-\2-docker', name)
+
+        # we don't want -tech-preview to be in component fields
+        return "%s" % regex.replace("-tech-preview", '')
 
     def base_image(self, base_image, version):
-        """
-        Return the base image name that could be used in FROM
+        """Return the base image name that could be used in FROM
         instruction.
         """
 
@@ -47,8 +46,7 @@ class TemplateHelper(object):
         return "%s:%s" % (base_image, version)
 
     def envs(self, env_variables):
-        """
-        Combines all environment variables that should be added to the
+        """Combines all environment variables that should be added to the
         Dockerfile into one array
         """
 
