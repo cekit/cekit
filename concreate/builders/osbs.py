@@ -13,6 +13,15 @@ logger = logging.getLogger('concreate')
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
+    def check_prerequisities(self):
+        try:
+            subprocess.check_output(['rhpkg', 'help'], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as ex:
+            raise ConcreateError("OSBS build engine needs 'rhpkg' tools installed, error: %s"
+                                 % ex.output)
+        except Exception as ex:
+            raise ConcreateError("OSBS build engine needs 'rhpkg' tools installed!", ex)
+
     def prepare(self, descriptor):
         """Prepares dist-git repository for OSBS build."""
 

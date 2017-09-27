@@ -12,6 +12,15 @@ logger = logging.getLogger('concreate')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
+    def check_prerequisities(self):
+        try:
+            subprocess.check_output(['docker', 'info'], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as ex:
+            raise ConcreateError("Docker build engine needs docker installed and configured, error: %s"
+                                 % ex.output)
+        except Exception as ex:
+            raise ConcreateError("Docker build engine needs docker installed and configured!", ex)
+
     def build(self, build_args):
         """After the source siles are generated, the container image can be built.
         We're using Docker to build the image currently.

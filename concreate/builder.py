@@ -29,6 +29,10 @@ class Builder(object):
 
     def __init__(self, build_engine, target):
         self.target = target
+        self.check_prerequisities()
+
+    def check_prerequisities():
+        pass
 
     def prepare(self, descriptor):
         # we dont require prepare to be implemented by builder
