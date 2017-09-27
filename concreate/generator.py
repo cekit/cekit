@@ -28,6 +28,11 @@ class Generator(object):
 
         logger.info("Initializing image descriptor...")
 
+    def generate_tech_preview(self):
+        name = self.descriptor.get('name')
+        family, name = name.split('/')
+        self.descriptor['name'] = "%s-tech-preview/%s" % (family, name)
+
     def get_tags(self):
         return ["%s:%s" % (self.descriptor['name'], self.descriptor[
             'version']), "%s:latest" % self.descriptor['name']]
