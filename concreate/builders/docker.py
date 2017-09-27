@@ -25,8 +25,8 @@ class DockerBuilder(Builder):
         cmd = ["docker", "build"]
 
         # Custom tags for the container image
-        logger.debug("Custom tags for container image specified: %s" %
-                     ", ".join(tags))
+        logger.debug("Building image with a custom tags: '%s'" %
+                     "', '".join(tags))
 
         for tag in tags:
             cmd.extend(["-t", tag])

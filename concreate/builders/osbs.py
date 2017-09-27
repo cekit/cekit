@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 
 from concreate.builder import Builder
 from concreate.errors import ConcreateError
@@ -184,6 +185,9 @@ class Git(object):
             logger.info("Pushing change to the upstream repository...")
             subprocess.check_output(["git", "push", "-q"])
             logger.info("Change pushed.")
+        else:
+            logger.info("Changes are not pushed, exiting")
+            sys.exit(0)
 
 
 def decision(question):

@@ -50,7 +50,7 @@ class Concreate(object):
         build_group.add_argument('--build-engine',
                                  default='docker',
                                  choices=['docker', 'osbs'],
-                                 help='An engine used to build an image [docker,osbs]')
+                                 help='An engine used to build the image.')
 
         build_group.add_argument('--build-tag',
                                  dest='build_tags',
@@ -61,7 +61,7 @@ class Concreate(object):
                                  dest='build_osbs_release',
                                  action='store_true',
                                  default=False,
-                                 help='Do a proper OSBS build not scratch only.')
+                                 help='Execute OSBS release build.')
 
         parser.add_argument('--overrides',
                             help='path to a file containing overrides')

@@ -17,9 +17,11 @@ class Builder(object):
             if 'docker' == build_engine:
                 # import is delayed until here to prevent circular import error
                 from concreate.builders.docker import DockerBuilder as BuilderImpl
+                logger.info("Using Docker builder to build the image.")
             elif 'osbs' == build_engine:
                 # import is delayed until here to prevent circular import error
                 from concreate.builders.osbs import OSBSBuilder as BuilderImpl
+                logger.info("Using OSBS builder to build the image.")
             else:
                 raise ConcreateError("Builder engine %s is not supported" % build_engine)
 
@@ -32,5 +34,5 @@ class Builder(object):
         # we dont require prepare to be implemented by builder
         pass
 
-    def build(self, build_tags=[]):
+    def build(self, build_args):
         raise ConcreateError("Buider.build() is not implemented!")
