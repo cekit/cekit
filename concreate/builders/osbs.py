@@ -15,12 +15,14 @@ class OSBSBuilder(Builder):
 
     def check_prerequisities(self):
         try:
-            subprocess.check_output(['rhpkg', 'help'], stderr=subprocess.STDOUT)
+            subprocess.check_output(
+                ['rhpkg', 'help'], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as ex:
             raise ConcreateError("OSBS build engine needs 'rhpkg' tools installed, error: %s"
                                  % ex.output)
         except Exception as ex:
-            raise ConcreateError("OSBS build engine needs 'rhpkg' tools installed!", ex)
+            raise ConcreateError(
+                "OSBS build engine needs 'rhpkg' tools installed!", ex)
 
     def prepare(self, descriptor):
         """Prepares dist-git repository for OSBS build."""
@@ -30,7 +32,8 @@ class OSBSBuilder(Builder):
         branch = repository_key.get('branch')
 
         if not (repository and branch):
-            raise ConcreateError("OSBS builder needs repostiory and branch provided!")
+            raise ConcreateError(
+                "OSBS builder needs repostiory and branch provided!")
 
         self.dist_git_dir = os.path.join(os.path.expanduser('~/.concreate.d'),
                                          'osbs',
@@ -55,8 +58,9 @@ class OSBSBuilder(Builder):
         with Chdir(os.path.join(self.target, 'image')):
             for obj in ["repos", "modules"]:
                 if os.path.exists(obj):
-                    shutil.copytree(obj, os.path.join(self.dist_git_dir,obj))
-            shutil.copy("Dockerfile", os.path.join(self.dist_git_dir, "Dockerfile"))
+                    shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
+            shutil.copy("Dockerfile", os.path.join(
+                self.dist_git_dir, "Dockerfile"))
 
     def update_lookaside_cache(self, artifacts):
         if not artifacts:
@@ -103,11 +107,15 @@ class Git(object):
 
         with Chdir(path):
             if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip() != "true":
-                raise Exception("Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
+                raise Exception(
+                    "Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
 
-            name = os.path.basename(subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip())
-            branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
-            commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
+            name = os.path.basename(subprocess.check_output(
+                ["git", "rev-parse", "--show-toplevel"]).strip())
+            branch = subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
+            commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"]).strip()
 
         return name, branch, commit
 
@@ -118,7 +126,8 @@ class Git(object):
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.noninteractive = noninteractive
 
-        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = Git.repo_info(source)
+        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = Git.repo_info(
+            source)
 
     def stage_modified(self):
         # Check if there are any files in stage (return code 1). If there are no files
@@ -133,18 +142,23 @@ class Git(object):
             with Chdir(self.output):
                 logger.info("Pulling latest changes in repo %s..." % self.repo)
                 subprocess.check_output(["git", "fetch"])
-                subprocess.check_output(["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
-                subprocess.check_output(["git", "reset", "--hard", "origin/%s" % self.branch])
+                subprocess.check_output(
+                    ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
+                subprocess.check_output(
+                    ["git", "reset", "--hard", "origin/%s" % self.branch])
             logger.debug("Changes pulled")
         else:
-            logger.info("Cloning %s git repository (%s branch)..." % (self.repo, self.branch))
-            subprocess.check_output(["rhpkg", "-q", "clone", "-b", self.branch, self.repo, self.output])
+            logger.info("Cloning %s git repository (%s branch)..." %
+                        (self.repo, self.branch))
+            subprocess.check_output(
+                ["rhpkg", "-q", "clone", "-b", self.branch, self.repo, self.output])
             logger.debug("Repository %s cloned" % self.repo)
 
     def clean(self):
         """ Removes old generated scripts, repos and modules directories """
         with Chdir(self.output):
-            git_files = subprocess.check_output(["git", "ls-files", "."]).strip().splitlines()
+            git_files = subprocess.check_output(
+                ["git", "ls-files", "."]).strip().splitlines()
             for d in ["repos", "modules"]:
                 logger.info("Removing old '%s' directory" % d)
                 shutil.rmtree(d, ignore_errors=True)
@@ -173,15 +187,18 @@ class Git(object):
         logger.info("Commiting with message: '%s'" % commit_msg)
         subprocess.check_output(["git", "commit", "-q", "-m", commit_msg])
 
-        untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard"])
+        untracked = subprocess.check_output(
+            ["git", "ls-files", "--others", "--exclude-standard"])
 
         if untracked:
-            logger.warn("There are following untracked files: %s. Please review your commit." % ", ".join(untracked.splitlines()))
+            logger.warn("There are following untracked files: %s. Please review your commit." % ", ".join(
+                untracked.splitlines()))
 
         diffs = subprocess.check_output(["git", "diff-files", "--name-only"])
 
         if diffs:
-            logger.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(diffs.splitlines()))
+            logger.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(
+                diffs.splitlines()))
 
         if not self.noninteractive:
             subprocess.call(["git", "status"])
