@@ -52,13 +52,11 @@ class OSBSBuilder(Builder):
         self.update_lookaside_cache(artifacts)
 
     def update_osbs_image_source(self):
-        for obj in ["repos", "modules", "Dockerfile"]:
-            if os.path.exists(obj):
-                shutil.copytree(os.path.join(self.target,
-                                             'image',
-                                             obj),
-                                os.path.join(self.dist_git_dir,
-                                             obj))
+        with Chdir(os.path.join(self.target, 'image')):
+            for obj in ["repos", "modules"]:
+                if os.path.exists(obj):
+                    shutil.copytree(obj, os.path.join(self.dist_git_dir,obj))
+            shutil.copy("Dockerfile", os.path.join(self.dist_git_dir, "Dockerfile"))
 
     def update_lookaside_cache(self, artifacts):
         if not artifacts:
@@ -78,6 +76,7 @@ class OSBSBuilder(Builder):
 
     def build(self, build_args):
         build_cmd = ["rhpkg", "container-build"]
+
         if not build_args.build_osbs_release:
             build_cmd.append("--scratch")
 
@@ -90,10 +89,11 @@ class OSBSBuilder(Builder):
             else:
                 logger.info("No changes made to the code, committing skipped")
 
-            logger.info("Executing container build on OSBS...")
+            if decision("Do you want to build the image in OSBS?"):
+                logger.info("Executing container build in OSBS...")
 
-            logger.debug("Executing '%s'." % ' '.join(build_cmd))
-            subprocess.call(build_cmd)
+                logger.debug("Executing '%s'." % ' '.join(build_cmd))
+                subprocess.check_call(build_cmd)
 
 
 class Git(object):
@@ -144,11 +144,13 @@ class Git(object):
     def clean(self):
         """ Removes old generated scripts, repos and modules directories """
         with Chdir(self.output):
+            git_files = subprocess.check_output(["git", "ls-files", "."]).strip().splitlines()
             for d in ["repos", "modules"]:
-                if os.path.exists(d):
-                    logger.info("Removing old '%s' directory" % d)
-                    if os.path.exists(d):
-                        subprocess.check_output(["git", "rm", "-rf", d])
+                logger.info("Removing old '%s' directory" % d)
+                shutil.rmtree(d, ignore_errors=True)
+
+                if d in git_files:
+                    subprocess.check_output(["git", "rm", "-rf", d])
 
     def add(self):
         # Add new Dockerfile
