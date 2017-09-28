@@ -103,9 +103,9 @@ VOLUME ["{{ volume }}"]
 {% endfor %}
 {% endif %}
 
-
 USER {{ run['user'] }}
-{%- if run %}
+
+{% if run %}
 {%- if 'workdir' in run %}
 # Specify the working directory
 WORKDIR {{ run['workdir'] }}
