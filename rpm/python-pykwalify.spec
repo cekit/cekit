@@ -9,7 +9,7 @@
 
 Name:           python-%{pname}
 Version:        1.6.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Python lib/cli for JSON/YAML schema validation
 
 License:        MIT
@@ -68,8 +68,10 @@ found at: http://www.kuwata-lab.com/kwalify/
 %autosetup -n %{pname}-%{version}
 rm -rf *.egg-info
 
-sed -i 's/^PyYAML.*/PyYAML/g' requirements.txt
-sed -i 's/^python-dateutil.*/python-dateutil/g' requirements.txt
+sed -i "s|^PyYAML.*|PyYAML|g" requirements.txt
+sed -i "s|PyYAML.*|PyYAML',|g" setup.py
+sed -i "s|^python-dateutil.*|python-dateutil|g" requirements.txt
+sed -i "s|python-dateutil.*|python-dateutil',|g" setup.py
 
 %build
 %py2_build
@@ -115,6 +117,9 @@ ln -s %{_bindir}/python2-%{pname} %{buildroot}%{_bindir}/%{pname}
 %endif
 
 %changelog
+* Fri Sep 29 2017 Marek Goldmann <mgoldman@redhat.com> - 1.6.0-4
+- Rebuild
+
 * Fri Sep 29 2017 Marek Goldmann <mgoldman@redhat.com> - 1.6.0-3
 - Rebuild
 
