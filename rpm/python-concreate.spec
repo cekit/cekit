@@ -9,7 +9,7 @@
 
 Name:           python-concreate
 Version:        1.1.0
-Release:        0.1.git%{?dist}
+Release:        0.2.git%{?dist}
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/jboss-container-images/concreate
@@ -110,6 +110,9 @@ py.test-%{python3_version} -v tests/test_unit*.py
 %{_bindir}/concreate
 
 %changelog
+* Fri Sep 29 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.0-0.2.git
+- Rebuild
+
 * Thu Sep 28 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.0-0.1.git
 - Switch to latest release from develop branch
 
