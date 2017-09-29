@@ -32,7 +32,7 @@ Other systems
 --------------
 
 We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Concreate. Please consult
-your package namager of choice for the correct package name.
+your package manager of choice for the correct package name.
 
 .. code-block:: bash
 
