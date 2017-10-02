@@ -1,9 +1,38 @@
 Installation
 ============
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Concreate.
+Fedora / CentOS / RHEL
+-----------------------
 
-If you are on Fedora/RHEL please install the ``python-virtualenv`` package. If you use different operating system please consult your package namager of choice for the correct package name.
+We suggest installing Concreate using the YUM/DNF package manager. We provide a `COPR repository for Concreate <https://copr.fedorainfracloud.org/coprs/goldmann/concreate/>`_
+which contains everything needed to install Concreate.
+
+Fedora
+^^^^^^^
+
+Supported versions: 25, 26, 27.
+
+.. code-block:: bash
+
+    dnf copr enable goldmann/concreate
+    dnf install python3-concreate
+
+CentOS / RHEL
+^^^^^^^^^^^^^
+
+Supported versions: 7.
+
+.. code-block:: bash
+
+    yum install yum-plugin-copr
+    yum copr enable goldmann/concreate
+    yum install python2-concreate
+
+Other systems
+--------------
+
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Concreate. Please consult
+your package manager of choice for the correct package name.
 
 .. code-block:: bash
 
@@ -19,6 +48,6 @@ If you are on Fedora/RHEL please install the ``python-virtualenv`` package. If y
     concreate --help
 
 Requirements
-------------
+^^^^^^^^^^^^^
 
 To build container images you need to have Docker installed on your system.

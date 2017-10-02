@@ -1,6 +1,4 @@
-PyYAML>=3.11
-Jinja2>=2.8
-requests>=2.8.1
-six>=1.10.0
+PyYAML>=3.10
+Jinja2>=2.7
 pykwalify>=1.6.0
 colorlog>=2.10.0

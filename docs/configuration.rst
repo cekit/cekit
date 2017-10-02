@@ -16,7 +16,7 @@ Below you can find description of available sections together with options descr
 
 Controls verification of SSL certificates for example when downloading artifacts. Default: ``True``.
 
-.. code::
+.. code:: yaml
 
     [common]
     ssl_verify = False

@@ -2,13 +2,17 @@
 import hashlib
 import logging
 import os
-import requests
+
 try:
-    import urllib.parse as urlparse
-except:
-    import urlparse
+    from urllib.parse import urlparse
+    from urllib.request import urlopen
+except ImportError:
+    from urlparse import urlparse
+    from urllib2 import urlopen
+
 import shutil
 import subprocess
+import ssl
 
 from concreate import tools
 from concreate.errors import ConcreateError
@@ -44,9 +48,9 @@ class Resource(object):
                 self.checksums[algorithm] = descriptor[algorithm]
 
     def _copy_impl(self, target):
-        raise NotImplementedError("Implement _copy_impl() for Resource: "
-                                  + self.__module__ + "."
-                                  + type(self).__name__)
+        raise NotImplementedError("Implement _copy_impl() for Resource: " +
+                                  self.__module__ + "." +
+                                  type(self).__name__)
 
     def target_file_name(self):
         return os.path.basename(self.name)
@@ -139,7 +143,7 @@ class Resource(object):
 
         logger.debug("Downloading from '%s' as %s" % (url, destination))
 
-        parsedUrl = urlparse.urlparse(url)
+        parsedUrl = urlparse(url)
 
         if parsedUrl.scheme == 'file' or not parsedUrl.scheme:
             if os.path.isdir(parsedUrl.path):
@@ -151,11 +155,21 @@ class Resource(object):
             if str(verify).lower() == 'false':
                 verify = False
 
-            res = requests.get(url, verify=verify, stream=True)
-            if res.status_code != 200:
+            ctx = ssl.create_default_context()
+
+            if not verify:
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+
+            res = urlopen(url, context=ctx)
+
+            if res.getcode() != 200:
                 raise ConcreateError("Could not download file from %s" % url)
             with open(destination, 'wb') as f:
-                for chunk in res.iter_content(chunk_size=1024):
+                while True:
+                    chunk = res.read(1024)
+                    if not chunk:
+                        break
                     f.write(chunk)
         else:
             raise ConcreateError("Unsupported URL scheme: %s" % (url))

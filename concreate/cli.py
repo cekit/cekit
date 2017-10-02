@@ -5,7 +5,9 @@ import os
 import logging
 import sys
 
+
 from concreate import tools
+from concreate.builder import Builder
 from concreate.log import setup_logging
 from concreate.errors import ConcreateError
 from concreate.generator import Generator
@@ -41,6 +43,28 @@ class Concreate(object):
         parser.add_argument('--version',
                             action='version',
                             help='show version and exit', version=version)
+
+        build_group = parser.add_argument_group(
+            'build', "Arguments valid for the 'build' target")
+
+        build_group.add_argument('--build-engine',
+                                 default='docker',
+                                 choices=['docker', 'osbs'],
+                                 help='an engine used to build the image.')
+
+        build_group.add_argument('--build-tag',
+                                 dest='build_tags',
+                                 action='append',
+                                 help='tag to assign to the built image, can be used multiple times')
+
+        build_group.add_argument('--build-osbs-release',
+                                 dest='build_osbs_release',
+                                 action='store_true',
+                                 help='execute OSBS release build')
+
+        build_group.add_argument('--build-tech-preview',
+                                 action='store_true',
+                                 help='perform tech preview build')
 
         parser.add_argument('--overrides',
                             help='path to a file containing overrides')
@@ -80,20 +104,34 @@ class Concreate(object):
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)
-            get_dependencies(generator.descriptor, os.path.join(self.args.target, 'repo'))
+            get_dependencies(generator.descriptor,
+                             os.path.join(self.args.target, 'repo'))
 
             # We have all overrided repo fetch so we can discover modules
             # and process its dependency trees
             discover_modules(os.path.join(self.args.target, 'repo'))
 
+            # First we need to prepare a builder environment (it can change default target)
+            if 'build' in self.args.commands:
+                # we need to create the builder before generate, because it needs
+                # to prepare env
+                builder = Builder(self.args.build_engine, self.args.target)
+                # build contains implicit generate
+                self.args.commands.append('generate')
+
             if 'generate' in self.args.commands:
-                # In case both: 'generate' and 'build' are specified
-                # Make sure we only run generate once (as part of 'build')
-                if 'build' not in self.args.commands:
-                    self.generate(generator)
+                generator.prepare_modules()
+                generator.prepare_repositories()
+                generator.prepare_artifacts()
+                if self.args.build_tech_preview:
+                    generator.generate_tech_preview()
+                generator.render_dockerfile()
 
             if 'build' in self.args.commands:
-                self.build(generator)
+                builder.prepare(generator.descriptor)
+                if not self.args.build_tags:
+                    self.args.build_tags = generator.get_tags()
+                builder.build(self.args)
 
             logger.info("Finished!")
         except KeyboardInterrupt as e:

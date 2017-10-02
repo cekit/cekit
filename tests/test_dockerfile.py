@@ -160,3 +160,22 @@ class TestDockerfile(unittest.TestCase):
             regex = re.compile(
                 r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n',  re.MULTILINE)
             self.assertRegexpMatches(dockerfile, regex)
+
+    def test_tech_preview_without_family(self):
+        self.generator.descriptor.process()
+        self.generator.generate_tech_preview()
+        self.generator.render_dockerfile()
+        with open(self.dockerfile, "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"')
+            self.assertRegexpMatches(dockerfile, regex)
+
+    def test_tech_preview(self):
+        self.descriptor['name'] = 'testimage/test'
+        self.generator.descriptor.process()
+        self.generator.generate_tech_preview()
+        self.generator.render_dockerfile()
+        with open(self.dockerfile, "r") as f:
+            dockerfile = f.read()
+            regex = re.compile(r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')
+            self.assertRegexpMatches(dockerfile, regex)
