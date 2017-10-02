@@ -1,2 +1,2 @@
-version = "1.1.0dev"
+version = "1.1.0"
 schema_version = 1
