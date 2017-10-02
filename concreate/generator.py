@@ -121,6 +121,9 @@ class Generator(object):
         dockerfile = os.path.join(self.target,
                                   'image',
                                   'Dockerfile')
+        if not os.path.exists(os.path.dirname(dockerfile)):
+            os.makedirs(os.path.dirname(dockerfile))
+
         with open(dockerfile, 'wb') as f:
             f.write(template.render(
                 self.descriptor.descriptor).encode('utf-8'))
