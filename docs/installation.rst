@@ -17,8 +17,8 @@ Supported versions: 25, 26, 27.
     dnf copr enable goldmann/concreate
     dnf install python3-concreate
 
-CentOS / RHEL
-^^^^^^^^^^^^^
+CentOS
+^^^^^^
 
 Supported versions: 7.
 
@@ -26,6 +26,16 @@ Supported versions: 7.
 
     yum install yum-plugin-copr
     yum copr enable goldmann/concreate
+    yum install python2-concreate
+
+RHEL
+^^^^^^
+
+Supported versions: 7.
+
+.. code-block:: bash
+
+    curl https://copr.fedorainfracloud.org/coprs/goldmann/concreate/repo/epel-7/goldmann-concreate-epel-7.repo -o /etc/yum.repos.d/goldmann-concreate-epel-7.repo
     yum install python2-concreate
 
 Other systems
