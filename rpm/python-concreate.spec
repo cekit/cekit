@@ -8,7 +8,7 @@
 %global git_version develop
 
 Name:           python-concreate
-Version:        1.1.0
+Version:        1.1.1
 Release:        1%{?dist}
 Summary:        Container image creation tool
 License:        MIT
@@ -110,6 +110,9 @@ py.test-%{python3_version} -v tests/test_unit*.py
 %{_bindir}/concreate
 
 %changelog
+* Mon Oct 02 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.1-1
+- Release 1.1.1
+
 * Mon Oct 02 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.0-1
 - Release 1.1.0
 
