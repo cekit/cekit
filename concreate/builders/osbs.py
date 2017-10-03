@@ -106,7 +106,7 @@ class Git(object):
     def repo_info(path):
 
         with Chdir(path):
-            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip() != "true":
+            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip().decode("utf8") != "true":
                 raise Exception(
                     "Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
 
