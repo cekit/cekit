@@ -5,15 +5,14 @@
 %endif
 
 %global modname concreate
-%global git_version develop
 
 Name:           python-concreate
-Version:        1.1.1
+Version:        1.1.2
 Release:        1%{?dist}
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/jboss-container-images/concreate
-Source0:        %{url}/archive/%{git_version}.tar.gz
+Source0:        %{url}/archive/%{version}.tar.gz
 BuildArch:      noarch
 
 %global _description \
@@ -72,7 +71,7 @@ Python 3 version.
 %endif
 
 %prep
-%setup -q -n %{modname}-%{git_version}
+%setup -q -n %{modname}-%{version}
 
 %build
 %py2_build
@@ -110,6 +109,9 @@ py.test-%{python3_version} -v tests/test_unit*.py
 %{_bindir}/concreate
 
 %changelog
+* Tue Oct 03 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.2-1
+- Rebuilt
+
 * Mon Oct 02 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.1-1
 - Release 1.1.1
 
