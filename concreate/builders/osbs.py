@@ -106,16 +106,16 @@ class Git(object):
     def repo_info(path):
 
         with Chdir(path):
-            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip() != "true":
+            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip().decode("utf8") != "true":
                 raise Exception(
                     "Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
 
             name = os.path.basename(subprocess.check_output(
-                ["git", "rev-parse", "--show-toplevel"]).strip())
+                ["git", "rev-parse", "--show-toplevel"]).strip().decode("utf8"))
             branch = subprocess.check_output(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip()
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip().decode("utf8")
             commit = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"]).strip()
+                ["git", "rev-parse", "HEAD"]).strip().decode("utf8")
 
         return name, branch, commit
 
@@ -158,7 +158,7 @@ class Git(object):
         """ Removes old generated scripts, repos and modules directories """
         with Chdir(self.output):
             git_files = subprocess.check_output(
-                ["git", "ls-files", "."]).strip().splitlines()
+                ["git", "ls-files", "."]).strip().decode("utf8").splitlines()
             for d in ["repos", "modules"]:
                 logger.info("Removing old '%s' directory" % d)
                 shutil.rmtree(d, ignore_errors=True)
@@ -188,13 +188,13 @@ class Git(object):
         subprocess.check_output(["git", "commit", "-q", "-m", commit_msg])
 
         untracked = subprocess.check_output(
-            ["git", "ls-files", "--others", "--exclude-standard"])
+            ["git", "ls-files", "--others", "--exclude-standard"]).decode("utf8")
 
         if untracked:
             logger.warn("There are following untracked files: %s. Please review your commit." % ", ".join(
                 untracked.splitlines()))
 
-        diffs = subprocess.check_output(["git", "diff-files", "--name-only"])
+        diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode("utf8")
 
         if diffs:
             logger.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(
