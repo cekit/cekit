@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 
+from builtins import input
 from concreate.builder import Builder
 from concreate.errors import ConcreateError
 
@@ -219,7 +220,7 @@ class Git(object):
 
 
 def decision(question):
-    if raw_input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
+    if input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
         return True
     return False
 
