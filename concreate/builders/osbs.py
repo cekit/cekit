@@ -184,6 +184,8 @@ class Git(object):
         if self.source_repo_commit:
             commit_msg += ", commit %s" % self.source_repo_commit
 
+        commit_msg = commit_msg.decode("utf8")
+
         # Commit the change
         logger.info("Commiting with message: '%s'" % commit_msg)
         subprocess.check_output(["git", "commit", "-q", "-m", commit_msg])
