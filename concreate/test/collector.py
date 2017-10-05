@@ -19,7 +19,7 @@ class TestCollector(object):
 
     def fetch_steps(self, version):
         """Methods fetches builtin steps """
-        logger.info("Fetching common steps from 'https://github.com/jboss-openshift/concreate-test-steps  '.")
+        logger.info("Fetching common steps from 'https://github.com/jboss-openshift/concreate-test-steps'.")
         cmd = ['git',
                'clone',
                '--depth',
@@ -47,8 +47,7 @@ class TestCollector(object):
         logger.debug("Collected tests from modules")
 
         # copy tests from image repo
-        tests_dir = os.path.join(self.descriptor_dir, 'test')
-        self._copy_tests(tests_dir, 'image')
+        self._copy_tests(self.descriptor_dir, '')
         logger.debug("Collected tests from image")
         logger.info("Tests collected!")
 
