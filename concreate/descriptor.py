@@ -133,7 +133,7 @@ class Descriptor(object):
         # If a directory called 'modules' is found next to the image descriptor
         # scan it for modules.
         if os.path.isdir(local_modules_path):
-            repositories.append({'path': local_modules_path, 'name': 'modules'})
+            repositories.append({'path': 'modules', 'name': 'modules'})
 
         modules['repositories'] = repositories
         self.descriptor['modules'] = modules
