@@ -14,8 +14,7 @@ class TestCollector(object):
         self.test_dir = os.path.join(self.target_dir, 'test')
 
         # remove old test so we can get fresh ones collected
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        shutil.rmtree(self.test_dir, ignore_errors=True)
         os.makedirs(self.test_dir)
 
     def fetch_steps(self, version):
