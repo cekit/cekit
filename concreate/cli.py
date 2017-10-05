@@ -52,10 +52,6 @@ class Concreate(object):
         build_group = parser.add_argument_group('build',
                                                 "Arguments valid for the 'build' target")
 
-        test_group.add_argument('--test-tags',
-                                action='append',
-                                help='tags used for behave test')
-
         test_group.add_argument('--test-wip',
                                 action='store_true',
                                 help='Run @wip tests only')
@@ -143,12 +139,11 @@ class Concreate(object):
                 builder.build(self.args)
 
             if 'test' in self.args.commands:
-                if not self.args.test_tags:
-                    self.args.test_tags = [generator.get_tags()[0]]
-                    
+
+                test_tags = [generator.get_tags()[0]]
                 # if wip is specifed set tags to @wip
                 if self.args.test_wip:
-                    self.args.test_tags = ['@wip']
+                    test_tags = ['@wip']
 
                 # at first we collect tests
                 TestCollector(os.path.dirname(self.args.descriptor),
@@ -156,7 +151,7 @@ class Concreate(object):
 
                 # then we run them
                 TestRunner(self.args.target).run(self.args.build_tags[0],
-                                                 self.args.test_tags)
+                                                 test_tags)
 
             logger.info("Finished!")
         except KeyboardInterrupt as e:

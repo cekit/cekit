@@ -20,7 +20,7 @@ class TestCollector(object):
 
     def fetch_steps(self, version):
         """Methods fetches builtin steps """
-        logger.info("Fetching common steps")
+        logger.info("Fetching common steps from 'https://github.com/jboss-openshift/concreate-test-steps  '.")
         cmd = ['git',
                'clone',
                '--depth',
@@ -33,7 +33,7 @@ class TestCollector(object):
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
     def collect(self, version):
-        # first clone common steps 
+        # first clone common steps
         self.fetch_steps(version)
         # copy tests from repository root
         tests_root = os.path.join(self.target_dir, 'repo')
