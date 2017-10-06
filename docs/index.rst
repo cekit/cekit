@@ -18,4 +18,5 @@ Topics
     modules
     configuration
     build
+    test
 
