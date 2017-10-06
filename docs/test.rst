@@ -15,7 +15,7 @@ Image can be tested by running:
 
 About Tests
 -----------
-Behave test are separate to two parts steps and features. You can place tests in ``tests`` directory next
+Behave tests are separate to two parts steps and features. You can place tests in ``tests`` directory next
 to the image descriptor, module descriptor or in a root of a git repository which contains the modules.
 
 The tests directory is structured in following way:
@@ -30,7 +30,7 @@ The tests directory is structured in following way:
 
 The ``tests/features`` directory is the place where you can drop your custom developed `behave features. <https://pythonhosted.org/behave/gherkin.html>`_
 
-The ``tests/steps`` directory is optional and contains custom steps for specific image/module.
+The ``tests/steps`` directory is optional and contains custom `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for specific image/module.
 
 We strongly recommend that a test is written for every feature that is added to the image.
 For the list of steps that are available for use in tests, see the `steps repository <https://github.com/jboss-openshift/concreate-test-steps>`_.
