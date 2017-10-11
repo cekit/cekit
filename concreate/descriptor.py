@@ -136,6 +136,9 @@ class Descriptor(object):
             repositories.append({'path': 'modules', 'name': 'modules'})
 
         for repository in repositories:
+            # if the name is already there we will not change it
+            if 'name' in repository:
+                continue
             name = ""
             if 'git' in repository:
                 name = repository['git']['url']

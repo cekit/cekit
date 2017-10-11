@@ -1,9 +1,7 @@
 Developing modules locally
 ==========================
 
-Concreate was designed in a way, that it always tries to build image by fetching latest released modules available. This makes it a very good fit into any ci/automated environment but it can create a hard workflows for module developers. We can address this issue by using overrides mechanism which is integral part of the Concreate.
-
-Imagine we have very simple image which is using one module from a cct_module repository like this:
+Concreate enables you to use a work in progress modules to build the image by exploiting its overrides system. As an example, imagine we have very simple image which is using one module from a cct_module repository like this:
 
 .. code:: yaml
 
@@ -20,7 +18,7 @@ Imagine we have very simple image which is using one module from a cct_module re
       - name: s2i-common
 
 
-And we are in a need of updating s2i-common module. To achieve this one of the possible way is to:
+Now imagine,  we have found a bug in its s2i-common module. We will clone the module repository localy by executing:
 
 1. Clone cct_module to your workstation to ``~/repo/cct_module``
 
@@ -28,15 +26,16 @@ And we are in a need of updating s2i-common module. To achieve this one of the p
 
   $ git clone https://github.com/jboss-openshift/cct_module.git /home/user/repo/cct_module
 
-2. Create override.yaml next to the image.yaml. override.yaml should look like:
+2. Then we will create override.yaml next to the image.yaml, override.yaml should look like:
 
 .. code:: yaml
 
+  schema_version: 1
   modules:
     repositories:
       - path: "/home/user/repo/cct_module"
 
-3. Build image using overrided module by executing:
+3. We now can build the image using overridden module by executing:
 
 .. code:: bash
 
