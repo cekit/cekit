@@ -355,8 +355,11 @@ In case you want to define volumes for your image, just use the ``volumes`` sect
 .. code:: yaml
 
     volumes:
-        - "/opt/eap/standalone"
+        - name: "volume.eap"
+          path: "/opt/eap/standalone"
 
+.. note::
 
+    The ``name`` key is optional. If not specfied the value of ``path`` key will be used.
 
 

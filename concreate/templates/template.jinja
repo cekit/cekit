@@ -99,7 +99,7 @@ RUN rm -rf /tmp/artifacts
 
 {%- if volumes %}
 {% for volume in volumes %}
-VOLUME ["{{ volume }}"]
+VOLUME ["{{ volume['path'] }}"]
 {% endfor %}
 {% endif %}
 

@@ -62,6 +62,7 @@ class Descriptor(object):
             self._process_ports()
         self._process_artifacts()
         self._process_modules()
+        self._process_volumes()
         self._process_run()
         self._process_labels()
         return self
@@ -149,6 +150,18 @@ class Descriptor(object):
             repository['name'] = os.path.splitext(os.path.basename(name))[0]
         modules['repositories'] = repositories
         self.descriptor['modules'] = modules
+
+    def _process_volumes(self):
+        volumes = self.descriptor.get('volumes', [])
+
+        if not volumes:
+            return
+
+        for volume in volumes:
+            if 'name' not in volume:
+                volume['name'] = volume.get('path')
+
+        self.descriptor['volumes'] = volumes
 
     def _process_labels(self):
         """ Generate labels from concreate keys """
