@@ -7,7 +7,7 @@
 %global modname concreate
 
 Name:           python-concreate
-Version:        1.1.7
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Container image creation tool
 License:        MIT
@@ -109,6 +109,9 @@ py.test-%{python3_version} -v tests/test_unit*.py
 %{_bindir}/concreate
 
 %changelog
+* Thu Oct 12 2017 Marek Goldmann <mgoldman@redhat.com> - 1.2.0-1
+- Release 1.2.0
+
 * Thu Oct 05 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.7-1
 - Release 1.1.7
 

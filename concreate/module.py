@@ -59,9 +59,6 @@ def get_dependencies(descriptor, base_dir):
         resource = Resource.new(repo, descriptor.directory)
         resource.copy(base_dir)
 
-    for repo in module_repositories:
-        resource = Resource.new(repo, descriptor.directory)
-        resource.copy(base_dir)
 
 def discover_modules(repo_dir):
     """Looks through the directory trees for modules descriptor.

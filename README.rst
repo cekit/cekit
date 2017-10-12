@@ -8,34 +8,30 @@ About
 
 Container image creation tool.
 
-Concreate helps to build container images from image definition files.
+Concreate helps to build container images from image definition files with strong focus on modularity and code reuse.
 
 Features
 --------
 
-- Building container images from YAML image definitions
-- (not yet available) Running tests on built images
-- (not yet available) Releasing container image by building it in Red Hat supported build system
-
-Status
-------
-
-This project is currently in development. Initial release should be available shortly. Support for multiple target platforms is planned in future, but currently only Docker is supported.
+- `Building container images <http://concreate.readthedocs.io/en/develop/build.html>`_ from YAML image definitions
+- `Integration/unit testing <http://concreate.readthedocs.io/en/develop/test.html>`_ of images
+- Releasing container images by building it in Red Hat supported build system
 
 Installation
 ------------
 
-Please refer to `documentation <http://concreate.readthedocs.io/en/develop/installation.html>`_.
+If you are running Fedora, you can install Concreate easily via:
 
-Requirements
-^^^^^^^^^^^^
+.. code-block:: bash
 
-To build container images you need to have Docker installed on your system.
+    dnf copr enable goldmann/concreate
+    dnf install python3-concreate
+
+For other platforms, please refer to `documentation <http://concreate.readthedocs.io/en/develop/installation.html>`_.
 
 Usage
 -----
-
-Please refer to the ``concreate --help`` output.
+First steps tutorial is under construction, for now please refer to the ``concreate --help`` output.
 
 Documentation
 -------------

@@ -12,6 +12,8 @@ from concreate.log import setup_logging
 from concreate.errors import ConcreateError
 from concreate.generator import Generator
 from concreate.module import discover_modules, get_dependencies
+from concreate.test.collector import TestCollector
+from concreate.test.runner import TestRunner
 from concreate.version import version
 
 # FIXME we shoudl try to move this to json
@@ -44,8 +46,15 @@ class Concreate(object):
                             action='version',
                             help='show version and exit', version=version)
 
-        build_group = parser.add_argument_group(
-            'build', "Arguments valid for the 'build' target")
+        test_group = parser.add_argument_group('test',
+                                               "Arguments valid for the 'test' target")
+
+        build_group = parser.add_argument_group('build',
+                                                "Arguments valid for the 'build' target")
+
+        test_group.add_argument('--test-wip',
+                                action='store_true',
+                                help='Run @wip tests only')
 
         build_group.add_argument('--build-engine',
                                  default='docker',
@@ -80,7 +89,7 @@ class Concreate(object):
 
         parser.add_argument('commands',
                             nargs='+',
-                            choices=['generate', 'build'],
+                            choices=['generate', 'build', 'test'],
                             help="commands that should be executed, \
                                 you can specify multiple commands")
 
@@ -111,15 +120,8 @@ class Concreate(object):
             # and process its dependency trees
             discover_modules(os.path.join(self.args.target, 'repo'))
 
-            # First we need to prepare a builder environment (it can change default target)
-            if 'build' in self.args.commands:
-                # we need to create the builder before generate, because it needs
-                # to prepare env
-                builder = Builder(self.args.build_engine, self.args.target)
-                # build contains implicit generate
-                self.args.commands.append('generate')
-
-            if 'generate' in self.args.commands:
+            # we run generate for every possible command
+            if self.args.commands:
                 generator.prepare_modules()
                 generator.prepare_repositories()
                 generator.prepare_artifacts()
@@ -127,11 +129,29 @@ class Concreate(object):
                     generator.generate_tech_preview()
                 generator.render_dockerfile()
 
-            if 'build' in self.args.commands:
-                builder.prepare(generator.descriptor)
+                # if tags are not specified on command line we take them from image descriptor
                 if not self.args.build_tags:
                     self.args.build_tags = generator.get_tags()
+
+            if 'build' in self.args.commands:
+                builder = Builder(self.args.build_engine, self.args.target)
+                builder.prepare(generator.descriptor)
                 builder.build(self.args)
+
+            if 'test' in self.args.commands:
+
+                test_tags = [generator.get_tags()[0]]
+                # if wip is specifed set tags to @wip
+                if self.args.test_wip:
+                    test_tags = ['@wip']
+
+                # at first we collect tests
+                TestCollector(os.path.dirname(self.args.descriptor),
+                              self.args.target).collect(generator.descriptor.get('schema_version'))
+
+                # then we run them
+                TestRunner(self.args.target).run(self.args.build_tags[0],
+                                                 test_tags)
 
             logger.info("Finished!")
         except KeyboardInterrupt as e:
@@ -142,16 +162,6 @@ class Concreate(object):
             else:
                 logger.error(str(e))
             sys.exit(1)
-
-    def generate(self, generator):
-        generator.prepare_modules()
-        generator.prepare_repositories()
-        generator.prepare_artifacts()
-        generator.render_dockerfile()
-
-    def build(self, generator):
-        self.generate(generator)
-        generator.build()
 
 
 def run():

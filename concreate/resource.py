@@ -26,15 +26,15 @@ class Resource(object):
 
     @staticmethod
     def new(resource, base_dir=os.getcwd()):
-        if 'git' in resource:
-            return GitResource(resource)
-        elif 'path' in resource:
+        if 'path' in resource:
             directory = resource['path']
             if not os.path.isabs(directory):
                 resource['path'] = os.path.join(base_dir, directory)
             return PathResource(resource)
         elif 'url' in resource:
             return UrlResource(resource)
+        elif 'git' in resource:
+            return GitResource(resource)
         raise ValueError("Resource type is not supported: %s" (resource))
 
     def __init__(self, descriptor):

@@ -62,6 +62,7 @@ class Descriptor(object):
             self._process_ports()
         self._process_artifacts()
         self._process_modules()
+        self._process_volumes()
         self._process_run()
         self._process_labels()
         return self
@@ -127,16 +128,40 @@ class Descriptor(object):
         add it as a module repository.
         """
         modules = self.descriptor.get('modules', {})
-        repositories = modules.get('repositories', [])
         local_modules_path = os.path.join(self.directory, 'modules')
 
+        repositories = modules.get('repositories', [])
         # If a directory called 'modules' is found next to the image descriptor
         # scan it for modules.
         if os.path.isdir(local_modules_path):
             repositories.append({'path': 'modules', 'name': 'modules'})
 
+        for repository in repositories:
+            # if the name is already there we will not change it
+            if 'name' in repository:
+                continue
+            name = ""
+            if 'git' in repository:
+                name = repository['git']['url']
+            elif 'path' in repository:
+                name = repository['path']
+            elif 'url' in repository:
+                name = repository['url']
+            repository['name'] = os.path.splitext(os.path.basename(name))[0]
         modules['repositories'] = repositories
         self.descriptor['modules'] = modules
+
+    def _process_volumes(self):
+        volumes = self.descriptor.get('volumes', [])
+
+        if not volumes:
+            return
+
+        for volume in volumes:
+            if 'name' not in volume:
+                volume['name'] = volume.get('path')
+
+        self.descriptor['volumes'] = volumes
 
     def _process_labels(self):
         """ Generate labels from concreate keys """
