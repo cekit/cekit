@@ -52,4 +52,4 @@ class TestRunner(object):
         try:
             subprocess.check_call(cmd, stderr=subprocess.STDOUT, cwd=os.path.join(self.target, 'test'))
         except:
-            logger.error("Test execution failed, please consult output above")
+            raise ConcreateError("Test execution failed, please consult output above")
