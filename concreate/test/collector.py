@@ -62,12 +62,12 @@ class TestCollector(object):
 
     def _fetch_steps(self, version):
         """ Method fetches common steps """
-        logger.info("Fetching common steps from 'https://github.com/jboss-openshift/concreate-test-steps'.")
+        logger.info("Fetching common steps from 'https://github.com/jboss-container-images/concreate-test-steps.git'.")
         cmd = ['git',
                'clone',
                '--depth',
                '1',
-               'https://github.com/jboss-openshift/concreate-test-steps',
+               'https://github.com/jboss-container-images/concreate-test-steps',
                self.test_dir,
                '-b',
                'v%s' % version]
