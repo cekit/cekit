@@ -119,7 +119,7 @@ class TestDockerfile(unittest.TestCase):
         """
         Test that cmd: is mapped into a CMD instruction
         """
-        self.descriptor['volumes'] = ['/var/lib', '/usr/lib']
+        self.descriptor['volumes'] = [{'path': '/var/lib'}, {'path': '/usr/lib', 'name': 'path.lib'}]
         self.generator.descriptor.process()
         self.generator.render_dockerfile()
 

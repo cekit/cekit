@@ -72,3 +72,8 @@ map:
         map:
           name: {type: str}
           branch: {type: str}
+  volumes:
+    seq:
+      - map:
+          name: {type: str}
+          path: {type: str, required: True}
