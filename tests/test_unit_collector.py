@@ -41,7 +41,7 @@ class TestDockerfile(unittest.TestCase):
     @mock.patch.object(TestCollector, '_validate_steps_requirements')
     def test_collect_test_from_repository_root(self, m1, m2):
         collector = TestCollector(self.desc_dir, self.target_dir)
-    
+
         features_file = os.path.join(self.target_dir,
                                      'repo',
                                      'foo',
@@ -65,7 +65,7 @@ class TestDockerfile(unittest.TestCase):
     @mock.patch.object(TestCollector, '_validate_steps_requirements')
     def test_collect_test_from_module(self, m1, m2):
         collector = TestCollector(self.desc_dir, self.target_dir)
-    
+
         features_file = os.path.join(self.target_dir,
                                      'image',
                                      'modules',
