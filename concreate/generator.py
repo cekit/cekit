@@ -66,9 +66,7 @@ class Generator(object):
         logger.info("Handling modules...")
 
         for module in modules:
-            version = None
-            if 'version' in module:
-                version = module['version']
+            version = module.get('version', None)
 
             req_module = copy_module_to_target(module['name'],
                                                version,

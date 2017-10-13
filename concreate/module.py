@@ -1,6 +1,5 @@
 import os
 import logging
-import shutil
 
 from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
@@ -26,17 +25,20 @@ def copy_module_to_target(name, version, target):
     if not os.path.exists(target):
         os.makedirs(target)
     # FIXME: version checking
-    for module in modules:
-        if name == module.name:
-            dest = os.path.join(target, name)
-            logger.info('Preparing module %s' % module.name)
-            if os.path.exists(dest):
-                # FIXME check version
-                return module
-            shutil.copytree(module.path, dest)
-            module.path = dest
+
+    candidates = [m for m in modules if name == m.name]
+    if not candidates:
+        raise ConcreateError("Cannot find requested module: '%s'" % name)
+
+    for module in candidates:
+        if version == module.get('version', None):
             return module
-    raise ConcreateError("Cannot find requested module: '%s'" % name)
+
+    if version:
+        raise ConcreateError("Cannot find requested module: '%s', version:'%s'." % (name, version))
+
+    # if we do not request any special version jus return random module
+    return candidates[0]
 
 
 def get_dependencies(descriptor, base_dir):
@@ -73,7 +75,7 @@ def discover_modules(repo_dir):
             modules.append(module)
 
 
-class Module():
+class Module(Descriptor):
     """Represents a module.
 
     Constructor arguments:
