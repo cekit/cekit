@@ -62,13 +62,14 @@ def get_dependencies(descriptor, base_dir):
 
 def discover_modules(repo_dir):
     """Looks through the directory trees for modules descriptor.
-    When module is find, it create concreate.module.Module instance
+    When module is found, it create concreate.module.Module instance
     and add this instance to the concreate.module.modules list.
     """
     for modules_dir, _, files in os.walk(repo_dir):
         if 'module.yaml' in files:
             module = Module(os.path.join(modules_dir, 'module.yaml'))
             module.fetch_dependencies(repo_dir)
+            logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
             modules.append(module)
 
 

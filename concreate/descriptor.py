@@ -133,13 +133,7 @@ class Descriptor(object):
         add it as a module repository.
         """
         modules = self.descriptor.get('modules', {})
-        local_modules_path = os.path.join(self.directory, 'modules')
-
         repositories = modules.get('repositories', [])
-        # If a directory called 'modules' is found next to the image descriptor
-        # scan it for modules.
-        if os.path.isdir(local_modules_path):
-            repositories.append({'path': 'modules', 'name': 'modules'})
 
         for repository in repositories:
             # if the name is already there we will not change it
