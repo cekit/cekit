@@ -1,5 +1,6 @@
 import logging
 import os
+import yaml
 
 from concreate import DEFAULT_USER, tools
 from concreate.resource import Resource
@@ -32,6 +33,10 @@ class Descriptor(object):
                                  % (self.descriptor['schema_version'],
                                     schema_version,
                                     self.descriptor['schema_version']))
+
+    def write(self, path):
+        with open(path, 'w') as outfile:
+            yaml.dump(self.descriptor, outfile, default_flow_style=False)
 
     def __getitem__(self, key):
         return self.descriptor[key]

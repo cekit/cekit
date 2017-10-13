@@ -127,6 +127,7 @@ class Concreate(object):
                 generator.prepare_artifacts()
                 if self.args.build_tech_preview:
                     generator.generate_tech_preview()
+                generator.descriptor.write(os.path.join(self.args.target, 'image.yaml'))
                 generator.render_dockerfile()
 
                 # if tags are not specified on command line we take them from image descriptor
