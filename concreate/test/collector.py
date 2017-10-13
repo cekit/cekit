@@ -5,13 +5,14 @@ import subprocess
 import pkg_resources
 
 from concreate.errors import ConcreateError
-from pkg_resources import DistributionNotFound, VersionConflict, ResolutionError
+from pkg_resources import DistributionNotFound, VersionConflict
 
 
 logger = logging.getLogger('concreate')
 
 
 class TestCollector(object):
+    collected = False
 
     def __init__(self, descriptor_dir, target_dir):
         self.descriptor_dir = os.path.abspath(descriptor_dir)
@@ -80,28 +81,34 @@ class TestCollector(object):
         self._validate_steps_requirements()
         # copy tests from repository root
         tests_root = os.path.join(self.target_dir, 'repo')
-        for tests_dir in os.listdir(tests_root):
-            self._copy_tests(tests_root, tests_dir)
+        if os.path.exists(tests_root):
+            for tests_dir in os.listdir(tests_root):
+                self._copy_tests(tests_root, tests_dir)
         logger.debug("Collected tests from repositories roots")
 
         # copy tests from collected modules
         tests_dirs = os.path.join(self.target_dir, 'image', 'modules')
-        for tests_dir in os.listdir(tests_dirs):
-            self._copy_tests(os.path.abspath(tests_dir), tests_dir)
+        if os.path.exists(tests_dirs):
+            for tests_dir in os.listdir(tests_dirs):
+                self._copy_tests(tests_dirs, tests_dir)
         logger.debug("Collected tests from modules")
 
         # copy tests from image repo
         self._copy_tests(self.descriptor_dir, '')
         logger.debug("Collected tests from image")
         logger.info("Tests collected!")
+        return self.collected
 
     def _copy_tests(self, source, name):
         for obj_name in ['steps', 'features']:
             obj_path = os.path.join(source, name, 'tests', obj_name)
+
             if os.path.exists(obj_path):
                 target = os.path.join(self.test_dir,
                                       obj_name,
                                       name)
                 logger.debug("Collecting tests from '%s' into '%s'" % (obj_path,
                                                                        target))
+                if obj_name == 'features':
+                    self.collected = True
                 shutil.copytree(obj_path, target)

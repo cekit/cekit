@@ -146,12 +146,13 @@ class Concreate(object):
                     test_tags = ['@wip']
 
                 # at first we collect tests
-                TestCollector(os.path.dirname(self.args.descriptor),
-                              self.args.target).collect(generator.descriptor.get('schema_version'))
+                test_collected = TestCollector(os.path.dirname(self.args.descriptor),
+                                               self.args.target).collect(generator.descriptor.get('schema_version'))
 
-                # then we run them
-                TestRunner(self.args.target).run(self.args.build_tags[0],
-                                                 test_tags)
+                # we run the test only if we collect any
+                if test_collected:
+                    TestRunner(self.args.target).run(self.args.build_tags[0],
+                                                     test_tags)
 
             logger.info("Finished!")
         except KeyboardInterrupt as e:
