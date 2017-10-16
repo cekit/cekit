@@ -171,9 +171,9 @@ class Git(object):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
 
-        for d in ["repos", "modules"]:
-            if os.path.exists(os.path.join(self.output, d)):
-                subprocess.check_call(["git", "add", d])
+        for d in ["repos", "modules", "ASAS"]:
+            # we probably do not care about non existing files and other errors here
+            subprocess.call(["git", "add", d])
 
     def commit(self):
         commit_msg = "Sync"
