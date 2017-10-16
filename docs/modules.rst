@@ -65,11 +65,8 @@ Local modules
 ^^^^^^^^^^^^^
 
 To make it easy to develop images quickly we added support for local modules,
-where the module source is stored together with the image descriptor.
-
-By convention -- if you place your modules to the ``modules`` directory next to image
-descriptor -- all modules will be **automatically discovered** without the need to define them in
-image descriptor, which is the same asdefining it this way:
+where the module source is stored together with the image descriptor. To use local module you need
+to reference it in repositories section in a following way:
 
 .. code:: yaml
 
