@@ -1,5 +1,6 @@
 import os
 import logging
+import shutil
 
 from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
@@ -31,14 +32,26 @@ def copy_module_to_target(name, version, target):
         raise ConcreateError("Cannot find requested module: '%s'" % name)
 
     for module in candidates:
-        if version == module.get('version', None):
+        if not version or version == module.get('version', None):
+            dest = os.path.join(target, module.name)
+
+            # if module is already copied, check that the version is correct
+            if os.path.exists(dest) and version:
+                check_module_version(dest, version)
+
+            if not os.path.exists(dest):
+                logger.debug("Copying module '%s' to: '%s'" % (name, dest))
+                shutil.copytree(module.path, dest)
             return module
 
-    if version:
-        raise ConcreateError("Cannot find requested module: '%s', version:'%s'." % (name, version))
+    raise ConcreateError("Cannot find requested module: '%s', version:'%s'." % (name, version))
 
-    # if we do not request any special version jus return random module
-    return candidates[0]
+
+def check_module_version(path, version):
+    descriptor = Descriptor(os.path.join(path, 'module.yaml'), 'module')
+    if descriptor.version != version:
+        raise ConcreateError("Requested conflicting version '%s' of module '%s'" %
+                             (version, descriptor['name']))
 
 
 def get_dependencies(descriptor, base_dir):
@@ -54,7 +67,7 @@ def get_dependencies(descriptor, base_dir):
     module_repositories = descriptor.get('modules', {}).get('repositories', [])
 
     if not module_repositories:
-        logger.debug("No module repostiories specified in descriptor")
+        logger.debug("No module repositories specified in descriptor")
         return
 
     for repo in module_repositories:
