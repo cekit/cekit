@@ -66,6 +66,11 @@ class Concreate(object):
                                  action='append',
                                  help='tag to assign to the built image, can be used multiple times')
 
+        build_group.add_argument('--tag',
+                                 dest='tags',
+                                 action='append',
+                                 help='tag used to build/test the image, can be used multiple times')
+
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
                                  action='store_true',
@@ -103,6 +108,14 @@ class Concreate(object):
         logger.debug("Running version %s", version)
 
         try:
+            # DEPRECATED - remove following lines and --build-tag option
+            if self.args.build_tags:
+                logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead")
+                if not self.args.tags:
+                    self.args.tags = self.args.build_tags
+                else:
+                    self.args.tags += self.args.build_tags
+
             tools.cfg = tools.parse_cfg()
             tools.cleanup(self.args.target)
 
@@ -131,8 +144,8 @@ class Concreate(object):
                 generator.render_dockerfile()
 
                 # if tags are not specified on command line we take them from image descriptor
-                if not self.args.build_tags:
-                    self.args.build_tags = generator.get_tags()
+                if not self.args.tags:
+                    self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
                 builder = Builder(self.args.build_engine, self.args.target)
@@ -142,6 +155,7 @@ class Concreate(object):
             if 'test' in self.args.commands:
 
                 test_tags = [generator.get_tags()[0]]
+                print test_tags
                 # if wip is specifed set tags to @wip
                 if self.args.test_wip:
                     test_tags = ['@wip']
@@ -152,7 +166,7 @@ class Concreate(object):
 
                 # we run the test only if we collect any
                 if test_collected:
-                    TestRunner(self.args.target).run(self.args.build_tags[0],
+                    TestRunner(self.args.target).run(self.args.tags[0],
                                                      test_tags)
 
             logger.info("Finished!")
