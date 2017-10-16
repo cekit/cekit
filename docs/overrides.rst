@@ -19,7 +19,7 @@ Concreate is using `YAML <http://yaml.org/>`_ format for its descriptors. Overri
 
 Scalar nodes
 ^^^^^^^^^^^^
-Scalar nodes are easy to overrides, if Concreate finds any scalar node in a overrides descriptor it update its value in image descriptor with the overridden one.
+Scalar nodes are easy to override, if Concreate finds any scalar node in an overrides descriptor it updates its value in image descriptor with the overridden one.
 
 **Example**: Overriding scalar node:
 
@@ -50,7 +50,7 @@ Scalar nodes are easy to overrides, if Concreate finds any scalar node in a over
 
 Sequence nodes
 ^^^^^^^^^^^^^^
-Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so Concreate is just merging arrays from image and override descriptors together. This can have unexpected results, please see `corresponding issue. <https://github.com/jboss-container-images/concreate/issues/106>`_
+Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so Concreate is just merging arrays from image and override descriptors together.
 
 **Example**: Overriding plain array node:
 
@@ -90,9 +90,11 @@ Sequence nodes are little bit tricky, if they're representing plain arrays, we c
 	    - "echo"
 	    - "foo"
 
+**Known issues**: Merging sequence nodes can have surprising results, please see `corresponding issue. <https://github.com/jboss-container-images/concreate/issues/106>`_
+
 Mapping nodes
 ^^^^^^^^^^^^^
-Mappings are merged via *name* key. If Concreate is overriding an mapping or array of mappings it tries to find a *name* key in mapping and use and identification of mapping. If two *name* keys matches, all keys of the mapping are updated.
+Mappings are merged via *name* key. If Concreate is overriding an mapping or array of mappings it tries to find a **name** key in mapping and use and identification of mapping. If two **name** keys matches, all keys of the mapping are updated.
 
 **Example**: Updating mapping node:
 
