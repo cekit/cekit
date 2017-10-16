@@ -142,7 +142,8 @@ class Descriptor(object):
 
         if not repositories and os.path.exists(local_modules_path):
             logger.info("Using 'modules' directory next to the image descriptor.")
-            logger.warning("Implicit usage of a local module directory is deprecated.")
+            # DEPRECATED, introduced in https://github.com/jboss-container-images/concreate/pull/108
+            logger.warning("Implicit usage of a local module directory is deprecated and will be removed in concreate 2.0")
             repositories.append({'path': local_modules_path, 'name': 'modules'})
 
         for repository in repositories:
