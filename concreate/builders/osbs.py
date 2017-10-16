@@ -171,7 +171,7 @@ class Git(object):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
 
-        for d in ["repos", "modules", "ASAS"]:
+        for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here
             subprocess.call(["git", "add", d])
 
@@ -206,6 +206,7 @@ class Git(object):
             subprocess.call(["git", "show"])
 
         if not (self.noninteractive or decision("Are you ok with the changes?")):
+            logger.info("Executing bash in the repo directory. After fixing the issues, exit the shell and Concreate will continue.")
             ps1 = os.getenv("PS1", "$ ")
             subprocess.call(["bash"], env={'PS1': "concreate-%s" % ps1})
 
