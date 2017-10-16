@@ -206,7 +206,8 @@ class Git(object):
             subprocess.call(["git", "show"])
 
         if not (self.noninteractive or decision("Are you ok with the changes?")):
-            subprocess.call(["bash"])
+            ps1 = os.getenv("PS1", "$ ")
+            subprocess.call(["bash"], env={'PS1': "concreate-%s" % ps1})
 
     def push(self):
         if self.noninteractive or decision("Do you want to push the commit?"):
