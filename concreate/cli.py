@@ -110,7 +110,7 @@ class Concreate(object):
         try:
             # DEPRECATED - remove following lines and --build-tag option
             if self.args.build_tags:
-                logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead")
+                logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead.")
                 if not self.args.tags:
                     self.args.tags = self.args.build_tags
                 else:
