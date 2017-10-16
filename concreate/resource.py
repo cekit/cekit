@@ -137,9 +137,10 @@ class Resource(object):
                         .replace('#hash#', self.checksums[algorithm]))
         return url
 
-    def _download_file(self, url, destination):
+    def _download_file(self, url, destination, use_cache=True):
         """ Downloads a file from url and save it as destination """
-        url = self.__substitute_cache_url(url)
+        if use_cache:
+            url = self.__substitute_cache_url(url)
 
         logger.debug("Downloading from '%s' as %s" % (url, destination))
 
@@ -216,7 +217,11 @@ class UrlResource(Resource):
         self.url = descriptor['url'].strip()
 
     def _copy_impl(self, target):
-        self._download_file(self.url, target)
+        try:
+            self._download_file(self.url, target)
+        except:
+            logger.debug("Cannot hit artifact: '%s' via cacher, trying directly." % self.name)
+            self._download_file(self.url, target, use_cache=False)
         return target
 
 
