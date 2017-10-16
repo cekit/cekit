@@ -22,22 +22,22 @@ class TestRunner(object):
             raise ConcreateError(
                 "Test Runner needs behave installed!", ex)
 
-    def run(self, image_tag, run_tags):
+    def run(self, image, run_tags):
         """Run test suite"""
         cmd = ['behave',
                '--junit',
                '--junit-directory', 'results',
                '-t', '~ignore',
                '--no-skipped',
-               '-D', 'IMAGE=%s' % image_tag]
+               '-D', 'IMAGE=%s' % image]
 
         for tag in run_tags:
-            if ':' in image_tag:
-                image_tag = image_tag.split(':')[0]
+            if ':' in tag:
+                test_tag = tag.split(':')[0]
 
             cmd.append('-t')
             if '/' in tag:
-                cmd.append("@%s,@%s" % (image_tag.split('/')[0], image_tag))
+                cmd.append("@%s,@%s" % (test_tag.split('/')[0], test_tag))
             else:
                 cmd.append(tag)
 
