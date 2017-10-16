@@ -138,6 +138,13 @@ class Descriptor(object):
         modules = self.descriptor.get('modules', {})
         repositories = modules.get('repositories', [])
 
+        local_modules_path = os.path.join(self.directory, 'modules')
+
+        if not repositories and os.path.exists(local_modules_path):
+            logger.info("Using 'modules' directory next to the image descriptor.")
+            logger.warning("Implicit usage of a local module directory is deprecated.")
+            repositories.append({'path': local_modules_path, 'name': 'modules'})
+
         for repository in repositories:
             # if the name is already there we will not change it
             if 'name' in repository:
