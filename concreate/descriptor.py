@@ -35,6 +35,9 @@ class Descriptor(object):
                                     self.descriptor['schema_version']))
 
     def write(self, path):
+        directory = os.path.dirname(path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         with open(path, 'w') as outfile:
             yaml.dump(self.descriptor, outfile, default_flow_style=False)
 
