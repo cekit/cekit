@@ -32,7 +32,7 @@ class MyParser(argparse.ArgumentParser):
 class Concreate(object):
     """ Main application """
 
-    def run(self):
+    def parse(self):
         parser = MyParser(
             description='Dockerfile generator tool',
             formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -100,6 +100,17 @@ class Concreate(object):
 
         self.args = parser.parse_args()
 
+        # DEPRECATED - remove following lines and --build-tag option
+        if self.args.build_tags:
+            logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead.")
+            if not self.args.tags:
+                self.args.tags = self.args.build_tags
+            else:
+                self.args.tags += self.args.build_tags
+
+        return self
+
+    def run(self):
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
@@ -108,14 +119,6 @@ class Concreate(object):
         logger.debug("Running version %s", version)
 
         try:
-            # DEPRECATED - remove following lines and --build-tag option
-            if self.args.build_tags:
-                logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead.")
-                if not self.args.tags:
-                    self.args.tags = self.args.build_tags
-                else:
-                    self.args.tags += self.args.build_tags
-
             tools.cfg = tools.parse_cfg()
             tools.cleanup(self.args.target)
 
@@ -155,7 +158,6 @@ class Concreate(object):
             if 'test' in self.args.commands:
 
                 test_tags = [generator.get_tags()[0]]
-                print test_tags
                 # if wip is specifed set tags to @wip
                 if self.args.test_wip:
                     test_tags = ['@wip']
@@ -181,7 +183,7 @@ class Concreate(object):
 
 
 def run():
-    Concreate().run()
+    Concreate().parse().run()
 
 if __name__ == "__main__":
     run()
