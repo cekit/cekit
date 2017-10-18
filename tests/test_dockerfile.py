@@ -1,23 +1,20 @@
-import tempfile
-import unittest
 import os
 import pytest
 import re
-import shutil
+
 
 from concreate.generator import Generator
 from concreate.descriptor import Descriptor
 
 basic_config = {'release': 1,
                 'version': 1,
-                'run': {'cmd': ['whoami']},
                 'from': 'scratch',
                 'name': 'testimage'}
 
 
 @pytest.mark.parametrize('desc_part, exp_regex', [
     ({'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n+.*CMD.*'),
-    ({},  r'.*USER root\n+.*CMD.*'),
+    ({'run': {'cmd': ['whatever']}},  r'.*USER root\n+.*CMD.*'),
     ({'run': {'cmd': ['/usr/bin/date']}}, r'.*CMD \["/usr/bin/date"\]'),
     ({'run': {'entrypoint': ['/usr/bin/date']}}, r'.*ENTRYPOINT \["/usr/bin/date"\]'),
     ({'run': {'workdir': '/home/jboss'}}, r'.*WORKDIR /home/jboss'),
@@ -33,7 +30,12 @@ basic_config = {'release': 1,
                  'value': 'set_value',
                  'example': 'example_value',
                  'description': 'This is a description'}]},
-     r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n')])
+     r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n'),
+    ({'execute': [{'script': 'foo_script'}]},
+     r'.*RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
+    ({'execute': [{'script': 'bar_script',
+                   'user': 'bar_user'}]},
+     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*')])
 def test_dockerfile_rendering(tmpdir, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
@@ -42,6 +44,7 @@ def test_dockerfile_rendering(tmpdir, desc_part, exp_regex):
     generator.render_dockerfile()
 
     regex_dockerfile(target, exp_regex)
+
 
 @pytest.mark.parametrize('desc_part, exp_regex', [
     ({}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
