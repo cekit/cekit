@@ -12,10 +12,9 @@ basic_config = {'release': 1,
 
 
 def print_test_name(value):
-    if value.startswith('test'):
+    if str(value).startswith('test'):
         return value
-    return " "
-
+    return "\b"
 
 
 @pytest.mark.parametrize('name, desc_part, exp_regex', [
