@@ -2,7 +2,6 @@ import os
 import pytest
 import re
 
-
 from concreate.generator import Generator
 from concreate.descriptor import Descriptor
 
@@ -12,31 +11,48 @@ basic_config = {'release': 1,
                 'name': 'testimage'}
 
 
-@pytest.mark.parametrize('desc_part, exp_regex', [
-    ({'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n+.*CMD.*'),
-    ({'run': {'cmd': ['whatever']}},  r'.*USER root\n+.*CMD.*'),
-    ({'run': {'cmd': ['/usr/bin/date']}}, r'.*CMD \["/usr/bin/date"\]'),
-    ({'run': {'entrypoint': ['/usr/bin/date']}}, r'.*ENTRYPOINT \["/usr/bin/date"\]'),
-    ({'run': {'workdir': '/home/jboss'}}, r'.*WORKDIR /home/jboss'),
-    ({'volumes': [{'path': '/var/lib'},
+def print_test_name(value):
+    if value.startswith('test'):
+        return value
+    return " "
+
+
+
+@pytest.mark.parametrize('name, desc_part, exp_regex', [
+    ('test_run_user',
+     {'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n+.*CMD.*'),
+    ('test_default_run_user',
+     {'run': {'cmd': ['whatever']}},  r'.*USER root\n+.*CMD.*'),
+    ('test_custom_cmd',
+     {'run': {'cmd': ['/usr/bin/date']}}, r'.*CMD \["/usr/bin/date"\]'),
+    ('test_entrypoint',
+     {'run': {'entrypoint': ['/usr/bin/date']}}, r'.*ENTRYPOINT \["/usr/bin/date"\]'),
+    ('test_workdir',
+     {'run': {'workdir': '/home/jboss'}}, r'.*WORKDIR /home/jboss'),
+    ('test_volumes',
+     {'volumes': [{'path': '/var/lib'},
                   {'path': '/usr/lib',
                    'name': 'path.lib'}]}, r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]'),
-    ({'ports': [{'value': 8080},
+    ('test_ports',
+     {'ports': [{'value': 8080},
                 {'expose': False,
                  'value': 9999}]}, r'.*EXPOSE 8080$'),
-    ({'envs':  [{'name': 'CONFIG_ENV',
-                 'example': 1234},
-                {'name': 'COMBINED_ENV',
-                 'value': 'set_value',
-                 'example': 'example_value',
-                 'description': 'This is a description'}]},
+    ('test_env', {'envs':  [{'name': 'CONFIG_ENV',
+                             'example': 1234},
+                            {'name': 'COMBINED_ENV',
+                             'value': 'set_value',
+                             'example': 'example_value',
+                             'description': 'This is a description'}]},
      r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n'),
-    ({'execute': [{'script': 'foo_script'}]},
+    ('test_execute',
+     {'execute': [{'script': 'foo_script'}]},
      r'.*RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
-    ({'execute': [{'script': 'bar_script',
+    ('test_execute_user',
+     {'execute': [{'script': 'bar_script',
                    'user': 'bar_user'}]},
-     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*')])
-def test_dockerfile_rendering(tmpdir, desc_part, exp_regex):
+     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*')],
+                         ids=print_test_name)
+def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
 
@@ -46,10 +62,13 @@ def test_dockerfile_rendering(tmpdir, desc_part, exp_regex):
     regex_dockerfile(target, exp_regex)
 
 
-@pytest.mark.parametrize('desc_part, exp_regex', [
-    ({}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
-    ({'name': 'testimage/test'}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')])
-def test_dockerfile_rendering_tech_preview(tmpdir, desc_part, exp_regex):
+@pytest.mark.parametrize('name, desc_part, exp_regex', [
+    ('test_without_family',
+     {}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
+    ('test_with_family',
+        {'name': 'testimage/test'}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
+                         ids=print_test_name)
+def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
 
