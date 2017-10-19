@@ -1,0 +1,9 @@
+#!/bin/sh
+
+pushd /home/jboss
+
+if [ -d target ]
+    tar -cf - target
+fi
+
+popd

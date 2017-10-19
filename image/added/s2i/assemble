@@ -1,0 +1,47 @@
+#!/bin/sh
+# This script executes either a 'concreate generate' producing a Dockerfile and
+# folder structure containing required resources to build the Dockerfile.  The
+# following variables are used by this script:
+#       SOURCE_REPOSITORY: required.  The location of the source git repository
+#               to clone.
+#       SOURCE_REF: optional.  The git reference to use when building the image.
+#       TARGET_DIR: optional.  The directory to place the generated image files.
+#       CONCREATE_CFG_PATH: optional.  The location of the .concreate
+#               configuration file.
+#
+# The following volumes locations may be required to build the image:
+#       CONCREATE_CFG_PATH - specify a volume to use your local configuration
+#               file (typically ~/.concreate), where
+#               CONCREATE_CFG_PATH == -v option.
+#       Additional .repo files - local files should be located in a sibling
+#               directory next to .concreate when mounted in the image, e.g.
+#               '-v ~/repos:${CONCREATE_CFG_PATH}/repos'
+#
+
+set -ex
+
+# /tmp is specified in io.openshift.s2i.destination label
+# restore build artifacts
+if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
+    mv /tmp/artifacts/* /home/jboss/.
+fi
+
+# move the application source
+mv /tmp/src /home/jboss/src
+
+TARGET_DIR=${TARGET_DIR:-/home/jboss/target}
+CONCREATE_CFG_PATH=${CONCREATE_CFG_PATH:-/etc/concreate/default.concreate}
+
+mkdir -p "${TARGET_DIR}"
+
+pushd "/home/jboss/src"
+
+concreate --config="${CONCREATE_CFG_PATH}" --target="${TARGET_DIR}" generate
+if [ $? != 0 ]; then
+  echo "Error generating image files with concreate"
+  exit 1
+fi
+
+popd
+
+chown -R jboss:root "${TARGET_DIR}"

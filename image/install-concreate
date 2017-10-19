@@ -1,0 +1,9 @@
+#!/bin/bash
+# Install concreate into the image
+set -e
+
+IMAGE_DIR=$(dirname $0)
+
+pushd "${IMAGE_DIR}/.."
+python setup.py install
+popd

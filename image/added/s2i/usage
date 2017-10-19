@@ -1,0 +1,12 @@
+#!/bin/sh
+
+cat <<EOF
+This is a S2I which uses concreate to generate a Dockerfile and associated
+scripts, resources, etc. from concreate metadata, i.e. an image.yaml file.
+
+The resulting artifact can be built using standard docker build.
+
+This image is intended to be used as the first step in a chain, building the
+Dockerfile and collecting all supporting resources, with the next step building
+the image from these resources.
+EOF

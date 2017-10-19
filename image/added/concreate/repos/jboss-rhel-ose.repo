@@ -1,0 +1,7 @@
+[jboss-rhel-ose]
+name=Red Hat RHEL7 OSE 3.6 repo
+baseurl=
+enabled=1
+gpgcheck=1
+gpgkey=
+

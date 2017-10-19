@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ImageStream
+metadata:
+  name: concreate
+  annotations:
+    openshift.io/display-name: Concreate 1.0
+spec:
+  tags:
+  - name: "1.0"
+    annotations:
+      description: Build images defined using concreate image.yaml files.
+      iconClass: icon-jboss
+      openshift.io/display-name: Concreate 1.0
+      supports: concreate:1.0
+      tags: builder,xpaas,concreate
+      version: "1.0"
+    from:
+      kind: DockerImage
+      name: redhat-concreate-1/concreate-openshift:1.0

@@ -69,7 +69,7 @@ RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endf
 # Add all artifacts to the /tmp/artifacts
 # directory
 COPY \
-{% for artifact in artifacts %}
+{% for artifact in artifacts.values() %}
     {{ artifact['name'] }} \
     {% endfor %}
     /tmp/artifacts/
@@ -104,8 +104,7 @@ VOLUME ["{{ volume['path'] }}"]
 {% endif %}
 
 USER {{ run['user'] }}
-
-{% if run %}
+{%+ if run %}
 {%- if 'workdir' in run %}
 # Specify the working directory
 WORKDIR {{ run['workdir'] }}

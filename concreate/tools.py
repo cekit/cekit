@@ -16,10 +16,14 @@ logger = logging.getLogger('concreate')
 cfg = {}
 
 
-def parse_cfg():
+def init_cfg(config_file):
+    config_file = os.path.expanduser(config_file)
+    logger.info("Using concreate configuration file: %s" % (config_file))
     cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser('~/.concreate'))
-    return cp._sections
+    cp.read(config_file)
+    global cfg
+    cfg = cp._sections
+    cfg.file = config_file
 
 
 def cleanup(target):
@@ -124,9 +128,6 @@ def merge_lists(list1, list2):
     list1_dicts = [x for x in list1 if isinstance(x, dict)]
     for v2 in list2:
         if isinstance(v2, dict):
-            if 'name' not in v2:
-                raise KeyError("The 'name' key was not found in dict: %s" % v2)
-
             if v2['name'] not in [x['name'] for x in list1_dicts]:
                 list1.append(v2)
             else:

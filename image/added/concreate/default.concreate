@@ -1,0 +1,10 @@
+[common]
+# ssl_verify = False
+# cache_url = http://cacher.example.com/get?#algorithm#=#hash#
+
+[repositories]
+jboss-rhel-os.repo = repos/jboss-rhel-os.repo
+jboss-rhel-ose.repo = repos/jboss-rhel-ose.repo
+jboss-rhel-rhscl.repo = repos/jboss-rhel-rhscl.repo
+jboss-rhel-optional.repo = repos/jboss-rhel-optional.repo
+jboss-rhel-extras.repo = repos/jboss-rhel-server-extras.repo

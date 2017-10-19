@@ -1,0 +1,25 @@
+#!/bin/bash
+# Add s2i scripts and make the image S2I-enabled
+set -e
+
+SCRIPT_DIR=$(dirname $0)
+ADDED_DIR=${SCRIPT_DIR}/added
+CONCREATE_DIR=/etc/concreate
+S2I_DIR=/usr/libexec/s2i
+
+mkdir -p $CONCREATE_DIR
+mkdir -p $S2I_DIR
+
+chown -R jboss:root $SCRIPT_DIR
+chmod -R g+rwX $SCRIPT_DIR
+
+cp -r ${ADDED_DIR}/s2i/* ${S2I_DIR}
+cp -r ${ADDED_DIR}/concreate/* ${CONCREATE_DIR}
+
+chmod -R ug+x ${S2I_DIR}/*
+
+# Add jboss user to root group
+usermod -g root -G jboss jboss
+
+# Configure $HOME
+chown -R jboss:root /home/jboss
