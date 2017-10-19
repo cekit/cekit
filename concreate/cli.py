@@ -172,6 +172,7 @@ class Concreate(object):
                                                      test_tags)
 
             logger.info("Finished!")
+            sys.exit(0)
         except KeyboardInterrupt as e:
             pass
         except ConcreateError as e:
