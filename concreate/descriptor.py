@@ -71,9 +71,13 @@ class Descriptor(object):
         self._process_artifacts()
         self._process_modules()
         self._process_volumes()
-        self._process_run()
         self._process_labels()
         return self
+
+    def prepare_defaults(self):
+        self._prepare_run_defaults()
+        if 'execute' in self.descriptor:
+            self._prepare_execute_defaults()
 
     def merge(self, descriptor):
         """ Merges two descriptors in a way, that arrays are appended
@@ -98,10 +102,13 @@ class Descriptor(object):
             execute['directory'] = module
             execute['name'] = "%s-%s" % (module,
                                          execute['script'])
+
+    def _prepare_execute_defaults(self):
+        for execute in self.descriptor['execute']:
             if 'user' not in execute:
                 execute['user'] = DEFAULT_USER
 
-    def _process_run(self):
+    def _prepare_run_defaults(self):
         """ Make sure the user is set for cmd/entrypoint  """
 
         if 'run' not in self.descriptor:

@@ -106,6 +106,7 @@ class Generator(object):
         Args:
           template_file - a path to jinja2 template file
         """
+        self.descriptor.prepare_defaults()
         logger.info("Rendering Dockerfile...")
         template_file = os.path.join(os.path.dirname(__file__),
                                      'templates',
