@@ -207,8 +207,9 @@ class Git(object):
 
         if not (self.noninteractive or decision("Are you ok with the changes?")):
             logger.info("Executing bash in the repo directory. After fixing the issues, exit the shell and Concreate will continue.")
-            ps1 = os.getenv("PS1", "$ ")
-            subprocess.call(["bash"], env={'PS1': "concreate-%s" % ps1})
+            subprocess.call(["bash"], env={"PS1": "concreate $ ",
+                                           "TERM": os.getenv("TERM", "xterm"),
+                                           "HOME": os.getenv("HOME", "")})
 
     def push(self):
         if self.noninteractive or decision("Do you want to push the commit?"):
