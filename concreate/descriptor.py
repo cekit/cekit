@@ -2,37 +2,56 @@ import logging
 import os
 import yaml
 
-from concreate import DEFAULT_USER, tools
-from concreate.resource import Resource
+from concreate import tools, DEFAULT_USER
 from concreate.errors import ConcreateError
-from concreate.version import schema_version
+
+from pykwalify.core import Core
 
 logger = logging.getLogger('concreate')
 
+common_schema = yaml.safe_load("""
+map:
+  name: {type: str, required: True}
+  version: {type: text, required: True}
+  schema_version: {type: int}
+  release: {type: text}
+  from: {type: str}
+  description: {type: text}
+  labels: {type: any}
+  envs:  {type: any}
+  ports: {type: any}
+  run: {type: any}
+  artifacts: {type: any}
+  modules: {type: any}
+  packages: {type: any}
+  osbs: {type: any}
+  volumes: {type: any}""")
+
+overrides_schema = common_schema.copy()
+overrides_schema['map']['name'] = {'type': 'str'}
+overrides_schema['map']['version'] = {'type': 'text'}
+
+module_schema = overrides_schema.copy()
+module_schema['map']['execute'] = {'type': 'any'}
+
 
 class Descriptor(object):
-    """ Representes a module/image descriptor
-    Args:
-      descriptor_path - a path to the image/module descriptor
-      descriptor_type - a type of descriptor (image/module)
-    """
+    def __init__(self, descriptor):
+        self.descriptor = descriptor
+        self.__validate()
 
-    def __init__(self, descriptor_path, descriptor_type):
-        self.directory = os.path.dirname(descriptor_path)
-        self.descriptor = tools.load_descriptor(descriptor_path,
-                                                descriptor_type)
-        if descriptor_type == 'image':
-            self.check_schema_version()
+    def __validate(self):
+        for schema in self.schemas:
+            core = Core(source_data=self.descriptor,
+                        schema_data=schema, allow_assertions=True)
+            try:
+                core.validate(raise_exception=True)
+                return
+            except Exception as ex:
+                pass
 
-    def check_schema_version(self):
-        """ Check supported schema version """
-        if self.descriptor['schema_version'] != schema_version:
-            raise ConcreateError("Schema version: '%s' is not supported by current version."
-                                 " This version supports schema version: '%s' only."
-                                 " To build this image please install concreate version: '%s'"
-                                 % (self.descriptor['schema_version'],
-                                    schema_version,
-                                    self.descriptor['schema_version']))
+        raise ConcreateError("Cannot validate schema: %s" % (self.__class__.__name__),
+                             ex)
 
     def write(self, path):
         directory = os.path.dirname(path)
@@ -40,6 +59,34 @@ class Descriptor(object):
             os.makedirs(directory)
         with open(path, 'w') as outfile:
             yaml.dump(self.descriptor, outfile, default_flow_style=False)
+
+    def label(self, key):
+        for l in self.descriptor['labels']:
+            if l['name'] == key:
+                return l
+        return None
+
+    def merge(self, descriptor):
+        """ Merges two descriptors in a way, that arrays are appended
+        and duplicit values are kept
+        Args:
+          descriptor - a concreate descritor
+        """
+        try:
+            self.descriptor = tools.merge_dictionaries(self.descriptor, descriptor)
+        except KeyError as ex:
+            logger.debug(ex, exc_info=True)
+            raise ConcreateError("Cannot merge descriptors, see log message for more information")
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self['name'] == other['name']
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return not self['name'] == other['name']
+        return NotImplemented
 
     def __getitem__(self, key):
         return self.descriptor[key]
@@ -56,60 +103,12 @@ class Descriptor(object):
     def get(self, k, default=None):
         return self.descriptor.get(k, default)
 
-    def label(self, key):
-        for l in self.descriptor['labels']:
-            if l['name'] == key:
-                return l
-        return None
-
-    def process(self):
-        """ Prepare descriptor to be used by generating defaults """
+    def process_defaults(self):
+        """Prepares default values before rendering"""
         if 'execute' in self.descriptor:
-            self._process_execute()
-        if 'ports' in self.descriptor:
-            self._process_ports()
-        self._process_artifacts()
-        self._process_modules()
-        self._process_volumes()
-        self._process_labels()
-        return self
-
-    def prepare_defaults(self):
-        self._prepare_run_defaults()
-        if 'execute' in self.descriptor:
-            self._prepare_execute_defaults()
-
-    def merge(self, descriptor):
-        """ Merges two descriptors in a way, that arrays are appended
-        and duplicit values are kept
-
-        Args:
-          descriptor - a concreate descritor
-        """
-        try:
-            self.descriptor = tools.merge_dictionaries(
-                self.descriptor, descriptor)
-        except KeyError as ex:
-            logger.debug(ex, exc_info=True)
-            raise ConcreateError("Cannot merge descriptors, see log message for more information")
-
-    def _process_execute(self):
-        """ Prepares executables of modules to contian all needed data like,
-        directories, module name, unique name
-        """
-        for execute in self.descriptor['execute']:
-            module = self.descriptor['name']
-            execute['directory'] = module
-            execute['name'] = "%s-%s" % (module,
-                                         execute['script'])
-
-    def _prepare_execute_defaults(self):
-        for execute in self.descriptor['execute']:
-            if 'user' not in execute:
-                execute['user'] = DEFAULT_USER
-
-    def _prepare_run_defaults(self):
-        """ Make sure the user is set for cmd/entrypoint  """
+            for execute in self.descriptor['execute']:
+                if 'user' not in execute:
+                    execute['user'] = DEFAULT_USER
 
         if 'run' not in self.descriptor:
             self.descriptor['run'] = {}
@@ -117,74 +116,155 @@ class Descriptor(object):
         if 'user' not in self.descriptor['run']:
             self.descriptor['run']['user'] = DEFAULT_USER
 
-    def _process_ports(self):
-        """ Generate name attribute for ports """
-        for port in self.descriptor['ports']:
-            port['name'] = port['value']
 
-    def _process_artifacts(self):
-        """ Makes sure every artifact has 'name' set """
+class Label(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+            name: {type: str, required: True}
+            value: {type: str, required: True}
+            description: {type: str}
+        """)]
+        super(Label, self).__init__(descriptor)
 
-        artifacts = self.descriptor.get('artifacts', [])
 
-        for artifact in artifacts:
-            if 'name' not in artifact:
-                # This is suboptimal, but at this point we cannot reuse created
-                # resource object. We do create it only to retrieve the name
-                # of the artifact. We do this because we can have different types
-                # of resources (path, url, etc).
-                artifact['name'] = Resource.new(artifact, self.directory).name
+class Env(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          name: {type: str, required: True}
+          value: {type: any}
+          example: {type: any}
+          description: {type: str}""")]
+        super(Env, self).__init__(descriptor)
 
-        self.descriptor['artifacts'] = artifacts
 
-    def _process_modules(self):
-        """
-        If a 'modules' directory is found next to descriptor -
-        add it as a module repository.
-        """
-        modules = self.descriptor.get('modules', {})
-        repositories = modules.get('repositories', [])
+class Port(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          value: {type: int, required: True}
+          expose: {type: bool}
+          description: {type: str}""")]
+        super(Port, self).__init__(descriptor)
+        if 'name' not in self.descriptor:
+            self.descriptor['name'] = self.descriptor['value']
 
-        local_modules_path = os.path.join(self.directory, 'modules')
 
-        if not repositories and os.path.exists(local_modules_path):
-            logger.info("Using 'modules' directory next to the image descriptor.")
-            # DEPRECATED, introduced in https://github.com/jboss-container-images/concreate/pull/108
-            logger.warning("Implicit usage of a local module directory is deprecated and will be removed in concreate 2.0")
-            repositories.append({'path': local_modules_path, 'name': 'modules'})
+class Run(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          workdir: {type: str}
+          user: {type: text}
+          cmd:
+            seq:
+              - {type: str}
+          entrypoint:
+            seq:
+              - {type: str} """)]
+        super(Run, self).__init__(descriptor)
+        if 'name' not in self.descriptor:
+            self.descriptor['name'] = 'run'
 
-        for repository in repositories:
-            # if the name is already there we will not change it
-            if 'name' in repository:
-                continue
-            name = ""
-            if 'git' in repository:
-                name = repository['git']['url']
-            elif 'path' in repository:
-                name = repository['path']
-            elif 'url' in repository:
-                name = repository['url']
-            repository['name'] = os.path.splitext(os.path.basename(name))[0]
-        modules['repositories'] = repositories
-        self.descriptor['modules'] = modules
 
-    def _process_volumes(self):
-        volumes = self.descriptor.get('volumes', [])
+class Volume(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          name: {type: str}
+          path: {type: str, required: True}""")]
+        super(Volume, self).__init__(descriptor)
+        if 'name' not in self.descriptor:
+            self.descriptor['name'] = os.path.basename(self.descriptor['path'])
 
-        if not volumes:
-            return
 
-        for volume in volumes:
-            if 'name' not in volume:
-                volume['name'] = volume.get('path')
+class Osbs(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          repository:
+            map:
+              name: {type: str}
+              branch: {type: str}""")]
+        super(Osbs, self).__init__(descriptor)
 
-        self.descriptor['volumes'] = volumes
 
-    def _process_labels(self):
-        """ Generate labels from concreate keys """
-        if "labels" not in self.descriptor:
-            self.descriptor['labels'] = []
+class Packages(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          repositories:
+            seq:
+              - {type: str}
+          install:
+            seq:
+            - {type: str}""")]
 
+        super(Packages, self).__init__(descriptor)
+
+
+class Artifact(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+       map:
+          name: {type: str}
+          git:
+            map:
+              url: {type: str, required: True}
+              ref: {type: str}
+          path: {type: str, required: False}
+          url: {type: str, required: False}
+          md5: {type: str}
+          sha1: {type: str}
+          sha256: {type: str}
+          description: {type: str}
+        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"""")]
+        super(Artifact, self).__init__(descriptor)
+
+
+class Modules(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          repositories: {type: any}
+          install:
+          seq:
+            - map:
+                name: {type: str, required: True}
+                version: {type: str}""")]
+        super(Modules, self).__init__(descriptor)
+        self._prepare()
+
+    def _prepare(self):
+        self.descriptor['repositories'] = [Artifact(r)
+                                           for r in self.descriptor.get('repositories', [])]
+
+
+class Execute(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          script: {type: str}
+          user: {type: str}""")]
+
+        if 'user' not in descriptor:
+            descriptor['user'] = DEFAULT_USER
+
+        super(Execute, self).__init__(descriptor)
+
+
+class Image(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [common_schema.copy()]
+
+        super(Image, self).__init__(descriptor)
+        self._prepare()
+
+    def _prepare(self):
+        """Updates self.descriptor with objects and prepare sane label"""
+
+        self.descriptor['labels'] = self.descriptor.get('labels', [])
         # The description key available in image descriptor's
         # root is added as labels to the image
         key = 'description'
@@ -205,3 +285,38 @@ class Descriptor(object):
         if not self.label('summary') and description:
             self.descriptor['labels'].append(
                 {'name': 'summary', 'value': description['value']})
+
+        self.descriptor['labels'] = [Label(x) for x in self.descriptor.get('labels', [])]
+        self.descriptor['envs'] = [Env(x) for x in self.descriptor.get('envs', [])]
+        self.descriptor['ports'] = [Port(x) for x in self.descriptor.get('ports', [])]
+        if 'run' in self.descriptor:
+            self.descriptor['run'] = Run(self.descriptor['run'])
+        self.descriptor['artifacts'] = [Artifact(a) for a in self.descriptor.get('artifacts', [])]
+        if 'modules' in self.descriptor:
+            self.descriptor['modules'] = Modules(self.descriptor['modules'])
+        if 'packages' in self.descriptor:
+            self.descriptor['packages'] = Packages(self.descriptor['packages'])
+        if 'osbs' in self.descriptor:
+            self.descriptor['osbs'] = Osbs(self.descriptor['osbs'])
+        self.descriptor['volumes'] = [Volume(x) for x in self.descriptor.get('volumes', [])]
+
+
+class Module(Image):
+    def __init__(self, descriptor):
+        schema = module_schema.copy()
+        self.schemas = [schema]
+        # calling Descriptor constructor only here (we dont wat Image() to mess with schema)
+        super(Image, self).__init__(descriptor)
+
+        self._prepare()
+        self.descriptor['execute'] = [Execute(x) for x in self.descriptor.get('execute', [])]
+
+
+class Overrides(Image):
+    def __init__(self, descriptor):
+        schema = overrides_schema.copy()
+        self.schemas = [schema]
+        # calling Descriptor constructor only here (we dont wat Image() to mess with schema)
+        super(Image, self).__init__(descriptor)
+
+        self._prepare()

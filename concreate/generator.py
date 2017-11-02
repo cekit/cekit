@@ -6,7 +6,7 @@ import os
 from jinja2 import Environment, FileSystemLoader
 
 from concreate import tools
-from concreate.descriptor import Descriptor
+from concreate.descriptor import Image, Overrides
 from concreate.errors import ConcreateError
 from concreate.module import copy_module_to_target
 from concreate.resource import Resource
@@ -20,7 +20,7 @@ class Generator(object):
 
     def __init__(self, descriptor_path, target, overrides):
 
-        self.descriptor = Descriptor(descriptor_path, 'image').process()
+        self.descriptor = Image(tools.load_descriptor(descriptor_path))
         self.target = target
 
         if overrides:
@@ -96,7 +96,7 @@ class Generator(object):
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
-        descriptor = Descriptor(overrides_path, 'overrides').process()
+        descriptor = Overrides(tools.load_descriptor(overrides_path))
         descriptor.merge(self.descriptor)
         return descriptor
 
@@ -106,8 +106,10 @@ class Generator(object):
         Args:
           template_file - a path to jinja2 template file
         """
-        self.descriptor.prepare_defaults()
         logger.info("Rendering Dockerfile...")
+
+        self.descriptor.process_defaults()
+
         template_file = os.path.join(os.path.dirname(__file__),
                                      'templates',
                                      'template.jinja')

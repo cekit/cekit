@@ -33,52 +33,21 @@ def cleanup(target):
             shutil.rmtree(d)
 
 
-def load_descriptor(descriptor_path, schema_type):
+def load_descriptor(descriptor_path):
     """ parses descriptor and validate it against requested schema type
 
     Args:
-      schema_type - type of schema (module/image)
       descriptor_path - path to image/modules descriptor to be validated
 
-    Returns validated schema
+    Returns descriptor as a dictionary
     """
-    logger.debug("Loading %s descriptor from path '%s'."
-                 % (schema_type,
-                    descriptor_path))
+    logger.debug("Loading descriptor from path '%s'." % descriptor_path)
 
     if not os.path.exists(descriptor_path):
         raise ConcreateError('Cannot find provided descriptor file')
 
-    common_schema_path = os.path.join(os.path.dirname(__file__),
-                                      'schema',
-                                      'common.yaml')
-    schema = {}
-
-    # Read main schema definition
-    with open(common_schema_path, 'r') as fh:
-        schema = yaml.safe_load(fh)
-
-    specific_schema_path = os.path.join(os.path.dirname(__file__),
-                                        'schema',
-                                        '%s.yaml' % schema_type)
-
-    # Read schema definition for specific type
-    with open(specific_schema_path, 'r') as fh:
-        specific_schema = yaml.safe_load(fh)
-        schema = merge_dictionaries(schema, specific_schema, True)
-
-    descriptor = {}
-
     with open(descriptor_path, 'r') as fh:
-        descriptor = yaml.safe_load(fh)
-
-    core = Core(source_data=descriptor,
-                schema_data=schema, allow_assertions=True)
-    try:
-        return core.validate(raise_exception=True)
-    except Exception as ex:
-        raise ConcreateError("Cannot validate schema: %s" % (descriptor_path),
-                             ex)
+        return yaml.safe_load(fh)
 
 
 def merge_dictionaries(dict1, dict2, kwalify_schema=False):

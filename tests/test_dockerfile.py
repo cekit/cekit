@@ -3,7 +3,7 @@ import pytest
 import re
 
 from concreate.generator import Generator
-from concreate.descriptor import Descriptor
+from concreate.descriptor import Module
 
 basic_config = {'release': 1,
                 'version': 1,
@@ -68,26 +68,23 @@ def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
         {'name': 'testimage/test'}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
                          ids=print_test_name)
 def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
-
     target = str(tmpdir.mkdir('target'))
-
     generator = prepare_generator(target, desc_part)
     generator.generate_tech_preview()
     generator.render_dockerfile()
     regex_dockerfile(target, exp_regex)
 
 
-def prepare_generator(target, desc_part):
+def prepare_generator(target, desc_part, desc_type="image"):
     # create basic descriptor
-    descriptor = Descriptor.__new__(Descriptor)
-    descriptor.descriptor = basic_config.copy()
-    descriptor.descriptor.update(desc_part)
-    descriptor.directory = target
-    descriptor.process()
 
-    # create generator and generate dockerfile
+    desc = basic_config.copy()
+    desc.update(desc_part)
+
+    image = Module(desc)
+
     generator = Generator.__new__(Generator)
-    generator.descriptor = descriptor
+    generator.descriptor = image
     generator.target = target
     return generator
 

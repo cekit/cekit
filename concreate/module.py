@@ -2,6 +2,7 @@ import os
 import logging
 import shutil
 
+from concreate import tools
 from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
 from concreate.resource import Resource
@@ -95,7 +96,7 @@ class Module(Descriptor):
     descriptor_path: A path to module descriptor file.
     """
     def __init__(self, descriptor_path):
-        self.descriptor = Descriptor(descriptor_path, 'module').process()
+        self.descriptor = Module(tools.load_descriptor(descriptor_path))
         self.name = self.descriptor['name']
         self.path = os.path.dirname(descriptor_path)
 

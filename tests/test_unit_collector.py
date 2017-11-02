@@ -7,6 +7,8 @@ from concreate.test.collector import TestCollector
 desc_dir = "/tmp/desc"
 target_dir = "/tmp/target_dir"
 
+steps_url = 'https://github.com/jboss-container-images/concreate-test-steps'
+
 
 @pytest.fixture
 def prepare_dirs():
