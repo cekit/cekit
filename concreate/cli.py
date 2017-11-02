@@ -49,12 +49,12 @@ class Concreate(object):
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
-        build_group = parser.add_argument_group('build',
-                                                "Arguments valid for the 'build' target")
-
         test_group.add_argument('--test-wip',
                                 action='store_true',
                                 help='Run @wip tests only')
+
+        build_group = parser.add_argument_group('build',
+                                                "Arguments valid for the 'build' target")
 
         build_group.add_argument('--build-engine',
                                  default='docker',

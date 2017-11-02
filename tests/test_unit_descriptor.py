@@ -1,94 +1,92 @@
-import pytest
 import yaml
 
 from concreate import descriptor
-from concreate.errors import ConcreateError
 
 
-def test_descriptor_schema_version():
-    img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
-    img_descriptor.descriptor = {'schema_version': 1}
-    img_descriptor.check_schema_version()
+def test_label():
+    label = descriptor.Label(yaml.safe_load("""
+      name: "io.k8s.display-name"
+      value: "JBoss A-MQ 6.2"
+"""))
+    assert label['name'] == "io.k8s.display-name"
+    assert label['value'] == "JBoss A-MQ 6.2"
 
 
-def test_descriptor_schema_version_bad_version():
-    img_descriptor = descriptor.Descriptor.__new__(descriptor.Descriptor)
-    img_descriptor.descriptor = {'schema_version': 123}
-    with pytest.raises(ConcreateError):
-        img_descriptor.check_schema_version()
+def test_env():
+    env = descriptor.Label(yaml.safe_load("""
+      name: "io.k8s.display-name"
+      value: "JBoss A-MQ 6.2"
+"""))
+    assert env['name'] == "io.k8s.display-name"
+    assert env['value'] == "JBoss A-MQ 6.2"
 
 
-def prepare_descriptor(path, data={}):
-    image = {'name': 'image/name', 'version': 1.0,
-             'from': 'from/image', 'schema_version': 1}
-    image.update(data)
-
-    with open(path, 'w') as fd:
-        yaml.dump(image, fd, default_flow_style=False)
-    return path
-
-
-def test_no_labels_should_be_added(tmpdir):
-    descriptor_path = prepare_descriptor(str(tmpdir.mkdir('image').join('image.yaml')))
-
-    img_descriptor = descriptor.Descriptor(descriptor_path, 'image')
-    img_descriptor._process_labels()
-
-    assert img_descriptor.label('description') is None
-    assert img_descriptor.label('summary') is None
-    assert img_descriptor.label('maintainer') is None
+def test_port():
+    env = descriptor.Port(yaml.safe_load("""
+      value: 8788
+      expose: False
+"""))
+    assert env['value'] == 8788
+    assert env['name'] == 8788
+    assert not env['expose']
 
 
-def test_description_label_should_be_added(tmpdir):
-    descriptor_path = prepare_descriptor(str(tmpdir.mkdir('image').join('image.yaml')),
-                                         {'description': 'This is image description'})
-
-    img_descriptor = descriptor.Descriptor(descriptor_path, 'image')
-    img_descriptor._process_labels()
-
-    assert img_descriptor.label('maintainer') is None
-    assert img_descriptor.label('description').get('value') == 'This is image description'
-    # In this case the 'summary' label should be also set
-    assert img_descriptor.label('summary').get('value') == 'This is image description'
+def test_volume():
+    volume = descriptor.Volume(yaml.safe_load("""
+    name: vol1
+    path: /tmp/a
+"""))
+    assert volume['name'] == 'vol1'
+    assert volume['path'] == '/tmp/a'
 
 
-def test_description_and_summary_labels_should_not_be_overriden(tmpdir):
-    descriptor_path = prepare_descriptor(str(tmpdir.mkdir('image').join('image.yaml')),
-                                         {'description': 'This is image description', 'labels': [
-                                             {'name': 'summary',
-                                              'value': 'summary value'},
-                                             {'name': 'description',
-                                              'value': 'description value'}]})
-
-    img_descriptor = descriptor.Descriptor(descriptor_path, 'image')
-    img_descriptor._process_labels()
-
-    assert img_descriptor.label('maintainer') is None
-    assert img_descriptor.label('description').get('value') == 'description value'
-    assert img_descriptor.label('summary').get('value') == 'summary value'
+def test_volume_name():
+    volume = descriptor.Volume(yaml.safe_load("""
+    path: /tmp/a
+"""))
+    assert volume['name'] == 'a'
+    assert volume['path'] == '/tmp/a'
 
 
-def test_override_default_user_run(tmpdir):
-    descriptor_path = prepare_descriptor(str(tmpdir.mkdir('image').join('image.yaml')))
-    overrides_path = prepare_descriptor(str(tmpdir.mkdir('override').join('overrides.yaml')),
-                                        {'run': {'user': 123}})
+def test_osbs():
+    osbs = descriptor.Osbs(yaml.safe_load("""
+    repository:
+      name: foo
+      branch: bar
+"""))
 
-    img_descriptor = descriptor.Descriptor(descriptor_path, 'image')
-    overrides_descriptor = descriptor.Descriptor(overrides_path, 'image')
-    overrides_descriptor.merge(img_descriptor)
-    overrides_descriptor.prepare_defaults()
-
-    assert overrides_descriptor.descriptor['run']['user'] == 123
+    assert osbs['repository']['name'] == 'foo'
+    assert osbs['repository']['branch'] == 'bar'
 
 
-def test_override_default_user_kept(tmpdir):
-    descriptor_path = prepare_descriptor(str(tmpdir.mkdir('image').join('image.yaml')),
-                                         {'run': {'user': 123}})
-    overrides_path = prepare_descriptor(str(tmpdir.mkdir('override').join('overrides.yaml')))
+def test_packages():
+    pkg = descriptor.Packages(yaml.safe_load("""
+      repositories:
+          - repo-foo
+          - repo-bar
+      install:
+          - pkg-foo"""))
 
-    img_descriptor = descriptor.Descriptor(descriptor_path, 'image')
-    overrides_descriptor = descriptor.Descriptor(overrides_path, 'image')
-    overrides_descriptor.merge(img_descriptor)
-    overrides_descriptor.prepare_defaults()
+    assert 'repo-foo' in pkg['repositories']
+    assert 'repo-bar' in pkg['repositories']
+    assert 'pkg-foo' in pkg['install']
 
-    assert overrides_descriptor.descriptor['run']['user'] == 123
+
+def test_image():
+    image = descriptor.Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: test
+        value: val1
+      - name: label2
+        value: val2
+    envs:
+      - name: env1
+        value: env1val
+"""))
+
+    assert image['name'] == 'test/foo'
+    assert type(image['labels'][0]) == descriptor.Label
+    assert image['labels'][0]['name'] == 'test'
