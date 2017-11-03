@@ -94,19 +94,20 @@ class TestCollector(object):
         logger.debug("Collected tests from modules")
 
         # copy tests from image repo
-        self._copy_tests(self.descriptor_dir, '')
+        self._copy_tests(self.descriptor_dir, '', 'image')
         logger.debug("Collected tests from image")
         logger.info("Tests collected!")
         return self.collected
 
-    def _copy_tests(self, source, name):
+    def _copy_tests(self, source, name, target_dir = ''):
         for obj_name in ['steps', 'features']:
             obj_path = os.path.join(source, name, 'tests', obj_name)
 
             if os.path.exists(obj_path):
                 target = os.path.join(self.test_dir,
                                       obj_name,
-                                      name)
+                                      name,
+                                      target_dir)
                 logger.debug("Collecting tests from '%s' into '%s'" % (obj_path,
                                                                        target))
                 if obj_name == 'features':
