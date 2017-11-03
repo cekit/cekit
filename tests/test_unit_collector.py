@@ -21,11 +21,10 @@ def test_collect_test_from_image_repo(prepare_dirs, mocker):
     mocker.patch.object(TestCollector, '_fetch_steps')
     collector = TestCollector(desc_dir, target_dir)
 
-    feature_part = os.path.join('features', 'file.feature')
-
     features_file = os.path.join(desc_dir,
                                  'tests',
-                                 feature_part)
+                                 'features',
+                                 'file.feature')
 
     os.makedirs(os.path.dirname(features_file))
     open(features_file, 'w').close()
@@ -33,7 +32,9 @@ def test_collect_test_from_image_repo(prepare_dirs, mocker):
     assert collector.collect('1')
     collected_feature_file = os.path.join(target_dir,
                                           'test',
-                                          feature_part)
+                                          'features',
+                                          'image',
+                                          'file.feature')
 
     assert os.path.exists(collected_feature_file)
 
