@@ -6,7 +6,6 @@ import logging
 import os
 import shutil
 import yaml
-from pykwalify.core import Core
 
 from concreate.errors import ConcreateError
 

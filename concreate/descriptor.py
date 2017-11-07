@@ -1,10 +1,9 @@
+import concreate
 import logging
 import os
 import yaml
 
-from concreate import tools, DEFAULT_USER
 from concreate.errors import ConcreateError
-
 from pykwalify.core import Core
 
 logger = logging.getLogger('concreate')
@@ -47,11 +46,10 @@ class Descriptor(object):
             try:
                 core.validate(raise_exception=True)
                 return
-            except Exception as ex:
+            except Exception:
                 pass
 
-        raise ConcreateError("Cannot validate schema: %s" % (self.__class__.__name__),
-                             ex)
+        raise ConcreateError("Cannot validate schema: %s" % (self.__class__.__name__))
 
     def write(self, path):
         directory = os.path.dirname(path)
@@ -73,7 +71,7 @@ class Descriptor(object):
           descriptor - a concreate descritor
         """
         try:
-            self.descriptor = tools.merge_dictionaries(self.descriptor, descriptor)
+            self.descriptor = concreate.tools.merge_dictionaries(self.descriptor, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise ConcreateError("Cannot merge descriptors, see log message for more information")
@@ -108,13 +106,13 @@ class Descriptor(object):
         if 'execute' in self.descriptor:
             for execute in self.descriptor['execute']:
                 if 'user' not in execute:
-                    execute['user'] = DEFAULT_USER
+                    execute['user'] = concreate.DEFAULT_USER
 
         if 'run' not in self.descriptor:
             self.descriptor['run'] = {}
 
         if 'user' not in self.descriptor['run']:
-            self.descriptor['run']['user'] = DEFAULT_USER
+            self.descriptor['run']['user'] = concreate.DEFAULT_USER
 
 
 class Label(Descriptor):
@@ -204,58 +202,48 @@ class Packages(Descriptor):
         super(Packages, self).__init__(descriptor)
 
 
-class Artifact(Descriptor):
-    def __init__(self, descriptor):
-        self.schemas = [yaml.safe_load("""
-       map:
-          name: {type: str}
-          git:
-            map:
-              url: {type: str, required: True}
-              ref: {type: str}
-          path: {type: str, required: False}
-          url: {type: str, required: False}
-          md5: {type: str}
-          sha1: {type: str}
-          sha256: {type: str}
-          description: {type: str}
-        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"""")]
-        super(Artifact, self).__init__(descriptor)
-
-
 class Modules(Descriptor):
     def __init__(self, descriptor):
         self.schemas = [yaml.safe_load("""
         map:
-          repositories: {type: any}
+          repositories:
+            seq:
+              -  {type: any}
           install:
-          seq:
-            - map:
-                name: {type: str, required: True}
-                version: {type: str}""")]
+            seq:
+              - map:
+                  name: {type: str, required: True}
+                  version: {type: str}""")]
         super(Modules, self).__init__(descriptor)
         self._prepare()
 
     def _prepare(self):
-        self.descriptor['repositories'] = [Artifact(r)
+        self.descriptor['repositories'] = [concreate.resource.Resource.new(r)
                                            for r in self.descriptor.get('repositories', [])]
 
 
 class Execute(Descriptor):
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, directory):
         self.schemas = [yaml.safe_load("""
         map:
           script: {type: str}
-          user: {type: str}""")]
-
-        if 'user' not in descriptor:
-            descriptor['user'] = DEFAULT_USER
+          user: {type: text}""")]
 
         super(Execute, self).__init__(descriptor)
 
+        descriptor['directory'] = directory
+
+        if 'user' not in descriptor:
+            descriptor['user'] = concreate.DEFAULT_USER
+
+        if 'name' not in descriptor:
+            descriptor['name'] = "%s/%s" % (directory,
+                                            descriptor['script'])
+
 
 class Image(Descriptor):
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, directory):
+        self.directory = directory
         self.schemas = [common_schema.copy()]
 
         super(Image, self).__init__(descriptor)
@@ -291,7 +279,8 @@ class Image(Descriptor):
         self.descriptor['ports'] = [Port(x) for x in self.descriptor.get('ports', [])]
         if 'run' in self.descriptor:
             self.descriptor['run'] = Run(self.descriptor['run'])
-        self.descriptor['artifacts'] = [Artifact(a) for a in self.descriptor.get('artifacts', [])]
+        self.descriptor['artifacts'] = [concreate.resource.Resource.new(a)
+                                        for a in self.descriptor.get('artifacts', [])]
         if 'modules' in self.descriptor:
             self.descriptor['modules'] = Modules(self.descriptor['modules'])
         if 'packages' in self.descriptor:
@@ -299,17 +288,6 @@ class Image(Descriptor):
         if 'osbs' in self.descriptor:
             self.descriptor['osbs'] = Osbs(self.descriptor['osbs'])
         self.descriptor['volumes'] = [Volume(x) for x in self.descriptor.get('volumes', [])]
-
-
-class Module(Image):
-    def __init__(self, descriptor):
-        schema = module_schema.copy()
-        self.schemas = [schema]
-        # calling Descriptor constructor only here (we dont wat Image() to mess with schema)
-        super(Image, self).__init__(descriptor)
-
-        self._prepare()
-        self.descriptor['execute'] = [Execute(x) for x in self.descriptor.get('execute', [])]
 
 
 class Overrides(Image):
@@ -320,3 +298,30 @@ class Overrides(Image):
         super(Image, self).__init__(descriptor)
 
         self._prepare()
+
+
+class Module(Image):
+    """Represents a module.
+
+    Constructor arguments:
+    descriptor_path: A path to module descriptor file.
+    """
+    def __init__(self, descriptor, path):
+        schema = module_schema.copy()
+        self.schemas = [schema]
+        # calling Descriptor constructor only here (we dont wat Image() to mess with schema)
+        super(Image, self).__init__(descriptor)
+
+        self._prepare()
+        self.path = path
+        self.name = self.descriptor['name']
+        self.descriptor['execute'] = [Execute(x, self.name)
+                                      for x in self.descriptor.get('execute', [])]
+
+    def fetch_dependencies(self, repo_root):
+        """ Processes modules dependencies and fetches them.
+
+        Arguments:
+        repo_root: A parent directory where repositories will be cloned in
+        """
+        concreate.module.get_dependencies(self.descriptor, repo_root)
