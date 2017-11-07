@@ -46,8 +46,9 @@ class Descriptor(object):
             try:
                 core.validate(raise_exception=True)
                 return
-            except Exception:
-                pass
+            except Exception as ex:
+                # We log this as debug, because we support multiple schemas
+                logger.debug("Schema validation failed: %s" % ex)
 
         raise ConcreateError("Cannot validate schema: %s" % (self.__class__.__name__))
 
