@@ -20,7 +20,8 @@ class Generator(object):
 
     def __init__(self, descriptor_path, target, overrides):
 
-        self.descriptor = Image(tools.load_descriptor(descriptor_path))
+        self.descriptor = Image(tools.load_descriptor(descriptor_path),
+                                os.path.dirname(descriptor_path))
         self.target = target
 
         if overrides:
@@ -89,9 +90,7 @@ class Generator(object):
         target_dir = os.path.join(self.target, 'image')
 
         for artifact in self.descriptor['artifacts']:
-            resource = Resource.new(artifact, self.descriptor.directory)
-            resource.copy(target_dir)
-            artifact['name'] = resource.name
+            artifact.copy(target_dir)
         logger.debug("Artifacts handled")
 
     def override(self, overrides_path):

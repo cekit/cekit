@@ -85,7 +85,7 @@ def test_image():
     envs:
       - name: env1
         value: env1val
-"""))
+    """), 'foo')
 
     assert image['name'] == 'test/foo'
     assert type(image['labels'][0]) == descriptor.Label

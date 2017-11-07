@@ -1,7 +1,11 @@
-
 import hashlib
 import logging
 import os
+import shutil
+import subprocess
+import ssl
+import yaml
+
 
 try:
     from urllib.parse import urlparse
@@ -10,17 +14,14 @@ except ImportError:
     from urlparse import urlparse
     from urllib2 import urlopen
 
-import shutil
-import subprocess
-import ssl
-
 from concreate import tools
+from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
 
 logger = logging.getLogger('concreate')
 
 
-class Resource(object):
+class Resource(Descriptor):
     SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
     CHECK_INTEGRITY = True
 
@@ -38,10 +39,28 @@ class Resource(object):
         raise ValueError("Resource type is not supported: %s" (resource))
 
     def __init__(self, descriptor):
-        self.description = None
+        self.schemas = [yaml.safe_load("""
+        map:
+          name: {type: str}
+          git:
+            map:
+              url: {type: str, required: True}
+              ref: {type: str}
+          path: {type: str, required: False}
+          url: {type: str, required: False}
+          md5: {type: str}
+          sha1: {type: str}
+          sha256: {type: str}
+          description: {type: str}
+        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"""")]
+        super(Resource, self).__init__(descriptor)
+
         self.name = descriptor['name']
+
+        self.description = None
         if 'description' in descriptor:
             self.description = descriptor['description']
+
         self.checksums = {}
         for algorithm in self.SUPPORTED_HASH_ALGORITHMS:
             if algorithm in descriptor:

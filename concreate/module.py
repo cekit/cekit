@@ -3,7 +3,7 @@ import logging
 import shutil
 
 from concreate import tools
-from concreate.descriptor import Descriptor
+from concreate.descriptor import Module
 from concreate.errors import ConcreateError
 from concreate.resource import Resource
 
@@ -49,7 +49,8 @@ def copy_module_to_target(name, version, target):
 
 
 def check_module_version(path, version):
-    descriptor = Descriptor(os.path.join(path, 'module.yaml'), 'module')
+    descriptor = Module(tools.load_descriptor(os.path.join(path, 'module.yaml')),
+                        path)
     if descriptor.version != version:
         raise ConcreateError("Requested conflicting version '%s' of module '%s'" %
                              (version, descriptor['name']))
@@ -72,8 +73,7 @@ def get_dependencies(descriptor, base_dir):
         return
 
     for repo in module_repositories:
-        resource = Resource.new(repo, descriptor.directory)
-        resource.copy(base_dir)
+        repo.copy(base_dir)
 
 
 def discover_modules(repo_dir):
@@ -83,27 +83,8 @@ def discover_modules(repo_dir):
     """
     for modules_dir, _, files in os.walk(repo_dir):
         if 'module.yaml' in files:
-            module = Module(os.path.join(modules_dir, 'module.yaml'))
+            module = Module(tools.load_descriptor(os.path.join(modules_dir, 'module.yaml')),
+                            modules_dir)
             module.fetch_dependencies(repo_dir)
             logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
             modules.append(module)
-
-
-class Module(Descriptor):
-    """Represents a module.
-
-    Constructor arguments:
-    descriptor_path: A path to module descriptor file.
-    """
-    def __init__(self, descriptor_path):
-        self.descriptor = Module(tools.load_descriptor(descriptor_path))
-        self.name = self.descriptor['name']
-        self.path = os.path.dirname(descriptor_path)
-
-    def fetch_dependencies(self, repo_root):
-        """ Processes modules dependencies and fetches them.
-
-        Arguments:
-        repo_root: A parent directory where repositories will be cloned in
-        """
-        get_dependencies(self.descriptor, repo_root)
