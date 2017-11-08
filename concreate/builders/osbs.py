@@ -50,10 +50,9 @@ class OSBSBuilder(Builder):
         self.dist_git.prepare()
         self.dist_git.clean()
 
-        self.update_osbs_image_source()
+        self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
 
-        artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
-        self.update_lookaside_cache(artifacts)
+        self.update_osbs_image_source()
 
     def update_osbs_image_source(self):
         with Chdir(os.path.join(self.target, 'image')):
@@ -63,17 +62,17 @@ class OSBSBuilder(Builder):
             shutil.copy("Dockerfile", os.path.join(
                 self.dist_git_dir, "Dockerfile"))
 
-    def update_lookaside_cache(self, artifacts):
-        if not artifacts:
-            return
-        for artifact in artifacts:
+        # Copy also every artifact
+        for artifact in self.artifacts:
             shutil.copy(os.path.join(self.target,
                                      'image',
                                      artifact),
                         os.path.join(self.dist_git_dir,
                                      artifact))
+
+    def update_lookaside_cache(self):
         logger.info("Updating lookaside cache...")
-        cmd = ["rhpkg", "new-sources"] + artifacts
+        cmd = ["rhpkg", "new-sources"] + self.artifacts
         logger.debug("Executing '%s'" % cmd)
         with Chdir(self.dist_git_dir):
             subprocess.check_output(cmd)
@@ -87,6 +86,7 @@ class OSBSBuilder(Builder):
 
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
+            self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
                 self.dist_git.commit()
