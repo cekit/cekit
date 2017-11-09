@@ -44,8 +44,10 @@ class TestCollector(object):
         }
 
         if name in deps:
-            logger.error("Try to install %s RPM package using yum/dnf depending on what OS are you and what Python version you use. You can also use Python package manager of your choice to install '%s' library." % (
-                " or ".join(deps[name]), name))
+            logger.error("Try to install %s RPM package using yum/dnf depending on what OS "
+                         "are you and what Python version you use. You can also use Python "
+                         "package manager of your choice to install '%s' library." %
+                         (" or ".join(deps[name]), name))
 
     def _validate_steps_requirements(self):
         logger.debug("Validating steps requirements...")
@@ -59,25 +61,26 @@ class TestCollector(object):
 
         for req in ['behave', 'requests']:
             if not self._requirement_available(req):
-                raise ConcreateError("Handling of test steps requirements failed, see log for more info.")
+                raise ConcreateError("Handling of test steps requirements "
+                                     "failed, see log for more info.")
 
-    def _fetch_steps(self, version):
+    def _fetch_steps(self, version, url):
         """ Method fetches common steps """
-        logger.info("Fetching common steps from 'https://github.com/jboss-container-images/concreate-test-steps.git'.")
+        logger.info("Fetching common steps from '%s'." % url)
         cmd = ['git',
                'clone',
                '--depth',
                '1',
-               'https://github.com/jboss-container-images/concreate-test-steps',
+               url,
                self.test_dir,
                '-b',
                'v%s' % version]
         logger.debug("Running '%s'" % ' '.join(cmd))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
-    def collect(self, version):
+    def collect(self, version, url):
         # first clone common steps
-        self._fetch_steps(version)
+        self._fetch_steps(version, url)
         self._validate_steps_requirements()
         # copy tests from repository root
         tests_root = os.path.join(self.target_dir, 'repo')
@@ -99,7 +102,7 @@ class TestCollector(object):
         logger.info("Tests collected!")
         return self.collected
 
-    def _copy_tests(self, source, name, target_dir = ''):
+    def _copy_tests(self, source, name, target_dir=''):
         for obj_name in ['steps', 'features']:
             obj_path = os.path.join(source, name, 'tests', obj_name)
 
