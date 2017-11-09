@@ -13,6 +13,8 @@ Image can be tested by running:
 
 * ``--test-wip`` -- run only tests tagged with ``@wip`` tag.
 * ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
+* ``--tag`` -- an image tag used to determine image which will be tests. It can be specified multiple times but only the first occurence is honored.
+
 
 About Tests
 -----------
@@ -49,3 +51,7 @@ Concreate is selecting which test to run via tags mechanism. There are two way t
 2. `Wip tags`
    
    This is very special behavior used mainly in development. It servers purpose you want to limit test to be run to a subset you are working on. To achieve this you should mark your test scenario with ``@wip`` tag and run ``concreate test --test-wip``
+
+3. `Custom tags`
+
+   You can test an particular image using via ``--tag`` option. To run test for image 'foo' you can run ``concreate test --tag foo``

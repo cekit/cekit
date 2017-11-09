@@ -69,12 +69,8 @@ class Concreate(object):
         build_group.add_argument('--build-tag',
                                  dest='build_tags',
                                  action='append',
-                                 help='tag to assign to the built image, can be used multiple times')
-
-        build_group.add_argument('--tag',
-                                 dest='tags',
-                                 action='append',
-                                 help='tag used to build/test the image, can be used multiple times')
+                                 help='tag to assign to the built image, '
+                                 'can be used multiple times')
 
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
@@ -84,6 +80,11 @@ class Concreate(object):
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
                                  help='perform tech preview build')
+
+        parser.add_argument('--tag',
+                            dest='tags',
+                            action='append',
+                            help='tag used to build/test the image, can be used multiple times')
 
         parser.add_argument('--overrides',
                             help='path to a file containing overrides')
@@ -107,7 +108,8 @@ class Concreate(object):
 
         # DEPRECATED - remove following lines and --build-tag option
         if self.args.build_tags:
-            logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead.")
+            logger.warning("--build-tag is deprecated and will be removed in concreate 2.0,"
+                           " please use --tag instead.")
             if not self.args.tags:
                 self.args.tags = self.args.build_tags
             else:
