@@ -12,6 +12,7 @@ Image can be tested by running:
 **Test options**
 
 * ``--test-wip`` -- run only tests tagged with ``@wip`` tag.
+* ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
 
 About Tests
 -----------

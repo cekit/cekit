@@ -53,6 +53,11 @@ class Concreate(object):
                                 action='store_true',
                                 help='Run @wip tests only')
 
+        test_group.add_argument('--test-steps-url',
+                                default='https://github.com/jboss-container-images/'
+                                'concreate-test-steps.git',
+                                help='contains url for concreate test stesp')
+
         build_group = parser.add_argument_group('build',
                                                 "Arguments valid for the 'build' target")
 
@@ -163,13 +168,13 @@ class Concreate(object):
                     test_tags = ['@wip']
 
                 # at first we collect tests
-                test_collected = TestCollector(os.path.dirname(self.args.descriptor),
-                                               self.args.target).collect(generator.descriptor.get('schema_version'))
+                tc = TestCollector(os.path.dirname(self.args.descriptor),
+                                   self.args.target)
 
                 # we run the test only if we collect any
-                if test_collected:
-                    TestRunner(self.args.target).run(self.args.tags[0],
-                                                     test_tags)
+                if tc.collect(generator.descriptor.get('schema_version'), self.args.test_steps_url):
+                    runner = TestRunner(self.args.target)
+                    runner.run(self.args.tags[0], test_tags)
 
             logger.info("Finished!")
             sys.exit(0)

@@ -31,7 +31,7 @@ def test_collect_test_from_image_repo(prepare_dirs, mocker):
     os.makedirs(os.path.dirname(features_file))
     open(features_file, 'w').close()
 
-    assert collector.collect('1')
+    assert collector.collect('1', steps_url)
     collected_feature_file = os.path.join(target_dir,
                                           'test',
                                           'features',
@@ -56,7 +56,7 @@ def test_collect_test_from_repository_root(prepare_dirs, mocker):
     os.makedirs(os.path.dirname(features_file))
     open(features_file, 'w').close()
 
-    assert collector.collect('1')
+    assert collector.collect('1', steps_url)
     collected_feature_file = os.path.join(target_dir,
                                           'test',
                                           'features',
@@ -82,7 +82,7 @@ def test_collect_test_from_module(prepare_dirs, mocker):
     os.makedirs(os.path.dirname(features_file))
     open(features_file, 'w').close()
 
-    assert collector.collect('1')
+    assert collector.collect('1', steps_url)
     collected_feature_file = os.path.join(target_dir,
                                           'test',
                                           'features',
@@ -97,4 +97,4 @@ def test_collect_return_false(prepare_dirs, mocker):
     mocker.patch.object(TestCollector, '_validate_steps_requirements')
 
     collector = TestCollector(desc_dir, target_dir)
-    assert not collector.collect('1')
+    assert not collector.collect('1', steps_url)
