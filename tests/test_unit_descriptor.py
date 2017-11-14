@@ -67,9 +67,9 @@ def test_packages():
       install:
           - pkg-foo"""))
 
-    assert 'repo-foo' in pkg['repositories']
-    assert 'repo-bar' in pkg['repositories']
-    assert 'pkg-foo' in pkg['install']
+    assert 'repo-foo' in pkg['repositories'][0]['name']
+    assert 'repo-bar' in pkg['repositories'][1]['name']
+    assert 'pkg-foo' in pkg['packages'][0]['name']
 
 
 def test_image():

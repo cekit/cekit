@@ -49,8 +49,10 @@ def print_test_name(value):
     ('test_execute_user',
      {'execute': [{'script': 'bar_script',
                    'user': 'bar_user'}]},
-     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*')],
-                         ids=print_test_name)
+     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
+    ('test_packages',
+     {'packages': {'packages': ['foo', 'bar']}},
+     r'.*RUN yum install -y  foo bar.*')], ids=print_test_name)
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
@@ -93,4 +95,4 @@ def regex_dockerfile(target, exp_regex):
     with open(os.path.join(target, 'image', 'Dockerfile'), "r") as fd:
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)
-        assert regex.search(dockerfile_content)
+        assert regex.search(dockerfile_content), "Generated Dockerfile: %s" % dockerfile_content
