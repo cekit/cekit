@@ -6,7 +6,7 @@ import os
 from jinja2 import Environment, FileSystemLoader
 
 from concreate import tools
-from concreate.descriptor import Descriptor
+from concreate.descriptor import Image, Overrides
 from concreate.errors import ConcreateError
 from concreate.module import copy_module_to_target
 from concreate.resource import Resource
@@ -20,7 +20,8 @@ class Generator(object):
 
     def __init__(self, descriptor_path, target, overrides):
 
-        self.descriptor = Descriptor(descriptor_path, 'image').process()
+        self.descriptor = Image(tools.load_descriptor(descriptor_path),
+                                os.path.dirname(descriptor_path))
         self.target = target
 
         if overrides:
@@ -66,9 +67,7 @@ class Generator(object):
         logger.info("Handling modules...")
 
         for module in modules:
-            version = None
-            if 'version' in module:
-                version = module['version']
+            version = module.get('version', None)
 
             req_module = copy_module_to_target(module['name'],
                                                version,
@@ -91,14 +90,12 @@ class Generator(object):
         target_dir = os.path.join(self.target, 'image')
 
         for artifact in self.descriptor['artifacts']:
-            resource = Resource.new(artifact, self.descriptor.directory)
-            resource.copy(target_dir)
-            artifact['name'] = resource.name
+            artifact.copy(target_dir)
         logger.debug("Artifacts handled")
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
-        descriptor = Descriptor(overrides_path, 'overrides').process()
+        descriptor = Overrides(tools.load_descriptor(overrides_path))
         descriptor.merge(self.descriptor)
         return descriptor
 
@@ -109,6 +106,9 @@ class Generator(object):
           template_file - a path to jinja2 template file
         """
         logger.info("Rendering Dockerfile...")
+
+        self.descriptor.process_defaults()
+
         template_file = os.path.join(os.path.dirname(__file__),
                                      'templates',
                                      'template.jinja')

@@ -196,6 +196,15 @@ descriptor.
           - name: xpaas.java
           - name: xpaas.amq.install
 
+You can even request specific module version via *version* key as follows:
+
+.. code:: yaml
+
+    modules:
+      install:
+          - name: xpaas.java
+	    version: 1.2-dev
+          - name: xpaas.amq.install
 
 ``name``
 --------
@@ -360,6 +369,6 @@ In case you want to define volumes for your image, just use the ``volumes`` sect
 
 .. note::
 
-    The ``name`` key is optional. If not specfied the value of ``path`` key will be used.
+    The ``name`` key is optional. If not specified the value of ``path`` key will be used.
 
 

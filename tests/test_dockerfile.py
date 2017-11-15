@@ -1,181 +1,96 @@
-import tempfile
-import unittest
 import os
+import pytest
 import re
-import shutil
 
 from concreate.generator import Generator
-from concreate.descriptor import Descriptor
+from concreate.descriptor import Module
 
 basic_config = {'release': 1,
                 'version': 1,
-                'run': {'cmd': 'whoami'},
                 'from': 'scratch',
                 'name': 'testimage'}
 
-# Generate a Dockerfile, and check what is in it.
+
+def print_test_name(value):
+    if str(value).startswith('test'):
+        return value
+    return "\b"
 
 
-class TestDockerfile(unittest.TestCase):
+@pytest.mark.parametrize('name, desc_part, exp_regex', [
+    ('test_run_user',
+     {'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n+.*CMD.*'),
+    ('test_default_run_user',
+     {'run': {'cmd': ['whatever']}},  r'.*USER root\n+.*CMD.*'),
+    ('test_custom_cmd',
+     {'run': {'cmd': ['/usr/bin/date']}}, r'.*CMD \["/usr/bin/date"\]'),
+    ('test_entrypoint',
+     {'run': {'entrypoint': ['/usr/bin/date']}}, r'.*ENTRYPOINT \["/usr/bin/date"\]'),
+    ('test_workdir',
+     {'run': {'workdir': '/home/jboss'}}, r'.*WORKDIR /home/jboss'),
+    ('test_volumes',
+     {'volumes': [{'path': '/var/lib'},
+                  {'path': '/usr/lib',
+                   'name': 'path.lib'}]}, r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]'),
+    ('test_ports',
+     {'ports': [{'value': 8080},
+                {'expose': False,
+                 'value': 9999}]}, r'.*EXPOSE 8080$'),
+    ('test_env', {'envs':  [{'name': 'CONFIG_ENV',
+                             'example': 1234},
+                            {'name': 'COMBINED_ENV',
+                             'value': 'set_value',
+                             'example': 'example_value',
+                             'description': 'This is a description'}]},
+     r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n'),
+    ('test_execute',
+     {'execute': [{'script': 'foo_script'}]},
+     r'.*RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
+    ('test_execute_user',
+     {'execute': [{'script': 'bar_script',
+                   'user': 'bar_user'}]},
+     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*')],
+                         ids=print_test_name)
+def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.workdir = tempfile.mkdtemp(prefix="test_dockerfile")
+    target = str(tmpdir.mkdir('target'))
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.workdir)
+    generator = prepare_generator(target, desc_part)
+    generator.render_dockerfile()
 
-    def setUp(self):
-        # Prepare directory structure
-        self.target = os.path.join(self.workdir, "target")
-        os.makedirs(os.path.join(self.target, 'image'))
-        self.dockerfile = os.path.join(self.target, "image", "Dockerfile")
+    regex_dockerfile(target, exp_regex)
 
-        # create default descriptor
-        self.descriptor = basic_config.copy()
 
-        # prepare Generator + inject required deps
-        self.generator = Generator.__new__(Generator)
-        self.generator.target = self.target
-        self.generator.descriptor = Descriptor.__new__(Descriptor)
-        self.generator.descriptor.descriptor = self.descriptor
-        self.generator.descriptor.directory = '/tmp'
+@pytest.mark.parametrize('name, desc_part, exp_regex', [
+    ('test_without_family',
+     {}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
+    ('test_with_family',
+        {'name': 'testimage/test'}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
+                         ids=print_test_name)
+def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
+    target = str(tmpdir.mkdir('target'))
+    generator = prepare_generator(target, desc_part)
+    generator.generate_tech_preview()
+    generator.render_dockerfile()
+    regex_dockerfile(target, exp_regex)
 
-    def tearDown(self):
-        shutil.rmtree(self.target)
 
-    def test_set_cmd_user(self):
-        """
-        Ensure that setting 'user' in 'run' section in the YAML generates a corresponding
-        USER instruction in the Dockerfile, immediately before the CMD.
-        """
-        self.descriptor['run']['user'] = 1347
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
+def prepare_generator(target, desc_part, desc_type="image"):
+    # create basic descriptor
 
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'.*USER 1347\n+CMD.*',
-                               re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
+    desc = basic_config.copy()
+    desc.update(desc_part)
 
-    def test_default_cmd_user(self):
-        """
-        Make sure we use 'root' user to run the CMD/ENTRYPOINT process, if it not defined.
-        """
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
+    image = Module(desc, '/tmp/')
 
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'.*USER root\n+CMD.*',
-                               re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
+    generator = Generator.__new__(Generator)
+    generator.descriptor = image
+    generator.target = target
+    return generator
 
-    def test_set_cmd(self):
-        """
-        Test that run/cmd: is mapped into a CMD instruction
-        """
-        self.descriptor['run']['cmd'] = ['/usr/bin/date']
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
 
-        with open(os.path.join(self.dockerfile), "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'.*CMD \["/usr/bin/date"\]',
-                               re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
-
-    def test_set_entrypoint(self):
-        """
-        Test that run/entrypoint: is mapped into a ENTRYPOINT instruction
-        """
-        self.descriptor['run']['entrypoint'] = ['/usr/bin/time']
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
-
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'.*ENTRYPOINT \["/usr/bin/time"\]',
-                               re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
-
-    def test_set_workdir(self):
-        """
-        Test that run/workdir is mapped into a WORKDIR instruction
-        """
-        self.descriptor['run']['workdir'] = "/home/jboss"
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
-
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'.*WORKDIR /home/jboss',
-                               re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
-
-    def test_volumes(self):
-        """
-        Test that cmd: is mapped into a CMD instruction
-        """
-        self.descriptor['volumes'] = [{'path': '/var/lib'}, {'path': '/usr/lib', 'name': 'path.lib'}]
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
-
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(
-                r'.*VOLUME \["/var/lib"\]\nVOLUME \["/usr/lib"\]',  re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
-
-    # https://github.com/jboss-dockerfiles/concreate/issues/124
-    def test_debug_port(self):
-        self.descriptor['ports'] = [{'value': 8080},
-                                    {'expose': False,
-                                     'value': 9999}]
-
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
-
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'.*EXPOSE 8080$',  re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
-
-    # https://github.com/jboss-dockerfiles/concreate/issues/127
-    def test_generating_env_variables(self):
-        self.descriptor['envs'] = [{'name': 'CONFIG_ENV',
-                                    'example': 1234},
-                                   {'name': 'COMBINED_ENV',
-                                    'value': 'set_value',
-                                    'example': 'example_value',
-                                    'description': 'This is a description'}]
-
-        self.generator.descriptor.process()
-        self.generator.render_dockerfile()
-
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(
-                r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n',  re.MULTILINE)
-            self.assertRegexpMatches(dockerfile, regex)
-
-    def test_tech_preview_without_family(self):
-        self.generator.descriptor.process()
-        self.generator.generate_tech_preview()
-        self.generator.render_dockerfile()
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"')
-            self.assertRegexpMatches(dockerfile, regex)
-
-    def test_tech_preview(self):
-        self.descriptor['name'] = 'testimage/test'
-        self.generator.descriptor.process()
-        self.generator.generate_tech_preview()
-        self.generator.render_dockerfile()
-        with open(self.dockerfile, "r") as f:
-            dockerfile = f.read()
-            regex = re.compile(r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')
-            self.assertRegexpMatches(dockerfile, regex)
+def regex_dockerfile(target, exp_regex):
+    with open(os.path.join(target, 'image', 'Dockerfile'), "r") as fd:
+        dockerfile_content = fd.read()
+        regex = re.compile(exp_regex, re.MULTILINE)
+        assert regex.search(dockerfile_content)

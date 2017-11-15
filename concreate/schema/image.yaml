@@ -1,3 +1,0 @@
-# To be merged with common.yaml
-map:
-  from: {type: str, required: True}

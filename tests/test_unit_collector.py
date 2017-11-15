@@ -1,93 +1,100 @@
-import mock
 import os
 import shutil
-import unittest
+import pytest
 
 from concreate.test.collector import TestCollector
 
+desc_dir = "/tmp/desc"
+target_dir = "/tmp/target_dir"
 
-class TestDockerfile(unittest.TestCase):
+steps_url = 'https://github.com/jboss-container-images/concreate-test-steps'
 
-    def setUp(self):
-        self.desc_dir = "/tmp/desc"
-        self.target_dir = "/tmp/target_dir"
-        shutil.rmtree(self.desc_dir, ignore_errors=True)
-        shutil.rmtree(self.target_dir, ignore_errors=True)
-        os.makedirs(self.desc_dir)
-        os.makedirs(self.target_dir)
 
-    @mock.patch.object(TestCollector, '_fetch_steps')
-    @mock.patch.object(TestCollector, '_validate_steps_requirements')
-    def test_collect_test_from_image_repo(self, m1, m2):
-        collector = TestCollector(self.desc_dir, self.target_dir)
+@pytest.fixture
+def prepare_dirs():
+    shutil.rmtree(desc_dir, ignore_errors=True)
+    shutil.rmtree(target_dir, ignore_errors=True)
+    os.makedirs(desc_dir)
+    os.makedirs(target_dir)
 
-        feature_part = os.path.join('features', 'file.feature')
 
-        features_file = os.path.join(self.desc_dir,
-                                     'tests',
-                                     feature_part)
+def test_collect_test_from_image_repo(prepare_dirs, mocker):
+    mocker.patch.object(TestCollector, '_validate_steps_requirements')
+    mocker.patch.object(TestCollector, '_fetch_steps')
+    collector = TestCollector(desc_dir, target_dir)
 
-        os.makedirs(os.path.dirname(features_file))
-        open(features_file, 'w').close()
+    features_file = os.path.join(desc_dir,
+                                 'tests',
+                                 'features',
+                                 'file.feature')
 
-        self.assertTrue(collector.collect('v1'))
-        collected_feature_file = os.path.join(self.target_dir,
-                                              'test',
-                                              feature_part)
+    os.makedirs(os.path.dirname(features_file))
+    open(features_file, 'w').close()
 
-        self.assertTrue(os.path.exists(collected_feature_file))
+    assert collector.collect('1')
+    collected_feature_file = os.path.join(target_dir,
+                                          'test',
+                                          'features',
+                                          'image',
+                                          'file.feature')
 
-    @mock.patch.object(TestCollector, '_fetch_steps')
-    @mock.patch.object(TestCollector, '_validate_steps_requirements')
-    def test_collect_test_from_repository_root(self, m1, m2):
-        collector = TestCollector(self.desc_dir, self.target_dir)
-    
-        features_file = os.path.join(self.target_dir,
-                                     'repo',
-                                     'foo',
-                                     'tests',
-                                     'features',
-                                     'file.feature')
+    assert os.path.exists(collected_feature_file)
 
-        os.makedirs(os.path.dirname(features_file))
-        open(features_file, 'w').close()
 
-        self.assertTrue(collector.collect('v1'))
-        collected_feature_file = os.path.join(self.target_dir,
-                                              'test',
-                                              'features',
-                                              'foo',
-                                              'file.feature')
+def test_collect_test_from_repository_root(prepare_dirs, mocker):
+    mocker.patch.object(TestCollector, '_fetch_steps')
+    mocker.patch.object(TestCollector, '_validate_steps_requirements')
+    collector = TestCollector(desc_dir, target_dir)
 
-        self.assertTrue(os.path.exists(collected_feature_file))
+    features_file = os.path.join(target_dir,
+                                 'repo',
+                                 'foo',
+                                 'tests',
+                                 'features',
+                                 'file.feature')
 
-    @mock.patch.object(TestCollector, '_fetch_steps')
-    @mock.patch.object(TestCollector, '_validate_steps_requirements')
-    def test_collect_test_from_module(self, m1, m2):
-        collector = TestCollector(self.desc_dir, self.target_dir)
-    
-        features_file = os.path.join(self.target_dir,
-                                     'image',
-                                     'modules',
-                                     'foo',
-                                     'tests',
-                                     'features',
-                                     'file.feature')
+    os.makedirs(os.path.dirname(features_file))
+    open(features_file, 'w').close()
 
-        os.makedirs(os.path.dirname(features_file))
-        open(features_file, 'w').close()
+    assert collector.collect('1')
+    collected_feature_file = os.path.join(target_dir,
+                                          'test',
+                                          'features',
+                                          'foo',
+                                          'file.feature')
 
-        self.assertTrue(collector.collect('v1'))
-        collected_feature_file = os.path.join(self.target_dir,
-                                              'test',
-                                              'features',
-                                              'foo',
-                                              'file.feature')
+    assert os.path.exists(collected_feature_file)
 
-        self.assertTrue(os.path.exists(collected_feature_file))
 
-    @mock.patch.object(TestCollector, '_fetch_steps')
-    @mock.patch.object(TestCollector, '_validate_steps_requirements')
-    def test_collect_return_false(self, m1, m2):
-        collector = TestCollector(self.desc_dir, self.target_dir)
-        self.assertFalse(collector.collect('v1'))
+def test_collect_test_from_module(prepare_dirs, mocker):
+    mocker.patch.object(TestCollector, '_fetch_steps')
+    mocker.patch.object(TestCollector, '_validate_steps_requirements')
+    collector = TestCollector(desc_dir, target_dir)
+
+    features_file = os.path.join(target_dir,
+                                 'image',
+                                 'modules',
+                                 'foo',
+                                 'tests',
+                                 'features',
+                                 'file.feature')
+
+    os.makedirs(os.path.dirname(features_file))
+    open(features_file, 'w').close()
+
+    assert collector.collect('1')
+    collected_feature_file = os.path.join(target_dir,
+                                          'test',
+                                          'features',
+                                          'foo',
+                                          'file.feature')
+
+    assert os.path.exists(collected_feature_file)
+
+
+def test_collect_return_false(prepare_dirs, mocker):
+    mocker.patch.object(TestCollector, '_fetch_steps')
+    mocker.patch.object(TestCollector, '_validate_steps_requirements')
+
+    collector = TestCollector(desc_dir, target_dir)
+    assert not collector.collect('1')

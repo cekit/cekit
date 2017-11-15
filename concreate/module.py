@@ -2,7 +2,8 @@ import os
 import logging
 import shutil
 
-from concreate.descriptor import Descriptor
+from concreate import tools
+from concreate.descriptor import Module
 from concreate.errors import ConcreateError
 from concreate.resource import Resource
 
@@ -26,17 +27,33 @@ def copy_module_to_target(name, version, target):
     if not os.path.exists(target):
         os.makedirs(target)
     # FIXME: version checking
-    for module in modules:
-        if name == module.name:
-            dest = os.path.join(target, name)
-            logger.info('Preparing module %s' % module.name)
-            if os.path.exists(dest):
-                # FIXME check version
-                return module
-            shutil.copytree(module.path, dest)
-            module.path = dest
+
+    candidates = [m for m in modules if name == m.name]
+    if not candidates:
+        raise ConcreateError("Cannot find requested module: '%s'" % name)
+
+    for module in candidates:
+        if not version or version == module.get('version', None):
+            dest = os.path.join(target, module.name)
+
+            # if module is already copied, check that the version is correct
+            if os.path.exists(dest) and version:
+                check_module_version(dest, version)
+
+            if not os.path.exists(dest):
+                logger.debug("Copying module '%s' to: '%s'" % (name, dest))
+                shutil.copytree(module.path, dest)
             return module
-    raise ConcreateError("Cannot find requested module: '%s'" % name)
+
+    raise ConcreateError("Cannot find requested module: '%s', version:'%s'." % (name, version))
+
+
+def check_module_version(path, version):
+    descriptor = Module(tools.load_descriptor(os.path.join(path, 'module.yaml')),
+                        path)
+    if descriptor.version != version:
+        raise ConcreateError("Requested conflicting version '%s' of module '%s'" %
+                             (version, descriptor['name']))
 
 
 def get_dependencies(descriptor, base_dir):
@@ -52,41 +69,22 @@ def get_dependencies(descriptor, base_dir):
     module_repositories = descriptor.get('modules', {}).get('repositories', [])
 
     if not module_repositories:
-        logger.debug("No module repostiories specified in descriptor")
+        logger.debug("No module repositories specified in descriptor")
         return
 
     for repo in module_repositories:
-        resource = Resource.new(repo, descriptor.directory)
-        resource.copy(base_dir)
+        repo.copy(base_dir)
 
 
 def discover_modules(repo_dir):
     """Looks through the directory trees for modules descriptor.
-    When module is find, it create concreate.module.Module instance
+    When module is found, it create concreate.module.Module instance
     and add this instance to the concreate.module.modules list.
     """
     for modules_dir, _, files in os.walk(repo_dir):
         if 'module.yaml' in files:
-            module = Module(os.path.join(modules_dir, 'module.yaml'))
+            module = Module(tools.load_descriptor(os.path.join(modules_dir, 'module.yaml')),
+                            modules_dir)
             module.fetch_dependencies(repo_dir)
+            logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
             modules.append(module)
-
-
-class Module():
-    """Represents a module.
-
-    Constructor arguments:
-    descriptor_path: A path to module descriptor file.
-    """
-    def __init__(self, descriptor_path):
-        self.descriptor = Descriptor(descriptor_path, 'module').process()
-        self.name = self.descriptor['name']
-        self.path = os.path.dirname(descriptor_path)
-
-    def fetch_dependencies(self, repo_root):
-        """ Processes modules dependencies and fetches them.
-
-        Arguments:
-        repo_root: A parent directory where repositories will be cloned in
-        """
-        get_dependencies(self.descriptor, repo_root)

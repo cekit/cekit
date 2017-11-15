@@ -1,0 +1,12 @@
+version: 2
+jobs:
+  build:
+    machine:
+     image: circleci/classic:latest
+    steps:
+     - checkout
+     - run: docker version
+     - run: docker info
+     - run: pip install tox tox-pyenv --user
+     - run: pyenv local 2.7.12 3.5.2
+     - run: ~/.local/bin/tox

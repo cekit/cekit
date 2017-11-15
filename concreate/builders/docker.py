@@ -30,7 +30,7 @@ class DockerBuilder(Builder):
         Args:
           build_tags - a list of image tags
         """
-        tags = build_args.build_tags
+        tags = build_args.tags
         cmd = ["docker", "build"]
 
         # Custom tags for the container image

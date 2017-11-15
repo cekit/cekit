@@ -15,10 +15,10 @@ You can execute an container image build by running:
 
 	  $ concreate build
 
-**Builder options**
+**Options affecting builder:**
 
+* ``--tag`` -- an image tag used to build image (can be specified multiple times)
 * ``--build-engine`` -- a builder engine to use ``osbs`` or ``docker`` [#f1]_
-* ``--build-tag`` -- an image tag used to build image (can be specified multiple times)
 * ``--build-osbs-release`` [#f2]_ -- perform a OSBS release build
 * ``--build-tech-preview`` [#f2]_ -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
   

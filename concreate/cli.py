@@ -32,7 +32,7 @@ class MyParser(argparse.ArgumentParser):
 class Concreate(object):
     """ Main application """
 
-    def run(self):
+    def parse(self):
         parser = MyParser(
             description='Dockerfile generator tool',
             formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -49,12 +49,12 @@ class Concreate(object):
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
-        build_group = parser.add_argument_group('build',
-                                                "Arguments valid for the 'build' target")
-
         test_group.add_argument('--test-wip',
                                 action='store_true',
                                 help='Run @wip tests only')
+
+        build_group = parser.add_argument_group('build',
+                                                "Arguments valid for the 'build' target")
 
         build_group.add_argument('--build-engine',
                                  default='docker',
@@ -65,6 +65,11 @@ class Concreate(object):
                                  dest='build_tags',
                                  action='append',
                                  help='tag to assign to the built image, can be used multiple times')
+
+        build_group.add_argument('--tag',
+                                 dest='tags',
+                                 action='append',
+                                 help='tag used to build/test the image, can be used multiple times')
 
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
@@ -95,6 +100,17 @@ class Concreate(object):
 
         self.args = parser.parse_args()
 
+        # DEPRECATED - remove following lines and --build-tag option
+        if self.args.build_tags:
+            logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead.")
+            if not self.args.tags:
+                self.args.tags = self.args.build_tags
+            else:
+                self.args.tags += self.args.build_tags
+
+        return self
+
+    def run(self):
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
@@ -127,11 +143,12 @@ class Concreate(object):
                 generator.prepare_artifacts()
                 if self.args.build_tech_preview:
                     generator.generate_tech_preview()
+                generator.descriptor.write(os.path.join(self.args.target, 'image.yaml'))
                 generator.render_dockerfile()
 
                 # if tags are not specified on command line we take them from image descriptor
-                if not self.args.build_tags:
-                    self.args.build_tags = generator.get_tags()
+                if not self.args.tags:
+                    self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
                 builder = Builder(self.args.build_engine, self.args.target)
@@ -151,10 +168,11 @@ class Concreate(object):
 
                 # we run the test only if we collect any
                 if test_collected:
-                    TestRunner(self.args.target).run(self.args.build_tags[0],
+                    TestRunner(self.args.target).run(self.args.tags[0],
                                                      test_tags)
 
             logger.info("Finished!")
+            sys.exit(0)
         except KeyboardInterrupt as e:
             pass
         except ConcreateError as e:
@@ -166,7 +184,7 @@ class Concreate(object):
 
 
 def run():
-    Concreate().run()
+    Concreate().parse().run()
 
 if __name__ == "__main__":
     run()

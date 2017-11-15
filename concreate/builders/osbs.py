@@ -50,10 +50,9 @@ class OSBSBuilder(Builder):
         self.dist_git.prepare()
         self.dist_git.clean()
 
-        self.update_osbs_image_source()
+        self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
 
-        artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
-        self.update_lookaside_cache(artifacts)
+        self.update_osbs_image_source()
 
     def update_osbs_image_source(self):
         with Chdir(os.path.join(self.target, 'image')):
@@ -63,17 +62,17 @@ class OSBSBuilder(Builder):
             shutil.copy("Dockerfile", os.path.join(
                 self.dist_git_dir, "Dockerfile"))
 
-    def update_lookaside_cache(self, artifacts):
-        if not artifacts:
-            return
-        for artifact in artifacts:
+        # Copy also every artifact
+        for artifact in self.artifacts:
             shutil.copy(os.path.join(self.target,
                                      'image',
                                      artifact),
                         os.path.join(self.dist_git_dir,
                                      artifact))
+
+    def update_lookaside_cache(self):
         logger.info("Updating lookaside cache...")
-        cmd = ["rhpkg", "new-sources"] + artifacts
+        cmd = ["rhpkg", "new-sources"] + self.artifacts
         logger.debug("Executing '%s'" % cmd)
         with Chdir(self.dist_git_dir):
             subprocess.check_output(cmd)
@@ -87,6 +86,7 @@ class OSBSBuilder(Builder):
 
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
+            self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
                 self.dist_git.commit()
@@ -172,8 +172,8 @@ class Git(object):
         subprocess.check_call(["git", "add", "Dockerfile"])
 
         for d in ["repos", "modules"]:
-            if os.path.exists(os.path.join(self.output, d)):
-                subprocess.check_call(["git", "add", d])
+            # we probably do not care about non existing files and other errors here
+            subprocess.call(["git", "add", d])
 
     def commit(self):
         commit_msg = "Sync"
@@ -206,7 +206,10 @@ class Git(object):
             subprocess.call(["git", "show"])
 
         if not (self.noninteractive or decision("Are you ok with the changes?")):
-            subprocess.call(["bash"])
+            logger.info("Executing bash in the repo directory. After fixing the issues, exit the shell and Concreate will continue.")
+            subprocess.call(["bash"], env={"PS1": "concreate $ ",
+                                           "TERM": os.getenv("TERM", "xterm"),
+                                           "HOME": os.getenv("HOME", "")})
 
     def push(self):
         if self.noninteractive or decision("Do you want to push the commit?"):
