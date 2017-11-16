@@ -53,9 +53,9 @@ class Concreate(object):
                                 action='store_true',
                                 help='Run @wip tests only')
 
+        steps_url = 'https://github.com/jboss-container-images/concreate-test-steps.git'
         test_group.add_argument('--test-steps-url',
-                                default='https://github.com/jboss-container-images/'
-                                'concreate-test-steps.git',
+                                default=steps_url,
                                 help='contains url for concreate test stesp')
 
         build_group = parser.add_argument_group('build',
