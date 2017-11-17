@@ -29,6 +29,7 @@ BuildRequires:  python2-mock
 BuildRequires:  python2-pykwalify
 BuildRequires:  PyYAML
 BuildRequires:  python2-colorlog
+BuildRequires:  python-jinja2
 
 %if 0%{?rhel}
 BuildRequires:  pytest
@@ -60,6 +61,7 @@ BuildRequires:  python3-mock
 BuildRequires:  PyYAML
 BuildRequires:  python3-pykwalify
 BuildRequires:  python3-colorlog
+BuildRequires:  python3-jinja2
 Requires:       PyYAML
 Requires:       docker
 Requires:       python3-pykwalify
