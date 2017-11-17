@@ -29,6 +29,7 @@ BuildRequires:  python2-setuptools
 BuildRequires:  python2-mock
 BuildRequires:  python2-pykwalify
 BuildRequires:  PyYAML
+BuildRequires:  python2-colorlog
 
 %if 0%{?rhel}
 BuildRequires:  pytest
@@ -59,6 +60,7 @@ BuildRequires:  python3-pytest
 BuildRequires:  python3-mock
 BuildRequires:  PyYAML
 BuildRequires:  python3-pykwalify
+BuildRequires:  python3-colorlog
 Requires:       PyYAML
 Requires:       docker
 Requires:       python3-pykwalify
