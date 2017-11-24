@@ -8,8 +8,8 @@
 %global git_version develop
 
 Name:           python-concreate
-Version:        1.1.0
-Release:        0.3.git%{?dist}
+Version:        1.4.0
+Release:        0.1.git%{?dist}
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/jboss-container-images/concreate
@@ -46,6 +46,7 @@ Requires:       python2-pykwalify
 Requires:       python2-colorlog
 Requires:       PyYAML
 Requires:       docker
+Requires:       git
 
 %description -n python2-%{modname} %_description
 
@@ -69,6 +70,7 @@ Requires:       python3-pykwalify
 Requires:       python3-colorlog
 Requires:       python3-jinja2
 Requires:       python3-setuptools
+Requires:       git
 
 %description -n python3-%{modname} %_description
 
