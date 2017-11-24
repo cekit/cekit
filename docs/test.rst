@@ -15,8 +15,7 @@ An image can be tested by running:
 
 * ``--test-wip`` -- only run tests tagged with the ``@wip`` tag.
 * ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
-* ``--tag`` --  only run tests tagged with the supplied tag. Only the
-                first occurence of this argument is honoured.
+* ``--tag`` --  only run tests tagged with the supplied tag. Only the first occurence of this argument is honoured.
 
 
 About Tests
