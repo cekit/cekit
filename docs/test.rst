@@ -53,18 +53,25 @@ Where necessary we encourage people to add or extend these steps.
 
 **Tags**
 
-Concreate selects which tests to run via the *tags* mechanism. There are two
-way that tags are used:
+Concreate selects which tests to run via the *tags* mechanism. Here are three
+ways that tags could be used for managing tests across a set of related images:
 
 1. `Product tags`
    
-   These tags are based on product names. When a product image is tested, concreate uses tag containing image name and its product family name.
-   **Example**: If you are testing ``jboss-eap-7/eap7`` image, test will be invoked with tag ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
+   Tags based on product names. When a product image is tested, concreate uses
+   tags containing the image name and its product family name.  **Example**: If
+   you are testing ``jboss-eap-7/eap7`` image, test will be invoked with tag
+   ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
 
 2. `Wip tags`
    
-   This is very special behavior used mainly in development. It servers purpose you want to limit test to be run to a subset you are working on. To achieve this you should mark your test scenario with ``@wip`` tag and run ``concreate test --test-wip``
+   This is very special behavior used mainly in development. Its purpose is to
+   to limit the tests to be run to a subset you are working on. To achieve this
+   you should mark your in-development test scenarios with the ``@wip`` tag and
+   run ``concreate test --test-wip``.
 
 3. `Custom tags`
 
-   You can test an particular image using via ``--tag`` option. To run test for image 'foo' you can run ``concreate test --tag foo``
+   You can restrict tests to those for a particular image using the ``--tag``
+   option. **Example**: To run only the tests for image 'foo' you can run
+   ``concreate test --tag foo``
