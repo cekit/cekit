@@ -2,7 +2,7 @@ Testing images
 ==============
 
 Concreate is able to run `behave <https://pythonhosted.org/behave/>`_ based
-test for images. We suggest you read the Behave documentation before reading
+tests for images. We suggest you read the Behave documentation before reading
 this chapter.
 
 An image can be tested by running:
@@ -15,7 +15,7 @@ An image can be tested by running:
 
 * ``--test-wip`` -- only run tests tagged with the ``@wip`` tag.
 * ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
-* ``--tag`` --  only run tests tagged with the supplied tag. Only the first occurence of this argument is honoured.
+* ``--tag @sometag`` --  only run tests tagged with e.g. ``@sometag``. Only the first occurrence of this argument is honoured.
 
 
 About Tests
@@ -37,9 +37,12 @@ The tests directory is structured as follows:
           tests/steps/custom_steps.py
 
 
-The ``tests/features`` directory is the place where you can drop your `behave features. <https://pythonhosted.org/behave/gherkin.html>`_
+The ``tests/features`` directory is the place where you can drop your `behave
+features. <https://pythonhosted.org/behave/gherkin.html>`_
 
-The ``tests/steps`` directory is optional and contains custom `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for specific image/module.
+The ``tests/steps`` directory is optional and contains custom `steps
+<https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_
+for the specific image/module.
 
 We strongly recommend that a test is written for every feature that is added to the image.
 
