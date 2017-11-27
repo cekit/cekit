@@ -72,10 +72,17 @@ class OSBSBuilder(Builder):
 
     def update_lookaside_cache(self):
         logger.info("Updating lookaside cache...")
+        if not self.artifacts:
+            return
         cmd = ["rhpkg", "new-sources"] + self.artifacts
         logger.debug("Executing '%s'" % cmd)
         with Chdir(self.dist_git_dir):
-            subprocess.check_output(cmd)
+            try:
+                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as ex:
+                logger.error("Cannot run '%s', ouput: '%s'" % (cmd, ex.output))
+                raise ConcreateError("Cannot update sources.")
+
         logger.info("Update finished.")
 
     def build(self, build_args):
