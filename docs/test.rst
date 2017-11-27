@@ -53,8 +53,9 @@ Where necessary we encourage people to add or extend these steps.
 
 **Tags**
 
-Concreate selects which tests to run via the *tags* mechanism. Here are three
-ways that tags could be used for managing tests across a set of related images:
+Concreate selects which tests to run via the *tags* mechanism. Here are several
+examples of ways ways that tags could be used for managing tests across a set
+of related images:
 
 1. `Product tags`
    
@@ -75,3 +76,10 @@ ways that tags could be used for managing tests across a set of related images:
    You can restrict tests to those for a particular image using the ``--tag``
    option. **Example**: To run only the tests for image 'foo' you can run
    ``concreate test --tag foo``
+
+4. `Environment tags`
+
+   You may wish to define some scenarios that are only executed when running
+   tests in some environment. **Example** you may write some tests that only
+   make sense to execute as part of a Continuous Integration system. You could
+   mark such tests with ``@ci``.
