@@ -59,11 +59,11 @@ def test_merging_list_of_dictionaries():
     list1 = [{'name': 1,
               'a': 1,
               'b': 2}, 'a']
-    list2 = [{'name': 1,
+    list2 = [{'name': 2,
+              'a': 123},
+             {'name': 1,
               'b': 3,
-              'c': 3},
-             {'name': 2,
-              'a': 123}]
+              'c': 3}]
     expected = [{'name': 1,
                  'a': 1,
                  'b': 2,
