@@ -222,6 +222,20 @@ class Modules(Descriptor):
         self.descriptor['repositories'] = [concreate.resource.Resource.new(r)
                                            for r in self.descriptor.get('repositories', [])]
 
+    def merge(self, descriptor):
+        if 'repositories' in descriptor:
+            if 'repositories' in self.descriptor:
+                self.descriptor['repositories'] = concreate.tools.merge_lists(
+                    self.descriptor['repositories'], descriptor['repositories'])
+            else:
+                self.descriptor['repositories'] = descriptor['repositories']
+        if 'install' in descriptor:
+            if 'install' in self.descriptor:
+                self.descriptor['install'] = concreate.tools.merge_lists(
+                    self.descriptor['install'], descriptor['install'])
+            else:
+                self.descriptor['install'] = descriptor['install']
+
 
 class Execute(Descriptor):
     def __init__(self, descriptor, directory):
@@ -289,6 +303,31 @@ class Image(Descriptor):
         if 'osbs' in self.descriptor:
             self.descriptor['osbs'] = Osbs(self.descriptor['osbs'])
         self.descriptor['volumes'] = [Volume(x) for x in self.descriptor.get('volumes', [])]
+
+    def merge(self, descriptor):
+        orig_run = self.descriptor['run'] if 'run' in self.descriptor else None
+        orig_modules = self.descriptor['modules'] if 'modules' in self.descriptor else None
+        orig_packages = self.descriptor['packages'] if 'packages' in self.descriptor else None
+        orig_osbs = self.descriptor['osbs'] if 'osbs' in self.descriptor else None
+
+        super(Image, self).merge(descriptor)
+
+        if orig_run is not None:
+            self.descriptor['run'] = orig_run
+            if 'run' in descriptor:
+                orig_run.merge(descriptor['run'])
+        if orig_modules is not None:
+            self.descriptor['modules'] = orig_modules
+            if 'modules' in descriptor:
+                orig_modules.merge(descriptor['modules'])
+        if orig_packages is not None:
+            self.descriptor['packages'] = orig_packages
+            if 'packages' in descriptor:
+                orig_packages.merge(descriptor['packages'])
+        if orig_osbs is not None:
+            self.descriptor['osbs'] = orig_osbs
+            if 'osbs' in descriptor:
+                orig_osbs.merge(descriptor['osbs'])
 
 
 class Overrides(Image):
