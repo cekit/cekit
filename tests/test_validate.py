@@ -10,8 +10,8 @@ from concreate.cli import Concreate
 
 image_descriptor = {
     'schema_version': 1,
-    'from': 'busybox:latest',
-    'name': 'test/busybox',
+    'from': 'centos:latest',
+    'name': 'test/image',
     'version': '1.0',
     'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
     'run': {'cmd': ['sleep', '60']},
