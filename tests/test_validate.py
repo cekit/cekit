@@ -134,14 +134,39 @@ def test_module_override(tmpdir, mocker):
     assert not os.path.exists(os.path.join(module_dir,
                                            'original'))
 
-    found = False
+    assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/foo/script" ]')
 
+
+def check_dockerfile(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         for line in fd.readlines():
-            if line.strip() == 'RUN [ "bash", "-x", "/tmp/scripts/foo/script" ]':
-                found = True
+            if line.strip() == match.strip():
+                return True
+    return False
 
-    assert found
+
+def test_run_override_user(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      '--overrides',
+                                      'overrides.yaml',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'run': {'user': '4321'}}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_concreate(image_dir)
+
+    assert check_dockerfile(image_dir, 'USER 4321')
 
 
 def run_concreate(cwd):
