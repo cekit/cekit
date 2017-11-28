@@ -1,10 +1,12 @@
 import os
 import sys
+
 import yaml
 
 import pytest
 from concreate.builders.osbs import Chdir
 from concreate.cli import Concreate
+
 
 image_descriptor = {
     'schema_version': 1,
@@ -12,7 +14,10 @@ image_descriptor = {
     'name': 'test/busybox',
     'version': '1.0',
     'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
-    'run': {'cmd': ['sleep', '60']}
+    'run': {'cmd': ['sleep', '60']},
+    'modules': {'repositories': [{'name': 'modules',
+                                  'path': 'tests/modules/repo_1'}],
+                'install': [{'name': 'foo'}]}
 }
 
 feature_label_test = """
@@ -93,6 +98,50 @@ def test_image_test_with_override(tmpdir, mocker):
         fd.write(feature_label_test_overriden)
 
     run_concreate(image_dir)
+
+
+def test_module_override(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      '--overrides',
+                                      'overrides.yaml',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'modules': {'repositories': [{'name': 'modules',
+                                      'path': 'tests/modules/repo_2'}]}}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_concreate(image_dir)
+
+    module_dir = os.path.join(image_dir,
+                              'target',
+                              'image',
+                              'modules',
+                              'foo')
+
+    assert os.path.exists(os.path.join(module_dir,
+                                       'overriden'))
+
+    assert not os.path.exists(os.path.join(module_dir,
+                                           'original'))
+
+    found = False
+
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
+        for line in fd.readlines():
+            if line.strip() == 'RUN [ "bash", "-x", "/tmp/scripts/foo/script" ]':
+                found = True
+
+    assert found
 
 
 def run_concreate(cwd):
