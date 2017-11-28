@@ -1,14 +1,15 @@
-try:
-    import ConfigParser as configparser
-except:
-    import configparser
 import logging
 import os
 import shutil
 import yaml
 
 from concreate.errors import ConcreateError
+from concreate.descriptor import Descriptor
 
+try:
+    import ConfigParser as configparser
+except:
+    import configparser
 
 logger = logging.getLogger('concreate')
 
@@ -69,7 +70,7 @@ def merge_dictionaries(dict1, dict2, kwalify_schema=False):
         else:
             if isinstance(v2, list):
                 dict1[k2] = merge_lists(dict1[k2], v2)
-            elif isinstance(v2, dict):
+            elif isinstance(v2, dict) or isinstance(v2, Descriptor):
                 dict1[k2] = merge_dictionaries(dict1[k2], v2, kwalify_schema)
             else:
                 # if the type is int or strings we override the value from
@@ -89,9 +90,10 @@ def merge_lists(list1, list2):
 
     Returns merged list
     """
-    list1_dicts = [x for x in list1 if isinstance(x, dict)]
+    list1_dicts = [x for x in list1 if isinstance(x, dict) or isinstance(x, Descriptor)]
+
     for v2 in list2:
-        if isinstance(v2, dict):
+        if isinstance(v2, dict) or isinstance(v2, Descriptor):
             if 'name' not in v2:
                 raise KeyError("The 'name' key was not found in dict: %s" % v2)
 
