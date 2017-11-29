@@ -15,7 +15,7 @@ An image can be tested by running:
 
 * ``--test-wip`` -- only run tests tagged with the ``@wip`` tag.
 * ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
-* ``--tag @sometag`` --  only run tests tagged with e.g. ``@sometag``. Only the first occurrence of this argument is honoured.
+* ``--tag altname`` --  Overrides the name of the Image used for testing to ``altname``. Only the first occurrence of this argument is honoured.
 
 
 About Tests
@@ -59,27 +59,31 @@ of related images:
 
 1. `Product tags`
    
-   Tags based on product names. When a product image is tested, concreate uses
-   tags containing the image name and its product family name.  **Example**: If
-   you are testing ``jboss-eap-7/eap7`` image, test will be invoked with tag
-   ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
+   Tags based on image names. Concreate derives two test tag names from the
+   name of the Image being tested. The whole image name is converted into one
+   tag, and everything before the first '/' character is converted into
+   another.
+   **Example**: If you are testing the ``jboss-eap-7/eap7`` image,
+   tests will be invoked with tags ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
+
+   If ``--tag`` is specified, then the argument is used in place of the Image
+   name for the process above.
+   **Example** If you provided ``--tag foo/bar``, then the tags used would be
+   ``@foo`` and ``@foo/bar``.
 
 2. `Wip tags`
    
    This is very special behavior used mainly in development. Its purpose is to
    to limit the tests to be run to a subset you are working on. To achieve this
    you should mark your in-development test scenarios with the ``@wip`` tag and
-   run ``concreate test --test-wip``.
+   run ``concreate test --test-wip``. All other scenarios not tagged ``@wip``
+   will be ignored.
 
-3. `Custom tags`
+3. `The @ci tag`
 
-   You can restrict tests to those for a particular image using the ``--tag``
-   option. **Example**: To run only the tests for image 'foo' you can run
-   ``concreate test --tag foo``
+   If ``concreate`` is not running as a user called ``jenkins``, the tag ``@ci``
+   is added to the list of ignored tags, meaning any tests tagged ``@ci`` are
+   ignored and not executed.
 
-4. `Environment tags`
-
-   You may wish to define some scenarios that are only executed when running
-   tests in some environment. **Example** you may write some tests that only
-   make sense to execute as part of a Continuous Integration system. You could
-   mark such tests with ``@ci``.
+   The purpose of this behavior is to ease specifying tests that are only
+   executed when run within Jenkins CI.
