@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 import yaml
@@ -143,6 +144,52 @@ def check_dockerfile(image_dir, match):
             if line.strip() == match.strip():
                 return True
     return False
+
+
+def test_local_module_injection(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    local_desc = image_descriptor.copy()
+    local_desc['modules'] = {'install': [{'name': 'foo'}]}
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(local_desc, fd, default_flow_style=False)
+
+    shutil.copytree(os.path.join(os.path.dirname(__file__),
+                                 'modules', 'repo_1'),
+                    os.path.join(image_dir, 'modules'))
+    run_concreate(image_dir)
+    assert os.path.exists(os.path.join(image_dir,
+                                       'target',
+                                       'image',
+                                       'modules',
+                                       'foo',
+                                       'original'))
+
+
+def test_local_module_not_injected(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    local_desc = image_descriptor.copy()
+    local_desc.pop('modules')
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(local_desc, fd, default_flow_style=False)
+
+    shutil.copytree(os.path.join(os.path.dirname(__file__),
+                                 'modules', 'repo_1'),
+                    os.path.join(image_dir, 'modules'))
+    run_concreate(image_dir)
+    assert not os.path.exists(os.path.join(image_dir,
+                                           'target',
+                                           'image',
+                                           'modules'))
 
 
 def test_run_override_user(tmpdir, mocker):
