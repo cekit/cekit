@@ -19,9 +19,16 @@ logger = logging.getLogger('concreate')
 class Generator(object):
 
     def __init__(self, descriptor_path, target, overrides):
+        descriptor = tools.load_descriptor(descriptor_path)
 
-        self.descriptor = Image(tools.load_descriptor(descriptor_path),
-                                os.path.dirname(descriptor_path))
+        # if there is a local modules directory and no modules are defined
+        # we will inject it for a backward compatibility
+        local_mod_path = os.path.join(os.path.abspath(os.path.dirname(descriptor_path)), 'modules')
+        if os.path.exists(local_mod_path) and 'modules' in descriptor:
+            modules = descriptor.get('modules')
+            if not modules.get('repositories'):
+                modules['repositories'] = [{'path': local_mod_path, 'name': 'modules'}]
+        self.descriptor = Image(descriptor, os.path.dirname(descriptor_path))
         self.target = target
 
         if overrides:
