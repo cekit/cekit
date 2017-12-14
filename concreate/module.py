@@ -74,6 +74,7 @@ def get_dependencies(descriptor, base_dir):
 
     for repo in module_repositories:
         repo.copy(base_dir)
+        discover_modules(os.path.join(base_dir, repo['name']))
 
 
 def discover_modules(repo_dir):
