@@ -3,10 +3,21 @@ import shutil
 import sys
 
 import yaml
-
 import pytest
+
 from concreate.builders.osbs import Chdir
 from concreate.cli import Concreate
+
+
+def clear_module(*args, **kwargs):
+    """Reload concreate.module to make sure it doesnt contain old modules instances"""
+    import concreate.module
+    try:
+        from imp import reload
+    except NameError:
+        from importlib import reload
+
+    reload(concreate.module)
 
 
 image_descriptor = {
@@ -41,6 +52,7 @@ Feature: Test test
 
 
 def test_simple_image_build(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '-v',
                                       'build'])
@@ -54,6 +66,7 @@ def test_simple_image_build(tmpdir, mocker):
 
 
 def test_simple_image_test(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate', '-v',
                                       'build',
                                       'test'])
@@ -74,6 +87,7 @@ def test_simple_image_test(tmpdir, mocker):
 
 
 def test_image_test_with_override(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '--overrides',
                                       'overrides.yaml',
@@ -102,6 +116,7 @@ def test_image_test_with_override(tmpdir, mocker):
 
 
 def test_module_override(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '--overrides',
                                       'overrides.yaml',
@@ -147,6 +162,7 @@ def check_dockerfile(image_dir, match):
 
 
 def test_local_module_injection(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       'generate'])
 
@@ -171,6 +187,7 @@ def test_local_module_injection(tmpdir, mocker):
 
 
 def test_local_module_not_injected(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       'generate'])
 
@@ -193,6 +210,7 @@ def test_local_module_not_injected(tmpdir, mocker):
 
 
 def test_run_override_user(tmpdir, mocker):
+    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '--overrides',
                                       'overrides.yaml',

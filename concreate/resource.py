@@ -220,6 +220,8 @@ class PathResource(Resource):
             else:
                 raise ConcreateError("Could not copy resource '%s', source path does not exist. Make sure you provided correct path" % self.name)
 
+        logger.debug("Copying repository from '%s' to '%s'." % (self.path,
+                                                                target))
         if os.path.isdir(self.path):
             shutil.copytree(self.path, target)
         else:
