@@ -113,6 +113,9 @@ Python 3 version.
 %{_bindir}/concreate
 
 %changelog
+* Thu Dec 14 2017 David Becvarik <dbecvari@redhat.com> - 1.3.4-1
+- Release 1.3.4
+
 * Thu Nov 29 2017 David Becvarik <dbecvari@redhat.com> - 1.3.3-1
 - Release 1.3.3
 
