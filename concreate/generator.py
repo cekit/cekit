@@ -150,13 +150,14 @@ class Generator(object):
         target_dir = os.path.join(self.target, 'image', 'repos')
 
         for repo in self.descriptor.get('packages', {}).get('repositories', []):
-            if repo not in configured_repositories:
+            if repo['state'] == 'present' and \
+               repo['name'] not in configured_repositories:
                 raise ConcreateError("Package repository '%s' used in descriptor is not "
                                      "available in Concreate configuration file. "
                                      "Available repositories: %s"
-                                     % (repo, configured_repository_names))
+                                     % (repo['name'], configured_repository_names))
 
-            urls = configured_repositories[repo]
+            urls = configured_repositories[repo['name']]
 
             if urls:
                 # we need to do this in this cycle to prevent creation of empty dir

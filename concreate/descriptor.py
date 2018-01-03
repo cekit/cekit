@@ -195,12 +195,59 @@ class Packages(Descriptor):
         map:
           repositories:
             seq:
-              - {type: str}
+              - {type: any}
           install:
             seq:
-            - {type: str}""")]
+              - {type: str}"""),
+                        yaml.safe_load("""
+        map:
+          repositories:
+            seq:
+              - {type: any}
+          packages:
+            seq:
+              - {type: any}""")]
 
         super(Packages, self).__init__(descriptor)
+
+        if 'install' in self.descriptor:
+            self.descriptor['packages'] = []
+            for pkg in self.descriptor['install']:
+                self.descriptor['packages'].append(ListItem(pkg))
+        elif 'packages' in self.descriptor:
+            pkgs = self.descriptor['packages'][:]
+            self.descriptor['packages'] = []
+            for pkg in pkgs:
+                self.descriptor['packages'].append(ListItem(pkg))
+
+        if 'repositories' in self.descriptor:
+            repos = self.descriptor['repositories'][:]
+            self.descriptor['repositories'] = []
+            for repo in repos:
+                self.descriptor['repositories'].append(ListItem(repo))
+
+
+class ListItem(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""
+        map:
+          name: {type: str, required: True}
+          state:
+            type: str
+            enum: ['present', 'absent']"""),
+                        yaml.safe_load("""{type: str}""")]
+        super(ListItem, self).__init__(descriptor)
+
+        self._prepare()
+
+    def _prepare(self):
+        # if its base string, convert it to dict for compatibility
+        if isinstance(self.descriptor, str):
+            self.descriptor = {'name': self.descriptor,
+                               'state': 'present'}
+            return
+        if 'state' not in self.descriptor:
+            self.descriptor['state'] = 'present'
 
 
 class Modules(Descriptor):

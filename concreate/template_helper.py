@@ -45,6 +45,11 @@ class TemplateHelper(object):
 
         return "%s:%s" % (base_image, version)
 
+    def filter_state(self, list_of_dicts, state):
+        """Retrun list of 'name' keys from dictionary matching state"""
+
+        return [x['name'] for x in list_of_dicts if x['state'] == state]
+
     def envs(self, env_variables):
         """Combines all environment variables that should be added to the
         Dockerfile into one array
