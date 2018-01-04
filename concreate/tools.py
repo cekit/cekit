@@ -50,35 +50,25 @@ def load_descriptor(descriptor_path):
         return yaml.safe_load(fh)
 
 
-def merge_dictionaries(dict1, dict2, kwalify_schema=False):
+def merge_descriptors(desc1, desc2):
     """
-    Merges two dictionaries handling embedded lists and
-    dictionaries.
-
-    In a case of simple type; values from dict1 are preserved by default, but
-    if `kwalify_schema` argument is set to `True`, values from dict2 are used.
+    Merges two descriptors with handling embedded lists and
+    descriptors.
 
     Args:
-      dict1, dict2: dictionaries to merge
-      kwalify_schema: defines if we're merging schema or descriptors
+      desc1, desc2: descriptors to merge
 
-    Return merged dictionaries
+    Return merged descriptor
     """
-    for k2, v2 in dict2.items():
-        if k2 not in dict1:
-            dict1[k2] = v2
+    for k2, v2 in desc2.items():
+        if k2 not in desc1:
+            desc1[k2] = v2
         else:
             if isinstance(v2, list):
-                dict1[k2] = merge_lists(dict1[k2], v2)
-            elif isinstance(v2, dict) or isinstance(v2, Descriptor):
-                dict1[k2] = merge_dictionaries(dict1[k2], v2, kwalify_schema)
-            else:
-                # if the type is int or strings we override the value from
-                # dict2 but only when we're merging kwalify schema, for other
-                # types of merges we're interested in using the value from dict1
-                if kwalify_schema:
-                    dict1[k2] = v2
-    return dict1
+                desc1[k2] = merge_lists(desc1[k2], v2)
+            elif isinstance(v2, Descriptor):
+                desc1[k2] = merge_descriptors(desc1[k2], v2)
+    return desc1
 
 
 def merge_lists(list1, list2):
@@ -90,19 +80,12 @@ def merge_lists(list1, list2):
 
     Returns merged list
     """
-    list1_dicts = [x for x in list1 if isinstance(x, dict) or isinstance(x, Descriptor)]
-
     for v2 in list2:
-        if isinstance(v2, dict) or isinstance(v2, Descriptor):
-            if 'name' not in v2:
-                raise KeyError("The 'name' key was not found in dict: %s" % v2)
-
-            if v2['name'] not in [x['name'] for x in list1_dicts]:
-                list1.append(v2)
+        if isinstance(v2, Descriptor):
+            if v2 in list1:
+                merge_descriptors(list1[list1.index(v2)], v2)
             else:
-                for v1 in list1_dicts:
-                    if v2['name'] == v1['name']:
-                        merge_dictionaries(v1, v2)
+                list1.append(v2)
         elif isinstance(v2, list):
             raise ConcreateError("Cannot merge list of lists")
         else:

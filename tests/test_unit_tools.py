@@ -1,44 +1,58 @@
 import pytest
+import yaml
 
 from concreate import tools
+from concreate.descriptor import Descriptor
 from concreate.errors import ConcreateError
 
 
-def test_merging_plain_dictionaries():
-    dict1 = {'a': 1,
-             'b': 2}
-    dict2 = {'b': 5,
-             'c': 3}
-    expected = {'a': 1,
-                'b': 2,
-                'c': 3}
-    assert expected == tools.merge_dictionaries(dict1, dict2)
+class TestDescriptor(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""type: any""")]
+        super(TestDescriptor, self).__init__(descriptor)
+
+        for key, val in descriptor.items():
+            if isinstance(val, dict):
+                self.descriptor[key] = TestDescriptor(val)
 
 
-def test_merging_plain_dictionaries_for_kwalify_schema():
-    dict1 = {'a': 1,
-             'b': 2}
-    dict2 = {'b': 5,
-             'c': 3}
-    expected = {'a': 1,
-                'b': 5,
-                'c': 3}
-    assert expected == tools.merge_dictionaries(dict1, dict2, True)
+def test_merging_plain_descriptors():
+    desc1 = TestDescriptor({'name': 'foo',
+                            'a': 1,
+                            'b': 2})
+
+    desc2 = TestDescriptor({'name': 'foo',
+                            'b': 5,
+                            'c': 3})
+
+    expected = TestDescriptor({'name': 'foo',
+                               'a': 1,
+                               'b': 2,
+                               'c': 3})
+    assert expected == tools.merge_descriptors(desc1, desc2)
+    assert expected.items() == tools.merge_descriptors(desc1, desc2).items()
 
 
-def test_merging_emdedded_dictionaires():
-    dict1 = {'a': 1,
-             'b': {'b1': 10,
-                   'b2': 20}}
-    dict2 = {'b': {'b2': 50,
-                   'b3': 30},
-             'c': 3}
-    expected = {'a': 1,
-                'b': {'b1': 10,
-                      'b2': 20,
-                      'b3': 30},
-                'c': 3}
-    assert expected == tools.merge_dictionaries(dict1, dict2)
+def test_merging_emdedded_descriptors():
+    desc1 = TestDescriptor({'name': 'a',
+                            'a': 1,
+                            'b': {'name': 'b',
+                                  'b1': 10,
+                                  'b2': 20}})
+    desc2 = TestDescriptor({'b': {'name': 'b',
+                                  'b2': 50,
+                                  'b3': 30},
+                            'c': {'name': 'c'}})
+
+    expected = TestDescriptor({'name': 'a',
+                               'a': 1,
+                               'b': {'name': 'b',
+                                     'b1': 10,
+                                     'b2': 20,
+                                     'b3': 30},
+                               'c': {'name': 'c'}})
+
+    assert expected == tools.merge_descriptors(desc1, desc2)
 
 
 def test_merging_plain_lists():
@@ -55,21 +69,22 @@ def test_merging_plain_list_of_list():
         tools.merge_lists(list1, list2)
 
 
-def test_merging_list_of_dictionaries():
-    list1 = [{'name': 1,
-              'a': 1,
-              'b': 2}, 'a']
-    list2 = [{'name': 2,
-              'a': 123},
-             {'name': 1,
-              'b': 3,
-              'c': 3}]
-    expected = [{'name': 1,
-                 'a': 1,
-                 'b': 2,
-                 'c': 3},
-                'a',
-                {'name': 2,
-                 'a': 123}]
+def test_merging_list_of_descriptors():
+    desc1 = [TestDescriptor({'name': 1,
+                             'a': 1,
+                             'b': 2})]
 
-    assert expected == tools.merge_lists(list1, list2)
+    desc2 = [TestDescriptor({'name': 2,
+                             'a': 123}),
+             TestDescriptor({'name': 1,
+                             'b': 3,
+                             'c': 3})]
+
+    expected = [TestDescriptor({'name': 1,
+                                'a': 1,
+                                'b': 2,
+                                'c': 3}),
+                TestDescriptor({'name': 2,
+                                'a': 123})]
+
+    assert expected == tools.merge_lists(desc1, desc2)

@@ -5,7 +5,6 @@ import shutil
 from concreate import tools
 from concreate.descriptor import Module
 from concreate.errors import ConcreateError
-from concreate.resource import Resource
 
 logger = logging.getLogger('concreate')
 # importable list of all modules
