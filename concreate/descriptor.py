@@ -72,7 +72,7 @@ class Descriptor(object):
           descriptor - a concreate descritor
         """
         try:
-            self.descriptor = concreate.tools.merge_dictionaries(self.descriptor, descriptor)
+            self.descriptor = concreate.tools.merge_descriptors(self.descriptor, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise ConcreateError("Cannot merge descriptors, see log message for more information")
@@ -128,6 +128,11 @@ class Label(Descriptor):
 
 
 class Env(Descriptor):
+    """Object representing Env variable
+
+    Args:
+      descriptor - yaml object containing Env variable
+    """
     def __init__(self, descriptor):
         self.schemas = [yaml.safe_load("""
         map:
