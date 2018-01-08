@@ -1,4 +1,5 @@
 import concreate
+import collections
 import logging
 import os
 import yaml
@@ -9,7 +10,7 @@ from pykwalify.core import Core
 logger = logging.getLogger('concreate')
 
 
-class Descriptor(object):
+class Descriptor(collections.MutableMapping):
     def __init__(self, descriptor):
         self.descriptor = descriptor
         self.__validate()
@@ -68,8 +69,14 @@ class Descriptor(object):
     def __setitem__(self, key, item):
         self.descriptor[key] = item
 
+    def __delitem__(self, key):
+        del self.descriptor[key]
+
     def __iter__(self):
         return self.descriptor.__iter__()
+
+    def __len__(self):
+        return len(self.descriptor)
 
     def items(self):
         return self.descriptor.items()
