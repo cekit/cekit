@@ -1,4 +1,3 @@
-import tempfile
 import unittest
 
 from concreate.template_helper import TemplateHelper

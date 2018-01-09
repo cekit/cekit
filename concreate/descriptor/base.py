@@ -12,12 +12,13 @@ logger = logging.getLogger('concreate')
 
 class Descriptor(collections.MutableMapping):
     def __init__(self, descriptor):
-        self.descriptor = descriptor
+        self.skip_merging = []
+        self._descriptor = descriptor
         self.__validate()
 
     def __validate(self):
         for schema in self.schemas:
-            core = Core(source_data=self.descriptor,
+            core = Core(source_data=self._descriptor,
                         schema_data=schema, allow_assertions=True)
             try:
                 core.validate(raise_exception=True)
@@ -33,10 +34,10 @@ class Descriptor(collections.MutableMapping):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(path, 'w') as outfile:
-            yaml.dump(self.descriptor, outfile, default_flow_style=False)
+            yaml.dump(self._descriptor, outfile, default_flow_style=False)
 
     def label(self, key):
-        for l in self.descriptor['labels']:
+        for l in self._descriptor['labels']:
             if l['name'] == key:
                 return l
         return None
@@ -64,35 +65,37 @@ class Descriptor(collections.MutableMapping):
         return NotImplemented
 
     def __getitem__(self, key):
-        return self.descriptor[key]
+        return self._descriptor[key]
 
     def __setitem__(self, key, item):
-        self.descriptor[key] = item
+        self._descriptor[key] = item
 
     def __delitem__(self, key):
-        del self.descriptor[key]
+        del self._descriptor[key]
 
     def __iter__(self):
-        return self.descriptor.__iter__()
+        return self._descriptor.__iter__()
 
     def __len__(self):
-        return len(self.descriptor)
+        return len(self._descriptor)
 
     def items(self):
-        return self.descriptor.items()
+        return self._descriptor.items()
 
     def get(self, k, default=None):
-        return self.descriptor.get(k, default)
+        return self._descriptor.get(k, default)
 
     def process_defaults(self):
         """Prepares default values before rendering"""
-        if 'execute' in self.descriptor:
-            for execute in self.descriptor['execute']:
+        if 'execute' in self._descriptor:
+            for execute in self._descriptor['execute']:
                 if 'user' not in execute:
                     execute['user'] = concreate.DEFAULT_USER
 
-        if 'run' not in self.descriptor:
-            self.descriptor['run'] = {}
+        if 'run' not in self._descriptor:
+            self._descriptor['run'] = {}
 
-        if 'user' not in self.descriptor['run']:
-            self.descriptor['run']['user'] = concreate.DEFAULT_USER
+        if 'user' not in self._descriptor['run']:
+            self._descriptor['run']['user'] = concreate.DEFAULT_USER
+
+

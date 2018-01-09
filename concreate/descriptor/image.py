@@ -32,9 +32,9 @@ class Image(Descriptor):
         self._prepare()
 
     def _prepare(self):
-        """Updates self.descriptor with objects and prepare sane label"""
+        """Updates self._descriptor with objects and prepare sane label"""
 
-        self.descriptor['labels'] = self.descriptor.get('labels', [])
+        self._descriptor['labels'] = self._descriptor.get('labels', [])
         # The description key available in image descriptor's
         # root is added as labels to the image
         key = 'description'
@@ -42,9 +42,9 @@ class Image(Descriptor):
         # If we define the label in the image descriptor
         # we should *not* override it with value from
         # the root's key
-        if key in self.descriptor and not self.label(key):
-            value = self.descriptor[key]
-            self.descriptor['labels'].append({'name': key, 'value': value})
+        if key in self._descriptor and not self.label(key):
+            value = self._descriptor[key]
+            self._descriptor['labels'].append({'name': key, 'value': value})
 
         # Last - if there is no 'summary' label added to image descriptor
         # we should use the value of the 'description' key and create
@@ -53,20 +53,20 @@ class Image(Descriptor):
         description = self.label('description')
 
         if not self.label('summary') and description:
-            self.descriptor['labels'].append(
+            self._descriptor['labels'].append(
                 {'name': 'summary', 'value': description['value']})
 
-        self.descriptor['labels'] = [Label(x) for x in self.descriptor.get('labels', [])]
-        self.descriptor['envs'] = [Env(x) for x in self.descriptor.get('envs', [])]
-        self.descriptor['ports'] = [Port(x) for x in self.descriptor.get('ports', [])]
-        if 'run' in self.descriptor:
-            self.descriptor['run'] = Run(self.descriptor['run'])
-        self.descriptor['artifacts'] = [concreate.resource.Resource.new(a)
-                                        for a in self.descriptor.get('artifacts', [])]
-        if 'modules' in self.descriptor:
-            self.descriptor['modules'] = Modules(self.descriptor['modules'])
-        if 'packages' in self.descriptor:
-            self.descriptor['packages'] = Packages(self.descriptor['packages'])
-        if 'osbs' in self.descriptor:
-            self.descriptor['osbs'] = Osbs(self.descriptor['osbs'])
-        self.descriptor['volumes'] = [Volume(x) for x in self.descriptor.get('volumes', [])]
+        self._descriptor['labels'] = [Label(x) for x in self._descriptor.get('labels', [])]
+        self._descriptor['envs'] = [Env(x) for x in self._descriptor.get('envs', [])]
+        self._descriptor['ports'] = [Port(x) for x in self._descriptor.get('ports', [])]
+        if 'run' in self._descriptor:
+            self._descriptor['run'] = Run(self._descriptor['run'])
+        self._descriptor['artifacts'] = [concreate.resource.Resource.new(a)
+                                        for a in self._descriptor.get('artifacts', [])]
+        if 'modules' in self._descriptor:
+            self._descriptor['modules'] = Modules(self._descriptor['modules'])
+        if 'packages' in self._descriptor:
+            self._descriptor['packages'] = Packages(self._descriptor['packages'])
+        if 'osbs' in self._descriptor:
+            self._descriptor['osbs'] = Osbs(self._descriptor['osbs'])
+        self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
