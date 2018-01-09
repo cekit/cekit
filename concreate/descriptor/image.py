@@ -29,6 +29,10 @@ class Image(Descriptor):
         self.schemas = [image_schema.copy()]
 
         super(Image, self).__init__(descriptor)
+        self.skip_merging = ['description',
+                             'version',
+                             'name',
+                             'release']
         self._prepare()
 
     def _prepare(self):
@@ -62,7 +66,7 @@ class Image(Descriptor):
         if 'run' in self._descriptor:
             self._descriptor['run'] = Run(self._descriptor['run'])
         self._descriptor['artifacts'] = [concreate.resource.Resource.new(a)
-                                        for a in self._descriptor.get('artifacts', [])]
+                                         for a in self._descriptor.get('artifacts', [])]
         if 'modules' in self._descriptor:
             self._descriptor['modules'] = Modules(self._descriptor['modules'])
         if 'packages' in self._descriptor:

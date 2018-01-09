@@ -11,6 +11,24 @@ logger = logging.getLogger('concreate')
 
 
 class Descriptor(collections.MutableMapping):
+    """Class serving as parent for any descriptor in concreate.
+
+    Class implement collections.MutableMapping so it can be used as a dictionary.
+
+    * Schema validation:
+    Each class which uses this as a parent can validate its schemas defined in
+    self.schemas by calling Descriptor constructor
+
+    * Merging
+    Any two Descriptor childs can be merged by invoking merge() method. Easch subclass
+    can define its own logic for merging by overriding this method.
+    If there is any key which should not be merged, it should be appended to Descriptor.skip_merging
+    list.
+
+    args:
+      descriptor - an descriptor to be represented by this class
+
+    """
     def __init__(self, descriptor):
         self.skip_merging = []
         self._descriptor = descriptor
@@ -110,6 +128,8 @@ def _merge_descriptors(desc1, desc2):
     Return merged descriptor
     """
     for k2, v2 in desc2.items():
+        if k2 in desc1.skip_merging:
+            continue
         if k2 not in desc1:
             desc1[k2] = v2
         else:
