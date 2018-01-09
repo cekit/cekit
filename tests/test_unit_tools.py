@@ -2,7 +2,8 @@ import pytest
 import yaml
 
 from concreate import tools
-from concreate.descriptor import Descriptor
+from concreate.descriptor.base import _merge_descriptors, _merge_lists
+from concreate.descriptor import Descriptor, Image, Module, Overrides
 from concreate.errors import ConcreateError
 
 
@@ -13,7 +14,7 @@ class TestDescriptor(Descriptor):
 
         for key, val in descriptor.items():
             if isinstance(val, dict):
-                self.descriptor[key] = TestDescriptor(val)
+                self._descriptor[key] = TestDescriptor(val)
 
 
 def test_merging_plain_descriptors():
@@ -29,8 +30,8 @@ def test_merging_plain_descriptors():
                                'a': 1,
                                'b': 2,
                                'c': 3})
-    assert expected == tools.merge_descriptors(desc1, desc2)
-    assert expected.items() == tools.merge_descriptors(desc1, desc2).items()
+    assert expected == _merge_descriptors(desc1, desc2)
+    assert expected.items() == _merge_descriptors(desc1, desc2).items()
 
 
 def test_merging_emdedded_descriptors():
@@ -59,14 +60,14 @@ def test_merging_plain_lists():
     list1 = [1, 2, 3]
     list2 = [2, 3, 4, 5]
     expected = [1, 2, 3, 4, 5]
-    assert tools.merge_lists(list1, list2) == expected
+    assert _merge_lists(list1, list2) == expected
 
 
 def test_merging_plain_list_of_list():
     list1 = [1, 2, 3]
     list2 = [3, 4, []]
     with pytest.raises(ConcreateError):
-        tools.merge_lists(list1, list2)
+        _merge_lists(list1, list2)
 
 
 def test_merging_list_of_descriptors():
@@ -87,4 +88,4 @@ def test_merging_list_of_descriptors():
                 TestDescriptor({'name': 2,
                                 'a': 123})]
 
-    assert expected == tools.merge_lists(desc1, desc2)
+    assert expected == _merge_lists(desc1, desc2)
