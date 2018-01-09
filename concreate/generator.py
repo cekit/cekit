@@ -17,6 +17,14 @@ logger = logging.getLogger('concreate')
 
 
 class Generator(object):
+    """This class process Image descriptor(self.image) and uses it to generate
+    target directory by fetching all dependencies and artifacts
+
+    Args:
+      descriptor_path - path to an image descriptor
+      target - path to target directory
+      overrides - path to overrides file (can be None)
+    """
 
     def __init__(self, descriptor_path, target, overrides):
         descriptor = tools.load_descriptor(descriptor_path)
@@ -28,25 +36,27 @@ class Generator(object):
             modules = descriptor.get('modules')
             if not modules.get('repositories'):
                 modules['repositories'] = [{'path': local_mod_path, 'name': 'modules'}]
-        self.descriptor = Image(descriptor, os.path.dirname(descriptor_path))
+
+        self.image = Image(descriptor, os.path.dirname(descriptor_path))
         self.target = target
 
         if overrides:
-            self.descriptor = self.override(overrides)
+            self.image = self.override(overrides)
 
         logger.info("Initializing image descriptor...")
 
     def generate_tech_preview(self):
-        name = self.descriptor.get('name')
+        """Appends '--tech-preview' to image name/family name"""
+        name = self.image.get('name')
         if '/' in name:
             family, name = name.split('/')
-            self.descriptor['name'] = "%s-tech-preview/%s" % (family, name)
+            self.image['name'] = "%s-tech-preview/%s" % (family, name)
         else:
-            self.descriptor['name'] = "%s-tech-preview" % name
+            self.image['name'] = "%s-tech-preview" % name
 
     def get_tags(self):
-        return ["%s:%s" % (self.descriptor['name'], self.descriptor[
-            'version']), "%s:latest" % self.descriptor['name']]
+        return ["%s:%s" % (self.image['name'], self.image[
+            'version']), "%s:latest" % self.image['name']]
 
     def prepare_modules(self, descriptor=None):
         """Prepare module to be used for Dockerfile generation.
@@ -61,14 +71,14 @@ class Generator(object):
             if descriptor is not provided image descriptor is used.
         """
         if not descriptor:
-            descriptor = self.descriptor
+            descriptor = self.image
 
         modules = descriptor.get('modules', {}).get('install', {})
 
         # If descriptor doesn't requires any module we can start merging descriptors
         # and fetching artifacts. There is nothing left to do except for this
         if not modules:
-            self.descriptor.merge(descriptor)
+            self.image.merge(descriptor)
             return
 
         logger.info("Handling modules...")
@@ -80,8 +90,8 @@ class Generator(object):
                                                version,
                                                os.path.join(self.target, 'image', 'modules'))
             # If there is any required module it needs to be prepared too
-            self.prepare_modules(req_module.descriptor)
-            self.descriptor.merge(descriptor)
+            self.prepare_modules(req_module)
+            self.image.merge(descriptor)
 
         logger.debug("Modules handled")
 
@@ -89,21 +99,21 @@ class Generator(object):
         """Goes through artifacts section of image descriptor
         and fetches all of them
         """
-        if 'artifacts' not in self.descriptor:
+        if 'artifacts' not in self.image:
             logger.debug("No artifacts to fetch")
             return
 
         logger.info("Handling artifacts...")
         target_dir = os.path.join(self.target, 'image')
 
-        for artifact in self.descriptor['artifacts']:
+        for artifact in self.image['artifacts']:
             artifact.copy(target_dir)
         logger.debug("Artifacts handled")
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
         descriptor = Overrides(tools.load_descriptor(overrides_path))
-        descriptor.merge(self.descriptor)
+        descriptor.merge(self.image)
         return descriptor
 
     def render_dockerfile(self):
@@ -114,7 +124,7 @@ class Generator(object):
         """
         logger.info("Rendering Dockerfile...")
 
-        self.descriptor.process_defaults()
+        self.image.process_defaults()
 
         template_file = os.path.join(os.path.dirname(__file__),
                                      'templates',
@@ -132,7 +142,7 @@ class Generator(object):
 
         with open(dockerfile, 'wb') as f:
             f.write(template.render(
-                self.descriptor.descriptor).encode('utf-8'))
+                self.image).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
     def prepare_repositories(self):
@@ -149,7 +159,7 @@ class Generator(object):
         added_repos = []
         target_dir = os.path.join(self.target, 'image', 'repos')
 
-        for repo in self.descriptor.get('packages', {}).get('repositories', []):
+        for repo in self.image.get('packages', {}).get('repositories', []):
             if repo not in configured_repositories:
                 raise ConcreateError("Package repository '%s' used in descriptor is not "
                                      "available in Concreate configuration file. "
@@ -171,4 +181,4 @@ class Generator(object):
 
                 logger.debug("Additional repository files handled")
 
-                self.descriptor['additional_repos'] = added_repos
+                self.image['additional_repos'] = added_repos
