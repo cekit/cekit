@@ -1,5 +1,6 @@
 # forwarding import
 from concreate.descriptor.base import Descriptor
+from concreate.descriptor.resource import Resource
 from concreate.descriptor.label import Label
 from concreate.descriptor.port import Port
 from concreate.descriptor.env import Env

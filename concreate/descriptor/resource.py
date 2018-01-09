@@ -25,18 +25,18 @@ class Resource(Descriptor):
     SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
     CHECK_INTEGRITY = True
 
-    @staticmethod
-    def new(resource, base_dir=os.getcwd()):
-        if 'path' in resource:
-            directory = resource['path']
-            if not os.path.isabs(directory):
-                resource['path'] = os.path.join(base_dir, directory)
-            return PathResource(resource)
-        elif 'url' in resource:
-            return UrlResource(resource)
-        elif 'git' in resource:
-            return GitResource(resource)
-        raise ValueError("Resource type is not supported: %s" (resource))
+    def __new__(cls, resource):
+        if cls is Resource:
+            if 'path' in resource:
+                directory = resource['path']
+                if not os.path.isabs(directory):
+                    resource['path'] = os.path.join(os.getcwd(), directory)
+                return super(Resource, cls).__new__(_PathResource)
+            elif 'url' in resource:
+                return super(Resource, cls).__new__(_UrlResource)
+            elif 'git' in resource:
+                return super(Resource, cls).__new__(_GitResource)
+            raise ValueError("Resource type is not supported: %s" (resource))
 
     def __init__(self, descriptor):
         self.schemas = [yaml.safe_load("""
@@ -82,25 +82,26 @@ class Resource(Descriptor):
         if os.path.exists(target):
             try:
                 self.__verify(target)
-            except:
+            except Exception as ex:
                 logger.debug("Local resource verification failed")
                 overwrite = True
 
         if os.path.exists(target) and not overwrite:
-            logger.debug(
-                "Local resource '%s' exists and is valid, skipping" % self.name)
+            logger.debug("Local resource '%s' exists and is valid, skipping" % self.name)
             return target
 
         try:
             self._copy_impl(target)
         except Exception as ex:
-            logger.warn("Concreate is not able to fetch resource '%s' automatically. You can manually place required artifact as '%s'" % (self.name, target))
+            logger.warn("Concreate is not able to fetch resource '%s' automatically. "
+                        "You can manually place required artifact as '%s'" % (self.name, target))
 
             if self.description:
                 logger.info(self.description)
 
             # exception is fatal we be logged before Concreate dies
-            raise ConcreateError("Error copying resource: '%s'. See logs for more info." % self.name, ex)
+            raise ConcreateError("Error copying resource: '%s'. See logs for more info."
+                                 % self.name, ex)
 
         self.__verify(target)
 
@@ -195,12 +196,12 @@ class Resource(Descriptor):
             raise ConcreateError("Unsupported URL scheme: %s" % (url))
 
 
-class PathResource(Resource):
+class _PathResource(Resource):
 
     def __init__(self, descriptor):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['path'])
-        super(PathResource, self).__init__(descriptor)
+        super(_PathResource, self).__init__(descriptor)
         self.path = descriptor['path']
 
     def _copy_impl(self, target):
@@ -218,7 +219,9 @@ class PathResource(Resource):
                     logger.exception(ex)
                     raise ConcreateError("Could not download resource '%s' from cache" % self.name)
             else:
-                raise ConcreateError("Could not copy resource '%s', source path does not exist. Make sure you provided correct path" % self.name)
+                raise ConcreateError("Could not copy resource '%s', "
+                                     "source path does not exist. "
+                                     "Make sure you provided correct path" % self.name)
 
         logger.debug("Copying repository from '%s' to '%s'." % (self.path,
                                                                 target))
@@ -229,12 +232,12 @@ class PathResource(Resource):
         return target
 
 
-class UrlResource(Resource):
+class _UrlResource(Resource):
 
     def __init__(self, descriptor):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['url'])
-        super(UrlResource, self).__init__(descriptor)
+        super(_UrlResource, self).__init__(descriptor)
         self.url = descriptor['url'].strip()
 
     def _copy_impl(self, target):
@@ -246,12 +249,12 @@ class UrlResource(Resource):
         return target
 
 
-class GitResource(Resource):
+class _GitResource(Resource):
 
     def __init__(self, descriptor):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['git']['url'])
-        super(GitResource, self).__init__(descriptor)
+        super(_GitResource, self).__init__(descriptor)
         self.url = descriptor['git']['url']
         self.ref = descriptor['git']['ref']
 

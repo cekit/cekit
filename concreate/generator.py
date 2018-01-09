@@ -6,10 +6,9 @@ import os
 from jinja2 import Environment, FileSystemLoader
 
 from concreate import tools
-from concreate.descriptor import Image, Overrides
+from concreate.descriptor import Image, Overrides, Resource
 from concreate.errors import ConcreateError
 from concreate.module import copy_module_to_target
-from concreate.resource import Resource
 from concreate.template_helper import TemplateHelper
 
 
@@ -175,7 +174,7 @@ class Generator(object):
                 logger.info("Handling additional repository files...")
 
                 for url in urls.split(','):
-                    Resource.new({'url': url}).copy(target_dir)
+                    Resource({'url': url}).copy(target_dir)
                     added_repos.append(os.path.splitext(
                         os.path.basename(url))[0])
 

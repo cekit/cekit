@@ -1,8 +1,6 @@
 import yaml
 
-import concreate
-
-from concreate.descriptor import Descriptor
+from concreate.descriptor import Descriptor, Resource
 
 
 modules_schema = [yaml.safe_load("""
@@ -24,8 +22,8 @@ class Modules(Descriptor):
     def __init__(self, descriptor):
         self.schemas = modules_schema
         super(Modules, self).__init__(descriptor)
-        self._descriptor['repositories'] = [concreate.resource.Resource.new(r)
-                                           for r in self._descriptor.get('repositories', [])]
+        self._descriptor['repositories'] = [Resource(r)
+                                            for r in self._descriptor.get('repositories', [])]
         self._descriptor['install'] = [Install(x) for x in self._descriptor.get('install', [])]
 
 
