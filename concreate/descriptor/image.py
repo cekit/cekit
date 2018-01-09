@@ -1,8 +1,7 @@
-import concreate
 import yaml
 
 from concreate.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
-    Packages, Osbs, Volume
+    Packages, Osbs, Volume, Resource
 from concreate.version import version as concreate_version
 
 image_schema = yaml.safe_load("""
@@ -71,8 +70,7 @@ class Image(Descriptor):
         self._descriptor['ports'] = [Port(x) for x in self._descriptor.get('ports', [])]
         if 'run' in self._descriptor:
             self._descriptor['run'] = Run(self._descriptor['run'])
-        self._descriptor['artifacts'] = [concreate.resource.Resource.new(a)
-                                         for a in self._descriptor.get('artifacts', [])]
+        self._descriptor['artifacts'] = [Resource(a) for a in self._descriptor.get('artifacts', [])]
         if 'modules' in self._descriptor:
             self._descriptor['modules'] = Modules(self._descriptor['modules'])
         if 'packages' in self._descriptor:

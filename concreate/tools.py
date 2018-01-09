@@ -4,7 +4,6 @@ import shutil
 import yaml
 
 from concreate.errors import ConcreateError
-from concreate.descriptor import Descriptor
 
 try:
     import ConfigParser as configparser
