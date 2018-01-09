@@ -17,6 +17,36 @@ class TestDescriptor(Descriptor):
                 self._descriptor[key] = TestDescriptor(val)
 
 
+def test_merging_description_image():
+    desc1 = Image({'name': 'foo'}, None)
+
+    desc2 = Module({'name': 'mod1',
+                    'description': 'mod_desc'}, None)
+
+    merged = _merge_descriptors(desc1, desc2)
+    assert 'description' not in merged
+
+
+def test_merging_description_modules():
+    desc1 = Module({'name': 'foo'}, None)
+
+    desc2 = Module({'name': 'mod1',
+                    'description': 'mod_desc'}, None)
+
+    merged = _merge_descriptors(desc1, desc2)
+    assert 'description' not in merged
+
+
+def test_merging_description_override():
+    desc1 = Image({'name': 'foo'}, None)
+
+    desc2 = Overrides({'name': 'mod1',
+                       'description': 'mod_desc'})
+
+    merged = _merge_descriptors(desc2, desc1)
+    assert 'description' in merged
+
+
 def test_merging_plain_descriptors():
     desc1 = TestDescriptor({'name': 'foo',
                             'a': 1,
@@ -53,7 +83,7 @@ def test_merging_emdedded_descriptors():
                                      'b3': 30},
                                'c': {'name': 'c'}})
 
-    assert expected == tools.merge_descriptors(desc1, desc2)
+    assert expected == _merge_descriptors(desc1, desc2)
 
 
 def test_merging_plain_lists():
