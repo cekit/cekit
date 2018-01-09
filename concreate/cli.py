@@ -136,7 +136,7 @@ class Concreate(object):
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)
-            get_dependencies(generator.descriptor,
+            get_dependencies(generator.image,
                              os.path.join(self.args.target, 'repo'))
 
             # We have all overrided repo fetch so we can discover modules
@@ -150,7 +150,7 @@ class Concreate(object):
                 generator.prepare_artifacts()
                 if self.args.build_tech_preview:
                     generator.generate_tech_preview()
-                generator.descriptor.write(os.path.join(self.args.target, 'image.yaml'))
+                generator.image.write(os.path.join(self.args.target, 'image.yaml'))
                 generator.render_dockerfile()
 
                 # if tags are not specified on command line we take them from image descriptor
@@ -159,7 +159,7 @@ class Concreate(object):
 
             if 'build' in self.args.commands:
                 builder = Builder(self.args.build_engine, self.args.target)
-                builder.prepare(generator.descriptor)
+                builder.prepare(generator.image)
                 builder.build(self.args)
 
             if 'test' in self.args.commands:
@@ -174,7 +174,7 @@ class Concreate(object):
                                    self.args.target)
 
                 # we run the test only if we collect any
-                if tc.collect(generator.descriptor.get('schema_version'), self.args.test_steps_url):
+                if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
                     runner = TestRunner(self.args.target)
                     runner.run(self.args.tags[0], test_tags)
 
@@ -192,6 +192,7 @@ class Concreate(object):
 
 def run():
     Concreate().parse().run()
+
 
 if __name__ == "__main__":
     run()

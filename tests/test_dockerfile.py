@@ -84,7 +84,7 @@ def prepare_generator(target, desc_part, desc_type="image"):
     image = Module(desc, '/tmp/')
 
     generator = Generator.__new__(Generator)
-    generator.descriptor = image
+    generator.image = image
     generator.target = target
     return generator
 
