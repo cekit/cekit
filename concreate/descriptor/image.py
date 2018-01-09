@@ -3,6 +3,7 @@ import yaml
 
 from concreate.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
     Packages, Osbs, Volume
+from concreate.version import version as concreate_version
 
 image_schema = yaml.safe_load("""
 map:
@@ -39,6 +40,11 @@ class Image(Descriptor):
         """Updates self._descriptor with objects and prepare sane label"""
 
         self._descriptor['labels'] = self._descriptor.get('labels', [])
+        # we will persist concreate version in a label here, so we know which version of concreate
+        # was used to build the image
+        self['labels'].append({'name': 'org.concrt.version',
+                               'value': concreate_version})
+
         # The description key available in image descriptor's
         # root is added as labels to the image
         key = 'description'

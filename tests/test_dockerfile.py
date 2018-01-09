@@ -4,6 +4,7 @@ import re
 
 from concreate.generator import Generator
 from concreate.descriptor import Module
+from concreate.version import version as concreate_version
 
 basic_config = {'release': 1,
                 'version': 1,
@@ -49,7 +50,10 @@ def print_test_name(value):
     ('test_execute_user',
      {'execute': [{'script': 'bar_script',
                    'user': 'bar_user'}]},
-     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*')],
+     r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
+    ('test_label_version',
+     {},
+     r'.*org.concrt.version="%s".*' % concreate_version)],
                          ids=print_test_name)
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
