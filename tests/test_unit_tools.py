@@ -1,7 +1,6 @@
 import pytest
 import yaml
 
-from concreate import tools
 from concreate.descriptor.base import _merge_descriptors, _merge_lists
 from concreate.descriptor import Descriptor, Image, Module, Overrides
 from concreate.errors import ConcreateError
