@@ -49,7 +49,7 @@ class Descriptor(collections.MutableMapping):
           descriptor - a concreate descritor
         """
         try:
-            self.descriptor = concreate.tools.merge_descriptors(self.descriptor, descriptor)
+            _merge_descriptors(self, descriptor)
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise ConcreateError("Cannot merge descriptors, see log message for more information")
@@ -99,3 +99,45 @@ class Descriptor(collections.MutableMapping):
             self._descriptor['run']['user'] = concreate.DEFAULT_USER
 
 
+def _merge_descriptors(desc1, desc2):
+    """
+    Merges two descriptors with handling embedded lists and
+    descriptors.
+
+    Args:
+      desc1, desc2: descriptors to merge
+
+    Return merged descriptor
+    """
+    for k2, v2 in desc2.items():
+        if k2 not in desc1:
+            desc1[k2] = v2
+        else:
+            if isinstance(v2, list):
+                desc1[k2] = _merge_lists(desc1[k2], v2)
+            elif isinstance(v2, Descriptor):
+                desc1[k2] = _merge_descriptors(desc1[k2], v2)
+    return desc1
+
+
+def _merge_lists(list1, list2):
+    """ Merges two lists handling embedded dictionaries via 'name' as a key
+    In a case of simple type values are appended.
+
+    Args:
+      list1, list2 - list to merge
+
+    Returns merged list
+    """
+    for v2 in list2:
+        if isinstance(v2, Descriptor):
+            if v2 in list1:
+                _merge_descriptors(list1[list1.index(v2)], v2)
+            else:
+                list1.append(v2)
+        elif isinstance(v2, list):
+            raise ConcreateError("Cannot merge list of lists")
+        else:
+            if v2 not in list1:
+                list1.append(v2)
+    return list1
