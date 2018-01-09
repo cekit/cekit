@@ -18,5 +18,5 @@ class Port(Descriptor):
     def __init__(self, descriptor):
         self.schemas = port_schemas
         super(Port, self).__init__(descriptor)
-        if 'name' not in self.descriptor:
-            self.descriptor['name'] = self.descriptor['value']
+        if 'name' not in self._descriptor:
+            self._descriptor['name'] = self._descriptor['value']

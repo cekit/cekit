@@ -20,5 +20,5 @@ class Volume(Descriptor):
     def __init__(self, descriptor):
         self.schemas = volume_schema
         super(Volume, self).__init__(descriptor)
-        if 'name' not in self.descriptor:
-            self.descriptor['name'] = os.path.basename(self.descriptor['path'])
+        if 'name' not in self._descriptor:
+            self._descriptor['name'] = os.path.basename(self._descriptor['path'])

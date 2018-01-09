@@ -25,5 +25,5 @@ class Run(Descriptor):
     def __init__(self, descriptor):
         self.schemas = run_schema
         super(Run, self).__init__(descriptor)
-        if 'name' not in self.descriptor:
-            self.descriptor['name'] = 'run'
+        if 'name' not in self._descriptor:
+            self._descriptor['name'] = 'run'

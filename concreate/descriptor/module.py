@@ -24,9 +24,9 @@ class Module(Image):
 
         self._prepare()
         self.path = path
-        self.name = self.descriptor['name']
-        self.descriptor['execute'] = [Execute(x, self.name)
-                                      for x in self.descriptor.get('execute', [])]
+        self.name = self._descriptor['name']
+        self._descriptor['execute'] = [Execute(x, self.name)
+                                      for x in self._descriptor.get('execute', [])]
 
     def fetch_dependencies(self, repo_root):
         """ Processes modules dependencies and fetches them.
@@ -34,4 +34,4 @@ class Module(Image):
         Arguments:
         repo_root: A parent directory where repositories will be cloned in
         """
-        concreate.module.get_dependencies(self.descriptor, repo_root)
+        concreate.module.get_dependencies(self._descriptor, repo_root)
