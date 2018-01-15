@@ -1,15 +1,24 @@
 Overrides
 =========
 
-During an image life cycle there can be a need to do a slightly tweaked builds - using different base images, injecting newer libraries etc. We want to support such scenarios without a need of duplicating whole image sources. To achieve this Concreate supports overrides mechanism for its image descriptor. You can override almost anything in image descriptor. The overrides are based on overrides descriptor - a yaml file containing changes to image descriptor.
+During an image life cycle there can be a need to do a slightly tweaked builds - using different base images, injecting newer libraries etc. We want to support such scenarios without a need of duplicating whole image sources. To achieve this Concreate supports overrides mechanism for its image descriptor. You can override almost anything in image descriptor. The overrides are based on overrides descriptor - a YAML object containing overrides for the image descriptor.
 
-To use an override descriptor you need to pass ``--overides <PATH>`` argument to a concreate.
+To use an override descriptor you need to pass ``--overides`` argument to a concreate. This argument can be set with a YAML object representing changes or a path to a file containing overrides.
 
-**Example**: To use overrides.yaml  file located in current working directory run:
+**Example**: To use overrides.yaml file located in current working directory run:
 
 .. code:: bash
 
 	  $ concreate build --overrides=overrides.yaml
+
+
+**Example**: To override a label via command line run:
+
+.. code:: bash
+
+	  $ concreate build --overrides "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
+
+
 
 How overrides works
 -------------------
