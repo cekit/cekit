@@ -41,12 +41,12 @@ def load_descriptor(descriptor):
     Returns descriptor as a dictionary
     """
     if not os.path.exists(descriptor):
-        logger.info("Descriptor path '%s' doesn't exists, trying to parse it directly."
-                    % descriptor)
+        logger.debug("Descriptor path '%s' doesn't exists, trying to parse it directly."
+                     % descriptor)
         try:
             return yaml.safe_load(descriptor)
-        except Exception:
-            raise ConcreateError('Cannot load descriptor.')
+        except Exception as ex:
+            raise ConcreateError('Cannot load descriptor.', ex)
 
     logger.debug("Loading descriptor from path '%s'." % descriptor)
 
