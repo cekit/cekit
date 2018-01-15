@@ -32,18 +32,23 @@ def cleanup(target):
             shutil.rmtree(d)
 
 
-def load_descriptor(descriptor_path):
+def load_descriptor(descriptor):
     """ parses descriptor and validate it against requested schema type
 
     Args:
-      descriptor_path - path to image/modules descriptor to be validated
+      descriptor - yaml descriptor or path to a descriptor to be loaded
 
     Returns descriptor as a dictionary
     """
-    logger.debug("Loading descriptor from path '%s'." % descriptor_path)
+    if not os.path.exists(descriptor):
+        logger.info("Descriptor path '%s' doesn't exists, trying to parse it directly."
+                    % descriptor)
+        try:
+            return yaml.safe_load(descriptor)
+        except Exception:
+            raise ConcreateError('Cannot load descriptor.')
 
-    if not os.path.exists(descriptor_path):
-        raise ConcreateError('Cannot find provided descriptor file')
+    logger.debug("Loading descriptor from path '%s'." % descriptor)
 
-    with open(descriptor_path, 'r') as fh:
+    with open(descriptor, 'r') as fh:
         return yaml.safe_load(fh)
