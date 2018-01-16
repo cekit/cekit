@@ -45,3 +45,12 @@ def test_args_invalid_build_engine(mocker):
         Concreate().parse()
 
 
+def test_args_osbs_user(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'build',
+                                      '--build-engine',
+                                      'osbs',
+                                      '--build-osbs-user',
+                                      'USER'])
+
+    assert Concreate().parse().args.build_osbs_user == 'USER'

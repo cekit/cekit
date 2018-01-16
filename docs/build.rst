@@ -20,6 +20,7 @@ You can execute an container image build by running:
 * ``--tag`` -- an image tag used to build image (can be specified multiple times)
 * ``--build-engine`` -- a builder engine to use ``osbs`` or ``docker`` [#f1]_
 * ``--build-osbs-release`` [#f2]_ -- perform a OSBS release build
+* ``--build-osbs-user`` -- alternative user passed to `rhpkg --user`
 * ``--build-tech-preview`` [#f2]_ -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
   
   **Example**: If your ``name`` in image descriptor is: ``jboss-eap-7/eap7``, generated name will be: ``jboss-eap-7-tech-preview/eap7``.

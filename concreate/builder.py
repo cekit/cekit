@@ -12,7 +12,7 @@ class Builder(object):
       image_dir - path where image sources are generated
     """
 
-    def __new__(cls, build_engine, target):
+    def __new__(cls, build_engine, target, user=None):
         if cls is Builder:
             if 'docker' == build_engine:
                 # import is delayed until here to prevent circular import error
@@ -27,9 +27,10 @@ class Builder(object):
 
             return super(Builder, cls).__new__(BuilderImpl)
 
-    def __init__(self, build_engine, target):
+    def __init__(self, build_engine, target, user=None):
         self.target = target
         self.check_prerequisities()
+        self.user = user
 
     def check_prerequisities():
         pass

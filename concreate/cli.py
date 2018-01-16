@@ -77,6 +77,10 @@ class Concreate(object):
                                  action='store_true',
                                  help='execute OSBS release build')
 
+        build_group.add_argument('--build-osbs-user',
+                                 dest='build_osbs_user',
+                                 help='user for rphkg tool')
+
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
                                  help='perform tech preview build')
@@ -158,7 +162,9 @@ class Concreate(object):
                     self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
-                builder = Builder(self.args.build_engine, self.args.target)
+                builder = Builder(self.args.build_engine,
+                                  self.args.target,
+                                  self.args.build_osbs_user)
                 builder.prepare(generator.image)
                 builder.build(self.args)
 
