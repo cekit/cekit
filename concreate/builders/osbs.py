@@ -42,12 +42,12 @@ class OSBSBuilder(Builder):
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
             os.makedirs(os.path.dirname(self.dist_git_dir))
 
-        self.dist_git = Git(self.dist_git_dir,
-                            self.target,
-                            repository,
-                            branch)
+        self.dist_git = DistGit(self.dist_git_dir,
+                                self.target,
+                                repository,
+                                branch)
 
-        self.dist_git.prepare()
+        self.dist_git.prepare(self.user)
         self.dist_git.clean()
 
         self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
@@ -74,7 +74,11 @@ class OSBSBuilder(Builder):
         logger.info("Updating lookaside cache...")
         if not self.artifacts:
             return
-        cmd = ["rhpkg", "new-sources"] + self.artifacts
+        cmd = ["rhpkg"]
+        if self.user:
+            cmd += ['--user', self.user]
+        cmd += ["new-sources"] + self.artifacts
+
         logger.debug("Executing '%s'" % cmd)
         with Chdir(self.dist_git_dir):
             try:
@@ -86,10 +90,13 @@ class OSBSBuilder(Builder):
         logger.info("Update finished.")
 
     def build(self, build_args):
-        build_cmd = ["rhpkg", "container-build"]
+        cmd = ["rhpkg"]
+        if self.user:
+            cmd += ['--user', self.user]
+        cmd.append("container-build")
 
         if not build_args.build_osbs_release:
-            build_cmd.append("--scratch")
+            cmd.append("--scratch")
 
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
@@ -104,19 +111,21 @@ class OSBSBuilder(Builder):
             if decision("Do you want to build the image in OSBS?"):
                 logger.info("Executing container build in OSBS...")
 
-                logger.debug("Executing '%s'." % ' '.join(build_cmd))
-                subprocess.check_call(build_cmd)
+                logger.debug("Executing '%s'." % ' '.join(cmd))
+                subprocess.check_call(cmd)
 
 
-class Git(object):
+class DistGit(object):
     """Git support for osbs repositories"""
     @staticmethod
     def repo_info(path):
 
         with Chdir(path):
-            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip().decode("utf8") != "true":
-                raise Exception(
-                    "Directory %s doesn't seem to be a git repository. Please make sure you specified correct path." % path)
+            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]) \
+                    .strip().decode("utf8") != "true":
+
+                raise Exception("Directory %s doesn't seem to be a git repository. "
+                                "Please make sure you specified correct path." % path)
 
             name = os.path.basename(subprocess.check_output(
                 ["git", "rev-parse", "--show-toplevel"]).strip().decode("utf8"))
@@ -134,7 +143,7 @@ class Git(object):
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.noninteractive = noninteractive
 
-        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = Git.repo_info(
+        self.source_repo_name, self.source_repo_branch, self.source_repo_commit = DistGit.repo_info(
             source)
 
     def stage_modified(self):
@@ -145,7 +154,7 @@ class Git(object):
 
         return False
 
-    def prepare(self):
+    def prepare(self, user=None):
         if os.path.exists(self.output):
             with Chdir(self.output):
                 logger.info("Pulling latest changes in repo %s..." % self.repo)
@@ -158,8 +167,13 @@ class Git(object):
         else:
             logger.info("Cloning %s git repository (%s branch)..." %
                         (self.repo, self.branch))
-            subprocess.check_output(
-                ["rhpkg", "-q", "clone", "-b", self.branch, self.repo, self.output])
+
+            cmd = ['rhpkg']
+            if user:
+                cmd += ['--user', user]
+            cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
+
+            subprocess.check_output(cmd)
             logger.debug("Repository %s cloned" % self.repo)
 
     def clean(self):
@@ -199,21 +213,23 @@ class Git(object):
             ["git", "ls-files", "--others", "--exclude-standard"]).decode("utf8")
 
         if untracked:
-            logger.warn("There are following untracked files: %s. Please review your commit." % ", ".join(
-                untracked.splitlines()))
+            logger.warn("There are following untracked files: %s. Please review your commit."
+                        % ", ".join(untracked.splitlines()))
 
         diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode("utf8")
 
         if diffs:
-            logger.warn("There are uncommited changes in following files: '%s'. Please review your commit." % ", ".join(
-                diffs.splitlines()))
+            logger.warn("There are uncommited changes in following files: '%s'. "
+                        "Please review your commit."
+                        % ", ".join(diffs.splitlines()))
 
         if not self.noninteractive:
             subprocess.call(["git", "status"])
             subprocess.call(["git", "show"])
 
         if not (self.noninteractive or decision("Are you ok with the changes?")):
-            logger.info("Executing bash in the repo directory. After fixing the issues, exit the shell and Concreate will continue.")
+            logger.info("Executing bash in the repo directory. "
+                        "After fixing the issues, exit the shell and Concreate will continue.")
             subprocess.call(["bash"], env={"PS1": "concreate $ ",
                                            "TERM": os.getenv("TERM", "xterm"),
                                            "HOME": os.getenv("HOME", "")})
