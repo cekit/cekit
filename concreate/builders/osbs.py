@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 from builtins import input
+from concreate import tools
 from concreate.builder import Builder
 from concreate.errors import ConcreateError
 
@@ -40,7 +41,7 @@ class OSBSBuilder(Builder):
             raise ConcreateError(
                 "OSBS builder needs repostiory and branch provided!")
 
-        self.dist_git_dir = os.path.join(os.path.expanduser('~/.concreate.d'),
+        self.dist_git_dir = os.path.join(os.path.expanduser(tools.cfg['common']['work_dir']),
                                          'osbs',
                                          repository)
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
