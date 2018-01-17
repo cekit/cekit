@@ -14,6 +14,10 @@ logger = logging.getLogger('concreate')
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
+    def __init__(self, build_engine, target, params={}):
+        super(OSBSBuilder, self).__init__(build_engine, target, params={})
+        self.user = params.get('user')
+
     def check_prerequisities(self):
         try:
             subprocess.check_output(
