@@ -17,7 +17,7 @@ class TestDescriptor(Descriptor):
 
 
 def test_merging_description_image():
-    desc1 = Image({'name': 'foo'}, None)
+    desc1 = Image({'name': 'foo', 'version': 1}, None)
 
     desc2 = Module({'name': 'mod1',
                     'description': 'mod_desc'}, None)
@@ -37,7 +37,7 @@ def test_merging_description_modules():
 
 
 def test_merging_description_override():
-    desc1 = Image({'name': 'foo'}, None)
+    desc1 = Image({'name': 'foo', 'version': 1}, None)
 
     desc2 = Overrides({'name': 'mod1',
                        'description': 'mod_desc'})

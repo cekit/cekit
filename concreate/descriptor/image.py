@@ -1,10 +1,11 @@
+import copy
 import yaml
 
 from concreate.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
     Packages, Osbs, Volume, Resource
 from concreate.version import version as concreate_version
 
-image_schema = yaml.safe_load("""
+_image_schema = yaml.safe_load("""
 map:
   name: {type: str, required: True}
   version: {type: text, required: True}
@@ -23,11 +24,14 @@ map:
   volumes: {type: any}""")
 
 
+def get_image_schema():
+    return copy.deepcopy(_image_schema)
+
+
 class Image(Descriptor):
     def __init__(self, descriptor, directory):
         self.directory = directory
-        self.schemas = [image_schema.copy()]
-
+        self.schemas = [_image_schema.copy()]
         super(Image, self).__init__(descriptor)
         self.skip_merging = ['description',
                              'version',

@@ -1,7 +1,7 @@
 from concreate.descriptor import Image
-from concreate.descriptor.image import image_schema
+from concreate.descriptor.image import get_image_schema
 
-overrides_schema = image_schema.copy()
+overrides_schema = get_image_schema()
 overrides_schema['map']['name'] = {'type': 'str'}
 overrides_schema['map']['version'] = {'type': 'text'}
 

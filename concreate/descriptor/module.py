@@ -1,10 +1,10 @@
 import concreate
 
 from concreate.descriptor import Image, Execute
-from concreate.descriptor.image import image_schema
+from concreate.descriptor.image import get_image_schema
 
 
-module_schema = image_schema.copy()
+module_schema = get_image_schema()
 module_schema['map']['name'] = {'type': 'str'}
 module_schema['map']['version'] = {'type': 'text'}
 module_schema['map']['execute'] = {'type': 'any'}
