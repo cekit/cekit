@@ -46,6 +46,10 @@ class Concreate(object):
                             action='version',
                             help='show version and exit', version=version)
 
+        parser.add_argument('--config',
+                            default='~/.concreate',
+                            help='path for concreate config file (~/.concreate is default)')
+
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
@@ -130,7 +134,7 @@ class Concreate(object):
         logger.debug("Running version %s", version)
 
         try:
-            tools.cfg = tools.parse_cfg()
+            tools.cfg = tools.get_cfg(self.args.config)
             tools.cleanup(self.args.target)
 
             # We need to construct Generator first, because we need overrides

@@ -15,10 +15,18 @@ logger = logging.getLogger('concreate')
 cfg = {}
 
 
-def parse_cfg():
+def get_cfg(config_path):
+    """Returns configuration from concreate config file and prepares sensible defaults
+
+    params:
+        config_path - path to a concreate config file (expanding user)
+    """
     cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser('~/.concreate'))
-    return cp._sections
+    cp.read(os.path.expanduser(config_path))
+    cfg = cp._sections
+    cfg['common'] = cfg.get('common', {})
+    cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.concreate.d')
+    return cfg
 
 
 def cleanup(target):

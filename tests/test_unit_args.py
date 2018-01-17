@@ -54,3 +54,19 @@ def test_args_osbs_user(mocker):
                                       'USER'])
 
     assert Concreate().parse().args.build_osbs_user == 'USER'
+
+
+def test_args_osbs_config_default(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'generate'])
+
+    assert Concreate().parse().args.config == '~/.concreate'
+
+
+def test_args_osbs_config(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      '--config',
+                                      'whatever',
+                                      'generate'])
+
+    assert Concreate().parse().args.config == 'whatever'
