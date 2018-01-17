@@ -162,9 +162,10 @@ class Concreate(object):
                     self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
+                params = {'user': self.args.build_osbs_user}
                 builder = Builder(self.args.build_engine,
                                   self.args.target,
-                                  self.args.build_osbs_user)
+                                  params)
                 builder.prepare(generator.image)
                 builder.build(self.args)
 

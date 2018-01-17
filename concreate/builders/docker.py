@@ -12,6 +12,9 @@ logger = logging.getLogger('concreate')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
+    def __init__(self, build_engine, target, params={}):
+        super(DockerBuilder, self).__init__(build_engine, target, params)
+
     def check_prerequisities(self):
         try:
             subprocess.check_output(['docker', 'info'], stderr=subprocess.STDOUT)
