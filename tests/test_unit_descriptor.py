@@ -1,5 +1,7 @@
+import pytest
 import yaml
 
+from concreate.errors import ConcreateError
 from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
 
 
@@ -90,3 +92,10 @@ def test_image():
     assert image['name'] == 'test/foo'
     assert type(image['labels'][0]) == Label
     assert image['labels'][0]['name'] == 'test'
+
+
+def test_image_missing_name():
+    with pytest.raises(ConcreateError):
+        Image(yaml.safe_load("""
+        from: foo
+        version: 1.9"""), 'foo')
