@@ -58,7 +58,6 @@ def copy_repos(dst):
 
 
 def test_simple_image_build(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '-v',
                                       'build'])
@@ -73,7 +72,6 @@ def test_simple_image_build(tmpdir, mocker):
 
 
 def test_simple_image_test(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate', '-v',
                                       'build',
                                       'test'])
@@ -95,7 +93,6 @@ def test_simple_image_test(tmpdir, mocker):
 
 
 def test_image_test_with_override(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '--overrides',
                                       'overrides.yaml',
