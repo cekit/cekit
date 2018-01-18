@@ -192,6 +192,18 @@ def check_dockerfile(image_dir, match):
     return False
 
 
+def check_dockerfile_uniq(image_dir, match):
+    found = False
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
+        for line in fd.readlines():
+            if line.strip() == match.strip():
+                if found:
+                    return False
+                else:
+                    found = True
+    return found
+
+
 def test_local_module_injection(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['concreate',
                                       'generate'])
@@ -261,6 +273,38 @@ def test_run_override_user(tmpdir, mocker):
     run_concreate(image_dir)
 
     assert check_dockerfile(image_dir, 'USER 4321')
+
+
+def test_run_override_artifact(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      '--overrides',
+                                      'overrides.yaml',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'url': 'https://foo/bar.jar'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'artifacts': [{'path': 'bar.jar'}]}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_concreate(image_dir)
+
+    assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
 
 def run_concreate(cwd):
