@@ -66,6 +66,18 @@ class Resource(Descriptor):
             if algorithm in descriptor:
                 self.checksums[algorithm] = descriptor[algorithm]
 
+    def __eq__(self, other):
+        #All subclasses of Resource are considered same object type
+        if isinstance(other, Resource):
+            return self['name'] == other['name']
+        return NotImplemented
+
+    def __ne__(self, other):
+        #All subclasses of Resource are considered same object type
+        if isinstance(other, Resource):
+            return not self['name'] == other['name']
+        return NotImplemented
+
     def _copy_impl(self, target):
         raise NotImplementedError("Implement _copy_impl() for Resource: " +
                                   self.__module__ + "." +
