@@ -85,6 +85,11 @@ class Concreate(object):
                                  dest='build_osbs_user',
                                  help='user for rphkg tool')
 
+        build_group.add_argument('--build-osbs-nowait',
+                                 dest='build_osbs_nowait',
+                                 action='store_true',
+                                 help='run rhpkg container build with --nowait option')
+
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
                                  help='perform tech preview build')
@@ -166,7 +171,8 @@ class Concreate(object):
                     self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
-                params = {'user': self.args.build_osbs_user}
+                params = {'user': self.args.build_osbs_user,
+                          'nowait': self.args.build_osbs_nowait}
                 builder = Builder(self.args.build_engine,
                                   self.args.target,
                                   params)
