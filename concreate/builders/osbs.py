@@ -18,6 +18,7 @@ class OSBSBuilder(Builder):
     def __init__(self, build_engine, target, params={}):
         super(OSBSBuilder, self).__init__(build_engine, target, params={})
         self.user = params.get('user')
+        self.nowait = params.get('nowait')
 
     def check_prerequisities(self):
         try:
@@ -99,6 +100,8 @@ class OSBSBuilder(Builder):
         if self.user:
             cmd += ['--user', self.user]
         cmd.append("container-build")
+        if self.nowait:
+            cmd += ['--nowait']
 
         if not build_args.build_osbs_release:
             cmd.append("--scratch")
