@@ -4,12 +4,25 @@ Configuration file
 Concreate can be configured using a configuration file. We use the
 properties file format.
 
-Concreate will look for this file at the path ``~/.concreate``.
+Concreate will look for this file at the path ``~/.concreate``. Its location can be changed via command line ``--config`` option.
+
+**Example**
+Running Concreate with different config file:
+
+.. code:: sh
+	  
+	  $ concreate --config ~/alternative_path build
 
 Below you can find description of available sections together with options described in detail.
 
 ``[common]``
 ------------
+
+``work_dir``
+^^^^^^^^^^^^
+
+Contains location of Concreate working directory, which is used to store some persistent data like
+dist_git repositories.
 
 ``ssl_verify``
 ^^^^^^^^^^^^^^

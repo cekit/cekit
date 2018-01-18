@@ -1,10 +1,12 @@
+import pytest
 import yaml
 
-from concreate import descriptor
+from concreate.errors import ConcreateError
+from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
 
 
 def test_label():
-    label = descriptor.Label(yaml.safe_load("""
+    label = Label(yaml.safe_load("""
       name: "io.k8s.display-name"
       value: "JBoss A-MQ 6.2"
 """))
@@ -13,7 +15,7 @@ def test_label():
 
 
 def test_env():
-    env = descriptor.Label(yaml.safe_load("""
+    env = Env(yaml.safe_load("""
       name: "io.k8s.display-name"
       value: "JBoss A-MQ 6.2"
 """))
@@ -22,7 +24,7 @@ def test_env():
 
 
 def test_port():
-    env = descriptor.Port(yaml.safe_load("""
+    env = Port(yaml.safe_load("""
       value: 8788
       expose: False
 """))
@@ -32,7 +34,7 @@ def test_port():
 
 
 def test_volume():
-    volume = descriptor.Volume(yaml.safe_load("""
+    volume = Volume(yaml.safe_load("""
     name: vol1
     path: /tmp/a
 """))
@@ -41,7 +43,7 @@ def test_volume():
 
 
 def test_volume_name():
-    volume = descriptor.Volume(yaml.safe_load("""
+    volume = Volume(yaml.safe_load("""
     path: /tmp/a
 """))
     assert volume['name'] == 'a'
@@ -49,7 +51,7 @@ def test_volume_name():
 
 
 def test_osbs():
-    osbs = descriptor.Osbs(yaml.safe_load("""
+    osbs = Osbs(yaml.safe_load("""
     repository:
       name: foo
       branch: bar
@@ -60,7 +62,7 @@ def test_osbs():
 
 
 def test_packages():
-    pkg = descriptor.Packages(yaml.safe_load("""
+    pkg = Packages(yaml.safe_load("""
       repositories:
           - repo-foo
           - repo-bar
@@ -73,7 +75,7 @@ def test_packages():
 
 
 def test_image():
-    image = descriptor.Image(yaml.safe_load("""
+    image = Image(yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -88,5 +90,12 @@ def test_image():
     """), 'foo')
 
     assert image['name'] == 'test/foo'
-    assert type(image['labels'][0]) == descriptor.Label
+    assert type(image['labels'][0]) == Label
     assert image['labels'][0]['name'] == 'test'
+
+
+def test_image_missing_name():
+    with pytest.raises(ConcreateError):
+        Image(yaml.safe_load("""
+        from: foo
+        version: 1.9"""), 'foo')

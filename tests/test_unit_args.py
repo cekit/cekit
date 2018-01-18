@@ -45,3 +45,43 @@ def test_args_invalid_build_engine(mocker):
         Concreate().parse()
 
 
+def test_args_osbs_user(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'build',
+                                      '--build-engine',
+                                      'osbs',
+                                      '--build-osbs-user',
+                                      'USER'])
+
+    assert Concreate().parse().args.build_osbs_user == 'USER'
+
+
+def test_args_config_default(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'generate'])
+
+    assert Concreate().parse().args.config == '~/.concreate'
+
+
+def test_args_config(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      '--config',
+                                      'whatever',
+                                      'generate'])
+
+    assert Concreate().parse().args.config == 'whatever'
+
+
+def test_args_osbs_nowait(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'build',
+                                      '--build-osbs-nowait'])
+
+    assert Concreate().parse().args.build_osbs_nowait is True
+
+
+def test_args_osbs_no_nowait(mocker):
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      'build'])
+
+    assert Concreate().parse().args.build_osbs_nowait is False

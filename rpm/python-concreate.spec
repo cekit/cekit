@@ -7,8 +7,8 @@
 %global modname concreate
 
 Name:           python-concreate
-Version:        1.3.4
-Release:        1%{?dist}
+Version:        1.4.0
+Release:        0.1.git%{?dist}
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/concrt/concreate
@@ -43,8 +43,10 @@ Requires:       python2-setuptools
 
 Requires:       python2-pykwalify
 Requires:       python2-colorlog
+Requires:       python2-future
 Requires:       PyYAML
 Requires:       docker
+Requires:       git
 
 %description -n python2-%{modname} %_description
 
@@ -68,6 +70,7 @@ Requires:       python3-pykwalify
 Requires:       python3-colorlog
 Requires:       python3-jinja2
 Requires:       python3-setuptools
+Requires:       git
 
 %description -n python3-%{modname} %_description
 

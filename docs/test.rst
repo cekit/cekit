@@ -1,9 +1,11 @@
-Testing image
-=============
+Testing images
+==============
 
-Concreate is able to run `behave <https://pythonhosted.org/behave/>`_ based test for the image. We suggest to read behave documentation before reading this chapter.
+Concreate is able to run `behave <https://pythonhosted.org/behave/>`_ based
+tests for images. We suggest you read the Behave documentation before reading
+this chapter.
 
-Image can be tested by running:
+An image can be tested by running:
 
 .. code:: bash
 	  
@@ -11,40 +13,77 @@ Image can be tested by running:
 
 **Test options**
 
-* ``--test-wip`` -- run only tests tagged with ``@wip`` tag.
+* ``--test-wip`` -- only run tests tagged with the ``@wip`` tag.
+* ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
+* ``--tag altname`` --  Overrides the name of the Image used for testing to ``altname``. Only the first occurrence of this argument is honoured.
+
 
 About Tests
 -----------
-Behave tests are separate to two parts steps and features. You can place tests in ``tests`` directory next
-to the image descriptor, module descriptor or in a root of a git repository which contains the modules.
 
-The tests directory is structured in following way:
+Behave tests are defined in two separate parts: steps and features.
+
+You can place the files defining tests in a ``tests`` directory next to the
+image descriptor, module descriptor or in a root of a git repository which
+contains the modules.
+
+The tests directory is structured as follows:
 
 .. code::
    
           tests/features
-          tests/features/amq.features
+          tests/features/amq.feature
           tests/steps
           tests/steps/custom_steps.py
 
 
-The ``tests/features`` directory is the place where you can drop your custom developed `behave features. <https://pythonhosted.org/behave/gherkin.html>`_
+The ``tests/features`` directory is the place where you can drop your `behave
+features. <https://pythonhosted.org/behave/gherkin.html>`_
 
-The ``tests/steps`` directory is optional and contains custom `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for specific image/module.
+The ``tests/steps`` directory is optional and contains custom `steps
+<https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_
+for the specific image/module.
 
 We strongly recommend that a test is written for every feature that is added to the image.
-For the list of steps that are available for use in tests, see the `steps repository <https://github.com/jboss-openshift/concreate-test-steps>`_.
-Where necessary we encourage people to add or extend the steps.
+
+Concreate comes with a list of build-in steps that are available for use in
+tests. See the `steps repository <https://github.com/jboss-openshift/concreate-test-steps>`_.
+
+Where necessary we encourage people to add or extend these steps.
 
 **Tags**
 
-Concreate is selecting which test to run via tags mechanism. There are two way the tags are used:
+Concreate selects which tests to run via the *tags* mechanism. Here are several
+examples of ways ways that tags could be used for managing tests across a set
+of related images:
 
 1. `Product tags`
    
-   These tags are based on product names. When a product image is tested, concreate uses tag containing image name and its product family name.
-   **Example**: If you are testing ``jboss-eap-7/eap7`` image, test will be invoked with tag ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
+   Tags based on image names. Concreate derives two test tag names from the
+   name of the Image being tested. The whole image name is converted into one
+   tag, and everything before the first '/' character is converted into
+   another.
+   **Example**: If you are testing the ``jboss-eap-7/eap7`` image,
+   tests will be invoked with tags ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
+
+   If ``--tag`` is specified, then the argument is used in place of the Image
+   name for the process above.
+   **Example** If you provided ``--tag foo/bar``, then the tags used would be
+   ``@foo`` and ``@foo/bar``.
 
 2. `Wip tags`
    
-   This is very special behavior used mainly in development. It servers purpose you want to limit test to be run to a subset you are working on. To achieve this you should mark your test scenario with ``@wip`` tag and run ``concreate test --test-wip``
+   This is very special behavior used mainly in development. Its purpose is to
+   to limit the tests to be run to a subset you are working on. To achieve this
+   you should mark your in-development test scenarios with the ``@wip`` tag and
+   run ``concreate test --test-wip``. All other scenarios not tagged ``@wip``
+   will be ignored.
+
+3. `The @ci tag`
+
+   If ``concreate`` is not running as a user called ``jenkins``, the tag ``@ci``
+   is added to the list of ignored tags, meaning any tests tagged ``@ci`` are
+   ignored and not executed.
+
+   The purpose of this behavior is to ease specifying tests that are only
+   executed when run within Jenkins CI.

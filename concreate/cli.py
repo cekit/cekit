@@ -46,12 +46,21 @@ class Concreate(object):
                             action='version',
                             help='show version and exit', version=version)
 
+        parser.add_argument('--config',
+                            default='~/.concreate',
+                            help='path for concreate config file (~/.concreate is default)')
+
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
         test_group.add_argument('--test-wip',
                                 action='store_true',
                                 help='Run @wip tests only')
+
+        steps_url = 'https://github.com/jboss-container-images/concreate-test-steps.git'
+        test_group.add_argument('--test-steps-url',
+                                default=steps_url,
+                                help='contains url for concreate test stesp')
 
         build_group = parser.add_argument_group('build',
                                                 "Arguments valid for the 'build' target")
@@ -64,21 +73,31 @@ class Concreate(object):
         build_group.add_argument('--build-tag',
                                  dest='build_tags',
                                  action='append',
-                                 help='tag to assign to the built image, can be used multiple times')
-
-        build_group.add_argument('--tag',
-                                 dest='tags',
-                                 action='append',
-                                 help='tag used to build/test the image, can be used multiple times')
+                                 help='tag to assign to the built image, '
+                                 'can be used multiple times')
 
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
                                  action='store_true',
                                  help='execute OSBS release build')
 
+        build_group.add_argument('--build-osbs-user',
+                                 dest='build_osbs_user',
+                                 help='user for rphkg tool')
+
+        build_group.add_argument('--build-osbs-nowait',
+                                 dest='build_osbs_nowait',
+                                 action='store_true',
+                                 help='run rhpkg container build with --nowait option')
+
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
                                  help='perform tech preview build')
+
+        parser.add_argument('--tag',
+                            dest='tags',
+                            action='append',
+                            help='tag used to build/test the image, can be used multiple times')
 
         parser.add_argument('--overrides',
                             help='path to a file containing overrides')
@@ -102,7 +121,8 @@ class Concreate(object):
 
         # DEPRECATED - remove following lines and --build-tag option
         if self.args.build_tags:
-            logger.warning("--build-tag is deprecated and will be removed in concreate 2.0, please use --tag instead.")
+            logger.warning("--build-tag is deprecated and will be removed in concreate 2.0,"
+                           " please use --tag instead.")
             if not self.args.tags:
                 self.args.tags = self.args.build_tags
             else:
@@ -119,7 +139,7 @@ class Concreate(object):
         logger.debug("Running version %s", version)
 
         try:
-            tools.cfg = tools.parse_cfg()
+            tools.cfg = tools.get_cfg(self.args.config)
             tools.cleanup(self.args.target)
 
             # We need to construct Generator first, because we need overrides
@@ -129,7 +149,7 @@ class Concreate(object):
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)
-            get_dependencies(generator.descriptor,
+            get_dependencies(generator.image,
                              os.path.join(self.args.target, 'repo'))
 
             # We have all overrided repo fetch so we can discover modules
@@ -143,7 +163,7 @@ class Concreate(object):
                 generator.prepare_artifacts()
                 if self.args.build_tech_preview:
                     generator.generate_tech_preview()
-                generator.descriptor.write(os.path.join(self.args.target, 'image.yaml'))
+                generator.image.write(os.path.join(self.args.target, 'image.yaml'))
                 generator.render_dockerfile()
 
                 # if tags are not specified on command line we take them from image descriptor
@@ -151,8 +171,12 @@ class Concreate(object):
                     self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
-                builder = Builder(self.args.build_engine, self.args.target)
-                builder.prepare(generator.descriptor)
+                params = {'user': self.args.build_osbs_user,
+                          'nowait': self.args.build_osbs_nowait}
+                builder = Builder(self.args.build_engine,
+                                  self.args.target,
+                                  params)
+                builder.prepare(generator.image)
                 builder.build(self.args)
 
             if 'test' in self.args.commands:
@@ -163,13 +187,13 @@ class Concreate(object):
                     test_tags = ['@wip']
 
                 # at first we collect tests
-                test_collected = TestCollector(os.path.dirname(self.args.descriptor),
-                                               self.args.target).collect(generator.descriptor.get('schema_version'))
+                tc = TestCollector(os.path.dirname(self.args.descriptor),
+                                   self.args.target)
 
                 # we run the test only if we collect any
-                if test_collected:
-                    TestRunner(self.args.target).run(self.args.tags[0],
-                                                     test_tags)
+                if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
+                    runner = TestRunner(self.args.target)
+                    runner.run(self.args.tags[0], test_tags)
 
             logger.info("Finished!")
             sys.exit(0)
@@ -185,6 +209,7 @@ class Concreate(object):
 
 def run():
     Concreate().parse().run()
+
 
 if __name__ == "__main__":
     run()

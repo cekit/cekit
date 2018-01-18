@@ -9,7 +9,7 @@ from concreate.builders.osbs import Chdir
 from concreate.cli import Concreate
 
 
-def clear_module(*args, **kwargs):
+def setup_function():
     """Reload concreate.module to make sure it doesnt contain old modules instances"""
     import concreate.module
     try:
@@ -51,6 +51,12 @@ Feature: Test test
 """
 
 
+def copy_repos(dst):
+    shutil.copytree(os.path.join(os.path.dirname(__file__),
+                                 'modules'),
+                    os.path.join(dst, 'tests', 'modules'))
+
+
 def test_simple_image_build(tmpdir, mocker):
     clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
@@ -58,6 +64,7 @@ def test_simple_image_build(tmpdir, mocker):
                                       'build'])
 
     image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
@@ -72,6 +79,7 @@ def test_simple_image_test(tmpdir, mocker):
                                       'test'])
 
     image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
 
     feature_files = os.path.join(image_dir, 'tests', 'features', 'test.feature')
 
@@ -96,6 +104,7 @@ def test_image_test_with_override(tmpdir, mocker):
                                       'test'])
 
     image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
 
     feature_files = os.path.join(image_dir, 'tests', 'features', 'test.feature')
 
@@ -115,8 +124,32 @@ def test_image_test_with_override(tmpdir, mocker):
     run_concreate(image_dir)
 
 
+def test_image_test_with_override_on_cmd(tmpdir, mocker):
+    overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
+    mocker.patch.object(sys, 'argv', ['concreate',
+                                      '--overrides',
+                                      overrides_descriptor,
+                                      '-v',
+                                      'build',
+                                      'test'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    feature_files = os.path.join(image_dir, 'tests', 'features', 'test.feature')
+
+    os.makedirs(os.path.dirname(feature_files))
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    with open(feature_files, 'w') as fd:
+        fd.write(feature_label_test_overriden)
+
+    run_concreate(image_dir)
+
+
 def test_module_override(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '--overrides',
                                       'overrides.yaml',
@@ -124,6 +157,7 @@ def test_module_override(tmpdir, mocker):
                                       'generate'])
 
     image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
@@ -162,7 +196,6 @@ def check_dockerfile(image_dir, match):
 
 
 def test_local_module_injection(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       'generate'])
 
@@ -187,7 +220,6 @@ def test_local_module_injection(tmpdir, mocker):
 
 
 def test_local_module_not_injected(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       'generate'])
 
@@ -210,7 +242,6 @@ def test_local_module_not_injected(tmpdir, mocker):
 
 
 def test_run_override_user(tmpdir, mocker):
-    clear_module()
     mocker.patch.object(sys, 'argv', ['concreate',
                                       '--overrides',
                                       'overrides.yaml',
@@ -218,6 +249,7 @@ def test_run_override_user(tmpdir, mocker):
                                       'generate'])
 
     image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)

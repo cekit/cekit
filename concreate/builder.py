@@ -10,9 +10,10 @@ class Builder(object):
     Args:
       build_engine - a build engine to use to build image
       image_dir - path where image sources are generated
+      params - a dictionary of builder specific parameters
     """
 
-    def __new__(cls, build_engine, target):
+    def __new__(cls, build_engine, target, params={}):
         if cls is Builder:
             if 'docker' == build_engine:
                 # import is delayed until here to prevent circular import error
@@ -27,7 +28,7 @@ class Builder(object):
 
             return super(Builder, cls).__new__(BuilderImpl)
 
-    def __init__(self, build_engine, target):
+    def __init__(self, build_engine, target, params={}):
         self.target = target
         self.check_prerequisities()
 

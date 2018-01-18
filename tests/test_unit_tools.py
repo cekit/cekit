@@ -1,75 +1,120 @@
 import pytest
+import yaml
 
-from concreate import tools
+from concreate.descriptor.base import _merge_descriptors, _merge_lists
+from concreate.descriptor import Descriptor, Image, Module, Overrides
 from concreate.errors import ConcreateError
 
 
-def test_merging_plain_dictionaries():
-    dict1 = {'a': 1,
-             'b': 2}
-    dict2 = {'b': 5,
-             'c': 3}
-    expected = {'a': 1,
-                'b': 2,
-                'c': 3}
-    assert expected == tools.merge_dictionaries(dict1, dict2)
+class TestDescriptor(Descriptor):
+    def __init__(self, descriptor):
+        self.schemas = [yaml.safe_load("""type: any""")]
+        super(TestDescriptor, self).__init__(descriptor)
+
+        for key, val in descriptor.items():
+            if isinstance(val, dict):
+                self._descriptor[key] = TestDescriptor(val)
 
 
-def test_merging_plain_dictionaries_for_kwalify_schema():
-    dict1 = {'a': 1,
-             'b': 2}
-    dict2 = {'b': 5,
-             'c': 3}
-    expected = {'a': 1,
-                'b': 5,
-                'c': 3}
-    assert expected == tools.merge_dictionaries(dict1, dict2, True)
+def test_merging_description_image():
+    desc1 = Image({'name': 'foo', 'version': 1}, None)
+
+    desc2 = Module({'name': 'mod1',
+                    'description': 'mod_desc'}, None)
+
+    merged = _merge_descriptors(desc1, desc2)
+    assert 'description' not in merged
 
 
-def test_merging_emdedded_dictionaires():
-    dict1 = {'a': 1,
-             'b': {'b1': 10,
-                   'b2': 20}}
-    dict2 = {'b': {'b2': 50,
-                   'b3': 30},
-             'c': 3}
-    expected = {'a': 1,
-                'b': {'b1': 10,
-                      'b2': 20,
-                      'b3': 30},
-                'c': 3}
-    assert expected == tools.merge_dictionaries(dict1, dict2)
+def test_merging_description_modules():
+    desc1 = Module({'name': 'foo'}, None)
+
+    desc2 = Module({'name': 'mod1',
+                    'description': 'mod_desc'}, None)
+
+    merged = _merge_descriptors(desc1, desc2)
+    assert 'description' not in merged
+
+
+def test_merging_description_override():
+    desc1 = Image({'name': 'foo', 'version': 1}, None)
+
+    desc2 = Overrides({'name': 'mod1',
+                       'description': 'mod_desc'})
+
+    merged = _merge_descriptors(desc2, desc1)
+    assert 'description' in merged
+
+
+def test_merging_plain_descriptors():
+    desc1 = TestDescriptor({'name': 'foo',
+                            'a': 1,
+                            'b': 2})
+
+    desc2 = TestDescriptor({'name': 'foo',
+                            'b': 5,
+                            'c': 3})
+
+    expected = TestDescriptor({'name': 'foo',
+                               'a': 1,
+                               'b': 2,
+                               'c': 3})
+    assert expected == _merge_descriptors(desc1, desc2)
+    assert expected.items() == _merge_descriptors(desc1, desc2).items()
+
+
+def test_merging_emdedded_descriptors():
+    desc1 = TestDescriptor({'name': 'a',
+                            'a': 1,
+                            'b': {'name': 'b',
+                                  'b1': 10,
+                                  'b2': 20}})
+    desc2 = TestDescriptor({'b': {'name': 'b',
+                                  'b2': 50,
+                                  'b3': 30},
+                            'c': {'name': 'c'}})
+
+    expected = TestDescriptor({'name': 'a',
+                               'a': 1,
+                               'b': {'name': 'b',
+                                     'b1': 10,
+                                     'b2': 20,
+                                     'b3': 30},
+                               'c': {'name': 'c'}})
+
+    assert expected == _merge_descriptors(desc1, desc2)
 
 
 def test_merging_plain_lists():
     list1 = [1, 2, 3]
     list2 = [2, 3, 4, 5]
     expected = [1, 2, 3, 4, 5]
-    assert tools.merge_lists(list1, list2) == expected
+    assert _merge_lists(list1, list2) == expected
 
 
 def test_merging_plain_list_of_list():
     list1 = [1, 2, 3]
     list2 = [3, 4, []]
     with pytest.raises(ConcreateError):
-        tools.merge_lists(list1, list2)
+        _merge_lists(list1, list2)
 
 
-def test_merging_list_of_dictionaries():
-    list1 = [{'name': 1,
-              'a': 1,
-              'b': 2}, 'a']
-    list2 = [{'name': 1,
-              'b': 3,
-              'c': 3},
-             {'name': 2,
-              'a': 123}]
-    expected = [{'name': 1,
-                 'a': 1,
-                 'b': 2,
-                 'c': 3},
-                'a',
-                {'name': 2,
-                 'a': 123}]
+def test_merging_list_of_descriptors():
+    desc1 = [TestDescriptor({'name': 1,
+                             'a': 1,
+                             'b': 2})]
 
-    assert expected == tools.merge_lists(list1, list2)
+    desc2 = [TestDescriptor({'name': 2,
+                             'a': 123}),
+             TestDescriptor({'name': 1,
+                             'b': 3,
+                             'c': 3})]
+
+    expected = [TestDescriptor({'name': 1,
+                                'a': 1,
+                                'b': 2,
+                                'c': 3}),
+                TestDescriptor({'name': 2,
+                                'a': 123})]
+
+    assert expected == _merge_lists(desc1, desc2)
