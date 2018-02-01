@@ -8,6 +8,7 @@ from concreate.descriptor.volume import Volume
 from concreate.descriptor.osbs import Osbs
 from concreate.descriptor.run import Run
 from concreate.descriptor.packages import Packages
+from concreate.descriptor.packages import Repository
 from concreate.descriptor.modules import Modules
 from concreate.descriptor.execute import Execute
 from concreate.descriptor.image import Image

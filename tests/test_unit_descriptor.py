@@ -2,7 +2,8 @@ import pytest
 import yaml
 
 from concreate.errors import ConcreateError
-from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
+from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
+    Repository
 
 
 def test_label():
@@ -69,8 +70,8 @@ def test_packages():
       install:
           - pkg-foo"""))
 
-    assert 'repo-foo' in pkg['repositories']
-    assert 'repo-bar' in pkg['repositories']
+    assert Repository('repo-foo') in pkg['repositories']
+    assert Repository('repo-bar') in pkg['repositories']
     assert 'pkg-foo' in pkg['install']
 
 
