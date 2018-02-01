@@ -6,8 +6,7 @@ import os
 from jinja2 import Environment, FileSystemLoader
 
 from concreate import tools
-from concreate.descriptor import Image, Overrides, Resource
-from concreate.errors import ConcreateError
+from concreate.descriptor import Image, Overrides
 from concreate.module import copy_module_to_target
 from concreate.template_helper import TemplateHelper
 
@@ -145,7 +144,7 @@ class Generator(object):
         logger.debug("Dockerfile rendered")
 
     def prepare_repositories(self):
-        """Udates descriptor with added repositories"""
+        """Udates descriptor with added repositories and fetch them"""
         configured_repositories = tools.cfg.get('repositories', {})
 
         # We need to remove the custom "__name__" element before we can show
@@ -155,29 +154,10 @@ class Generator(object):
         if '__name__' in configured_repository_names:
             configured_repository_names.remove('__name__')
 
-        added_repos = []
         target_dir = os.path.join(self.target, 'image', 'repos')
 
+        logger.info("Handling additional repository files...")
         for repo in self.image.get('packages', {}).get('repositories', []):
-            if repo not in configured_repositories:
-                raise ConcreateError("Package repository '%s' used in descriptor is not "
-                                     "available in Concreate configuration file. "
-                                     "Available repositories: %s"
-                                     % (repo, configured_repository_names))
+            repo.fetch(target_dir)
 
-            urls = configured_repositories[repo]
-
-            if urls:
-                # we need to do this in this cycle to prevent creation of empty dir
-                if not os.path.exists(target_dir):
-                    os.makedirs(target_dir)
-                logger.info("Handling additional repository files...")
-
-                for url in urls.split(','):
-                    Resource({'url': url}).copy(target_dir)
-                    added_repos.append(os.path.splitext(
-                        os.path.basename(url))[0])
-
-                logger.debug("Additional repository files handled")
-
-                self.image['additional_repos'] = added_repos
+        logger.debug("Additional repository files handled")

@@ -47,19 +47,19 @@ EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
 USER root
 
 {% if packages and packages.install %}
-{% if additional_repos %}
+{% if packages.repositories %}
 # Add custom repo files
 COPY repos/*.repo /etc/yum.repos.d/
 {% endif %}
 
 # Install required RPMs and ensure that the packages were installed
-RUN yum install -y {% if additional_repos -%} --disablerepo=\* {%- for repo in additional_repos %} --enablerepo={{ repo }}{% endfor %}{% endif %} {%- for package in packages.install %} {{ package }}{% endfor %} \
+RUN yum install -y {%- for package in packages.install %} {{ package }}{% endfor %} \
     && yum clean all && \
     rpm -q {% for package in packages.install %} {{ package }}{% endfor %}
 
-{% if additional_repos %}
+{% if packages.repositories %}
 # Remove custom repo files
-RUN rm{% for repo in additional_repos %} /etc/yum.repos.d/{{ repo }}.repo{% endfor %}
+RUN rm{% for repo in packages.repositories %} /etc/yum.repos.d/{{ repo.name }}.repo{% endfor %}
 
 {% endif %}
 
