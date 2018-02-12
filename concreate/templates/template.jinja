@@ -49,7 +49,12 @@ USER root
 {% if packages and packages.install %}
 {% if packages.repositories %}
 # Add custom repo files
-COPY repos/*.repo /etc/yum.repos.d/
+COPY \
+{% for repo in packages.repositories %}
+    repos/{{ repo.name }}.repo
+{% endfor %}
+    /etc/yum.repos.d/
+
 {% endif %}
 
 # Install required RPMs and ensure that the packages were installed
