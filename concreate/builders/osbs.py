@@ -117,7 +117,8 @@ class OSBSBuilder(Builder):
                 logger.info("No changes made to the code, committing skipped")
 
             if decision("Do you want to build the image in OSBS?"):
-                logger.info("Executing container build in OSBS...")
+                build_type = "release" if build_args.build_osbs_release else "scratch"
+                logger.info("Executing %s container build in OSBS..." % build_type)
 
                 logger.debug("Executing '%s'." % ' '.join(cmd))
                 subprocess.check_call(cmd)
