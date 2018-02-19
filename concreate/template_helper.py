@@ -24,13 +24,16 @@ class TemplateHelper(object):
             ret.append("\"%s\"" % cmd)
         return "[%s]" % ', '.join(ret)
 
-    def component(self, name):
-        """Returns the component name based on the image name"""
-
+    def component(self, name, labels):
+        """Constructs com.redhat.component LABEL only if its ont present"""
+        if labels:
+            for label in labels:
+                if label['name'] == 'com.redhat.component':
+                    return ""
         regex = re.sub(r'^(.*)/(.*)$', r'\1-\2-docker', name)
 
         # we don't want -tech-preview to be in component fields
-        return "%s" % regex.replace("-tech-preview", '')
+        return 'com.redhat.component="%s"' % regex.replace("-tech-preview", '')
 
     def base_image(self, base_image, version):
         """Return the base image name that could be used in FROM
