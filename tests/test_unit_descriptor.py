@@ -1,6 +1,7 @@
 import pytest
 import yaml
 
+from concreate import tools
 from concreate.errors import ConcreateError
 from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
     Repository
@@ -62,7 +63,9 @@ def test_osbs():
     assert osbs['repository']['branch'] == 'bar'
 
 
-def test_packages():
+def test_packages(mocker):
+    tools.cfg = {'repositories': {'repo-foo': 'url',
+                                  'repo-bar': 'url'}}
     pkg = Packages(yaml.safe_load("""
       repositories:
           - repo-foo

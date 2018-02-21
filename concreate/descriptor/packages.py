@@ -9,14 +9,17 @@ packages_schema = [yaml.safe_load("""
 map:
   repositories:
     seq:
-      - {type: str}
+      - {type: any}
   install:
     seq:
       - {type: str}""")]
 
 repository_schema = [yaml.safe_load("""
 map:
-  name: {type: str}""")]
+  name: {type: str}
+  url: {type: str}
+  filename: {type: str}
+  """)]
 
 
 class Packages(Descriptor):
@@ -44,7 +47,24 @@ class Repository(Descriptor):
 
     def __init__(self, name):
         self.schemas = repository_schema
-        descriptor = {'name': name}
+
+        configured_repositories = tools.cfg.get('repositories', {})
+        # We need to remove the custom "__name__" element before we can show
+        # which repository keys are defined in the configuration
+        configured_repository_names = configured_repositories.keys()
+
+        if '__name__' in configured_repository_names:
+            configured_repository_names.remove('__name__')
+
+        if name not in configured_repositories:
+            raise ConcreateError("Package repository '%s' used in descriptor is not "
+                                 "available in Concreate configuration file. "
+                                 "Available repositories: %s"
+                                 % (name, configured_repository_names))
+        descriptor = {'name': name,
+                      'url': configured_repositories[name],
+                      'filename': os.path.basename(configured_repositories[name]),
+                      }
         super(Repository, self).__init__(descriptor)
 
     def fetch(self, target_dir):
@@ -54,22 +74,8 @@ class Repository(Descriptor):
         Args:
           target_dir - a target where file is fetched to
         """
-        configured_repositories = tools.cfg.get('repositories', {})
-
-        # We need to remove the custom "__name__" element before we can show
-        # which repository keys are defined in the configuration
-        configured_repository_names = configured_repositories.keys()
-
-        if '__name__' in configured_repository_names:
-            configured_repository_names.remove('__name__')
-
-        if self._descriptor['name'] not in configured_repositories:
-            raise ConcreateError("Package repository '%s' used in descriptor is not "
-                                 "available in Concreate configuration file. "
-                                 "Available repositories: %s"
-                                 % (self._descriptor['name'], configured_repository_names))
 
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
 
-        Resource({'url': configured_repositories[self._descriptor['name']]}).copy(target_dir)
+        Resource({'url': self._descriptor['url']}).copy(target_dir)
