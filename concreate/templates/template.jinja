@@ -51,7 +51,7 @@ USER root
 # Add custom repo files
 COPY \
 {% for repo in packages.repositories %}
-    repos/{{ repo.name }}.repo
+    repos/{{ repo.filename }} \
 {% endfor %}
     /etc/yum.repos.d/
 
@@ -64,7 +64,7 @@ RUN yum install -y {%- for package in packages.install %} {{ package }}{% endfor
 
 {% if packages.repositories %}
 # Remove custom repo files
-RUN rm{% for repo in packages.repositories %} /etc/yum.repos.d/{{ repo.name }}.repo{% endfor %}
+RUN rm{% for repo in packages.repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
 
 {% endif %}
 
