@@ -1,9 +1,9 @@
 import pytest
 import yaml
 
-from concreate import tools
-from concreate.errors import ConcreateError
-from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
+from cekit import tools
+from cekit.errors import CekitError
+from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
     Repository
 
 
@@ -99,7 +99,7 @@ def test_image():
 
 
 def test_image_missing_name():
-    with pytest.raises(ConcreateError):
+    with pytest.raises(CekitError):
         Image(yaml.safe_load("""
         from: foo
         version: 1.9"""), 'foo')

@@ -1,11 +1,11 @@
-Concreate
+Cekit
 =====================================
 
-Welcome to the Concreate's documentation.
+Welcome to the Cekit's documentation.
 
-.. image:: concreate.jpg
+.. image:: cekit.jpg
 
-Concreate helps to build container images from image definition files.
+Cekit helps to build container images from image definition files.
 
 Topics
 --------

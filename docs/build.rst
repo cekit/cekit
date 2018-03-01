@@ -1,7 +1,7 @@
 Building image
 ================
 
-Concreate supports following builder engines:
+Cekit supports following builder engines:
 
 * ``Docker`` -- build the container image using `docker build <https://docs.docker.com/engine/reference/commandline/build/>`_ command and it default option
 * ``OSBS`` -- build the container image using `OSBS service <https://osbs.readthedocs.io>`_
@@ -13,7 +13,7 @@ You can execute an container image build by running:
 
 .. code:: bash
 
-	  $ concreate build
+	  $ cekit build
 
 **Options affecting builder:**
 
@@ -38,7 +38,7 @@ This is the default way to build an container image. The image is build using ``
 
 .. code:: bash
 
-	  $ concreate build
+	  $ cekit build
 
 
 OSBS build
@@ -51,11 +51,11 @@ it performs scratch build. If you need a release build you need to specify ``--b
 
 .. code:: bash
 
-	  $ concreate build --build-engine=osbs
+	  $ cekit build --build-engine=osbs
 
 
 **Example:** Performing release build
 
 .. code:: bash
 
-	  $ concreate build --build-engine=osbs --build-osbs-release
+	  $ cekit build --build-engine=osbs --build-osbs-release

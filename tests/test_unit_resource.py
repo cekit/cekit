@@ -1,9 +1,9 @@
 import pytest
 import os
 
-from concreate.descriptor import Resource
-from concreate import tools
-from concreate.errors import ConcreateError
+from cekit.descriptor import Resource
+from cekit import tools
+from cekit.errors import CekitError
 
 
 def setup_function(function):
@@ -49,11 +49,11 @@ def get_ctx(mocker):
 
 
 def get_mock_urlopen(mocker):
-    return mocker.patch('concreate.descriptor.resource.urlopen', return_value=get_res(mocker))
+    return mocker.patch('cekit.descriptor.resource.urlopen', return_value=get_res(mocker))
 
 
 def get_mock_ssl(mocker, ctx):
-    return mocker.patch('concreate.descriptor.resource.ssl.create_default_context',
+    return mocker.patch('cekit.descriptor.resource.ssl.create_default_context',
                         return_value=ctx)
 
 
@@ -98,7 +98,7 @@ def test_fetching_disable_ssl_verify(mocker):
 def test_fetching_bad_status_code():
     res = Resource(
         {'name': 'file', 'url': 'http:///dummy'})
-    with pytest.raises(ConcreateError):
+    with pytest.raises(CekitError):
         res.copy()
 
 
@@ -128,7 +128,7 @@ def test_fetching_file_exists_fetched_again(mocker):
     with open('file', 'w') as f:  # noqa: F841
         pass
     res = Resource({'name': 'file', 'url': 'http:///dummy', 'md5': '123456'})
-    with pytest.raises(ConcreateError):
+    with pytest.raises(CekitError):
         # Checksum will fail, because the "downloaded" file
         # will not have md5 equal to 123456. We need investigate
         # mocking of requests get calls to do it properly
@@ -142,7 +142,7 @@ def test_generated_url_without_cacher():
 
 
 def test_resource_verify(mocker):
-    mock = mocker.patch('concreate.descriptor.resource.Resource._Resource__check_sum')
+    mock = mocker.patch('cekit.descriptor.resource.Resource._Resource__check_sum')
     res = Resource({'url': 'dummy'})
     res.checksums = {'sha256': 'justamocksum'}
     res._Resource__verify('dummy')

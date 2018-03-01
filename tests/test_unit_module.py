@@ -1,5 +1,5 @@
-from concreate.descriptor import Module
-from concreate.module import modules
+from cekit.descriptor import Module
+from cekit.module import modules
 
 module_desc = {
     'schema_version': 1,

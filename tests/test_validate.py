@@ -5,19 +5,19 @@ import sys
 import yaml
 import pytest
 
-from concreate.builders.osbs import Chdir
-from concreate.cli import Concreate
+from cekit.builders.osbs import Chdir
+from cekit.cli import Cekit
 
 
 def setup_function():
-    """Reload concreate.module to make sure it doesnt contain old modules instances"""
-    import concreate.module
+    """Reload cekit.module to make sure it doesnt contain old modules instances"""
+    import cekit.module
     try:
         from imp import reload
     except NameError:
         from importlib import reload
 
-    reload(concreate.module)
+    reload(cekit.module)
 
 
 image_descriptor = {
@@ -58,7 +58,7 @@ def copy_repos(dst):
 
 
 def test_simple_image_build(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
                                       'build'])
 
@@ -68,11 +68,11 @@ def test_simple_image_build(tmpdir, mocker):
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
 
 def test_simple_image_test(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate', '-v',
+    mocker.patch.object(sys, 'argv', ['cekit', '-v',
                                       'build',
                                       'test'])
 
@@ -89,11 +89,11 @@ def test_simple_image_test(tmpdir, mocker):
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
 
 def test_image_test_with_override(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',
                                       'overrides.yaml',
                                       '-v',
@@ -118,12 +118,12 @@ def test_image_test_with_override(tmpdir, mocker):
     with open(feature_files, 'w') as fd:
         fd.write(feature_label_test_overriden)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
 
 def test_image_test_with_override_on_cmd(tmpdir, mocker):
     overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',
                                       overrides_descriptor,
                                       '-v',
@@ -143,11 +143,11 @@ def test_image_test_with_override_on_cmd(tmpdir, mocker):
     with open(feature_files, 'w') as fd:
         fd.write(feature_label_test_overriden)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
 
 def test_module_override(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',
                                       'overrides.yaml',
                                       '-v',
@@ -167,7 +167,7 @@ def test_module_override(tmpdir, mocker):
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
         yaml.dump(overrides_descriptor, fd, default_flow_style=False)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
     module_dir = os.path.join(image_dir,
                               'target',
@@ -205,7 +205,7 @@ def check_dockerfile_uniq(image_dir, match):
 
 
 def test_local_module_injection(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       'generate'])
 
     image_dir = str(tmpdir.mkdir('source'))
@@ -219,7 +219,7 @@ def test_local_module_injection(tmpdir, mocker):
     shutil.copytree(os.path.join(os.path.dirname(__file__),
                                  'modules', 'repo_1'),
                     os.path.join(image_dir, 'modules'))
-    run_concreate(image_dir)
+    run_cekit(image_dir)
     assert os.path.exists(os.path.join(image_dir,
                                        'target',
                                        'image',
@@ -229,7 +229,7 @@ def test_local_module_injection(tmpdir, mocker):
 
 
 def test_local_module_not_injected(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       'generate'])
 
     image_dir = str(tmpdir.mkdir('source'))
@@ -243,7 +243,7 @@ def test_local_module_not_injected(tmpdir, mocker):
     shutil.copytree(os.path.join(os.path.dirname(__file__),
                                  'modules', 'repo_1'),
                     os.path.join(image_dir, 'modules'))
-    run_concreate(image_dir)
+    run_cekit(image_dir)
     assert not os.path.exists(os.path.join(image_dir,
                                            'target',
                                            'image',
@@ -251,7 +251,7 @@ def test_local_module_not_injected(tmpdir, mocker):
 
 
 def test_run_override_user(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',
                                       'overrides.yaml',
                                       '-v',
@@ -270,13 +270,13 @@ def test_run_override_user(tmpdir, mocker):
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
         yaml.dump(overrides_descriptor, fd, default_flow_style=False)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
     assert check_dockerfile(image_dir, 'USER 4321')
 
 
 def test_run_override_artifact(tmpdir, mocker):
-    mocker.patch.object(sys, 'argv', ['concreate',
+    mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',
                                       'overrides.yaml',
                                       '-v',
@@ -302,14 +302,14 @@ def test_run_override_artifact(tmpdir, mocker):
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
         yaml.dump(overrides_descriptor, fd, default_flow_style=False)
 
-    run_concreate(image_dir)
+    run_cekit(image_dir)
 
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
 
-def run_concreate(cwd):
+def run_cekit(cwd):
     with Chdir(cwd):
-        # run concreate and check it exits with 0
+        # run cekit and check it exits with 0
         with pytest.raises(SystemExit) as system_exit:
-            Concreate().parse().run()
+            Cekit().parse().run()
         assert system_exit.value.code == 0

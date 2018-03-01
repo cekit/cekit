@@ -3,7 +3,7 @@
 Modules
 =======
 
-Modules are the **most important** concept in Concreate.
+Modules are the **most important** concept in Cekit.
 
 It is very important to make a module self-containg which means that executing
 scripts defined in the module's definition file should always end up in a state

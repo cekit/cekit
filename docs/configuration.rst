@@ -1,17 +1,17 @@
 Configuration file
 ==================
 
-Concreate can be configured using a configuration file. We use the
+Cekit can be configured using a configuration file. We use the
 properties file format.
 
-Concreate will look for this file at the path ``~/.concreate``. Its location can be changed via command line ``--config`` option.
+Cekit will look for this file at the path ``~/.cekit``. Its location can be changed via command line ``--config`` option.
 
 **Example**
-Running Concreate with different config file:
+Running Cekit with different config file:
 
 .. code:: sh
 	  
-	  $ concreate --config ~/alternative_path build
+	  $ cekit --config ~/alternative_path build
 
 Below you can find description of available sections together with options described in detail.
 
@@ -21,7 +21,7 @@ Below you can find description of available sections together with options descr
 ``work_dir``
 ^^^^^^^^^^^^
 
-Contains location of Concreate working directory, which is used to store some persistent data like
+Contains location of Cekit working directory, which is used to store some persistent data like
 dist_git repositories.
 
 ``ssl_verify``
@@ -93,7 +93,7 @@ that should be added to the image at build time.
     other-repos=http://otherhost.com/osme.repo
 
 In case you have YUM/DNF repo files that you want to put to the ``/etc/yum.repos.d`` directory to enable additional
-repositories Concreate can handle it for you automatically.
+repositories Cekit can handle it for you automatically.
 
 Repositories are defined using custom keys that could be later referenced in the :ref:`image descriptor's
 packages section <descriptor_packages>`, under ``repositories``.
@@ -110,10 +110,10 @@ packages section <descriptor_packages>`, under ``repositories``.
             - maven
             - hostname
 
-Concreate will copy all repo files to ``/etc/yum.repos.d`` directory and
+Cekit will copy all repo files to ``/etc/yum.repos.d`` directory and
 enable them to be used while installing packages listed in the packages section.
 
-At the end of the image build process Concreate removes newly added repo files from the ``/etc/yum.repos.d``
+At the end of the image build process Cekit removes newly added repo files from the ``/etc/yum.repos.d``
 directory automatically. If you do not want to have these files removed after installation --
 you need to make your repo files part of some module that installs them in the correct place.
 
