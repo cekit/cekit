@@ -1,7 +1,7 @@
 Developing modules locally
 ==========================
 
-Concreate enables you to use a work in progress modules to build the image by exploiting its overrides system. As an example, imagine we have very simple image which is using one module from a cct_module repository like this:
+Cekit enables you to use a work in progress modules to build the image by exploiting its overrides system. As an example, imagine we have very simple image which is using one module from a cct_module repository like this:
 
 .. code:: yaml
 
@@ -39,6 +39,6 @@ Now imagine,  we have found a bug in its s2i-common module. We will clone the mo
 
 .. code:: bash
 
-  $ concreate generate --overrides overrides.yaml
+  $ cekit generate --overrides overrides.yaml
 
 4. When your work is finished, commit and push your changes to a module repository and remove overrides.yaml

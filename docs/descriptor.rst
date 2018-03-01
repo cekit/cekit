@@ -3,7 +3,7 @@
 Image descriptor file
 =====================
 
-Most important, user facing part of Concreate is the descriptor file. We use
+Most important, user facing part of Cekit is the descriptor file. We use
 `YAML <http://yaml.org/>`_ format which is easy to read and edit by humans but still machine
 parseable.
 
@@ -20,7 +20,7 @@ It's common for images to require external artifacts.
 In most cases you will want to add files into the image and use them at
 the image build process.
 
-Artifacts section is meant exactly for this. *Concreate will automatically
+Artifacts section is meant exactly for this. *Cekit will automatically
 fetch any artifacts* specified in this section
 and check their consistency by computing checksum of
 the downloaded file and comparing it with the desired value.  The output name
@@ -51,7 +51,7 @@ the base name of the file/URL. Artifact locations may be specified as ``url``\s,
 
     Currently supported algorithms are: md5, sha1 and sha256.
 
-For artifacts that are not publicly available Concreate provides a way to
+For artifacts that are not publicly available Cekit provides a way to
 add a description detailing a location from which the artifact can be obtained.
 
 .. code:: yaml
@@ -61,7 +61,7 @@ add a description detailing a location from which the artifact can be obtained.
           md5: 9a5d37631919a111ddf42ceda1a9f0b5
           description: "Red Hat JBoss EAP 6.4.0 distribution available on Customer Portal: https://access.redhat.com/jbossnetwork/restricted/softwareDetail.html?softwareId=37393&product=appplatform&version=6.4&downloadType=distributions"
 
-If Concreate is not able to download an artifact and this artifact has a ``description`` defined -- the build
+If Cekit is not able to download an artifact and this artifact has a ``description`` defined -- the build
 will fail but a message with the description will be printed together with information on where to place
 the manually downloaded artifact.
 
@@ -144,7 +144,7 @@ Base image of your image.
 
     Learn more about `standard labels in container images <https://github.com/projectatomic/ContainerApplicationGenericLabels>`_.
 
-Every image can include labels. Concreate makes it easy to do so with the ``labels`` section.
+Every image can include labels. Cekit makes it easy to do so with the ``labels`` section.
 
 .. code:: yaml
 
@@ -166,7 +166,7 @@ Module repositories
 
 Module repositories specify location of modules that are to be incorporated
 into the image. These repositories may be ``git`` repositories or directories
-on the local file system (``path``). Concreate will scan the repositories for
+on the local file system (``path``). Cekit will scan the repositories for
 ``module.xml`` files, which are used to encapsulate image details that may be
 incorporated into multiple images.
 
@@ -242,7 +242,7 @@ Packages are defined in the ``install`` subsection.
 To be able to define private repositories that you want to use at build time
 we have the ``repositories`` subsection. You can define repository `keys`
 that should be enabled. In image descriptor you only define what to use.
-Actual definition for these repositories takes place in :ref:`Concreate configuration file <configuration_repositories>`.
+Actual definition for these repositories takes place in :ref:`Cekit configuration file <configuration_repositories>`.
 
 .. code::
 
@@ -339,7 +339,7 @@ Sets the current working directory of the entrypoint process in the container.
 
 This key is **required**.
 
-Here you specify the schema version of the descriptor. This influences what versions of Concreate are able to parse it.
+Here you specify the schema version of the descriptor. This influences what versions of Cekit are able to parse it.
 
 .. code:: yaml
 

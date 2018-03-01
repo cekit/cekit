@@ -1,5 +1,5 @@
-from concreate.descriptor.label import Label
-from concreate.template_helper import TemplateHelper
+from cekit.descriptor.label import Label
+from cekit.template_helper import TemplateHelper
 
 
 helper = TemplateHelper()

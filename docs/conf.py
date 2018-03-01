@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Concreate documentation build configuration file, created by
+# Cekit documentation build configuration file, created by
 # sphinx-quickstart on Thu Sep  7 12:51:05 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -45,9 +45,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Concreate'
-copyright = u'2017, Concreate Team'
-author = u'Concreate Team'
+project = u'Cekit'
+copyright = u'2017, Cekit Team'
+author = u'Cekit Team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -114,7 +114,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Concreatedoc'
+htmlhelp_basename = 'Cekitdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -141,7 +141,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Concreate.tex', u'Concreate Documentation',
+    (master_doc, 'Cekit.tex', u'Cekit Documentation',
      u'Marek Goldmann', 'manual'),
 ]
 
@@ -151,7 +151,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'concreate', u'Concreate Documentation',
+    (master_doc, 'cekit', u'Cekit Documentation',
      [author], 1)
 ]
 
@@ -162,8 +162,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Concreate', u'Concreate Documentation',
-     author, 'Concreate', 'One line description of project.',
+    (master_doc, 'Cekit', u'Cekit Documentation',
+     author, 'Cekit', 'One line description of project.',
      'Miscellaneous'),
 ]
 

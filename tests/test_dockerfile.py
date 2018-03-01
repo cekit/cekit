@@ -2,9 +2,9 @@ import os
 import pytest
 import re
 
-from concreate.generator import Generator
-from concreate.descriptor import Module
-from concreate.version import version as concreate_version
+from cekit.generator import Generator
+from cekit.descriptor import Module
+from cekit.version import version as cekit_version
 
 basic_config = {'release': 1,
                 'version': 1,
@@ -53,7 +53,7 @@ def print_test_name(value):
      r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
     ('test_label_version',
      {},
-     r'.*org.concrt.version="%s".*' % concreate_version)],
+     r'.*org.concrt.version="%s".*' % cekit_version)],
                          ids=print_test_name)
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 

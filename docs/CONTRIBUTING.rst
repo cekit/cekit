@@ -6,7 +6,7 @@ write our documentation because this is the de-facto standard for Python documen
 We use `Sphinx <http://www.sphinx-doc.org/en/stable/index.html>`_ tool to generate documentation
 from reStructuredText files.
 
-Published documentation lives on Read the Docs: `<https://concreate.readthedocs.io/>`_
+Published documentation lives on Read the Docs: `<https://cekit.readthedocs.io/>`_
 
 reStructredText
 ---------------
