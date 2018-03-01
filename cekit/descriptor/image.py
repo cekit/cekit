@@ -45,8 +45,10 @@ class Image(Descriptor):
         self._descriptor['labels'] = self._descriptor.get('labels', [])
         # we will persist cekit version in a label here, so we know which version of cekit
         # was used to build the image
-        self['labels'].append({'name': 'org.concrt.version',
-                               'value': cekit_version})
+        self['labels'].extend([{'name': 'org.concrt.version',
+                                'value': cekit_version},
+                               {'name': 'io.cekit.version',
+                                'value': cekit_version}])
 
         # The description key available in image descriptor's
         # root is added as labels to the image

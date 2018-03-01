@@ -51,9 +51,12 @@ def print_test_name(value):
      {'execute': [{'script': 'bar_script',
                    'user': 'bar_user'}]},
      r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
-    ('test_label_version',
+    ('test_concrt_label_version',
      {},
-     r'.*org.concrt.version="%s".*' % cekit_version)],
+     r'.*org.concrt.version="%s".*' % cekit_version),
+    ('test_cekit_label_version',
+     {},
+     r'.*io.cekit.version="%s".*' % cekit_version)],
                          ids=print_test_name)
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
