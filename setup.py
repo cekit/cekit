@@ -16,8 +16,8 @@ setup(
         'cekit.templates': ['*.jinja'],
         'cekit.schema': ['*.yaml'],
     },
-    url='https://github.com/jboss-container-images/cekit',
-    download_url="https://github.com/jboss-container-images/cekit/archive/%s.tar.gz" % version,
+    url='https://github.com/cekit/cekit',
+    download_url="https://github.com/cekit/cekit/archive/%s.tar.gz" % version,
     author='Cloud Enablement',
     author_email='cloud-enablement-feedback@redhat.com',
     description='Containers creator',
@@ -25,7 +25,8 @@ setup(
     license='MIT',
     keywords='docker',
     entry_points={
-        'console_scripts': ['cekit=cekit.cli:run'],
+        'console_scripts': ['cekit=cekit.cli:run',
+                            'concreate=cekit.cli:run'],
     },
     tests_require=['mock'],
     install_requires=requirements
