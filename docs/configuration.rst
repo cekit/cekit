@@ -4,7 +4,7 @@ Configuration file
 Cekit can be configured using a configuration file. We use the
 properties file format.
 
-Cekit will look for this file at the path ``~/.cekit``. Its location can be changed via command line ``--config`` option.
+Cekit will look for this file at the path ``~/.cekit/config``. Its location can be changed via command line ``--config`` option.
 
 **Example**
 Running Cekit with different config file:
