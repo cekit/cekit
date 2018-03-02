@@ -25,7 +25,7 @@ def get_cfg(config_path):
     cp.read(os.path.expanduser(config_path))
     cfg = cp._sections
     cfg['common'] = cfg.get('common', {})
-    cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.cekit.d')
+    cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.cekit')
     return cfg
 
 

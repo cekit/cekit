@@ -47,8 +47,8 @@ class Cekit(object):
                             help='show version and exit', version=version)
 
         parser.add_argument('--config',
-                            default='~/.cekit',
-                            help='path for cekit config file (~/.cekit is default)')
+                            default='~/.cekit/config',
+                            help='path for cekit config file (~/.cekit/config is default)')
 
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
