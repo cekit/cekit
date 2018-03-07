@@ -4,20 +4,22 @@
 %global with_python3 1
 %endif
 
-%global modname concreate
-%global git_version develop
+%global modname cekit
 
-Name:           python-concreate
-Version:        1.4.0
+Name:           python-cekit
+Version:        2.0.0
+Obsoletes:      python-concreate
+Provides:       python-concreate
+Conflicts:      python-concreate
 Release:        0.1.git%{?dist}
 Summary:        Container image creation tool
 License:        MIT
-URL:            https://github.com/jboss-container-images/concreate
-Source0:        %{url}/archive/%{git_version}.tar.gz
+URL:            https://github.com/cekit/cekit
+Source0:        %{url}/archive/%{version}.tar.gz
 BuildArch:      noarch
 
 %global _description \
-Concreate helps to build container images from image definition files
+Cekit helps to build container images from image definition files
 
 %description %_description
 
@@ -102,21 +104,24 @@ Python 3 version.
 %files -n python2-%{modname}
 %doc README.rst
 %license LICENSE
-%{python2_sitelib}/concreate/
-%{python2_sitelib}/concreate-*.egg-info/
+%{python2_sitelib}/cekit/
+%{python2_sitelib}/cekit-*.egg-info/
 
 %if 0%{?with_python3}
 %files -n python3-%{modname}
 %doc README.rst
 %license LICENSE
-%{python3_sitelib}/concreate/
-%{python3_sitelib}/concreate-*.egg-info/
+%{python3_sitelib}/cekit/
+%{python3_sitelib}/cekit-*.egg-info/
 %endif
 
 # This file ends up in py3 subpackage if enabled, otherwise in py2
 %{_bindir}/concreate
+%{_bindir}/cekit
 
 %changelog
+
+
 * Fri Sep 29 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.0-0.3.git
 - Rebuild
 
