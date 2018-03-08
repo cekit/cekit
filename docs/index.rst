@@ -14,6 +14,7 @@ Topics
     :maxdepth: 2
 
     installation
+    upgrade
     descriptor
     modules
     configuration
