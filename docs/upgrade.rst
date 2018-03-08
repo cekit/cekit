@@ -54,7 +54,7 @@ Supported versions: 25, 26, 27.
 .. code-block:: bash
 
     dnf remove python3-concreate
-    rm -rf /etc/yum.repos.d/_copr_goldmann-concreate.repo
+    dnf copr remove goldmann/concreate
 
     dnf copr enable @cekit/cekit
     dnf install python3-cekit
@@ -80,7 +80,7 @@ RHEL
 .. code-block:: bash
 
     yum remove python2-concreate
-    rm -rf /etc/yum.repos.d/goldmann-cekit-epel-7.repo
+    rm -rf /etc/yum.repos.d/_copr_goldmann-concreate.repo
 
     yum copr enable @cekit/cekit
     yum install python2-cekit
