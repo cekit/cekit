@@ -1,14 +1,13 @@
 Cekit
 =====
 
-.. image:: docs/concreate.jpg
-
 About
 -----
 
-Container image creation tool.
+Container image creation tool. Cekit was previously known as Concreate. If your migrating from concreate tool, please follow
+upgrade instructions <http://concreate.readthedocs.io/en/develop/upgrade.html>`_.
 
-Concreate helps to build container images from image definition files with strong focus on modularity and code reuse.
+Cekit helps to build container images from image definition files with strong focus on modularity and code reuse.
 
 Features
 --------
@@ -41,6 +40,6 @@ Documentation
 History
 -------
 
-Concreate originates from the `Dogen <https://github.com/jboss-dockerfiles/dogen>`_ tool. Dogen was developed for over two years and served us well, but we decided to make it a first class citizen and promote using abstract image descriptors. At the same time we wanted to add new set of features which made the "Dockerfile generator" tagline inaccurate and we decided to start fresh under a new project. In any case, this is the Dogen project evolution.
+Cekit originates from the `Dogen <https://github.com/jboss-dockerfiles/dogen>`_ tool. Dogen was developed for over two years and served us well, but we decided to make it a first class citizen and promote using abstract image descriptors. At the same time we wanted to add new set of features which made the "Dockerfile generator" tagline inaccurate and we decided to start fresh under a new project. In any case, this is the Dogen project evolution.
 
 
