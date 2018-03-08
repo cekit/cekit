@@ -80,16 +80,17 @@ RHEL
 .. code-block:: bash
 
     yum remove python2-concreate
-    rm -rf /etc/yum.repos.d/_copr_goldmann-concreate.repo
+    rm -rf /etc/yum.repos.d/goldmann-concreate-epel-7.repo
 
-    yum copr enable @cekit/cekit
+    curl https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/repo/epel-7/group_cekit-cekit-epel-7.repo -o /etc/yum.repos.d/cekit-epel-7.repo
     yum install python2-cekit
 
 
 Other systems
 -------------
 
-We suggest using pip and `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to host you Cekit.
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Cekit. Please consult
+your package manager of choice for the correct package name.
 
 .. code-block:: bash
 
