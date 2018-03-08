@@ -4,7 +4,7 @@ Installation
 Fedora / CentOS / RHEL
 -----------------------
 
-We suggest installing Cekit using the YUM/DNF package manager. We provide a `COPR repository for Cekit <https://copr.fedorainfracloud.org/coprs/goldmann/cekit/>`_
+We suggest installing Cekit using the YUM/DNF package manager. We provide a `COPR repository for Cekit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_
 which contains everything needed to install Cekit.
 
 Fedora
@@ -14,7 +14,7 @@ Supported versions: 25, 26, 27.
 
 .. code-block:: bash
 
-    dnf copr enable goldmann/concreate
+    dnf copr enable @cekit/cekit
     dnf install python3-cekit
 
 CentOS
@@ -25,7 +25,7 @@ Supported versions: 7.
 .. code-block:: bash
 
     yum install yum-plugin-copr
-    yum copr enable goldmann/concreate
+    yum copr enable @cekit/cekit
     yum install python2-cekit
 
 RHEL
@@ -58,6 +58,18 @@ your package manager of choice for the correct package name.
     cekit --help
 
 Requirements
-^^^^^^^^^^^^^
+------------
 
-To build container images you need to have Docker installed on your system.
+Build
+^^^^^
+To build container images you need:
+
+* Docker
+
+Test
+^^^^
+For running tests you need:
+
+* docker python bindings
+* behave
+* python lxml

@@ -1,5 +1,5 @@
-Concreate
-=========
+Cekit
+=====
 
 .. image:: docs/concreate.jpg
 
@@ -24,8 +24,8 @@ If you are running Fedora, you can install Concreate easily via:
 
 .. code-block:: bash
 
-    dnf copr enable goldmann/concreate
-    dnf install python3-concreate
+    dnf copr enable @cekit/cekit
+    dnf install python3-cekit
 
 For other platforms, please refer to `documentation <http://concreate.readthedocs.io/en/develop/installation.html>`_.
 
