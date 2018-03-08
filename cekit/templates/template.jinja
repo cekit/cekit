@@ -58,7 +58,7 @@ COPY \
 
 # Install required RPMs and ensure that the packages were installed
 RUN yum install -y {%- for package in packages.install %} {{ package }}{% endfor %} \
-    && yum clean all && \
+    && yum clean all && rm -rf /var/cache/yum && \
     rpm -q {% for package in packages.install %} {{ package }}{% endfor %}
 
 {% if packages.repositories %}
