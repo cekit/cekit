@@ -35,7 +35,7 @@ Supported versions: 7.
 
 .. code-block:: bash
 
-    curl https://copr.fedorainfracloud.org/coprs/goldmann/cekit/repo/epel-7/goldmann-cekit-epel-7.repo -o /etc/yum.repos.d/goldmann-cekit-epel-7.repo
+    curl https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/repo/epel-7/group_cekit-cekit-epel-7.repo -o /etc/yum.repos.d/cekit-epel-7.repo
     yum install python2-cekit
 
 Other systems
