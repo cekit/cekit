@@ -30,8 +30,7 @@ ENV JBOSS_IMAGE_NAME="{{name}}" \
 # Labels
 LABEL name="$JBOSS_IMAGE_NAME" \
       version="$JBOSS_IMAGE_VERSION" \
-      architecture="x86_64" {% if helper.component(name, labels) %} \
-      {{ helper.component(name, labels) }} {% endif %} {%- if labels %} \
+      architecture="x86_64" {%- if labels %} \
       {% for label in labels %}
       {{ label.name }}="{{ label.value }}" {%- if loop.index < loop.length %} \{% endif %}
 
