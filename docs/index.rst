@@ -3,8 +3,6 @@ Cekit
 
 Welcome to the Cekit's documentation.
 
-.. image:: cekit.jpg
-
 Cekit helps to build container images from image definition files.
 
 Topics
