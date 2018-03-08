@@ -7,7 +7,7 @@ from cekit.test.collector import TestCollector
 desc_dir = "/tmp/desc"
 target_dir = "/tmp/target_dir"
 
-steps_url = 'https://github.com/jboss-container-images/cekit-test-steps'
+steps_url = 'https://github.com/cekit/behave-test-steps'
 
 
 @pytest.fixture
