@@ -1,9 +1,13 @@
 import os
+import logging
 import yaml
+import subprocess
 
 from cekit import tools
 from cekit.descriptor import Descriptor, Resource
 from cekit.errors import CekitError
+
+logger = logging.getLogger('cekit')
 
 packages_schema = [yaml.safe_load("""
 map:
@@ -47,25 +51,28 @@ class Repository(Descriptor):
 
     def __init__(self, name):
         self.schemas = repository_schema
-
-        configured_repositories = tools.cfg.get('repositories', {})
-        # We need to remove the custom "__name__" element before we can show
-        # which repository keys are defined in the configuration
-        configured_repository_names = configured_repositories.keys()
-
-        if '__name__' in configured_repository_names:
-            configured_repository_names.remove('__name__')
-
-        if name not in configured_repositories:
-            raise CekitError("Package repository '%s' used in descriptor is not "
-                                 "available in Cekit configuration file. "
-                                 "Available repositories: %s"
-                                 % (name, configured_repository_names))
+        url = self._create_content_set(name)
         descriptor = {'name': name,
-                      'url': configured_repositories[name],
-                      'filename': os.path.basename(configured_repositories[name]),
+                      'url': url,
+                      'filename': os.path.basename(url),
                       }
         super(Repository, self).__init__(descriptor)
+
+    def _create_content_set(self, name):
+        """Create pulp content set in ODCS and returns its url
+
+        Args:
+          name - name of the ODCS pulp"""
+        try:
+            # idealy this will be API for ODCS, but there is no python3 package for ODCS
+            cmd = ['odcs', '--redhat', 'create', 'pulp', name]
+            logger.debug("Creating ODCS content set via '%s'" % cmd)
+            output = subprocess.check_output(cmd)
+            normalized_output = '\n'.join(output.replace(" u'", " '").split('\n')[1:])
+            odcs_resp = yaml.safe_load(normalized_output)
+            return odcs_resp['result_repofile']
+        except Exception as ex:
+            raise CekitError('Cannot create content set!', ex)
 
     def fetch(self, target_dir):
         """Fetches repository file to the location. URL for fetching is derived from the
