@@ -38,6 +38,18 @@ def test_args_build_engine(mocker, engine):
     assert Cekit().parse().args.build_engine == engine
 
 
+def test_args_osbs_stage(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-osbs-stage'])
+
+    assert Cekit().parse().args.build_osbs_stage is True
+
+
+def test_args_osbs_stage_false(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit', 'build'])
+
+    assert Cekit().parse().args.build_osbs_stage is False
+
+
 def test_args_invalid_build_engine(mocker):
     mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-engine', 'rkt'])
 

@@ -90,6 +90,11 @@ class Cekit(object):
                                  action='store_true',
                                  help='run rhpkg container build with --nowait option')
 
+        build_group.add_argument('--build-osbs-stage',
+                                 dest='build_osbs_stage',
+                                 action='store_true',
+                                 help='use rhpkg-stage instead of rhpkg')
+
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
                                  help='perform tech preview build')
@@ -172,12 +177,17 @@ class Cekit(object):
 
             if 'build' in self.args.commands:
                 params = {'user': self.args.build_osbs_user,
-                          'nowait': self.args.build_osbs_nowait}
+                          'nowait': self.args.build_osbs_nowait,
+                          'stage': self.args.build_osbs_stage,
+                          'release': self.args.build_osbs_release,
+                          'tags': self.args.tags,
+                          }
+
                 builder = Builder(self.args.build_engine,
                                   self.args.target,
                                   params)
                 builder.prepare(generator.image)
-                builder.build(self.args)
+                builder.build()
 
             if 'test' in self.args.commands:
 

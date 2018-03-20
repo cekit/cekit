@@ -13,6 +13,7 @@ class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
     def __init__(self, build_engine, target, params={}):
+        self._tags = params.get('tags')
         super(DockerBuilder, self).__init__(build_engine, target, params)
 
     def check_prerequisities(self):
@@ -20,20 +21,15 @@ class DockerBuilder(Builder):
             subprocess.check_output(['docker', 'info'], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as ex:
             raise CekitError("Docker build engine needs docker installed and configured, error: %s"
-                                 % ex.output)
+                             % ex.output)
         except Exception as ex:
             raise CekitError("Docker build engine needs docker installed and configured!", ex)
 
-    def build(self, build_args):
+    def build(self):
         """After the source siles are generated, the container image can be built.
         We're using Docker to build the image currently.
-
-        This can be changed by specifying the tags in CLI using --build-tags option.
-
-        Args:
-          build_tags - a list of image tags
         """
-        tags = build_args.tags
+        tags = self._tags
         cmd = ["docker", "build"]
 
         # Custom tags for the container image
