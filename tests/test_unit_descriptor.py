@@ -64,8 +64,7 @@ def test_osbs():
 
 
 def test_packages(mocker):
-    tools.cfg = {'repositories': {'repo-foo': 'url',
-                                  'repo-bar': 'url'}}
+    mocker.patch.object(Repository, '_create_content_set', return_value='url')
     pkg = Packages(yaml.safe_load("""
       repositories:
           - repo-foo

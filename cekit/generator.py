@@ -116,11 +116,7 @@ class Generator(object):
         return descriptor
 
     def render_dockerfile(self):
-        """Renders Dockerfile to $target/image/Dockerfile
-
-        Args:
-          template_file - a path to jinja2 template file
-        """
+        """Renders Dockerfile to $target/image/Dockerfile"""
         logger.info("Rendering Dockerfile...")
 
         self.image.process_defaults()
