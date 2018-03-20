@@ -16,20 +16,28 @@ class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
     def __init__(self, build_engine, target, params={}):
+        self._user = params.get('user')
+        self._nowait = params.get('nowait', False)
+        self._release = params.get('release', False)
+
+        self._stage = params.get('stage', False)
+        if params.get('stage'):
+            self._rhpkg = 'rhpkg-stage'
+        else:
+            self._rhpkg = 'rhpkg'
+
         super(OSBSBuilder, self).__init__(build_engine, target, params={})
-        self.user = params.get('user')
-        self.nowait = params.get('nowait')
 
     def check_prerequisities(self):
         try:
             subprocess.check_output(
-                ['rhpkg', 'help'], stderr=subprocess.STDOUT)
+                [self._rhpkg, 'help'], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as ex:
             raise CekitError("OSBS build engine needs 'rhpkg' tools installed, error: %s"
-                                 % ex.output)
+                             % ex.output)
         except Exception as ex:
             raise CekitError(
-                "OSBS build engine needs 'rhpkg' tools installed!", ex)
+                "OSBS build engine needs '%s' tools installed!" % self._rhpkg, ex)
 
     def prepare(self, descriptor):
         """Prepares dist-git repository for OSBS build."""
@@ -42,8 +50,13 @@ class OSBSBuilder(Builder):
             raise CekitError(
                 "OSBS builder needs repostiory and branch provided!")
 
+        if self._stage:
+            osbs_dir = 'osbs-stage'
+        else:
+            osbs_dir = 'osbs'
+
         self.dist_git_dir = os.path.join(os.path.expanduser(tools.cfg['common']['work_dir']),
-                                         'osbs',
+                                         osbs_dir,
                                          repository)
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
             os.makedirs(os.path.dirname(self.dist_git_dir))
@@ -53,7 +66,7 @@ class OSBSBuilder(Builder):
                                 repository,
                                 branch)
 
-        self.dist_git.prepare(self.user)
+        self.dist_git.prepare(self._stage, self._user)
         self.dist_git.clean()
 
         self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
@@ -80,9 +93,9 @@ class OSBSBuilder(Builder):
         logger.info("Updating lookaside cache...")
         if not self.artifacts:
             return
-        cmd = ["rhpkg"]
-        if self.user:
-            cmd += ['--user', self.user]
+        cmd = [self._rhpkg]
+        if self._user:
+            cmd += ['--user', self._user]
         cmd += ["new-sources"] + self.artifacts
 
         logger.debug("Executing '%s'" % cmd)
@@ -95,15 +108,15 @@ class OSBSBuilder(Builder):
 
         logger.info("Update finished.")
 
-    def build(self, build_args):
-        cmd = ["rhpkg"]
-        if self.user:
-            cmd += ['--user', self.user]
+    def build(self):
+        cmd = [self._rhpkg]
+        if self._user:
+            cmd += ['--user', self._user]
         cmd.append("container-build")
-        if self.nowait:
+        if self._nowait:
             cmd += ['--nowait']
 
-        if not build_args.build_osbs_release:
+        if not self._release:
             cmd.append("--scratch")
 
         with Chdir(self.dist_git_dir):
@@ -117,7 +130,7 @@ class OSBSBuilder(Builder):
                 logger.info("No changes made to the code, committing skipped")
 
             if decision("Do you want to build the image in OSBS?"):
-                build_type = "release" if build_args.build_osbs_release else "scratch"
+                build_type = "release" if self._release else "scratch"
                 logger.info("Executing %s container build in OSBS..." % build_type)
 
                 logger.debug("Executing '%s'." % ' '.join(cmd))
@@ -163,7 +176,7 @@ class DistGit(object):
 
         return False
 
-    def prepare(self, user=None):
+    def prepare(self, stage, user=None):
         if os.path.exists(self.output):
             with Chdir(self.output):
                 logger.info("Pulling latest changes in repo %s..." % self.repo)
@@ -177,11 +190,15 @@ class DistGit(object):
             logger.info("Cloning %s git repository (%s branch)..." %
                         (self.repo, self.branch))
 
-            cmd = ['rhpkg']
+            if stage:
+                cmd = ['rhpkg-stage']
+            else:
+                cmd = ['rhpkg']
+
             if user:
                 cmd += ['--user', user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
-
+            logger.debug("Cloning: '%s'" % ' '.join(cmd))
             subprocess.check_output(cmd)
             logger.debug("Repository %s cloned" % self.repo)
 
