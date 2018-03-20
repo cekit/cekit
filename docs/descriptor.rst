@@ -238,7 +238,7 @@ section where you specify package names and repositories to be used.
 
     packages:
         repositories:
-            - jboss-default
+            - rhel-server-rhscl-7-rpms
         install:
             - mongodb24-mongo-java-driver
             - postgresql-jdbc
@@ -248,20 +248,13 @@ section where you specify package names and repositories to be used.
 
 Packages are defined in the ``install`` subsection.
 
-To be able to define private repositories that you want to use at build time
-we have the ``repositories`` subsection. You can define repository `keys`
-that should be enabled. In image descriptor you only define what to use.
-Actual definition for these repositories takes place in :ref:`Cekit configuration file <configuration_repositories>`.
+By default all yum repositories enabled in the image itself are used. You can define an
+aditional repository and it will be used to form ODCS puddle and injected inside
+your image. At the end of the image build process Cekit removes newly added repo files from
+the image. If you do not want to have these files removed after installation --
+you need to make your repo files part of some module that installs them in the correct place
 
-.. code::
-
-    [repositories]
-    jboss-ocp=http://host/jboss-rhel-os.repo,http://host/jboss-rhel-ocp.repo,http://host/jboss-rhel-rhscl.repo
-    other-repos=http://otherhost.com/osme.repo
-
-.. note::
-
-    Multiple url's can be separated with comma.
+.. note::  The repository feature covers only the situation where you want to add a custom repo file at build time but you do not want it to be enabled in containers.
 
 
 ``ports``
