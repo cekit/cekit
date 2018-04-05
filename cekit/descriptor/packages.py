@@ -1,11 +1,8 @@
 import os
 import logging
 import yaml
-import subprocess
 
-from cekit import tools
 from cekit.descriptor import Descriptor, Resource
-from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
 
@@ -16,14 +13,17 @@ map:
       - {type: any}
   install:
     seq:
-      - {type: str}""")]
+      - {type: any}""")]
 
-repository_schema = [yaml.safe_load("""
+
+repository_schema = yaml.safe_load("""
 map:
-  name: {type: str}
-  url: {type: str}
+  name: {type: str, required: True}
+  repository: {type: str, required: True}
+  state: {type: str}
   filename: {type: str}
-  """)]
+  __schema : {type: str}
+  """)
 
 
 class Packages(Descriptor):
@@ -46,43 +46,36 @@ class Repository(Descriptor):
     """Object representing package repository
 
     Args:
-      name - repository name as referenced in cekit config file
+      descriptor - repository name as referenced in cekit config file
     """
 
-    def __init__(self, name):
-        self.schemas = repository_schema
-        url = self._create_content_set(name)
-        descriptor = {'name': name,
-                      'url': url,
-                      'filename': os.path.basename(url),
-                      }
+    def __init__(self, descriptor):
+        # we test parameter is not dict asi there is no easy way how to test
+        # if something is string both in py2 and py3
+        if not isinstance(descriptor, dict):
+            descriptor = self._convert_to_v2(descriptor)
+
+        self.schemas = [repository_schema]
         super(Repository, self).__init__(descriptor)
 
-    def _create_content_set(self, name):
-        """Create pulp content set in ODCS and returns its url
+        if 'state' not in self._descriptor:
+            self._descriptor['state'] = 'enabled'
+        if 'filename' not in self._descriptor:
+            self._descriptor['filename'] = self._descriptor['repository'] + '.repo'
+        if '__schema' not in self._descriptor:
+            self._descriptor['__schema'] = 'v2'
 
-        Args:
-          name - name of the ODCS pulp"""
-        try:
-            # idealy this will be API for ODCS, but there is no python3 package for ODCS
-            cmd = ['odcs', '--redhat', 'create', 'pulp', name]
-            logger.debug("Creating ODCS content set via '%s'" % cmd)
-            output = subprocess.check_output(cmd)
-            normalized_output = '\n'.join(output.replace(" u'", " '").split('\n')[1:])
-            odcs_resp = yaml.safe_load(normalized_output)
-            return odcs_resp['result_repofile']
-        except Exception as ex:
-            raise CekitError('Cannot create content set!', ex)
+    def _convert_to_v2(self, repository):
+        descriptor = {}
+        descriptor['name'] = repository
+        descriptor['repository'] = repository
+        descriptor['state'] = 'enabled'
+        descriptor['filename'] = '%s.repo' % repository
+        descriptor['__schema'] = 'v1'
+        return descriptor
 
     def fetch(self, target_dir):
-        """Fetches repository file to the location. URL for fetching is derived from the
-        [repositories] section of cekit config file
-
-        Args:
-          target_dir - a target where file is fetched to
-        """
-
         if not os.path.exists(target_dir):
-            os.makedirs(target_dir)
-
-        Resource({'url': self._descriptor['url']}).copy(target_dir)
+                os.makedirs(target_dir)
+        Resource({'url': self._descriptor['url']}).copy(os.path.join(target_dir,
+                                                                     self._descriptor['filename']))

@@ -79,6 +79,12 @@ class OSBSBuilder(Builder):
                     shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
             shutil.copy("Dockerfile", os.path.join(
                 self.dist_git_dir, "Dockerfile"))
+            if os.path.exists("container.yaml"):
+                shutil.copy("container.yaml", os.path.join(
+                    self.dist_git_dir, "container.yaml"))
+            if os.path.exists("content_sets.yaml"):
+                shutil.copy("content_sets.yaml", os.path.join(
+                    self.dist_git_dir, "content_sets.yaml"))
 
         # Copy also every artifact
         for artifact in self.artifacts:
@@ -216,6 +222,10 @@ class DistGit(object):
     def add(self):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
+        if os.path.exists("container.yaml"):
+            subprocess.check_call(["git", "add", "container.yaml"])
+        if os.path.exists("content_sets.yaml"):
+            subprocess.check_call(["git", "add", "content_sets.yaml"])
 
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here

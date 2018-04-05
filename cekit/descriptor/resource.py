@@ -83,8 +83,9 @@ class Resource(Descriptor):
     def target_file_name(self):
         return os.path.basename(self.name)
 
-    def copy(self, target_dir=os.getcwd()):
-        target = os.path.join(target_dir, self.target_file_name())
+    def copy(self, target=os.getcwd()):
+        if os.path.isdir(target):
+            target = os.path.join(target, self.target_file_name())
         logger.debug("Fetching resource '%s'" % (self.name))
 
         overwrite = False
