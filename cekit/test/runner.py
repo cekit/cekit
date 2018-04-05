@@ -17,7 +17,7 @@ class TestRunner(object):
             subprocess.check_output(['behave', '--version'], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as ex:
             raise CekitError("Test Runner needs 'behave' installed, '%s'" %
-                                 ex.output)
+                             ex.output)
         except Exception as ex:
             raise CekitError(
                 "Test Runner needs behave installed!", ex)
@@ -50,6 +50,8 @@ class TestRunner(object):
 
         logger.debug("Running '%s'" % ' '.join(cmd))
         try:
-            subprocess.check_call(cmd, stderr=subprocess.STDOUT, cwd=os.path.join(self.target, 'test'))
+            subprocess.check_call(cmd,
+                                  stderr=subprocess.STDOUT,
+                                  cwd=os.path.join(self.target, 'test'))
         except:
             raise CekitError("Test execution failed, please consult output above")

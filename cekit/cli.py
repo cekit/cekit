@@ -10,7 +10,7 @@ from cekit import tools
 from cekit.builder import Builder
 from cekit.log import setup_logging
 from cekit.errors import CekitError
-from cekit.generator import Generator
+from cekit.generator.base import Generator
 from cekit.module import discover_modules, get_dependencies
 from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
@@ -159,6 +159,7 @@ class Cekit(object):
             # merged in
             generator = Generator(self.args.descriptor,
                                   self.args.target,
+                                  self.args.build_engine,
                                   self.args.overrides)
 
             # Now we can fetch repositories of modules (we have all overrides)

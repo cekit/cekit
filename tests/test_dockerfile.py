@@ -2,7 +2,7 @@ import os
 import pytest
 import re
 
-from cekit.generator import Generator
+from cekit.generator.base import Generator
 from cekit.descriptor import Module
 from cekit.version import version as cekit_version
 
@@ -90,9 +90,10 @@ def prepare_generator(target, desc_part, desc_type="image"):
 
     image = Module(desc, '/tmp/', '/tmp')
 
-    generator = Generator.__new__(Generator)
+    generator = Generator.__new__(Generator, image, target, 'docker', None)
     generator.image = image
     generator.target = target
+    generator._type = 'docker'
     return generator
 
 

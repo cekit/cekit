@@ -15,12 +15,14 @@ def setup_function(function):
 
 def test_repository_dir_is_constructed_properly(mocker):
     mocker.patch('subprocess.check_output')
+    mocker.patch('os.path.isdir', ret='True')
     res = Resource({'git': {'url': 'url/repo', 'ref': 'ref'}})
     assert res.copy('dir') == 'dir/repo-ref'
 
 
 def test_git_clone(mocker):
     mock = mocker.patch('subprocess.check_output')
+    mocker.patch('os.path.isdir', ret='True')
     res = Resource({'git': {'url': 'url', 'ref': 'ref'}})
     res.copy('dir')
     mock.assert_called_with(['git',
