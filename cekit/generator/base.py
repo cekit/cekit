@@ -166,12 +166,13 @@ class Generator(object):
         repos = self.image.get('packages').get('repositories', [])
 
         # handle v1 repositories
-        v1_repos = [x for x in repos if x.get('__schema') == 'v1']
+        v1_repos = [x for x in repos if x.get('__schema') == 'v1' and x.get('state') == 'enabled']
         self._prepate_repository_url(v1_repos)
 
         injected_repos = v1_repos
 
-        injected_repos.extend(self._handle_v2_repositories([x for x in repos if x.get('__schema') == 'v2']))
+        injected_repos.extend(self._handle_v2_repositories([x for x in repos if x.get('__schema') == 'v2'
+                                                            and x.get('state') == 'enabled']))
 
         for repo in injected_repos:
             repo.fetch(os.path.join(self.target, 'image', 'repos'))
@@ -202,9 +203,9 @@ class Generator(object):
                 if self._prepare_repository_odcs_pulp(repo):
                     injected_repos.append(repo)
 
-            elif repo_handler.startswith('rpm:'):
-                self._prepare_repository_rpm(repo_handler[4:]
-)
+            elif repo_handler == 'rpm':
+                self._prepare_repository_rpm(repo)
+
             elif repo_handler == 'check':
                 pass
 
@@ -242,5 +243,5 @@ class Generator(object):
     def _prepare_repository_odcs_pulp(self, repo, **kwargs):
         raise NotImplementedError("ODCS pulp repository injection not implemented!")
 
-    def _prepare_repository_rpm(self, **kwargs):
-        raise NotImplementedError('RPM based repository injection not implemented!')
+    def _prepare_repository_rpm(self, repo):
+        repo['__rpm'] = True
