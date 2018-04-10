@@ -238,7 +238,9 @@ section where you specify package names and repositories to be used.
 
     packages:
         repositories:
-            - rhel-server-rhscl-7-rpms
+            - name: scl
+	      repository: rhel-server-rhscl-7-rpms
+	      state: enabled
         install:
             - mongodb24-mongo-java-driver
             - postgresql-jdbc
@@ -248,13 +250,20 @@ section where you specify package names and repositories to be used.
 
 Packages are defined in the ``install`` subsection.
 
-By default all yum repositories enabled in the image itself are used. You can define an
-aditional repository and it will be used to form ODCS puddle and injected inside
-your image. At the end of the image build process Cekit removes newly added repo files from
-the image. If you do not want to have these files removed after installation --
-you need to make your repo files part of some module that installs them in the correct place
+Repositories
+^^^^^^^^^^^^^
+Cekit uses all repositories configured inside the image. You can also specify additional
+repositories inside the repositories subsection. Its schema follows these rules:
 
-.. note::  The repository feature covers only the situation where you want to add a custom repo file at build time but you do not want it to be enabled in containers.
+* **name** - name of the repository object - used mainly for overrides and to reference in  ``~/cekit/config``
+* **repository** - name of the *real* repository
+* **state** - state of the repository, only enabled repositories are used and pushed to image
+
+To learn how to get additional repositories into image please consult :ref:`Repository injection <repo_inject>` section.
+
+.. note::  The repository feature covers only the situation where you want to add a custom repo during
+	   build time but you do not want it to be enabled in containers. If you want to persist repository
+	   inside the image, you must perfrom this manually in a module script.
 
 
 ``ports``
