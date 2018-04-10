@@ -55,15 +55,22 @@ COPY \
     /etc/yum.repos.d/
 
 {% endif %}
+{% if packages.repositories %}
+{% for repo in packages.repositories %}
+{% if repo.state == 'enabled' and repo.__rpm %}
+RUN yum install -y {{ repo.repository }} && yum clean all
+{% endif %}
+{% endfor %}
+{% endif %}
 
 # Install required RPMs and ensure that the packages were installed
 RUN yum install -y {%- for package in packages.install %} {{ package }}{% endfor %} \
     && yum clean all && rm -rf /var/cache/yum && \
     rpm -q {% for package in packages.install %} {{ package }}{% endfor %}
 
-{% if packages.repositories %}
+{% if packages.repositories_injected %}
 # Remove custom repo files
-RUN rm{% for repo in packages.repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
+RUN rm{% for repo in packages.repositories_injected %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
 
 {% endif %}
 
