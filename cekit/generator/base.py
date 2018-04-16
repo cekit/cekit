@@ -157,91 +157,51 @@ class Generator(object):
         logger.debug("Dockerfile rendered")
 
     def prepare_repositories(self):
-        """Prepare repositories to be used for image build with respect of
-        ~/.cekit/config files
-        """
+        """ Prepare repositories for build time injection. """
         if 'packages' not in self.image:
             return
 
         repos = self.image.get('packages').get('repositories', [])
 
-        # handle v1 repositories
-        v1_repos = [x for x in repos if x.get('__schema') == 'v1' and x.get('state') == 'enabled']
-        self._prepate_repository_url(v1_repos)
+        injected_repos = []
 
-        injected_repos = v1_repos
-
-        injected_repos.extend(self._handle_v2_repositories([x for x in repos if x.get('__schema') == 'v2'
-                                                            and x.get('state') == 'enabled']))
+        for repo in [x for x in repos if x.get('present')]:
+            if self._handle_repository(repo):
+                injected_repos.append(repo)
 
         for repo in injected_repos:
             repo.fetch(os.path.join(self.target, 'image', 'repos'))
 
         self.image['packages']['repositories_injected'] = injected_repos
 
-
-    def _handle_v2_repositories(self, repos):
-        """Process and prepares all v2 repositories
+    def _handle_repository(self, repo):
+        """Process and prepares all v2 repositories.
 
         Args:
-          repos - list of v2 repositories
+          repo a repository to process
 
-        Returns: list of repositoires to be injected inside the build"""
-        injected_repos = []
+        Returns True if repository file is prepared and should be injected"""
 
-        configured_repositories = tools.cfg.get('repositories-%s' % self._type, {})
+        logger.debug("Loading configuration for repository: '%s' from '%s'."
+                     % (repo['name'],
+                        'repositories-%s' % self._type))
 
-        for repo in repos:
-            logger.debug("Loading configuration for repository: '%s' from '%s'."
-                         % (repo['name'],
-                            'repositories-%s' % self._type))
-            repo_handler = configured_repositories.get(repo['name'], '')
+        if 'odcs' in repo:
+            if self._prepare_repository_odcs_pulp(repo):
+                return True
 
-            logger.debug("Found handler: '%s'." % repo_handler)
+        elif 'rpm' in repo:
+            self._prepare_repository_rpm(repo)
+            return False
 
-            if repo_handler == 'odcs-pulp':
-                if self._prepare_repository_odcs_pulp(repo):
-                    injected_repos.append(repo)
+        elif 'url' in repo:
+            return True
 
-            elif repo_handler == 'rpm':
-                self._prepare_repository_rpm(repo)
-
-            elif repo_handler == 'check':
-                pass
-
-            else:
-                # Docker and OSBS have different defaults
-                if self._type == 'osbs':
-                    self._prepare_repository_odcs_pulp(repo)
-                # default for Docker is check, so again nothing is needed to do
-
-        return injected_repos
-
-
-    def _prepate_repository_url(self, repos, **kwargs):
-        """Updates descriptor with repositories fetched from url"""
-        configured_repositories = tools.cfg.get('repositories', {})
-
-        # We need to remove the custom "__name__" element before we can show
-        # which repository keys are defined in the configuration
-        configured_repository_names = configured_repositories.keys()
-
-        if '__name__' in configured_repository_names:
-            configured_repository_names.remove('__name__')
-
-        logger.info("Handling additional repository files...")
-
-        for repo in repos:
-            if repo['name'] not in configured_repositories:
-                raise CekitError("Package repository '%s' used in descriptor is not "
-                                 "available in Concreate configuration file. "
-                                 "Available repositories: %s"
-                                 % (repo['name'], configured_repository_names))
-            repo['url'] = configured_repositories[repo['name']]
+        return False
 
 
     def _prepare_repository_odcs_pulp(self, repo, **kwargs):
         raise NotImplementedError("ODCS pulp repository injection not implemented!")
 
     def _prepare_repository_rpm(self, repo):
-        repo['__rpm'] = True
+        raise NotImplementedError("RPM repository injection was not implemented!")

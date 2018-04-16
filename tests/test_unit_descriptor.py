@@ -63,6 +63,7 @@ def test_osbs():
 
 
 def test_packages(mocker):
+    mocker.patch.object(Repository, '_get_repo_url', return_value='foo')
     pkg = Packages(yaml.safe_load("""
       repositories:
           - repo-foo

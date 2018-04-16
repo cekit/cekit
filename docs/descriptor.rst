@@ -237,10 +237,6 @@ section where you specify package names and repositories to be used.
 .. code:: yaml
 
     packages:
-        repositories:
-            - name: scl
-	      repository: rhel-server-rhscl-7-rpms
-	      state: enabled
         install:
             - mongodb24-mongo-java-driver
             - postgresql-jdbc
@@ -250,21 +246,56 @@ section where you specify package names and repositories to be used.
 
 Packages are defined in the ``install`` subsection.
 
-Repositories
-^^^^^^^^^^^^^
+``repositories``
+----------------
 Cekit uses all repositories configured inside the image. You can also specify additional
-repositories inside the repositories subsection. Its schema follows these rules:
+repositories inside the repositories subsection. Cekit currently supports three ways of defining
+additional repositories:
 
-* **name** - name of the repository object - used mainly for overrides and to reference in  ``~/cekit/config``
-* **repository** - name of the *real* repository
-* **state** - state of the repository, only enabled repositories are used and pushed to image
+``RPM``
+^^^^^^^^
+This is way is using RPM existing in yum repositories to enable new repository.
 
-To learn how to get additional repositories into image please consult :ref:`Repository injection <repo_inject>` section.
+**Example**: To enable `CentOS SCL <https://wiki.centos.org/AdditionalResources/Repositories/SCL>`_ inside the
+image you should define repository in a following way:
 
-.. note::  The repository feature covers only the situation where you want to add a custom repo during
-	   build time but you do not want it to be enabled in containers. If you want to persist repository
-	   inside the image, you must perfrom this manually in a module script.
+.. code:: yaml
 
+    packages:
+        repositories:
+            - name: scl
+	      rpm: centos-release-scl
+
+
+``ODCS``
+^^^^^^^^^
+This way is instructs `ODCS <https://pagure.io/odcs>`_ to generate on demand pulp repositories.
+To use ODCS define repository section in following way:
+
+.. code:: yaml
+
+    packages:
+        repositories:
+            - name: foo
+	      odcs:
+	        pulp: rhel-7-extras-rpm
+		
+*note*: See :ref:`ODCS configuration section <odcs_config>` for additonal details.
+
+
+``URL``
+^^^^^^^^
+This approach enables you to download a yum repository file and corresponding GPG key. To do it, define
+repositories section in a way of:
+
+.. code:: yaml
+
+    packages:
+        repositories:
+            - name: foo
+	      url:
+	        repository: https://web.example/foo.repo
+                gpg: https://web.exmaple/foo.gpg
 
 ``ports``
 ---------

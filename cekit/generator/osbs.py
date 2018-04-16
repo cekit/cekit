@@ -14,6 +14,10 @@ class OSBSGenerator(Generator):
         super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides)
 
     def _prepare_repository_odcs_pulp(self, repo):
+        self._prepare_content_set_yaml(repo['odcs']['pulp'])
+        self._prepate_odcs_container_yaml()
+
+    def _prepare_content_set_yaml(self, repo_name):
         content_set_f = os.path.join(self.target, 'image', 'content_sets.yaml')
         content_set = {}
 
@@ -26,10 +30,26 @@ class OSBSGenerator(Generator):
             cur_repos = []
             self._wipe = False
 
-        if repo['repository'] not in cur_repos:
-            cur_repos.append(repo['repository'])
+        if repo_name not in cur_repos:
+            cur_repos.append(repo_name)
 
         content_set['x86_64'] = cur_repos
         with open(content_set_f, 'w') as _file:
             yaml.dump(content_set, _file)
+
+        # check the cotnianter.yaml and pulp true
         return False
+
+
+    def _prepate_odcs_container_yaml(self):
+        container_f = os.path.join(self.target, 'image', 'container.yaml')
+        container = {}
+
+        if os.path.exists(container_f):
+            with open(container_f, 'r') as _file:
+                container = yaml.safe_load(_file)
+
+        container['compose'] = {'pulp_repos': True}
+
+        with open(container_f, 'w') as _file:
+            yaml.dump(container, _file)

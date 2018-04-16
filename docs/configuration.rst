@@ -78,46 +78,16 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 
     In all cases digest will be computed from the downloaded file and compared with the expected value.
 
-:: _repo_inject:
+.. _odcs_config:
+``ODCS``
+----------
+This section contains customization to `ODCS <https://pagure.io/odcs>`_ command. ODCS is used to compose
+on demand RPM repositories via REST API.
 
- Repository injection
-^^^^^^^^^^^^^^^^^^^
-There are multiple possibilities how to inject repository inside the image and its configurable in the ``~/.cekit/config``. The configuration follows this scheme:
+``redhat``
+^^^^^^^^^^
+Specifies if `--redhat` option is passed to `odcs` command when invoking it. If you set this opton to True Red Hat internal ODCS will be used, otherwise it will default to Fedora one.
 
-.. code::
+.. note::
 
-   [repositories-$builder]
-   $repo_name = $action
-
-Where:
-
-* ``$builder`` - one of supported builder (docker, osbs)
-
-* ``$repo_name`` - name of the repository
-
-* ``$action`` - one of the following actions:
-
-  1) **odcs-pulp** - default for OSBS builder
-
-     Aks odcs to create a temporary repository from an existing pulp repository. Repository name is taken from
-     ``repository`` atribute of the repository section.
-
-  2) **rpm**
-
-     Install repository from rpm via yum. Mostly used for epel/scl in Centos. RPM name is taken from ``repository``
-     attribute of the repository section.
-
-  3) **dummy** - default for Docker builder
-
-     Threats the repository as only documentation note, that this repo should be available in the image. It
-     does not inject/enable it in the image.
-
-*Example*: To define that Software collection repository will be installed via RPM for Docker builder and injected via ODCS pulp for OSBS you need to put following lines into you ``~/.cekit/config`` file:
-
-.. code::
-
-   [repositories-docker]
-   scl = rpm
-
-   [repositories-osbs]
-   scl = odcs-pulp
+   If you are using Red Hat ODCS instance you need to provide valid Kerberos ticket.
