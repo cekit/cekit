@@ -57,8 +57,8 @@ COPY \
 {% endif %}
 {% if packages.repositories %}
 {% for repo in packages.repositories %}
-{% if repo.state == 'enabled' and repo.__rpm %}
-RUN yum install -y {{ repo.repository }} && yum clean all
+{% if repo.present and repo.rpm %}
+RUN yum install -y {{ repo.rpm }} && yum clean all
 {% endif %}
 {% endfor %}
 {% endif %}
