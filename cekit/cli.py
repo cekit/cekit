@@ -76,6 +76,11 @@ class Cekit(object):
                                  help='tag to assign to the built image, '
                                  'can be used multiple times')
 
+        build_group.add_argument('--build-pull',
+                                 dest='build_pull',
+                                 action='store_true',
+                                 help='Always fetch latest base image during build')
+
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
                                  action='store_true',
@@ -181,6 +186,7 @@ class Cekit(object):
                           'stage': self.args.build_osbs_stage,
                           'release': self.args.build_osbs_release,
                           'tags': self.args.tags,
+                          'pull': self.args.build_pull,
                           }
 
                 builder = Builder(self.args.build_engine,
