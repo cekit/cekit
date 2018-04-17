@@ -19,6 +19,7 @@ You can execute an container image build by running:
 
 * ``--tag`` -- an image tag used to build image (can be specified multiple times)
 * ``--build-engine`` -- a builder engine to use ``osbs`` or ``docker`` [#f1]_
+* ``--build-pull`` -- ask a builder engine to check and fetch latest base image
 * ``--build-osbs-stage`` -- use ``rhpkg-stage`` tool instead of ``rhpkg``
 * ``--build-osbs-release`` [#f2]_ -- perform a OSBS release build
 * ``--build-osbs-user`` -- alternative user passed to `rhpkg --user`

@@ -14,6 +14,7 @@ class DockerBuilder(Builder):
 
     def __init__(self, build_engine, target, params={}):
         self._tags = params.get('tags')
+        self._pull = params.get('pull', False)
         super(DockerBuilder, self).__init__(build_engine, target, params)
 
     def check_prerequisities(self):
@@ -31,6 +32,9 @@ class DockerBuilder(Builder):
         """
         tags = self._tags
         cmd = ["docker", "build"]
+
+        if self._pull:
+            cmd.append('--pull')
 
         # Custom tags for the container image
         logger.debug("Building image with tags: '%s'" %

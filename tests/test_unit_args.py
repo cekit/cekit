@@ -31,6 +31,11 @@ def test_args_tags(mocker, tags, build_tags, expected):
     assert Cekit().parse().args.tags == expected
 
 
+def test_args_build_pull(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-pull'])
+
+    assert Cekit().parse().args.build_pull
+
 @pytest.mark.parametrize('engine', ['osbs', 'docker'])
 def test_args_build_engine(mocker, engine):
     mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-engine', engine])
