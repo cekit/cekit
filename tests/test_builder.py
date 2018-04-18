@@ -50,7 +50,7 @@ class DistGitMock(object):
 
 def create_osbs_build_object(mocker, builder_type, params):
     mocker.patch.object(subprocess, 'check_output')
-    mocker.patch('cekit.builders.osbs.decision')
+    mocker.patch('cekit.tools.decision')
 
     builder = Builder(builder_type, 'tmp', params)
     builder.dist_git_dir = '/tmp'
