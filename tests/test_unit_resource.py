@@ -111,7 +111,9 @@ def test_fetching_file_exists_but_used_as_is(mocker):
     with open('file', 'w') as f:  # noqa: F841
         pass
     mock_urlopen = get_mock_urlopen(mocker)
-    res = Resource({'name': 'file', 'url': 'http:///dummy'})
+    res = Resource({'name': 'file',
+                    'url': 'http:///dummy',
+                    'md5': 'd41d8cd98f00b204e9800998ecf8427e'})
     res.copy()
     mock_urlopen.assert_not_called()
 
@@ -132,6 +134,25 @@ def test_fetching_file_exists_fetched_again(mocker):
         # Checksum will fail, because the "downloaded" file
         # will not have md5 equal to 123456. We need investigate
         # mocking of requests get calls to do it properly
+        res.copy()
+    mock_urlopen.assert_called_with('http:///dummy', context=ctx)
+
+
+def test_fetching_file_exists_no_hash_fetched_again(mocker):
+    """
+    It should download the file again, because available
+    file locally doesn't match checksum.
+    """
+    mock_urlopen = get_mock_urlopen(mocker)
+    ctx = get_ctx(mocker)
+    get_mock_ssl(mocker, ctx)
+
+    with open('file', 'w') as f:  # noqa: F841
+        pass
+    res = Resource({'name': 'file', 'url': 'http:///dummy'})
+    with pytest.raises(CekitError):
+        # url is not valid so we get error, but we are not interested
+        # in it. We just need to check that we attempted to downlad.
         res.copy()
     mock_urlopen.assert_called_with('http:///dummy', context=ctx)
 
