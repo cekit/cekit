@@ -4,7 +4,6 @@ import shutil
 import subprocess
 import sys
 
-from builtins import input
 from cekit import tools
 from cekit.builder import Builder
 from cekit.errors import CekitError
@@ -129,7 +128,7 @@ class OSBSBuilder(Builder):
             else:
                 logger.info("No changes made to the code, committing skipped")
 
-            if decision("Do you want to build the image in OSBS?"):
+            if tools.decision("Do you want to build the image in OSBS?"):
                 build_type = "release" if self._release else "scratch"
                 logger.info("Executing %s container build in OSBS..." % build_type)
 
@@ -253,7 +252,7 @@ class DistGit(object):
             subprocess.call(["git", "status"])
             subprocess.call(["git", "show"])
 
-        if not (self.noninteractive or decision("Are you ok with the changes?")):
+        if not (self.noninteractive or tools.decision("Are you ok with the changes?")):
             logger.info("Executing bash in the repo directory. "
                         "After fixing the issues, exit the shell and Cekit will continue.")
             subprocess.call(["bash"], env={"PS1": "cekit $ ",
@@ -261,7 +260,7 @@ class DistGit(object):
                                            "HOME": os.getenv("HOME", "")})
 
     def push(self):
-        if self.noninteractive or decision("Do you want to push the commit?"):
+        if self.noninteractive or tools.decision("Do you want to push the commit?"):
             print("")
             logger.info("Pushing change to the upstream repository...")
             subprocess.check_output(["git", "push", "-q"])
@@ -269,12 +268,6 @@ class DistGit(object):
         else:
             logger.info("Changes are not pushed, exiting")
             sys.exit(0)
-
-
-def decision(question):
-    if input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
-        return True
-    return False
 
 
 class Chdir(object):

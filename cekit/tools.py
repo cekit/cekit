@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import sys
 import yaml
 
 from cekit.errors import CekitError
@@ -60,3 +61,16 @@ def load_descriptor(descriptor):
 
     with open(descriptor, 'r') as fh:
         return yaml.safe_load(fh)
+
+
+def decision(question):
+    """Asks user for a question returning True/False answed"""
+    if sys.version_info[0] < 3:
+        if raw_input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
+            return True
+    else:
+        if input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
+            return True
+
+    return False
+

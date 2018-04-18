@@ -46,7 +46,6 @@ Requires:       python2-setuptools
 
 Requires:       python2-pykwalify
 Requires:       python2-colorlog
-Requires:       python2-future
 Requires:       PyYAML
 Requires:       docker
 Requires:       git
