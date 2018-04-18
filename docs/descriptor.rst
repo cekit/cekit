@@ -23,7 +23,7 @@ the image build process.
 Artifacts section is meant exactly for this. *Cekit will automatically
 fetch any artifacts* specified in this section
 and check their consistency by computing checksum of
-the downloaded file and comparing it with the desired value.  The output name
+the downloaded file and comparing it with the desired value. The output name
 for downloaded resources will match the ``name`` attribute, which defaults to
 the base name of the file/URL. Artifact locations may be specified as ``url``\s,
 ``path``\s or ``git`` references.
@@ -49,7 +49,8 @@ the base name of the file/URL. Artifact locations may be specified as ``url``\s,
 
 .. note::
 
-    Currently supported algorithms are: md5, sha1 and sha256.
+    Currently supported algorithms are: md5, sha1 and sha256. If no algorithm is provided, artifact will
+    be fetched **every** time.
 
 For artifacts that are not publicly available Cekit provides a way to
 add a description detailing a location from which the artifact can be obtained.

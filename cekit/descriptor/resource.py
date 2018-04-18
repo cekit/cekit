@@ -93,7 +93,7 @@ class Resource(Descriptor):
         overwrite = False
         if os.path.exists(target):
             try:
-                self.__verify(target)
+                overwrite = not self.__verify(target)
             except Exception as ex:
                 logger.debug("Local resource verification failed")
                 overwrite = True
@@ -122,7 +122,8 @@ class Resource(Descriptor):
     def __verify(self, target):
         """ Checks all defined check_sums for an aritfact """
         if not self.checksums:
-            return True
+            logger.debug("Artifact '%s' lacks any checksum definition, it will be replaced" % self.name)
+            return False
         if not Resource.CHECK_INTEGRITY:
             logger.info("Integrity checking disabled, skipping verification.")
             return True
