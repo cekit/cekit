@@ -147,6 +147,9 @@ class Cekit(object):
             logger.setLevel(logging.INFO)
 
         logger.debug("Running version %s", version)
+        if 'dev' in version:
+            logger.warning("You are running unreleased development version of Cekit, "
+                           "use it only at your own risk!")
 
         try:
             tools.cfg = tools.get_cfg(self.args.config)
