@@ -116,3 +116,32 @@ def test_docker_builder_run(mocker):
     builder.build()
 
     check_call.assert_called_once_with(['docker', 'build', '-t', 'foo', '-t', 'bar', 'tmp/image'])
+
+
+def test_buildah_builder_run(mocker):
+    params = {'tags': ['foo', 'bar']}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_osbs_build_object(mocker, 'buildah', params)
+    builder.build()
+
+    check_call.assert_called_once_with(['sudo',
+                                        'buildah',
+                                        'build-using-dockerfile',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'tmp/image'])
+
+
+def test_buildah_builder_run_pull(mocker):
+    params = {'tags': ['foo', 'bar'], 'pull': True}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_osbs_build_object(mocker, 'buildah', params)
+    builder.build()
+
+    check_call.assert_called_once_with(['sudo',
+                                        'buildah',
+                                        'build-using-dockerfile',
+                                        '--pull-awlays',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'tmp/image'])
