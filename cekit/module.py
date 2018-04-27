@@ -49,7 +49,8 @@ def copy_module_to_target(name, version, target):
 
 def check_module_version(path, version):
     descriptor = Module(tools.load_descriptor(os.path.join(path, 'module.yaml')),
-                        path)
+                        path,
+                        os.path.dirname(os.path.abspath(os.path.join(path, 'module.yaml'))))
     if descriptor.version != version:
         raise CekitError("Requested conflicting version '%s' of module '%s'" %
                              (version, descriptor['name']))
@@ -84,7 +85,9 @@ def discover_modules(repo_dir):
     for modules_dir, _, files in os.walk(repo_dir):
         if 'module.yaml' in files:
             module = Module(tools.load_descriptor(os.path.join(modules_dir, 'module.yaml')),
-                            modules_dir)
+                            modules_dir,
+                            os.path.dirname(os.path.abspath(os.path.join(modules_dir,
+                                                                         'module.yaml'))))
             module.fetch_dependencies(repo_dir)
             logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
             modules.append(module)

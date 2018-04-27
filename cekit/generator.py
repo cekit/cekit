@@ -35,7 +35,7 @@ class Generator(object):
             if not modules.get('repositories'):
                 modules['repositories'] = [{'path': local_mod_path, 'name': 'modules'}]
 
-        self.image = Image(descriptor, os.path.dirname(descriptor_path))
+        self.image = Image(descriptor, os.path.dirname(os.path.abspath(descriptor_path)))
         self.target = target
 
         if overrides:
@@ -110,7 +110,8 @@ class Generator(object):
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
-        descriptor = Overrides(tools.load_descriptor(overrides_path))
+        descriptor = Overrides(tools.load_descriptor(overrides_path),
+                               os.path.dirname(os.path.abspath(overrides_path)))
         descriptor.merge(self.image)
         return descriptor
 

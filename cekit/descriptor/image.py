@@ -1,4 +1,5 @@
 import copy
+import os
 import yaml
 
 from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
@@ -29,8 +30,9 @@ def get_image_schema():
 
 
 class Image(Descriptor):
-    def __init__(self, descriptor, directory):
-        self.directory = directory
+    def __init__(self, descriptor, artifact_dir):
+        self._artifact_dir = artifact_dir
+        self.path = artifact_dir
         self.schemas = [_image_schema.copy()]
         super(Image, self).__init__(descriptor)
         self.skip_merging = ['description',
@@ -76,9 +78,10 @@ class Image(Descriptor):
         self._descriptor['ports'] = [Port(x) for x in self._descriptor.get('ports', [])]
         if 'run' in self._descriptor:
             self._descriptor['run'] = Run(self._descriptor['run'])
-        self._descriptor['artifacts'] = [Resource(a) for a in self._descriptor.get('artifacts', [])]
+        self._descriptor['artifacts'] = [Resource(a, directory=self._artifact_dir)
+                                         for a in self._descriptor.get('artifacts', [])]
         if 'modules' in self._descriptor:
-            self._descriptor['modules'] = Modules(self._descriptor['modules'])
+            self._descriptor['modules'] = Modules(self._descriptor['modules'], self.path)
         if 'packages' in self._descriptor:
             self._descriptor['packages'] = Packages(self._descriptor['packages'])
         if 'osbs' in self._descriptor:

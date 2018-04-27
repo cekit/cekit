@@ -7,7 +7,9 @@ overrides_schema['map']['version'] = {'type': 'text'}
 
 
 class Overrides(Image):
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, artifact_dir):
+        self._artifact_dir = artifact_dir
+        self.path = artifact_dir
         schema = overrides_schema.copy()
         self.schemas = [schema]
         # calling Descriptor constructor only here (we dont wat Image() to mess with schema)

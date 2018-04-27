@@ -4,6 +4,7 @@ import logging
 import os
 import yaml
 
+
 from cekit.errors import CekitError
 from pykwalify.core import Core
 

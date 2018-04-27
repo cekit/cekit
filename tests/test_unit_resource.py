@@ -178,3 +178,15 @@ def test_generated_url_with_cacher():
     res.name = 'file'
     assert res._Resource__substitute_cache_url('file') == 'file,sha256,justamocksum'
     tools.cfg = {}
+
+
+def test_path_resource_absolute():
+    res = Resource({'name': 'foo',
+                    'path': '/bar'}, directory='/foo')
+    assert res.path == '/bar'
+
+
+def test_path_resource_relative():
+    res = Resource({'name': 'foo',
+                    'path': 'bar'}, directory='/foo')
+    assert res.path == '/foo/bar'

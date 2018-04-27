@@ -28,6 +28,14 @@ for downloaded resources will match the ``name`` attribute, which defaults to
 the base name of the file/URL. Artifact locations may be specified as ``url``\s,
 ``path``\s or ``git`` references.
 
+.. note::
+
+   If you are using relative ``path`` to define an artifact, path is considered relative to an
+   image descriptor which introduced that artifact.
+   
+   **Example**: If an artifact is defined inside */foo/bar/image.yaml* with a path: *baz/1.zip*
+   the artifact will be resolved as */foo/bar/baz/1.zip*
+
 .. code:: yaml
 
     artifacts:
