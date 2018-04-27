@@ -67,7 +67,7 @@ class Cekit(object):
 
         build_group.add_argument('--build-engine',
                                  default='docker',
-                                 choices=['docker', 'osbs'],
+                                 choices=['docker', 'osbs', 'buildah'],
                                  help='an engine used to build the image.')
 
         build_group.add_argument('--build-tag',

@@ -36,7 +36,8 @@ def test_args_build_pull(mocker):
 
     assert Cekit().parse().args.build_pull
 
-@pytest.mark.parametrize('engine', ['osbs', 'docker'])
+
+@pytest.mark.parametrize('engine', ['osbs', 'docker', 'buildah'])
 def test_args_build_engine(mocker, engine):
     mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-engine', engine])
 

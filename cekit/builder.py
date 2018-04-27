@@ -23,6 +23,9 @@ class Builder(object):
                 # import is delayed until here to prevent circular import error
                 from cekit.builders.osbs import OSBSBuilder as BuilderImpl
                 logger.info("Using OSBS builder to build the image.")
+            elif 'buildah' == build_engine:
+                from cekit.builders.buildah import BuildahBuilder as BuilderImpl
+                logger.info("Using Buildah builder to build the image.")
             else:
                 raise CekitError("Builder engine %s is not supported" % build_engine)
 
