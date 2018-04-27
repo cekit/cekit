@@ -25,12 +25,9 @@ class Resource(Descriptor):
     SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
     CHECK_INTEGRITY = True
 
-    def __new__(cls, resource):
+    def __new__(cls, resource, **kwargs):
         if cls is Resource:
             if 'path' in resource:
-                directory = resource['path']
-                if not os.path.isabs(directory):
-                    resource['path'] = os.path.join(os.getcwd(), directory)
                 return super(Resource, cls).__new__(_PathResource)
             elif 'url' in resource:
                 return super(Resource, cls).__new__(_UrlResource)
@@ -67,13 +64,13 @@ class Resource(Descriptor):
                 self.checksums[algorithm] = descriptor[algorithm]
 
     def __eq__(self, other):
-        #All subclasses of Resource are considered same object type
+        # All subclasses of Resource are considered same object type
         if isinstance(other, Resource):
             return self['name'] == other['name']
         return NotImplemented
 
     def __ne__(self, other):
-        #All subclasses of Resource are considered same object type
+        # All subclasses of Resource are considered same object type
         if isinstance(other, Resource):
             return not self['name'] == other['name']
         return NotImplemented
@@ -113,7 +110,7 @@ class Resource(Descriptor):
 
             # exception is fatal we be logged before Cekit dies
             raise CekitError("Error copying resource: '%s'. See logs for more info."
-                                 % self.name, ex)
+                             % self.name, ex)
 
         self.__verify(target)
 
@@ -122,7 +119,8 @@ class Resource(Descriptor):
     def __verify(self, target):
         """ Checks all defined check_sums for an aritfact """
         if not self.checksums:
-            logger.debug("Artifact '%s' lacks any checksum definition, it will be replaced" % self.name)
+            logger.debug("Artifact '%s' lacks any checksum definition, it will be replaced"
+                         % self.name)
             return False
         if not Resource.CHECK_INTEGRITY:
             logger.info("Integrity checking disabled, skipping verification.")
@@ -211,7 +209,13 @@ class Resource(Descriptor):
 
 class _PathResource(Resource):
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, directory, **kwargs):
+        # if the path si relative its considered relative to the directory parameter
+        # it defualts to CWD, but should be set for a descriptor dir if used for artifacts
+        if not os.path.isabs(descriptor['path']):
+            descriptor['path'] = os.path.join(directory,
+                                              descriptor['path'])
+
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['path'])
         super(_PathResource, self).__init__(descriptor)
@@ -233,8 +237,8 @@ class _PathResource(Resource):
                     raise CekitError("Could not download resource '%s' from cache" % self.name)
             else:
                 raise CekitError("Could not copy resource '%s', "
-                                     "source path does not exist. "
-                                     "Make sure you provided correct path" % self.name)
+                                 "source path does not exist. "
+                                 "Make sure you provided correct path" % self.name)
 
         logger.debug("Copying repository from '%s' to '%s'." % (self.path,
                                                                 target))
@@ -247,7 +251,7 @@ class _PathResource(Resource):
 
 class _UrlResource(Resource):
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, **kwargs):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['url'])
         super(_UrlResource, self).__init__(descriptor)
@@ -264,7 +268,7 @@ class _UrlResource(Resource):
 
 class _GitResource(Resource):
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, **kwargs):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['git']['url'])
         super(_GitResource, self).__init__(descriptor)
