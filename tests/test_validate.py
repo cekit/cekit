@@ -8,6 +8,10 @@ import pytest
 from cekit.builders.osbs import Chdir
 from cekit.cli import Cekit
 
+pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
+                                "Docker installed, export 'CEKIT_TEST_VALIDATE=y' variable if "
+                                "you need to run them.")
+
 
 def setup_function():
     """Reload cekit.module to make sure it doesnt contain old modules instances"""
