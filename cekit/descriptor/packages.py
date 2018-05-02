@@ -63,23 +63,23 @@ class Repository(Descriptor):
         if not isinstance(descriptor, dict):
             descriptor = self._create_repo_object(descriptor)
 
+        if 'filename' not in descriptor:
+            descriptor['filename'] = '%s.repo' % descriptor['name'].replace(' ', '_')
+        if 'url' not in descriptor:
+            descriptor['url'] = {}
+
         self.schemas = [repository_schema]
         super(Repository, self).__init__(descriptor)
 
         if 'present' not in self._descriptor:
             self._descriptor['present'] = True
-        if 'filename' not in self._descriptor:
-            self._descriptor['filename'] = self._descriptor['name'].replace(' ', '_') + '.repo'
 
     def _create_repo_object(self, repository):
         descriptor = {}
         descriptor['name'] = repository
-        descriptor['filename'] = '%s.repo' % repository
         descriptor['url'] = {}
         descriptor['url']['repository'] = self._get_repo_url(descriptor)
-
         return descriptor
-
 
     def _get_repo_url(self, descriptor):
         """Retruns repository url from Cekit config files repositories section"""
