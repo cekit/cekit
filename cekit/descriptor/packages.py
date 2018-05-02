@@ -75,6 +75,9 @@ class Repository(Descriptor):
             self._descriptor['present'] = True
 
     def _create_repo_object(self, repository):
+        logger.warning("The way of defining repository '%s' is deprecated. Convert "
+                       "it to an URL based repository object. Consult Cekit docs, "
+                       "for more details." % repository)
         descriptor = {}
         descriptor['name'] = repository
         descriptor['url'] = {}
@@ -103,5 +106,5 @@ class Repository(Descriptor):
     def fetch(self, target_dir):
         if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
-        Resource({'url': self._descriptor['url']['repository']}).copy(os.path.join(target_dir,
-                                                                     self._descriptor['filename']))
+        Resource({'url': self._descriptor['url']['repository']}) \
+            .copy(os.path.join(target_dir, self._descriptor['filename']))
