@@ -249,12 +249,16 @@ Packages are defined in the ``install`` subsection.
 ``repositories``
 ----------------
 Cekit uses all repositories configured inside the image. You can also specify additional
-repositories inside the repositories subsection. Cekit currently supports three ways of defining
+repositories using repositories subsection. Cekit currently supports three ways of defining
 additional repositories:
+
+* RPM
+* ODCS
+* URL
 
 ``RPM``
 ^^^^^^^^
-This is way is using RPM existing in yum repositories to enable new repository.
+This ways is using repository configuration files and related keys packaged as an RPM.
 
 **Example**: To enable `CentOS SCL <https://wiki.centos.org/AdditionalResources/Repositories/SCL>`_ inside the
 image you should define repository in a following way:
