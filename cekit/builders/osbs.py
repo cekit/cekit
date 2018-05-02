@@ -225,7 +225,7 @@ class DistGit(object):
         if os.path.exists("container.yaml"):
             subprocess.check_call(["git", "add", "container.yaml"])
         if os.path.exists("content_sets.yaml"):
-            subprocess.check_call(["git", "add", "content_sets.yaml"])
+            subprocess.check_call(["git", "add", "content_sets.yml"])
 
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here

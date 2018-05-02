@@ -18,7 +18,7 @@ class OSBSGenerator(Generator):
         self._prepate_odcs_container_yaml()
 
     def _prepare_content_set_yaml(self, repo_name):
-        content_set_f = os.path.join(self.target, 'image', 'content_sets.yaml')
+        content_set_f = os.path.join(self.target, 'image', 'content_sets.yml')
         content_set = {}
 
         if os.path.exists(content_set_f):
