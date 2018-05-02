@@ -86,7 +86,14 @@ on demand RPM repositories via REST API.
 
 ``redhat``
 ^^^^^^^^^^
-Specifies if `--redhat` option is passed to `odcs` command when invoking it. If you set this opton to True Red Hat internal ODCS will be used, otherwise it will default to Fedora one.
+Specifies if ``--redhat``` option is passed to `odcs` command when invoking it. If you set this opton to True Red Hat internal ODCS will be used, otherwise it will default to Fedora one.
+
+**Example**: To enable `odcs` command to talk to Red Hat internal instance, add following to `~/.cekit/confing` file.
+
+.. code::
+
+   [ODCS]
+   redhat = true
 
 .. note::
 

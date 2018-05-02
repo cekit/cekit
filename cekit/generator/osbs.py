@@ -40,7 +40,6 @@ class OSBSGenerator(Generator):
         # check the cotnianter.yaml and pulp true
         return False
 
-
     def _prepate_odcs_container_yaml(self):
         container_f = os.path.join(self.target, 'image', 'container.yaml')
         container = {}
