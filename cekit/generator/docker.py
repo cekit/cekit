@@ -40,7 +40,7 @@ class DockerGenerator(Generator):
 
             repo_url = odcs_result['result_repofile']
 
-            repo['url'] = repo_url
+            repo['url']['repository'] = repo_url
 
             return True
 
