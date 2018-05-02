@@ -34,6 +34,10 @@ class OSBSGenerator(Generator):
             cur_repos.append(repo_name)
 
         content_set['x86_64'] = cur_repos
+
+        if not os.path.exists(os.path.dirname(content_set_f)):
+            os.makedirs(os.path.dirname(content_set_f))
+
         with open(content_set_f, 'w') as _file:
             yaml.dump(content_set, _file)
 
@@ -52,3 +56,7 @@ class OSBSGenerator(Generator):
 
         with open(container_f, 'w') as _file:
             yaml.dump(container, _file)
+
+    def _prepare_repository_rpm(self, repo):
+        # no special handling is needed here, everything is in template
+        pass

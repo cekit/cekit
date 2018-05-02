@@ -48,8 +48,7 @@ USER root
 {% if packages and packages.install %}
 {% if packages.repositories_injected %}
 # Add custom repo files
-COPY \
-{% for repo in packages.repositories_injected %} 
+COPY \ {% for repo in packages.repositories_injected %} 
     repos/{{ repo.filename }} \
 {% endfor %}
     /etc/yum.repos.d/

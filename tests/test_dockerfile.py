@@ -1,9 +1,11 @@
 import os
 import pytest
 import re
+import subprocess
+import yaml
 
 from cekit.generator.base import Generator
-from cekit.descriptor import Module
+from cekit.descriptor import Module, Repository
 from cekit.version import version as cekit_version
 
 basic_config = {'release': 1,
@@ -16,6 +18,30 @@ def print_test_name(value):
     if str(value).startswith('test'):
         return value
     return "\b"
+
+
+odcs_fake_resp = """Result:
+{u'arches': u'x86_64',
+ u'flags': [],
+ u'id': 2019,
+ u'koji_event': None,
+ u'koji_task_id': None,
+ u'owner': u'dbecvari',
+ u'packages': None,
+ u'removed_by': None,
+ u'result_repo': u'http://hidden/compose/Temporary',
+ u'result_repofile': u'http://hidden/Temporary/odcs-2019.repo',
+ u'results': [u'repository'],
+ u'sigkeys': u'FD431D51',
+ u'source': u'rhel-7-server-rpms',
+ u'source_type': 4,
+ u'state': 2,
+ u'state_name': u'done',
+ u'state_reason': u'Compose is generated successfully',
+ u'time_done': u'2018-05-02T14:11:19Z',
+ u'time_removed': None,
+ u'time_submitted': u'2018-05-02T14:11:16Z',
+ u'time_to_expire': u'2018-05-03T14:11:16Z'}"""
 
 
 @pytest.mark.parametrize('name, desc_part, exp_regex', [
@@ -82,7 +108,71 @@ def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
     regex_dockerfile(target, exp_regex)
 
 
-def prepare_generator(target, desc_part, desc_type="image"):
+def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'odcs': {
+                                                   'pulp': 'foo'
+                                                }},
+                                               ],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image')
+    generator.prepare_repositories()
+    generator.render_dockerfile()
+    regex_dockerfile(target, 'repos/foo.repo')
+
+
+def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image')
+    generator.prepare_repositories()
+    generator.render_dockerfile()
+    regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
+
+
+def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'odcs': {
+                                                   'pulp': 'foo'
+                                                }},
+                                               ],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.prepare_repositories()
+    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
+        content_sets = yaml.safe_load(_file)
+        assert 'x86_64' in content_sets
+        assert 'foo' in content_sets['x86_64']
+
+
+def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.prepare_repositories()
+    generator.render_dockerfile()
+    regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
+
+
+def prepare_generator(target, desc_part, desc_type="image", engine="docker"):
     # create basic descriptor
 
     desc = basic_config.copy()
@@ -90,10 +180,11 @@ def prepare_generator(target, desc_part, desc_type="image"):
 
     image = Module(desc, '/tmp/', '/tmp')
 
-    generator = Generator.__new__(Generator, image, target, 'docker', None)
+    generator = Generator.__new__(Generator, image, target, engine, None)
     generator.image = image
     generator.target = target
     generator._type = 'docker'
+    generator._wipe = False
     return generator
 
 
