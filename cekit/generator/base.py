@@ -28,7 +28,7 @@ class Generator(object):
 
     def __new__(cls, descriptor_path, target, builder, overrides):
         if cls is Generator:
-            if 'docker' == builder:
+            if 'docker' == builder or 'buildah' == builder:
                 from cekit.generator.docker import DockerGenerator as GeneratorImpl
                 logger.info('Generating files for Docker engine.')
             elif 'osbs' == builder:
