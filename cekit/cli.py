@@ -50,6 +50,10 @@ class Cekit(object):
                             default='~/.cekit/config',
                             help='path for cekit config file (~/.cekit/config is default)')
 
+        parser.add_argument('--redhat',
+                            action='store_true',
+                            help='Set default options for Red Hat internal infrasructure.')
+
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
@@ -155,12 +159,17 @@ class Cekit(object):
             tools.cfg = tools.get_cfg(self.args.config)
             tools.cleanup(self.args.target)
 
+            if self.args.redhat:
+                tools.cfg['common']['redhat'] = True
+
             # We need to construct Generator first, because we need overrides
             # merged in
+            params = {'redhat': tools.cfg['common']['redhat']}
             generator = Generator(self.args.descriptor,
                                   self.args.target,
                                   self.args.build_engine,
-                                  self.args.overrides)
+                                  self.args.overrides,
+                                  params)
 
             # Now we can fetch repositories of modules (we have all overrides)
             get_dependencies(generator.image,
@@ -191,6 +200,7 @@ class Cekit(object):
                           'release': self.args.build_osbs_release,
                           'tags': self.args.tags,
                           'pull': self.args.build_pull,
+                          'redhat': tools.cfg['common']['redhat']
                           }
 
                 builder = Builder(self.args.build_engine,

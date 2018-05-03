@@ -69,7 +69,7 @@ odcs_fake_resp = """Result:
                              'value': 'set_value',
                              'example': 'example_value',
                              'description': 'This is a description'}]},
-     r'ENV JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \\\s+COMBINED_ENV=\"set_value\" \n'),
+     r' \\\s+COMBINED_ENV=\"set_value\" \\\s+JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \n'),
     ('test_execute',
      {'execute': [{'script': 'foo_script'}]},
      r'.*RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
@@ -89,6 +89,7 @@ def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
     target = str(tmpdir.mkdir('target'))
 
     generator = prepare_generator(target, desc_part)
+    generator._params['redhat'] = True
     generator.render_dockerfile()
 
     regex_dockerfile(target, exp_regex)
@@ -96,13 +97,14 @@ def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
 @pytest.mark.parametrize('name, desc_part, exp_regex', [
     ('test_without_family',
-     {}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
+     {}, r'JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
     ('test_with_family',
-        {'name': 'testimage/test'}, r'ENV JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
+        {'name': 'testimage/test'}, r'JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
                          ids=print_test_name)
 def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
     target = str(tmpdir.mkdir('target'))
     generator = prepare_generator(target, desc_part)
+    generator._params = {'redhat': True}
     generator.generate_tech_preview()
     generator.render_dockerfile()
     regex_dockerfile(target, exp_regex)
@@ -180,11 +182,12 @@ def prepare_generator(target, desc_part, desc_type="image", engine="docker"):
 
     image = Module(desc, '/tmp/', '/tmp')
 
-    generator = Generator.__new__(Generator, image, target, engine, None)
+    generator = Generator.__new__(Generator, image, target, engine, None, {})
     generator.image = image
     generator.target = target
     generator._type = 'docker'
     generator._wipe = False
+    generator._params = {}
     return generator
 
 

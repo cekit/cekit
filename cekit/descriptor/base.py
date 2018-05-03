@@ -30,6 +30,7 @@ class Descriptor(collections.MutableMapping):
       descriptor - an descriptor to be represented by this class
 
     """
+
     def __init__(self, descriptor):
         self.skip_merging = []
         self._descriptor = descriptor

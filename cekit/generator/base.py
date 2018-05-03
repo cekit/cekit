@@ -10,10 +10,8 @@ from cekit.descriptor import Image, Overrides
 from cekit.errors import CekitError
 from cekit.module import copy_module_to_target
 from cekit.template_helper import TemplateHelper
-from cekit.descriptor.resource import Resource
 
 logger = logging.getLogger('cekit')
-
 
 class Generator(object):
     """This class process Image descriptor(self.image) and uses it to generate
@@ -24,9 +22,10 @@ class Generator(object):
       target - path to target directory
       builder - builder type
       overrides - path to overrides file (can be None)
+      params - dictionary of builder specific parameterss
     """
 
-    def __new__(cls, descriptor_path, target, builder, overrides):
+    def __new__(cls, descriptor_path, target, builder, overrides, params):
         if cls is Generator:
             if 'docker' == builder or 'buildah' == builder:
                 from cekit.generator.docker import DockerGenerator as GeneratorImpl
@@ -38,7 +37,7 @@ class Generator(object):
                 raise CekitError("Unsupported generator type: '%s'" % builder)
         return super(Generator, cls).__new__(GeneratorImpl)
 
-    def __init__(self, descriptor_path, target, builder, overrides):
+    def __init__(self, descriptor_path, target, builder, overrides, params):
         self._type = builder
         descriptor = tools.load_descriptor(descriptor_path)
 
@@ -130,9 +129,32 @@ class Generator(object):
         descriptor.merge(self.image)
         return descriptor
 
+    def _inject_redhat_defaults(self):
+        envs = [{'name': 'JBOSS_IMAGE_NAME',
+                 'value': '%s' % self.image['name']},
+                {'name': 'JBOSS_IMAGE_VERSION',
+                 'value': '%s' % self.image['version']}]
+
+        labels = [{'name': 'name',
+                   'value': '%s' % self.image['name']},
+                  {'name': 'version',
+                   'value': '%s' % self.image['version']},
+                  {'name': 'architecture',
+                   'value': "x86_64"}]
+
+        redhat_override = {'envs': envs,
+                           'labels': labels}
+
+        descriptor = Overrides(redhat_override, None)
+        descriptor.merge(self.image)
+        self.image = descriptor
+
     def render_dockerfile(self):
         """Renders Dockerfile to $target/image/Dockerfile"""
         logger.info("Rendering Dockerfile...")
+
+        if self._params.get('redhat'):
+            self._inject_redhat_defaults()
 
         self.image.process_defaults()
 
@@ -198,7 +220,6 @@ class Generator(object):
             return True
 
         return False
-
 
     def _prepare_repository_odcs_pulp(self, repo, **kwargs):
         raise NotImplementedError("ODCS pulp repository injection not implemented!")

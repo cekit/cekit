@@ -19,20 +19,19 @@
 FROM {{ helper.base_image(from, version) }}
 
 # Environment variables
-ENV JBOSS_IMAGE_NAME="{{name}}" \
-    JBOSS_IMAGE_VERSION="{{version}}" {% if helper.envs(envs) %}\{% for env in helper.envs(envs)|sort(attribute='name') %}
-
+{% if envs %}
+ENV \
+    {% for env in helper.envs(envs)|sort(attribute='name') %}
     {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
-    {% endfor %}
 
-    {% endif %}
+    {% endfor %}
+{% endif %}
 
 # Labels
-LABEL name="$JBOSS_IMAGE_NAME" \
-      version="$JBOSS_IMAGE_VERSION" \
-      architecture="x86_64" {%- if labels %} \
+{% if labels %}
+LABEL \
       {% for label in labels|sort(attribute='name') %}
-      {{ label.name }}="{{ label.value }}" {%- if loop.index < loop.length %} \{% endif %}
+      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
 
       {% endfor %}
 {% endif %}
