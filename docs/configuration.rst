@@ -78,23 +78,35 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 
     In all cases digest will be computed from the downloaded file and compared with the expected value.
 
-.. _odcs_config:
-``ODCS``
-----------
-This section contains customization to `ODCS <https://pagure.io/odcs>`_ command. ODCS is used to compose
-on demand RPM repositories via REST API.
+.. _redhat_config:
 
 ``redhat``
 ^^^^^^^^^^
-Specifies if ``--redhat``` option is passed to `odcs` command when invoking it. If you set this opton to True Red Hat internal ODCS will be used, otherwise it will default to Fedora one.
+This option changes Cekit default options to comply with Red Hat internal infrastructure and policies.
+It changes following thins:
 
-**Example**: To enable `odcs` command to talk to Red Hat internal instance, add following to `~/.cekit/confing` file.
+* runs ``rhpkg`` instead of ``fedpkg``
+* runs ``odcs`` command with ``--redhat`` option set
+* injects following Labels and Environment variables into the image container:
+  
+  * Environment variables:
+    
+    * JBOSS_IMAGE_NAME - contains name of the image
+    * JBOSS_IMAGE_VERSION - contains version of the image
+  * Labels:
+    
+    * name - contains name of the image
+    * version - contains version of the image
+    * architecture - contains architecture of the image
+
+
+**Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
 
 .. code::
 
-   [ODCS]
+   [common]
    redhat = true
 
 .. note::
 
-   If you are using Red Hat ODCS instance you need to provide valid Kerberos ticket.
+   If you are using Cekit within Red Hat infrastructure you should have valid Kerberos ticket.

@@ -9,14 +9,23 @@ def test_osbs_builder_defaults(mocker):
     builder = Builder('osbs', 'tmp', {})
 
     assert builder._release is False
-    assert builder._rhpkg == 'rhpkg'
+    assert builder._rhpkg == 'fedpkg'
     assert builder._nowait is False
+
+
+def test_osbs_builder_redhat(mocker):
+    mocker.patch.object(subprocess, 'check_output')
+
+    builder = Builder('osbs', 'tmp', {'redhat': True})
+
+    assert builder._rhpkg == 'rhpkg'
 
 
 def test_osbs_builder_use_rhpkg_staget(mocker):
     mocker.patch.object(subprocess, 'check_output')
 
-    params = {'stage': True}
+    params = {'stage': True,
+              'redhat': True}
     builder = Builder('osbs', 'tmp', params)
 
     assert builder._rhpkg == 'rhpkg-stage'
@@ -62,7 +71,8 @@ def create_osbs_build_object(mocker, builder_type, params):
 def test_osbs_builder_run_rhpkg_stage(mocker):
     mocker.patch.object(subprocess, 'check_output')
 
-    params = {'stage': True}
+    params = {'stage': True,
+              'redhat': True}
 
     check_call = mocker.patch.object(subprocess, 'check_call')
     builder = create_osbs_build_object(mocker, 'osbs', params)
@@ -75,7 +85,7 @@ def test_osbs_builder_run_rhpkg(mocker):
     mocker.patch.object(subprocess, 'check_output')
 
     check_call = mocker.patch.object(subprocess, 'check_call')
-    builder = create_osbs_build_object(mocker, 'osbs', {})
+    builder = create_osbs_build_object(mocker, 'osbs', {'redhat': True})
     builder.build()
 
     check_call.assert_called_once_with(['rhpkg', 'container-build', '--scratch'])
@@ -83,7 +93,8 @@ def test_osbs_builder_run_rhpkg(mocker):
 
 def test_osbs_builder_run_rhpkg_nowait(mocker):
     mocker.patch.object(subprocess, 'check_output')
-    params = {'nowait': True}
+    params = {'nowait': True,
+              'redhat': True}
 
     check_call = mocker.patch.object(subprocess, 'check_call')
     builder = create_osbs_build_object(mocker, 'osbs', params)
@@ -93,7 +104,8 @@ def test_osbs_builder_run_rhpkg_nowait(mocker):
 
 
 def test_osbs_builder_run_rhpkg_user(mocker):
-    params = {'user': 'Foo'}
+    params = {'user': 'Foo',
+              'redhat': True}
 
     check_call = mocker.patch.object(subprocess, 'check_call')
     builder = create_osbs_build_object(mocker, 'osbs', params)

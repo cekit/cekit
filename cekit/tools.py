@@ -27,6 +27,7 @@ def get_cfg(config_path):
     cfg = cp._sections
     cfg['common'] = cfg.get('common', {})
     cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.cekit')
+    cfg['common']['redhat'] = False
     return cfg
 
 

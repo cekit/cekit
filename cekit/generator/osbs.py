@@ -9,9 +9,9 @@ logger = logging.getLogger('cekit')
 
 class OSBSGenerator(Generator):
 
-    def __init__(self, descriptor_path, target, builder, overrides):
+    def __init__(self, descriptor_path, target, builder, overrides, params):
         self._wipe = False
-        super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides)
+        super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
 
     def _prepare_repository_odcs_pulp(self, repo):
         self._prepare_content_set_yaml(repo['odcs']['pulp'])

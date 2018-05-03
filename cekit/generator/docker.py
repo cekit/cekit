@@ -1,16 +1,18 @@
 import logging
 import subprocess
 import yaml
-import os
 
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-from cekit.tools import cfg
 
 logger = logging.getLogger('cekit')
 
 
 class DockerGenerator(Generator):
+
+    def __init__(self, descriptor_path, target, builder, overrides, params):
+        self._params = params
+        super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
 
     def _prepare_repository_odcs_pulp(self, repo):
         """Create pulp content set in ODCS and returns its url
@@ -21,7 +23,7 @@ class DockerGenerator(Generator):
             # idealy this will be API for ODCS, but there is no python3 package for ODCS
             cmd = ['odcs']
 
-            if cfg.get('ODCS', {}).get('redhat'):
+            if self._params.get('redhat', False):
                 cmd.append('--redhat')
             cmd.extend(['create', 'pulp', repo['odcs']['pulp']])
 

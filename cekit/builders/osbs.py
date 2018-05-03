@@ -20,10 +20,14 @@ class OSBSBuilder(Builder):
         self._release = params.get('release', False)
 
         self._stage = params.get('stage', False)
-        if params.get('stage'):
-            self._rhpkg = 'rhpkg-stage'
+
+        if params.get('redhat'):
+            if params.get('stage'):
+                self._rhpkg = 'rhpkg-stage'
+            else:
+                self._rhpkg = 'rhpkg'
         else:
-            self._rhpkg = 'rhpkg'
+            self._rhpkg = 'fedpkg'
 
         super(OSBSBuilder, self).__init__(build_engine, target, params={})
 

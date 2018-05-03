@@ -90,6 +90,21 @@ def test_args_config(mocker):
     assert Cekit().parse().args.config == 'whatever'
 
 
+def test_args_redhat(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '--redhat',
+                                      'build'])
+
+    assert Cekit().parse().args.redhat
+
+
+def test_args_redhat_default(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      'build'])
+
+    assert not Cekit().parse().args.redhat
+
+
 def test_args_osbs_nowait(mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       'build',
