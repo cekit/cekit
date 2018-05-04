@@ -83,7 +83,7 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 ``redhat``
 ^^^^^^^^^^
 This option changes Cekit default options to comply with Red Hat internal infrastructure and policies.
-It changes following thins:
+It changes following things:
 
 * runs ``rhpkg`` instead of ``fedpkg``
 * runs ``odcs`` command with ``--redhat`` option set
@@ -91,13 +91,13 @@ It changes following thins:
   
   * Environment variables:
     
-    * JBOSS_IMAGE_NAME - contains name of the image
-    * JBOSS_IMAGE_VERSION - contains version of the image
+    * ``JBOSS_IMAGE_NAME`` - contains name of the image
+    * ``JBOSS_IMAGE_VERSION`` - contains version of the image
   * Labels:
     
-    * name - contains name of the image
-    * version - contains version of the image
-    * architecture - contains architecture of the image
+    * ``name`` - contains name of the image
+    * ``version`` - contains version of the image
+    * ``architecture`` - contains architecture of the image
 
 
 **Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:

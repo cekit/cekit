@@ -18,8 +18,8 @@
 
 FROM {{ helper.base_image(from, version) }}
 
-# Environment variables
 {% if envs %}
+# Environment variables
 ENV \
     {% for env in helper.envs(envs)|sort(attribute='name') %}
     {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
@@ -27,8 +27,8 @@ ENV \
     {% endfor %}
 {% endif %}
 
-# Labels
 {% if labels %}
+# Labels
 LABEL \
       {% for label in labels|sort(attribute='name') %}
       {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
