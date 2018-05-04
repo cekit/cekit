@@ -82,9 +82,9 @@ class OSBSBuilder(Builder):
             if os.path.exists("container.yaml"):
                 shutil.copy("container.yaml", os.path.join(
                     self.dist_git_dir, "container.yaml"))
-            if os.path.exists("content_sets.yaml"):
-                shutil.copy("content_sets.yaml", os.path.join(
-                    self.dist_git_dir, "content_sets.yaml"))
+            if os.path.exists("content_sets.yml"):
+                shutil.copy("content_sets.yml", os.path.join(
+                    self.dist_git_dir, "content_sets.yml"))
 
         # Copy also every artifact
         for artifact in self.artifacts:
@@ -224,7 +224,7 @@ class DistGit(object):
         subprocess.check_call(["git", "add", "Dockerfile"])
         if os.path.exists("container.yaml"):
             subprocess.check_call(["git", "add", "container.yaml"])
-        if os.path.exists("content_sets.yaml"):
+        if os.path.exists("content_sets.yml"):
             subprocess.check_call(["git", "add", "content_sets.yml"])
 
         for d in ["repos", "modules"]:
