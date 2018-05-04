@@ -284,7 +284,11 @@ To use ODCS define repository section in following way:
 	      odcs:
 	        pulp: rhel-7-extras-rpm
 		
-*note*: See :ref:`ODCS configuration section <odcs_config>` for additonal details.
+See :ref:`ODCS configuration section <odcs_config>` for additional details.
+
+.. note::
+
+   Only on demand pulp ODCS repositories are supported now.
 
 
 ``URL``

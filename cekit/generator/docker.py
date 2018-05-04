@@ -34,7 +34,7 @@ class DockerGenerator(Generator):
 
             odcs_result = yaml.safe_load(normalized_output)
 
-            if odcs_result['state'] == 4:
+            if odcs_result['state'] != 2:
                 raise CekitError("Cannot create content set: '%s'"
                                  % odcs_result['state_reason'])
 

@@ -30,7 +30,7 @@ class Generator(object):
         if cls is Generator:
             if 'docker' == builder or 'buildah' == builder:
                 from cekit.generator.docker import DockerGenerator as GeneratorImpl
-                logger.info('Generating files for Docker engine.')
+                logger.info('Generating files for %s engine.' % builder)
             elif 'osbs' == builder:
                 from cekit.generator.osbs import OSBSGenerator as GeneratorImpl
                 logger.info('Generating files for OSBS engine.')
