@@ -51,6 +51,7 @@ class Generator(object):
 
         self.image = Image(descriptor, os.path.dirname(os.path.abspath(descriptor_path)))
         self.target = target
+        self._params = params
 
         if overrides:
             self.image = self.override(overrides)

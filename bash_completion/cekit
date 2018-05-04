@@ -20,6 +20,7 @@ _cekit_build_options()
     options+='--build-osbs-user '
     options+='--build-osbs-nowait '
     options+='--build-osbs-stage '
+    options+='--build-osbs-target '
     options+='--build-tech-preview '
     echo "$options"
 }
@@ -73,6 +74,7 @@ _cekit_complete()
 	options+='--verbose '
 	options+='--version '
 	options+='--config '
+	options+='--redhat '
 	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
 	return
 

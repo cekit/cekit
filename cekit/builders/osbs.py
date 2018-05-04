@@ -18,6 +18,7 @@ class OSBSBuilder(Builder):
         self._user = params.get('user')
         self._nowait = params.get('nowait', False)
         self._release = params.get('release', False)
+        self._target = params.get('target')
 
         self._stage = params.get('stage', False)
 
@@ -119,9 +120,14 @@ class OSBSBuilder(Builder):
 
     def build(self):
         cmd = [self._rhpkg]
+
         if self._user:
             cmd += ['--user', self._user]
         cmd.append("container-build")
+
+        if self._target:
+            cmd += ['--target', self._target]
+
         if self._nowait:
             cmd += ['--nowait']
 
