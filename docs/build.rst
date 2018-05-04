@@ -25,6 +25,7 @@ You can execute an container image build by running:
 * ``--build-osbs-stage`` -- use ``rhpkg-stage`` tool instead of ``rhpkg``
 * ``--build-osbs-release`` [#f2]_ -- perform a OSBS release build
 * ``--build-osbs-user`` -- alternative user passed to `rhpkg --user`
+* ``--build-osbs-target`` -- overrides the default ``rhpkg`` target
 * ``--build-osbs-nowait`` -- run `rhpkg container-build` with `--nowait` option specified
 * ``--build-tech-preview`` [#f2]_ -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
   

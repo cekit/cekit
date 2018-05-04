@@ -114,6 +114,17 @@ def test_osbs_builder_run_rhpkg_user(mocker):
     check_call.assert_called_once_with(['rhpkg', '--user', 'Foo', 'container-build', '--scratch'])
 
 
+def test_osbs_builder_run_rhpkg_target(mocker):
+    params = {'target': 'Foo',
+              'redhat': True}
+
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_osbs_build_object(mocker, 'osbs', params)
+    builder.build()
+
+    check_call.assert_called_once_with(['rhpkg', 'container-build', '--target', 'Foo', '--scratch'])
+
+
 def test_docker_builder_defaults():
     params = {'tags': ['foo', 'bar']}
     builder = Builder('docker', 'tmp', params)

@@ -104,6 +104,10 @@ class Cekit(object):
                                  action='store_true',
                                  help='use rhpkg-stage instead of rhpkg')
 
+        build_group.add_argument('--build-osbs-target',
+                                 dest='build_osbs_target',
+                                 help='overrides the default rhpkg target')
+
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
                                  help='perform tech preview build')
@@ -200,7 +204,8 @@ class Cekit(object):
                           'release': self.args.build_osbs_release,
                           'tags': self.args.tags,
                           'pull': self.args.build_pull,
-                          'redhat': tools.cfg['common']['redhat']
+                          'redhat': tools.cfg['common']['redhat'],
+                          'target': self.args.build_osbs_target
                           }
 
                 builder = Builder(self.args.build_engine,
