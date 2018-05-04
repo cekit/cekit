@@ -239,7 +239,7 @@ class DistGit(object):
 
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here
-            subprocess.call(["git", "add", d])
+            subprocess.call(["git", "add", "--all", d])
 
     def commit(self):
         commit_msg = "Sync"
