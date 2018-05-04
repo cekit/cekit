@@ -49,6 +49,7 @@ Requires:       python2-colorlog
 Requires:       PyYAML
 Requires:       docker
 Requires:       git
+Requires:       bash-completion
 
 %description -n python2-%{modname} %_description
 
@@ -73,6 +74,7 @@ Requires:       python3-colorlog
 Requires:       python3-jinja2
 Requires:       python3-setuptools
 Requires:       git
+Requires:       bash-completion
 
 %description -n python3-%{modname} %_description
 
@@ -95,6 +97,8 @@ Python 3 version.
 #%endif
 
 %install
+mkdir -p %{buildroot}/%{_sysconfdir}/bash_completion.d
+cp bash_completion/cekit %{buildroot}/%{_sysconfdir}/bash_completion.d/cekit
 %py2_install
 %if 0%{?with_python3}
 %py3_install
@@ -117,6 +121,7 @@ Python 3 version.
 # This file ends up in py3 subpackage if enabled, otherwise in py2
 %{_bindir}/concreate
 %{_bindir}/cekit
+%{_sysconfdir}/bash_completion.d/cekit
 
 %changelog
 
