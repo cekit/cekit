@@ -82,7 +82,7 @@ Python 3 version.
 %endif
 
 %prep
-%setup -q -n %{modname}-%{git_version}
+%setup -q -n %{modname}-%{version}rc1
 
 %build
 %py2_build
