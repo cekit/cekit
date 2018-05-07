@@ -11,7 +11,7 @@ Version:        2.0.0
 Obsoletes:      python-concreate
 Provides:       python-concreate
 Conflicts:      python-concreate
-Release:        0.1.rc1
+Release:        0.2.rc1
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/cekit/cekit
