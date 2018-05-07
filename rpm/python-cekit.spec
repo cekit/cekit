@@ -25,7 +25,9 @@ Cekit helps to build container images from image definition files
 
 %package -n python2-%{modname}
 Summary:        %{summary}
-
+Obsoletes:      python2-concreate
+Provides:       python2-concreate
+Conflicts:      python2-concreate
 BuildRequires:  python2-devel
 BuildRequires:  python2-setuptools
 BuildRequires:  python2-mock
@@ -58,7 +60,9 @@ Python 2 version.
 %if 0%{?with_python3}
 %package -n python3-%{modname}
 Summary:        %{summary}
-
+Obsoletes:      python3-concreate
+Provides:       python3-concreate
+Conflicts:      python3-concreate
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-pytest
