@@ -15,7 +15,7 @@ Release:        0.1.rc1
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/cekit/cekit
-Source0:        %{url}/archive/%{version}-rc1.tar.gz
+Source0:        %{url}/archive/%{version}rc1.tar.gz
 BuildArch:      noarch
 
 %global _description \
@@ -137,7 +137,7 @@ cp bash_completion/cekit %{buildroot}/%{_sysconfdir}/bash_completion.d/cekit
 * Thu Dec 14 2017 David Becvarik <dbecvari@redhat.com> - 1.3.4-1
 - Release 1.3.4
 
-* Thu Nov 29 2017 David Becvarik <dbecvari@redhat.com> - 1.3.3-1
+* Wed Nov 29 2017 David Becvarik <dbecvari@redhat.com> - 1.3.3-1
 - Release 1.3.3
 
 * Tue Nov 28 2017 David Becvarik <dbecvari@redhat.com> - 1.3.1-1
