@@ -11,11 +11,11 @@ Version:        2.0.0
 Obsoletes:      python-concreate
 Provides:       python-concreate
 Conflicts:      python-concreate
-Release:        0.1.git%{?dist}
+Release:        0.1.rc1
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/cekit/cekit
-Source0:        %{url}/archive/%{version}.tar.gz
+Source0:        %{url}/archive/%{version}-rc1.tar.gz
 BuildArch:      noarch
 
 %global _description \
@@ -123,8 +123,58 @@ cp bash_completion/cekit %{buildroot}/%{_sysconfdir}/bash_completion.d/cekit
 %{_bindir}/cekit
 %{_sysconfdir}/bash_completion.d/cekit
 
-%changelog
 
+%changelog
+* Mon May 7 2018 David Becvarik <dbecvari@redhat.com> 2.0.0-0.1-rc1
+- Release 2.0.0rc1
+
+* Thu Mar 1 2018 David Becvarik <dbecvari@redhat.com> - 1.4.1-1
+- Release 1.4.1
+
+* Thu Dec 14 2017 David Becvarik <dbecvari@redhat.com> - 1.4.0-1
+- Release 1.4.0
+
+* Thu Dec 14 2017 David Becvarik <dbecvari@redhat.com> - 1.3.4-1
+- Release 1.3.4
+
+* Thu Nov 29 2017 David Becvarik <dbecvari@redhat.com> - 1.3.3-1
+- Release 1.3.3
+
+* Tue Nov 28 2017 David Becvarik <dbecvari@redhat.com> - 1.3.1-1
+- Release 1.3.2
+
+* Wed Nov 15 2017 David Becvarik <dbecvari@redhat.com> - 1.3.0-1
+- Release 1.3.0
+
+* Fri Oct 13 2017 Marek Goldmann <mgoldman@redhat.com> - 1.2.1-1
+- Release 1.2.1
+
+* Thu Oct 12 2017 Marek Goldmann <mgoldman@redhat.com> - 1.2.0-1
+- Release 1.2.0
+
+* Thu Oct 05 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.7-1
+- Release 1.1.7
+
+* Wed Oct 04 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.6-1
+- Release 1.1.6
+
+* Wed Oct 04 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.5-1
+- Release 1.1.5
+
+* Tue Oct 03 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.4-1
+- Release 1.1.4
+
+* Tue Oct 03 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.3-1
+- Release 1.1.3
+
+* Tue Oct 03 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.2-1
+- Rebuilt
+
+* Mon Oct 02 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.1-1
+- Release 1.1.1
+
+* Mon Oct 02 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.0-1
+- Release 1.1.0
 
 * Fri Sep 29 2017 Marek Goldmann <mgoldman@redhat.com> - 1.1.0-0.3.git
 - Rebuild
