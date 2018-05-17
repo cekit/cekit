@@ -54,6 +54,11 @@ class Cekit(object):
                             action='store_true',
                             help='Set default options for Red Hat internal infrasructure.')
 
+        parser.add_argument('--work-dir',
+                            dest='work_dir',
+                            help="Location of cekit working directory, it's "
+                            "used to store dist-git repos.")
+
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
@@ -165,6 +170,8 @@ class Cekit(object):
 
             if self.args.redhat:
                 tools.cfg['common']['redhat'] = True
+            if self.args.work_dir:
+                tools.cfg['common']['work_dir'] = self.args.work_dir
 
             # We need to construct Generator first, because we need overrides
             # merged in
