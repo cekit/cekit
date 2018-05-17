@@ -136,3 +136,33 @@ def test_args_osbs_no_nowait(mocker):
                                       'build'])
 
     assert Cekit().parse().args.build_osbs_nowait is False
+
+
+def test_args_overrides(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      'build',
+                                      '--overrides',
+                                      'foo'])
+
+    assert Cekit().parse().args.overrides == 'foo'
+
+
+def test_args_overrides_file(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      'build',
+                                      '--overrides-file',
+                                      'foo'])
+
+    assert Cekit().parse().args.overrides == 'foo'
+
+
+def test_args_overrides_exclusiver(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      'build',
+                                      'overrides',
+                                      'bar',
+                                      '--overrides-file',
+                                      'foo'])
+
+    with pytest.raises(SystemExit):
+        Cekit().parse()

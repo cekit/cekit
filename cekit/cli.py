@@ -122,8 +122,14 @@ class Cekit(object):
                             action='append',
                             help='tag used to build/test the image, can be used multiple times')
 
-        parser.add_argument('--overrides',
-                            help='path to a file containing overrides')
+        overrides_group = parser.add_mutually_exclusive_group()
+
+        overrides_group.add_argument('--overrides',
+                                     help='a YAML object to override image descriptor')
+
+        overrides_group.add_argument('--overrides-file',
+                                     dest='overrides',
+                                     help='path to a file containing overrides')
 
         parser.add_argument('--target',
                             default="target",

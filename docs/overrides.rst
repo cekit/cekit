@@ -3,13 +3,13 @@ Overrides
 
 During an image life cycle there can be a need to do a slightly tweaked builds - using different base images, injecting newer libraries etc. We want to support such scenarios without a need of duplicating whole image sources. To achieve this Cekit supports overrides mechanism for its image descriptor. You can override almost anything in image descriptor. The overrides are based on overrides descriptor - a YAML object containing overrides for the image descriptor.
 
-To use an override descriptor you need to pass ``--overides`` argument to a cekit. This argument can be set with a YAML object representing changes or a path to a file containing overrides.
+To use an override descriptor you need to pass ``--overides-file`` argument to a Cekit. You can also pass  YAML object representing changes directly via ``--overrides`` option.
 
 **Example**: To use overrides.yaml file located in current working directory run:
 
 .. code:: bash
 
-	  $ cekit build --overrides=overrides.yaml
+	  $ cekit build --overrides-file overrides.yaml
 
 
 **Example**: To override a label via command line run:
