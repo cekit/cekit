@@ -5,6 +5,7 @@ _cekit_global_options()
     local options
     options+='--tags '
     options+='--overrides '
+    options+='--overrides-file '
     options+='--target '
     options+='--descriptor '
     options+='--work-dir '
@@ -46,7 +47,7 @@ _cekit_complete()
 	_filedir
 	return
 
-    elif [[ '--descriptor --overrides' =~ .*$prev.* ]]; then
+    elif [[ '--descriptor --overrides-file' =~ .*$prev.* ]]; then
 	_filedir yaml
 	return
 
