@@ -18,11 +18,19 @@ Below you can find description of available sections together with options descr
 ``common``
 ------------
 
+.. _workdir_config:
+
 ``work_dir``
 ^^^^^^^^^^^^
 
 Contains location of Cekit working directory, which is used to store some persistent data like
 dist_git repositories.
+
+.. code:: yaml
+
+    [common]
+    work_dir=/tmp
+
 
 ``ssl_verify``
 ^^^^^^^^^^^^^^

@@ -81,6 +81,15 @@ def test_args_config_default(mocker):
     assert Cekit().parse().args.config == '~/.cekit/config'
 
 
+def test_args_workd_dir(mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      'generate',
+                                      '--work-dir',
+                                      'foo'])
+
+    assert Cekit().parse().args.work_dir == 'foo'
+
+
 def test_args_config(mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '--config',
