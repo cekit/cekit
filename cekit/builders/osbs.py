@@ -283,7 +283,9 @@ class DistGit(object):
         if self.noninteractive or tools.decision("Do you want to push the commit?"):
             print("")
             logger.info("Pushing change to the upstream repository...")
-            subprocess.check_output(["git", "push", "-q"])
+            cmd = ["git", "push", "-q", "origin", self.branch]
+            logger.debug("Running command '%s'" % ' '.join(cmd))
+            subprocess.check_output(cmd)
             logger.info("Change pushed.")
         else:
             logger.info("Changes are not pushed, exiting")
