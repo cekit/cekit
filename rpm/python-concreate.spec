@@ -8,7 +8,7 @@
 
 Name:           python-concreate
 Version:        1.4.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Container image creation tool
 License:        MIT
 URL:            https://github.com/concrt/concreate
@@ -78,7 +78,7 @@ Python 3 version.
 %endif
 
 %prep
-%setup -q -n %{modname}-%{version}
+%setup -q -n cekit-%{version}
 
 %build
 %py2_build
@@ -116,6 +116,9 @@ Python 3 version.
 %{_bindir}/concreate
 
 %changelog
+* Mon May 21 2018 David Becvarik <dbecvari@redhat.com> - 1.4.1-2
+- Release 1.4.1-2
+
 * Thu Mar 1 2018 David Becvarik <dbecvari@redhat.com> - 1.4.1-1
 - Release 1.4.1
 
