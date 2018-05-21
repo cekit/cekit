@@ -73,6 +73,8 @@ def get_dependencies(descriptor, base_dir):
         return
 
     for repo in module_repositories:
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
         repo.copy(base_dir)
         discover_modules(os.path.join(base_dir, repo['name']))
 
