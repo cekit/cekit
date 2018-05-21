@@ -242,6 +242,8 @@ class Cekit(object):
                 if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
                     runner = TestRunner(self.args.target)
                     runner.run(self.args.tags[0], test_tags)
+                else:
+                    logger.warning("No test collected, test can't be run.")
 
             logger.info("Finished!")
             sys.exit(0)
