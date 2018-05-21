@@ -13,7 +13,7 @@ Release:        4%{?dist}
 Summary:        Python lib/cli for JSON/YAML schema validation
 
 License:        MIT
-URL:            http://github.com/grokzen/pykwalify
+URL:            https://github.com/grokzen/pykwalify
 Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 BuildArch:      noarch
 
