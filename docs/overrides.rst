@@ -99,7 +99,7 @@ Sequence nodes are little bit tricky, if they're representing plain arrays, we c
 	    - "echo"
 	    - "foo"
 
-**Known issues**: Merging sequence nodes can have surprising results, please see `corresponding issue. <https://github.com/jboss-container-images/cekit/issues/106>`_
+**Known issues**: Merging sequence nodes can have surprising results, please see `corresponding issue. <https://github.com/cekit/cekit/issues/106>`_
 
 Mapping nodes
 ^^^^^^^^^^^^^
