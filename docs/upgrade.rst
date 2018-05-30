@@ -112,4 +112,4 @@ To migrate your configuration please run:
 .. code-block:: bash
 
     mv ~/.concreate.d ~/.cekit
-    mv ~/.conreate ~/.cekit/config
+    mv ~/.concreate ~/.cekit/config
