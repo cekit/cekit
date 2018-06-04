@@ -13,6 +13,7 @@ from cekit.template_helper import TemplateHelper
 
 logger = logging.getLogger('cekit')
 
+
 class Generator(object):
     """This class process Image descriptor(self.image) and uses it to generate
     target directory by fetching all dependencies and artifacts
@@ -87,27 +88,20 @@ class Generator(object):
         if not descriptor:
             descriptor = self.image
 
-        modules = descriptor.get('modules', {}).get('install', {})
-
-        # If descriptor doesn't requires any module we can start merging descriptors
-        # and fetching artifacts. There is nothing left to do except for this
-        if not modules:
-            self.image.merge(descriptor)
-            return
-
-        logger.info("Handling modules...")
+        modules = descriptor.get('modules', {}).get('install', [])[:]
 
         for module in modules:
+            logger.debug("Preparing module '%s' requested by '%s'."
+                         % (module['name'], descriptor['name']))
             version = module.get('version', None)
 
             req_module = copy_module_to_target(module['name'],
                                                version,
                                                os.path.join(self.target, 'image', 'modules'))
-            # If there is any required module it needs to be prepared too
-            self.prepare_modules(req_module)
-            self.image.merge(descriptor)
 
-        logger.debug("Modules handled")
+            self.prepare_modules(req_module)
+            logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
+            descriptor.merge(req_module)
 
     def prepare_artifacts(self):
         """Goes through artifacts section of image descriptor

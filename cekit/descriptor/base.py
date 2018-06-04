@@ -102,6 +102,9 @@ class Descriptor(collections.MutableMapping):
     def items(self):
         return self._descriptor.items()
 
+    def __repr__(self):
+        return "%s" % self._descriptor
+
     def get(self, k, default=None):
         return self._descriptor.get(k, default)
 
@@ -135,10 +138,10 @@ def _merge_descriptors(desc1, desc2):
         if k2 not in desc1:
             desc1[k2] = v2
         else:
-            if isinstance(v2, list):
+            if isinstance(v2, Descriptor):
+                desc1[k2].merge(v2)
+            elif isinstance(v2, list):
                 desc1[k2] = _merge_lists(desc1[k2], v2)
-            elif isinstance(v2, Descriptor):
-                desc1[k2] = _merge_descriptors(desc1[k2], v2)
     return desc1
 
 
@@ -154,7 +157,7 @@ def _merge_lists(list1, list2):
     for v2 in list2:
         if isinstance(v2, Descriptor):
             if v2 in list1:
-                _merge_descriptors(list1[list1.index(v2)], v2)
+                list1[list1.index(v2)].merge(v2)
             else:
                 list1.append(v2)
         elif isinstance(v2, list):
