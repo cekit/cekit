@@ -1,0 +1,4 @@
+schema_version: 1
+name: child2_of_child
+execute:
+  - script: scripti_e

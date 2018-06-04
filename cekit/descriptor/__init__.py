@@ -10,7 +10,7 @@ from cekit.descriptor.run import Run
 from cekit.descriptor.packages import Packages
 from cekit.descriptor.packages import Repository
 from cekit.descriptor.modules import Modules
-from cekit.descriptor.execute import Execute
+from cekit.descriptor.execute import Execute, ExecuteContainer
 from cekit.descriptor.image import Image
 from cekit.descriptor.module import Module
 from cekit.descriptor.overrides import Overrides

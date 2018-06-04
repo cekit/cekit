@@ -8,9 +8,9 @@ import pytest
 from cekit.builders.osbs import Chdir
 from cekit.cli import Cekit
 
-pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
-                                "Docker installed, export 'CEKIT_TEST_VALIDATE=y' variable if "
-                                "you need to run them.")
+#pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
+#                                "Docker installed, export 'CEKIT_TEST_VALIDATE=y' variable if "
+#                                "you need to run them.")
 
 
 def setup_function():
@@ -196,6 +196,14 @@ def check_dockerfile(image_dir, match):
     return False
 
 
+def check_dockerfile_text(image_dir, match):
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
+        dockerfile = fd.read()
+        if match in dockerfile:
+            return True
+    return False
+
+
 def check_dockerfile_uniq(image_dir, match):
     found = False
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
@@ -309,6 +317,55 @@ def test_run_override_artifact(tmpdir, mocker):
     run_cekit(image_dir)
 
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
+
+
+def test_execution_order(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_3'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    expected_modules_order = """# Custom scripts
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]
+
+USER root
+RUN rm -rf /tmp/scripts
+"""
+    assert check_dockerfile_text(image_dir, expected_modules_order)
 
 
 def run_cekit(cwd):

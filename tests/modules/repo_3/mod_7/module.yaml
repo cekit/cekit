@@ -1,0 +1,6 @@
+schema_version: 1
+name: child_3
+modules:
+  install:
+    - name: child_of_child3
+    - name: child2_of_child3

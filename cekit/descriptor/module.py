@@ -1,6 +1,6 @@
 import cekit
 
-from cekit.descriptor import Image, Execute
+from cekit.descriptor import Image, ExecuteContainer
 from cekit.descriptor.image import get_image_schema
 
 
@@ -30,8 +30,9 @@ class Module(Image):
 
         self._prepare()
         self.name = self._descriptor['name']
-        self._descriptor['execute'] = [Execute(x, self.name)
-                                      for x in self._descriptor.get('execute', [])]
+        self._descriptor['execute'] = ExecuteContainer(self._descriptor.get('execute', []),
+                                                       self.name)
+
 
     def fetch_dependencies(self, repo_root):
         """ Processes modules dependencies and fetches them.

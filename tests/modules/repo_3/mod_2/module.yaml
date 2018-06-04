@@ -1,0 +1,9 @@
+schema_version: 1
+name: child
+execute:
+  - script: script_b
+modules:
+  install:
+    - name: child_of_child
+    - name: child2_of_child
+    - name: child3_of_child
