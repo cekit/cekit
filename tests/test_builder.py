@@ -164,7 +164,7 @@ def test_buildah_builder_run_pull(mocker):
     check_call.assert_called_once_with(['sudo',
                                         'buildah',
                                         'build-using-dockerfile',
-                                        '--pull-awlays',
+                                        '--pull-always',
                                         '-t', 'foo',
                                         '-t', 'bar',
                                         'tmp/image'])

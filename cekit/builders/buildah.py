@@ -33,7 +33,7 @@ class BuildahBuilder(Builder):
         cmd = ["sudo", "buildah", "build-using-dockerfile"]
 
         if self._pull:
-            cmd.append('--pull-awlays')
+            cmd.append('--pull-always')
 
         # Custom tags for the container image
         logger.debug("Building image with tags: '%s'" %
