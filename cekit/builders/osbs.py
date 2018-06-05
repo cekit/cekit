@@ -19,6 +19,7 @@ class OSBSBuilder(Builder):
         self._nowait = params.get('nowait', False)
         self._release = params.get('release', False)
         self._target = params.get('target')
+        self._rhpkg_set_url_repos = []
 
         self._stage = params.get('stage', False)
 
@@ -75,6 +76,9 @@ class OSBSBuilder(Builder):
 
         self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
 
+        if 'packages' in descriptor and 'set_url' in descriptor['packages']:
+            self._rhpkg_set_url_repos = [x['url']['repository'] for x in descriptor['packages']['set_url']]
+
         self.update_osbs_image_source()
 
     def update_osbs_image_source(self):
@@ -130,6 +134,10 @@ class OSBSBuilder(Builder):
 
         if self._nowait:
             cmd += ['--nowait']
+
+        if self._rhpkg_set_url_repos:
+            cmd += ['--repo-url']
+            cmd += self._rhpkg_set_url_repos
 
         if not self._release:
             cmd.append("--scratch")

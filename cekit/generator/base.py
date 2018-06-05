@@ -52,6 +52,7 @@ class Generator(object):
         self.image = Image(descriptor, os.path.dirname(os.path.abspath(descriptor_path)))
         self.target = target
         self._params = params
+        self._use_odcs = False
 
         if overrides:
             self.image = self.override(overrides)
@@ -192,10 +193,12 @@ class Generator(object):
             if self._handle_repository(repo):
                 injected_repos.append(repo)
 
-        for repo in injected_repos:
-            repo.fetch(os.path.join(self.target, 'image', 'repos'))
-
-        self.image['packages']['repositories_injected'] = injected_repos
+        if self._use_odcs:
+            for repo in injected_repos:
+                repo.fetch(os.path.join(self.target, 'image', 'repos'))
+            self.image['packages']['repositories_injected'] = injected_repos
+        else:
+            self.image['packages']['set_url'] = injected_repos
 
     def _handle_repository(self, repo):
         """Process and prepares all v2 repositories.
@@ -210,8 +213,8 @@ class Generator(object):
                         'repositories-%s' % self._type))
 
         if 'odcs' in repo:
-            if self._prepare_repository_odcs_pulp(repo):
-                return True
+            self._use_odcs = True
+            return self._prepare_repository_odcs_pulp(repo)
 
         elif 'rpm' in repo:
             self._prepare_repository_rpm(repo)
