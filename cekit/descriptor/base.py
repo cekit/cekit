@@ -49,11 +49,16 @@ class Descriptor(collections.MutableMapping):
 
         raise CekitError("Cannot validate schema: %s" % (self.__class__.__name__))
 
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_data(node._descriptor)
+
     def write(self, path):
         directory = os.path.dirname(path)
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(path, 'w') as outfile:
+            yaml.Dumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
             yaml.dump(self._descriptor, outfile, default_flow_style=False)
 
     def label(self, key):
