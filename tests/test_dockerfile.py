@@ -231,7 +231,7 @@ def prepare_generator(target, desc_part, desc_type="image", engine="docker"):
     generator._type = 'docker'
     generator._wipe = False
     generator._params = {}
-    generator._use_odcs = False
+    generator._fetch_repos = False
     return generator
 
 

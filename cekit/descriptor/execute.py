@@ -67,7 +67,7 @@ class ExecuteContainer(Descriptor):
                 continue
             pos += 1
 
-        for executes in reversed(descriptor):
+        for executes in reversed(list(descriptor)):
             if executes not in self._descriptor:
                 self._descriptor.insert(pos, executes)
 
