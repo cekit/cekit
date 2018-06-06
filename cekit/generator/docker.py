@@ -13,6 +13,7 @@ class DockerGenerator(Generator):
     def __init__(self, descriptor_path, target, builder, overrides, params):
         self._params = params
         super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
+        self._fetch_repos = True
 
     def _prepare_repository_odcs_pulp(self, repo):
         """Create pulp content set in ODCS and returns its url
