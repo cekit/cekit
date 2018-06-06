@@ -72,6 +72,8 @@ class ExecuteContainer(Descriptor):
                 self._descriptor.insert(pos, executes)
 
     def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
         for i, execute in enumerate(self._descriptor):
             if execute != other[i]:
                 return False
