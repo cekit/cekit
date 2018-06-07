@@ -368,6 +368,70 @@ RUN rm -rf /tmp/scripts
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
 
+def test_execution_order_flat(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'mod_1'},
+                                      {'name': 'mod_2'},
+                                      {'name': 'mod_3'},
+                                      {'name': 'mod_4'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_4'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    expected_modules_order = """# Custom scripts
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_1/a" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_1/b" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_2/a" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_2/b" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_3/a" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_3/b" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_4/a" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_4/b" ]
+
+USER root
+RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
+
+USER root
+RUN rm -rf /tmp/scripts
+"""
+    assert check_dockerfile_text(image_dir, expected_modules_order)
+
+
 def run_cekit(cwd):
     with Chdir(cwd):
         # run cekit and check it exits with 0
