@@ -79,7 +79,7 @@ class Generator(object):
 
         1. Place module to args.target/image/modules/ directory
         2. Fetch its artifacts to target/image/sources directory
-        3. Merge modules descriptor with iamge descriptor
+        3. Merge modules descriptor with image descriptor
 
         Arguments:
         descriptor: Module descriptor used to dig required modules,
