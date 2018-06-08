@@ -134,9 +134,7 @@ class Generator(object):
         labels = [{'name': 'name',
                    'value': '%s' % self.image['name']},
                   {'name': 'version',
-                   'value': '%s' % self.image['version']},
-                  {'name': 'architecture',
-                   'value': "x86_64"}]
+                   'value': '%s' % self.image['version']}]
 
         redhat_override = {'envs': envs,
                            'labels': labels}
