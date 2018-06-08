@@ -57,8 +57,8 @@ class ExecuteContainer(Descriptor):
 
     def merge(self, descriptor):
         """To merge modules in correct order we need to insert
-        new executes before the last module. This the raeson why noop
-        execut exists"""
+        new executes before the last module. This the reason why noop
+        execute exists"""
 
         prev_module = self._descriptor[-1]['module_name']
         pos = 0
