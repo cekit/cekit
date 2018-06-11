@@ -1,8 +1,11 @@
+Upgrading
+*********
+
 Upgrading Cekit
-===============
+=================
 
 Fedora / CentOS / RHEL
------------------------
+----------------------
 On this platform you should be using RPM and our `COPR repository for Cekit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_
 
 *Note*: We assume, that you have this repository enabled on your system
@@ -38,7 +41,7 @@ We suggest using pip and `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ t
 
 
 Upgrading from Concreate
-========================
+
 
 Cekit and Concreate are the very same tool. Concreate was rename to Cekit in 2.0 release.
 

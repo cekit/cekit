@@ -1,22 +1,9 @@
-Cekit
-=====================================
-
-Welcome to the Cekit's documentation.
-
-Cekit helps to build container images from image definition files.
-
-Topics
---------
+.. include:: ../README.rst
 
 .. toctree::
     :maxdepth: 2
+    :hidden:
 
-    installation
-    upgrade
-    descriptor
-    modules
-    configuration
-    build
-    overrides
-    local_development
-    test
+    handbook
+    reference
+    tutorial

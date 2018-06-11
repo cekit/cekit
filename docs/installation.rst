@@ -1,26 +1,25 @@
 Installation
-============
+############
+This chapter will guide you through all the steps needed to setup Cekit on your operating system.
+
+.. contents::
+
+Installing Cekit
+*****************
+We provide RPM packages for Fedora, CentOS, RHEL distribution. Cekit installation on other platforms is still possible via `pip`
 
 Fedora / CentOS / RHEL
------------------------
+----------------------
 
-We suggest installing Cekit using the YUM/DNF package manager. We provide a `COPR repository for Cekit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_
+On RHEL derivatives we strongly suggest installing Cekit using the YUM/DNF package manager. We provide a `COPR repository for Cekit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_
 which contains everything needed to install Cekit.
 
 Fedora
-^^^^^^^
-
-Supported versions: 25, 26, 27.
-
-.. code-block:: bash
-
-    dnf copr enable @cekit/cekit
-    dnf install python3-cekit
-
-CentOS
 ^^^^^^
 
-Supported versions: 7.
+Supported versions: 27, 28.
+
+For Fedora we provide custom Copr repository. To enable the repository and install Cekit on your system please run:
 
 .. code-block:: bash
 
@@ -29,9 +28,11 @@ Supported versions: 7.
     yum install python2-cekit
 
 RHEL
-^^^^^^
+^^^^
 
-Supported versions: 7.
+Supported versions: 7.x
+
+For RHEL we provide custom Copr repository. To enable the repository and install Cekit on your system please run:
 
 .. code-block:: bash
 
@@ -39,10 +40,11 @@ Supported versions: 7.
     yum install python2-cekit
 
 Other systems
---------------
+-------------
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Cekit. Please consult
-your package manager of choice for the correct package name.
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Cekit. Please consult your package manager for the correct package name.
+
+To create custom Python virtual environment please run following commands on your system:
 
 .. code-block:: bash
 
@@ -57,19 +59,26 @@ your package manager of choice for the correct package name.
     # Now you are able to run Cekit
     cekit --help
 
+.. note::
+   Every time you want to use Cekit you must activate Cekit Python virtual environment by executing `source ~/cekit/bin/activate`
+
 Requirements
-------------
+============
 
 Build
-^^^^^
-To build container images you need:
+-----
+To build container images you need one of the following:
 
-* Docker
+* docker
+* buildah
 
 Test
-^^^^
+----
 For running tests you need:
 
+* docker
 * docker python bindings
 * behave
-* python lxml
+* python-lxml
+
+.. include:: upgrade.rst
