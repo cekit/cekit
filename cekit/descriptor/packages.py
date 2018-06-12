@@ -98,12 +98,12 @@ class Repository(Descriptor):
         if descriptor['name'] not in configured_repositories:
             if configured_repository_names:
                 raise CekitError("Package repository '%s' used in descriptor is not "
-                                 "available in Concreate configuration file. "
+                                 "available in Cekit configuration file. "
                                  "Available repositories: %s"
                                  % (descriptor['name'], ' '.join(configured_repository_names)))
             else:
                 raise CekitError("Package repository '%s' used in descriptor is not "
-                                 "available in Concreate configuration file. "
+                                 "available in Cekit configuration file. "
                                  % descriptor['name'])
 
         return configured_repositories[descriptor['name']]
