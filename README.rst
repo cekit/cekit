@@ -30,7 +30,7 @@ For other platforms, please refer to `documentation <http://concreate.readthedoc
 
 Usage
 -----
-First steps tutorial is under construction, for now please refer to the ``concreate --help`` output.
+First steps tutorial is under construction, for now please refer to the ``cekit --help`` output.
 
 Documentation
 -------------
