@@ -28,7 +28,7 @@ Supported versions: 7.
     yum update python2-cekit
 
 
-Other systems:
+Other systems
 -------------
 We suggest using pip and `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to host you Cekit.
 

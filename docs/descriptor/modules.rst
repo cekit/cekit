@@ -1,9 +1,8 @@
 ``modules``
 -----------
 
-.. note::
 
-    Modules are discussed in details :ref:`here <modules>`.
+
 
 Module repositories
 ^^^^^^^^^^^^^^^^^^^
