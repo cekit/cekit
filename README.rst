@@ -5,7 +5,7 @@ About
 -----
 
 Container image creation tool. Cekit was previously known as Concreate. If your migrating from concreate tool, please follow
-upgrade instructions <http://cekit.readthedocs.io/en/develop/installation.html#installing-cekit>`_.
+upgrade instructions `<http://cekit.readthedocs.io/en/develop/installation.html#installing-cekit>`_.
 
 Cekit helps to build container images from image definition files with strong focus on modularity and code reuse.
 
