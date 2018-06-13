@@ -16,7 +16,7 @@
 #
 # This is a Dockerfile for the {{ name }}:{{ version }} image.
 
-FROM {{ helper.base_image(from, version) }}
+FROM {{ from }}
 
 {% if envs %}
 # Environment variables

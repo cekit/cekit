@@ -24,19 +24,6 @@ class TemplateHelper(object):
             ret.append("\"%s\"" % cmd)
         return "[%s]" % ', '.join(ret)
 
-    def base_image(self, base_image, version):
-        """Return the base image name that could be used in FROM
-        instruction.
-        """
-
-        if base_image == "scratch":
-            return base_image
-
-        if ':' in base_image:
-            return base_image
-
-        return "%s:%s" % (base_image, version)
-
     def envs(self, env_variables):
         """Combines all environment variables that should be added to the
         Dockerfile into one array
