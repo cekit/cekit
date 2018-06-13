@@ -125,9 +125,11 @@ class Cekit(object):
         overrides_group = parser.add_mutually_exclusive_group()
 
         overrides_group.add_argument('--overrides',
+                                     action='append',
                                      help='a YAML object to override image descriptor')
 
         overrides_group.add_argument('--overrides-file',
+                                     action='append',
                                      dest='overrides',
                                      help='path to a file containing overrides')
 
