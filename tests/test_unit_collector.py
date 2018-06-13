@@ -2,12 +2,12 @@ import os
 import shutil
 import pytest
 
-from concreate.test.collector import TestCollector
+from cekit.test.collector import TestCollector
 
 desc_dir = "/tmp/desc"
 target_dir = "/tmp/target_dir"
 
-steps_url = 'https://github.com/jboss-container-images/concreate-test-steps'
+steps_url = 'https://github.com/cekit/behave-test-steps'
 
 
 @pytest.fixture

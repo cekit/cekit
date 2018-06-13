@@ -1,23 +1,9 @@
-Concreate
-=====================================
-
-Welcome to the Concreate's documentation.
-
-.. image:: concreate.jpg
-
-Concreate helps to build container images from image definition files.
-
-Topics
---------
+.. include:: ../README.rst
 
 .. toctree::
     :maxdepth: 2
+    :hidden:
 
-    installation
-    descriptor
-    modules
-    configuration
-    build
-    overrides
-    local_development
-    test
+    handbook
+    reference
+    tutorial

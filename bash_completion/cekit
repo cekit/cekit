@@ -1,0 +1,92 @@
+#!/bin/bash
+
+_cekit_global_options()
+{
+    local options
+    options+='--tags '
+    options+='--overrides '
+    options+='--overrides-file '
+    options+='--target '
+    options+='--descriptor '
+    options+='--work-dir '
+    echo "$options"
+}
+
+_cekit_build_options()
+{
+    local options
+    options+='--build-engine '
+    options+='--build-tag '
+    options+='--build-pull '
+    options+='--build-osbs-release '
+    options+='--build-osbs-user '
+    options+='--build-osbs-nowait '
+    options+='--build-osbs-stage '
+    options+='--build-osbs-target '
+    options+='--build-tech-preview '
+    echo "$options"
+}
+
+
+_cekit_test_options()
+{
+    local options
+    options+='--test-wip '
+    options+='--test-steps-url '
+    echo "$options"
+}
+
+_cekit_complete()
+{
+    # save the current world
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    # process all valid options here
+
+    if [[ '--config' == $prev ]]; then
+	_filedir
+	return
+
+    elif [[ '--descriptor --overrides-file' =~ .*$prev.* ]]; then
+	_filedir yaml
+	return
+
+    elif [[ '--target' == $prev ]]; then
+	_filedir -d
+	return
+
+    elif [[ '--work-dir' == $prev ]]; then
+	_filedir -d
+	return
+
+    elif [[ 'build generate' =~ .*$prev.* ]]; then
+	local options
+	options+=$(_cekit_global_options)
+	options+=$(_cekit_build_options)
+	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+	return
+
+    elif [[ 'test' == $prev ]]; then
+	local options
+	options+=$(_cekit_global_options)
+	options+=$(_cekit_test_options)
+	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+	return
+
+    elif [[ "$cur" == -* ]]; then
+	local options
+	options+=$(_cekit_global_options)
+	options+='--help '
+	options+='--verbose '
+	options+='--version '
+	options+='--config '
+	options+='--redhat '
+	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+	return
+
+    fi
+
+    COMPREPLY=( $(compgen -W "generate build test" -- $cur))
+}
+
+complete -F _cekit_complete cekit

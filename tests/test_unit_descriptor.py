@@ -1,8 +1,9 @@
 import pytest
 import yaml
 
-from concreate.errors import ConcreateError
-from concreate.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
+from cekit.errors import CekitError
+from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
+    Repository
 
 
 def test_label():
@@ -61,7 +62,8 @@ def test_osbs():
     assert osbs['repository']['branch'] == 'bar'
 
 
-def test_packages():
+def test_packages(mocker):
+    mocker.patch.object(Repository, '_get_repo_url', return_value='foo')
     pkg = Packages(yaml.safe_load("""
       repositories:
           - repo-foo
@@ -69,8 +71,8 @@ def test_packages():
       install:
           - pkg-foo"""))
 
-    assert 'repo-foo' in pkg['repositories']
-    assert 'repo-bar' in pkg['repositories']
+    assert Repository('repo-foo') in pkg['repositories']
+    assert Repository('repo-bar') in pkg['repositories']
     assert 'pkg-foo' in pkg['install']
 
 
@@ -95,7 +97,7 @@ def test_image():
 
 
 def test_image_missing_name():
-    with pytest.raises(ConcreateError):
+    with pytest.raises(CekitError):
         Image(yaml.safe_load("""
         from: foo
         version: 1.9"""), 'foo')

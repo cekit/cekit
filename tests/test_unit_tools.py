@@ -1,9 +1,9 @@
 import pytest
 import yaml
 
-from concreate.descriptor.base import _merge_descriptors, _merge_lists
-from concreate.descriptor import Descriptor, Image, Module, Overrides
-from concreate.errors import ConcreateError
+from cekit.descriptor.base import _merge_descriptors, _merge_lists
+from cekit.descriptor import Descriptor, Image, Module, Overrides
+from cekit.errors import CekitError
 
 
 class TestDescriptor(Descriptor):
@@ -20,17 +20,17 @@ def test_merging_description_image():
     desc1 = Image({'name': 'foo', 'version': 1}, None)
 
     desc2 = Module({'name': 'mod1',
-                    'description': 'mod_desc'}, None)
+                    'description': 'mod_desc'}, None, None)
 
     merged = _merge_descriptors(desc1, desc2)
     assert 'description' not in merged
 
 
 def test_merging_description_modules():
-    desc1 = Module({'name': 'foo'}, None)
+    desc1 = Module({'name': 'foo'}, None, None)
 
     desc2 = Module({'name': 'mod1',
-                    'description': 'mod_desc'}, None)
+                    'description': 'mod_desc'}, None, None)
 
     merged = _merge_descriptors(desc1, desc2)
     assert 'description' not in merged
@@ -40,7 +40,7 @@ def test_merging_description_override():
     desc1 = Image({'name': 'foo', 'version': 1}, None)
 
     desc2 = Overrides({'name': 'mod1',
-                       'description': 'mod_desc'})
+                       'description': 'mod_desc'}, None)
 
     merged = _merge_descriptors(desc2, desc1)
     assert 'description' in merged
@@ -95,7 +95,7 @@ def test_merging_plain_lists():
 def test_merging_plain_list_of_list():
     list1 = [1, 2, 3]
     list2 = [3, 4, []]
-    with pytest.raises(ConcreateError):
+    with pytest.raises(CekitError):
         _merge_lists(list1, list2)
 
 

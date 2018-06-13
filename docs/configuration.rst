@@ -1,28 +1,39 @@
 Configuration file
 ==================
 
-Concreate can be configured using a configuration file. We use the
+Cekit can be configured using a configuration file. We use the
 properties file format.
 
-Concreate will look for this file at the path ``~/.concreate``. Its location can be changed via command line ``--config`` option.
+Cekit will look for this file at the path ``~/.cekit/config``. Its location can be changed via command line ``--config`` option.
 
 **Example**
-Running Concreate with different config file:
+Running Cekit with different config file:
 
 .. code:: sh
 	  
-	  $ concreate --config ~/alternative_path build
+	  $ cekit --config ~/alternative_path build
 
 Below you can find description of available sections together with options described in detail.
 
-``[common]``
+.. contents::
+
+
+``common``
 ------------
+
+.. _workdir_config:
 
 ``work_dir``
 ^^^^^^^^^^^^
 
-Contains location of Concreate working directory, which is used to store some persistent data like
+Contains location of Cekit working directory, which is used to store some persistent data like
 dist_git repositories.
+
+.. code:: yaml
+
+    [common]
+    work_dir=/tmp
+
 
 ``ssl_verify``
 ^^^^^^^^^^^^^^
@@ -78,49 +89,35 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 
     In all cases digest will be computed from the downloaded file and compared with the expected value.
 
-.. _configuration_repositories:
+.. _redhat_config:
 
-``[repositories]``
--------------------
+``redhat``
+^^^^^^^^^^
+This option changes Cekit default options to comply with Red Hat internal infrastructure and policies.
+It changes following things:
 
-The ``repository`` section can be used to define YUM/DNF repository files
-that should be added to the image at build time.
+* runs ``rhpkg`` instead of ``fedpkg``
+* runs ``odcs`` command with ``--redhat`` option set
+* injects following Labels and Environment variables into the image container:
+  
+  * Environment variables:
+    
+    * ``JBOSS_IMAGE_NAME`` - contains name of the image
+    * ``JBOSS_IMAGE_VERSION`` - contains version of the image
+  * Labels:
+    
+    * ``name`` - contains name of the image
+    * ``version`` - contains version of the image
+    * ``architecture`` - contains architecture of the image
+
+
+**Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
 
 .. code::
 
-    [repositories]
-    jboss-ocp=http://host/jboss-rhel-os.repo,http://host/jboss-rhel-ocp.repo,http://host/jboss-rhel-rhscl.repo
-    other-repos=http://otherhost.com/osme.repo
+   [common]
+   redhat = true
 
-In case you have YUM/DNF repo files that you want to put to the ``/etc/yum.repos.d`` directory to enable additional
-repositories Concreate can handle it for you automatically.
+.. note::
 
-Repositories are defined using custom keys that could be later referenced in the :ref:`image descriptor's
-packages section <descriptor_packages>`, under ``repositories``.
-
-.. code:: yaml
-
-    packages:
-        repositories:
-            - jboss-ocp
-        install:
-            - mongodb24-mongo-java-driver
-            - postgresql-jdbc
-            - mysql-connector-java
-            - maven
-            - hostname
-
-Concreate will copy all repo files to ``/etc/yum.repos.d`` directory and
-enable them to be used while installing packages listed in the packages section.
-
-At the end of the image build process Concreate removes newly added repo files from the ``/etc/yum.repos.d``
-directory automatically. If you do not want to have these files removed after installation --
-you need to make your repo files part of some module that installs them in the correct place.
-
-There are a few rules about repositories added that way:
-
-1. This feature covers only the situation where you want to add a custom repo file at build time but you do not want it to be enabled in containers.
-2. Repo file name should be the same as the repo id in the repository (the name between square brackets).
-3. There should be only one repository per file.
-4. Only added repositories will be enabled during install of packages, all other repositories (including default) will be disabled.
-
+   If you are using Cekit within Red Hat infrastructure you should have valid Kerberos ticket.

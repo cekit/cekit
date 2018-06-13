@@ -1,0 +1,132 @@
+# Copyright 2017 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ------------------------------------------------------------------------
+#
+# This is a Dockerfile for the {{ name }}:{{ version }} image.
+
+FROM {{ helper.base_image(from, version) }}
+
+{% if envs %}
+# Environment variables
+ENV \
+    {% for env in helper.envs(envs)|sort(attribute='name') %}
+    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
+
+    {% endfor %}
+{% endif %}
+
+{% if labels %}
+# Labels
+LABEL \
+      {% for label in labels|sort(attribute='name') %}
+      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
+
+      {% endfor %}
+{% endif %}
+
+{% if ports %}
+# Exposed ports
+EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
+
+{% endif %}
+
+USER root
+
+{% if packages and packages.install %}
+{% if packages.repositories_injected %}
+# Add custom repo files
+COPY \ {% for repo in packages.repositories_injected %} 
+    repos/{{ repo.filename }} \
+{% endfor %}
+    /etc/yum.repos.d/
+
+{% endif %}
+{% if packages.repositories %}
+{% for repo in packages.repositories %}
+{% if repo.present and repo.rpm %}
+RUN yum install -y {{ repo.rpm }} \
+    && yum clean all && rm -rf /var/cache/yum
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+# Install required RPMs and ensure that the packages were installed
+RUN yum install -y {%- for package in packages.install %} {{ package }}{% endfor %} \
+    && yum clean all && rm -rf /var/cache/yum && \
+    rpm -q {% for package in packages.install %} {{ package }}{% endfor %}
+
+{% if packages.repositories_injected %}
+# Remove custom repo files
+RUN rm{% for repo in packages.repositories_injected %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
+
+{% endif %}
+
+{% endif %}
+
+{%- if artifacts %}
+# Add all artifacts to the /tmp/artifacts
+# directory
+COPY \
+{% for artifact in artifacts %}
+    {{ artifact['name'] }} \
+    {% endfor %}
+    /tmp/artifacts/
+
+{% endif %}
+
+{%- if execute %}
+# Add scripts used to configure the image
+COPY modules /tmp/scripts
+
+# Custom scripts
+{% for exec in execute %}
+USER {{ exec.user }}
+RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
+
+{% endfor %}
+{% endif %}
+
+{%- if execute %}
+USER root
+RUN rm -rf /tmp/scripts
+{% endif %}
+{%- if artifacts %}
+USER root
+RUN rm -rf /tmp/artifacts
+{% endif %}
+
+{%- if volumes %}
+{% for volume in volumes %}
+VOLUME ["{{ volume['path'] }}"]
+{% endfor %}
+{% endif %}
+
+USER {{ run['user'] }}
+
+{% if run %}
+{%- if 'workdir' in run %}
+# Specify the working directory
+WORKDIR {{ run['workdir'] }}
+{% endif %}
+
+{% if 'entrypoint' in run %}
+ENTRYPOINT {{ helper.cmd(run['entrypoint']) }}
+{% endif %}
+
+{% if 'cmd' in run %}
+CMD {{ helper.cmd(run['cmd']) }}
+{% endif %}
+{% endif %}

@@ -1,7 +1,7 @@
 Testing images
 ==============
 
-Concreate is able to run `behave <https://pythonhosted.org/behave/>`_ based
+Cekit is able to run `behave <https://pythonhosted.org/behave/>`_ based
 tests for images. We suggest you read the Behave documentation before reading
 this chapter.
 
@@ -9,7 +9,7 @@ An image can be tested by running:
 
 .. code:: bash
 	  
-	  $ concreate test
+	  $ cekit test
 
 **Test options**
 
@@ -46,20 +46,20 @@ for the specific image/module.
 
 We strongly recommend that a test is written for every feature that is added to the image.
 
-Concreate comes with a list of build-in steps that are available for use in
-tests. See the `steps repository <https://github.com/jboss-openshift/concreate-test-steps>`_.
+Cekit comes with a list of build-in steps that are available for use in
+tests. See the `steps repository <https://github.com/jboss-openshift/cekit-test-steps>`_.
 
 Where necessary we encourage people to add or extend these steps.
 
 **Tags**
 
-Concreate selects which tests to run via the *tags* mechanism. Here are several
+Cekit selects which tests to run via the *tags* mechanism. Here are several
 examples of ways ways that tags could be used for managing tests across a set
 of related images:
 
 1. `Product tags`
    
-   Tags based on image names. Concreate derives two test tag names from the
+   Tags based on image names. Cekit derives two test tag names from the
    name of the Image being tested. The whole image name is converted into one
    tag, and everything before the first '/' character is converted into
    another.
@@ -76,12 +76,12 @@ of related images:
    This is very special behavior used mainly in development. Its purpose is to
    to limit the tests to be run to a subset you are working on. To achieve this
    you should mark your in-development test scenarios with the ``@wip`` tag and
-   run ``concreate test --test-wip``. All other scenarios not tagged ``@wip``
+   run ``cekit test --test-wip``. All other scenarios not tagged ``@wip``
    will be ignored.
 
 3. `The @ci tag`
 
-   If ``concreate`` is not running as a user called ``jenkins``, the tag ``@ci``
+   If ``cekit`` is not running as a user called ``jenkins``, the tag ``@ci``
    is added to the list of ignored tags, meaning any tests tagged ``@ci`` are
    ignored and not executed.
 

@@ -1,0 +1,7 @@
+schema_version: 1
+name: mod_4
+execute:
+  - script: a
+  - script: b
+  - script: c
+
