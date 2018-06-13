@@ -144,7 +144,7 @@ def test_args_overrides(mocker):
                                       '--overrides',
                                       'foo'])
 
-    assert Cekit().parse().args.overrides == 'foo'
+    assert Cekit().parse().args.overrides == ['foo']
 
 
 def test_args_overrides_file(mocker):
@@ -153,7 +153,7 @@ def test_args_overrides_file(mocker):
                                       '--overrides-file',
                                       'foo'])
 
-    assert Cekit().parse().args.overrides == 'foo'
+    assert Cekit().parse().args.overrides == ['foo']
 
 
 def test_args_overrides_exclusiver(mocker):

@@ -96,6 +96,42 @@ def test_simple_image_test(tmpdir, mocker):
     run_cekit(image_dir)
 
 
+def test_image_generate_with_multiple_overrides(tmpdir, mocker):
+    override1 = "{'labels': [{'name': 'foo', 'value': 'bar'}]}"
+
+    override2 = "{'labels': [{'name': 'foo', 'value': 'baz'}]}"
+
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '--overrides',
+                                      override1,
+                                      '--overrides',
+                                      override2,
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'modules': {'repositories': [{'name': 'modules',
+                                      'path': 'tests/modules/repo_2'}]}}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    effective_image = {}
+    with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
+        effective_image = yaml.safe_load(file_)
+
+    assert {'name': 'foo', 'value': 'bar'} in effective_image['labels']
+
+
 def test_image_test_with_override(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',

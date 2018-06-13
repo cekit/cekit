@@ -16,9 +16,18 @@ To use an override descriptor you need to pass ``--overides-file`` argument to a
 
 .. code:: bash
 
-	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
+	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'overridden'}]}"
 
+Overrides Chaining
+------------------
 
+You can even specify multiple overrides. They are resolved in order they appear on command line. This means that values from *first override specified overrides all values from later overrides*.
+
+**Example**: If you run following command, label `foo` will be set to `bar`.
+
+.. code:: bash
+
+	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'bar'}]} --overrides "{'labels': [{'name': 'foo', 'value': 'baz'}]}"
 
 How overrides works
 -------------------
