@@ -129,7 +129,7 @@ def test_image_generate_with_multiple_overrides(tmpdir, mocker):
     with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
         effective_image = yaml.safe_load(file_)
 
-    assert {'name': 'foo', 'value': 'bar'} in effective_image['labels']
+    assert {'name': 'foo', 'value': 'baz'} in effective_image['labels']
 
 
 def test_image_test_with_override(tmpdir, mocker):

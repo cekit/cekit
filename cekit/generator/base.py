@@ -56,9 +56,7 @@ class Generator(object):
         self._fetch_repos = False
 
         if overrides:
-            # overrides must be processed in reversed order for overriding to work,
-            # our merge mechanism is designed to work top-down
-            for override in reversed(overrides):
+            for override in overrides:
                 self.image = self.override(override)
 
         logger.info("Initializing image descriptor...")
