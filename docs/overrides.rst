@@ -21,9 +21,9 @@ To use an override descriptor you need to pass ``--overides-file`` argument to a
 Overrides Chaining
 ------------------
 
-You can even specify multiple overrides. They are resolved in order they appear on command line. This means that values from *first override specified overrides all values from later overrides*.
+You can even specify multiple overrides. Overrides are resolved that last specified is the most important one. This means that values from *last override specified overrides all values from former ones*.
 
-**Example**: If you run following command, label `foo` will be set to `bar`.
+**Example**: If you run following command, label `foo` will be set to `baz`.
 
 .. code:: bash
 
