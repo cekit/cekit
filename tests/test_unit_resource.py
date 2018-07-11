@@ -8,6 +8,7 @@ from cekit.errors import CekitError
 
 def setup_function(function):
     tools.cfg = {}
+    tools.cfg['common'] = {'work_dir': '/tmp'}
 
     if os.path.exists('file'):
         os.remove('file')
@@ -76,7 +77,6 @@ def test_fetching_with_ssl_verify(mocker):
 
 
 def test_fetching_disable_ssl_verify(mocker):
-    tools.cfg['common'] = {}
     tools.cfg['common']['ssl_verify'] = "False"
 
     mock_urlopen = get_mock_urlopen(mocker)
@@ -165,7 +165,7 @@ def test_generated_url_without_cacher():
 
 
 def test_resource_verify(mocker):
-    mock = mocker.patch('cekit.descriptor.resource.Resource._Resource__check_sum')
+    mock = mocker.patch('cekit.descriptor.resource.check_sum')
     res = Resource({'url': 'dummy'})
     res.checksums = {'sha256': 'justamocksum'}
     res._Resource__verify('dummy')
@@ -173,7 +173,6 @@ def test_resource_verify(mocker):
 
 
 def test_generated_url_with_cacher():
-    tools.cfg['common'] = {}
     tools.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
     res = Resource({'url': 'dummy'})
     res.checksums = {'sha256': 'justamocksum'}

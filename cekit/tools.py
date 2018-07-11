@@ -74,4 +74,3 @@ def decision(question):
             return True
 
     return False
-

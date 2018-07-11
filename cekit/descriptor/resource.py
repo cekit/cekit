@@ -1,4 +1,3 @@
-import hashlib
 import logging
 import os
 import shutil
@@ -15,14 +14,15 @@ except ImportError:
     from urllib2 import urlopen
 
 from cekit import tools
+from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
+
 
 logger = logging.getLogger('cekit')
 
 
 class Resource(Descriptor):
-    SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
     CHECK_INTEGRITY = True
 
     def __new__(cls, resource, **kwargs):
@@ -52,6 +52,10 @@ class Resource(Descriptor):
         assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"""")]
         super(Resource, self).__init__(descriptor)
 
+        # forwarded import to prevent circural imports
+        from cekit.cache.artifact import ArtifactCache
+        self.cache = ArtifactCache()
+
         self.name = descriptor['name']
 
         self.description = None
@@ -59,7 +63,7 @@ class Resource(Descriptor):
             self.description = descriptor['description']
 
         self.checksums = {}
-        for algorithm in self.SUPPORTED_HASH_ALGORITHMS:
+        for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in descriptor:
                 self.checksums[algorithm] = descriptor[algorithm]
 
@@ -86,20 +90,28 @@ class Resource(Descriptor):
     def copy(self, target=os.getcwd()):
         if os.path.isdir(target):
             target = os.path.join(target, self.target_file_name())
+
         logger.debug("Fetching resource '%s'" % (self.name))
 
-        overwrite = False
-        if os.path.exists(target):
-            try:
-                overwrite = not self.__verify(target)
-            except Exception as ex:
-                logger.debug("Local resource verification failed")
-                overwrite = True
-
-        if os.path.exists(target) and not overwrite:
+        if os.path.exists(target) and self.__verify(target):
             logger.debug("Local resource '%s' exists and is valid, skipping" % self.name)
             return target
 
+        if self.cache.is_cached(self):
+            cached_resource = self.cache.get(self)
+            print(cached_resource)
+            shutil.copy(cached_resource['cached_path'],
+                        target)
+        else:
+            try:
+                self.cache.add(self)
+                cached_resource = self.cache.get(self)
+                shutil.copy(cached_resource['cached_path'],
+                            target)
+            except ValueError:
+                return self.guarded_copy(target)
+
+    def guarded_copy(self, target):
         try:
             self._copy_impl(target)
         except Exception as ex:
@@ -130,37 +142,16 @@ class Resource(Descriptor):
             logger.info("Target is directory, cannot verify checksum.")
             return True
         for algorithm, checksum in self.checksums.items():
-            self.__check_sum(target, algorithm, checksum)
+            if not check_sum(target, algorithm, checksum):
+                return False
         return True
-
-    def __check_sum(self, target, algorithm, expected):
-        """ Check that file chksum is correct
-        Args:
-          alg - algorithm which will be used for diget
-          expected_chksum - checksum which artifact must mathc
-        """
-
-        logger.debug("Checking '%s' %s hash..." % (self.name, algorithm))
-
-        hash_function = getattr(hashlib, algorithm)()
-
-        with open(target, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                hash_function.update(chunk)
-        checksum = hash_function.hexdigest()
-
-        if checksum.lower() != expected.lower():
-            raise CekitError("The %s computed for the '%s' file ('%s') doesn't match the '%s' value"  # noqa: E501
-                                 % (algorithm, self.name, checksum, expected))
-
-        logger.debug("Hash is correct.")
 
     def __substitute_cache_url(self, url):
         cache = tools.cfg.get('common', {}).get('cache_url', None)
         if not cache:
             return url
 
-        for algorithm in self.SUPPORTED_HASH_ALGORITHMS:
+        for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in self.checksums:
                 logger.debug("Using %s to fetch artifacts from cacher."
                              % algorithm)

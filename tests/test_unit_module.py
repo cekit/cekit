@@ -1,7 +1,8 @@
-from cekit.descriptor import Module
-from cekit.module import modules
 import os
 
+from cekit import tools
+from cekit.descriptor import Module
+from cekit.module import modules
 
 module_desc = {
     'schema_version': 1,
@@ -14,6 +15,11 @@ module_desc = {
         ]
     }
 }
+
+
+def setup_function(function):
+    tools.cfg = {}
+    tools.cfg['common'] = {'work_dir': '/tmp'}
 
 
 def test_modules_repos(tmpdir):
