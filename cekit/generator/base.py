@@ -173,6 +173,17 @@ class Generator(object):
                 self.image).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
+        template_file = os.path.join(os.path.dirname(__file__),
+                                     '..',
+                                     'templates',
+                                     'help.jinja')
+        help_template = env.get_template(os.path.basename(template_file))
+        helpfile = os.path.join(self.target, 'image', 'help.md')
+        with open(helpfile, 'wb') as f:
+            f.write(help_template.render(
+                self.image).encode('utf-8'))
+        logger.debug("help.md rendered")
+
     def prepare_repositories(self):
         """ Prepare repositories for build time injection. """
         if 'packages' not in self.image:
