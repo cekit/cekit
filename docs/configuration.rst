@@ -27,7 +27,7 @@ Below you can find description of available sections together with options descr
 ^^^^^^^^^^^^
 
 Contains location of Cekit working directory, which is used to store some persistent data like
-dist_git repositories.
+dist_git repositories and artifact cache.
 
 .. code:: yaml
 
