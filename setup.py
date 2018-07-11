@@ -26,7 +26,8 @@ setup(
     keywords='docker',
     entry_points={
         'console_scripts': ['cekit=cekit.cli:run',
-                            'concreate=cekit.cli:run'],
+                            'concreate=cekit.cli:run',
+                            'cekit-cache=cekit.cache.cli:run'],
     },
     tests_require=['mock'],
     install_requires=requirements
