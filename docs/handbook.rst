@@ -8,6 +8,7 @@ and be familiar with building and testing images with it.
 
     installation
     build
+    caching
     overrides
     test
     local_development
