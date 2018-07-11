@@ -1,0 +1,68 @@
+# {{ name }}
+
+## Description
+
+{{ description }}
+
+{% if usage %}
+## Usage
+
+{{ usage }}
+{% endif %}
+
+{% if envs %}
+## Environment variables
+
+### Informational
+
+These environment variables are defined in the image.
+
+{% for env in helper.envs(envs)|sort(attribute='name') %}
+__{{ env.name }}__
+>"{{ env.value }}"
+
+{% endfor %}
+
+### Configuration
+
+The image can be configured by defining these environment variables
+when starting a container:
+
+{% for env in envs|sort(attribute='name') %}{% if env.description or env.example %}
+__{{ env.name }}__
+{% if env.description %}> {{ env.description }}<br />
+{% endif %}
+{% if env.example %}> _Example: {{ env.example }}_
+{% endif %}
+
+{% endif %}{% endfor %}
+
+{% endif %}
+
+{% if labels %}
+## Labels
+
+{% for label in labels|sort(attribute='name') %}
+__{{ label.name }}__
+> {{ label.value }}
+
+{% endfor %}
+{% endif %}
+
+{% if 'root' == run['user'] or ports %}
+## Security implications
+
+{% if 'root' == run['user'] %}
+__Root privileges__
+> The container runs as root.
+
+{% endif %}
+
+{% if ports %}
+### Published Ports
+
+{% for port in helper.ports(ports) %}
+ * {{ port }}
+{% endfor %}
+{% endif %}
+{% endif %}
