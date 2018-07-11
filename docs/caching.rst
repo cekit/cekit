@@ -14,7 +14,7 @@ Cekit is automatically caching all artifacts used to build the image. This means
           url: https://github.com/rhuss/jolokia/releases/download/v1.3.6/jolokia-1.3.6-bin.tar.gz
           md5: 75e5b5ba0b804cd9def9f20a70af649f
 
-It will be automatically cached into `~/.cekit/cache/` directory during image build. This is useful as the artifact will be automatically copied from cache instead of downloading it again on any rebuild.
+It will be automatically cached into ``~/.cekit/cache/`` directory during image build. This is useful as the artifact will be automatically copied from cache instead of downloading it again on any rebuild.
 
 .. note::
 
@@ -25,16 +25,16 @@ It will be automatically cached into `~/.cekit/cache/` directory during image bu
 Managing Cache
 --------------
 
-Cekit contains command line tool called `cekit-cache` which is used to manage its cache.
+Cekit contains command line tool called ``cekit-cache`` which is used to manage its cache.
 
 **Options affecting cekit-cache:**
 
 * ``--verbose`` -- setups verbose output
-* ``--work-dir`` -- sets Cekit works directory where dist_git repositories are cloned into See :ref:`Configuration section for work_dir<workdir_config>`
+* ``--work-dir`` -- sets Cekit works directory where cache directory is located. See :ref:`Configuration section for work_dir<workdir_config>`
 * ``--version`` -- prints Cekit version
   
 
-Caching and artifact manually
+Caching an artifact manually
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Cekit supports caching an artifact manually. This is very use full if you need to introduce non-public
 artifact to a Cekit. To cache an artifact you need to specify path to the artifact on filesystem or its URL and one of the supported hashes (md5, sha256, sha512).
@@ -85,10 +85,10 @@ After running the command you can see following output:
      names:
       jolokia-jvm-1.5.0.redhat-1-agent.jar
 
-As you can see, we've got listing of two artifacts and they're represented by uuid. One is **912c3cc4-7bd3-445d-9927-5063ba3b3bc1** which is `hawkular-javaagent-1.0.1.Final-redhat-2-shaded.jar`. Second one is **d9171217-744e-43af-8d2f-5ee04f2fd741** which is `jolokia-jvm-1.5.0.redhat-1-agent.jar`. The artifacts uuids are auto generated when artifact is cached and serves as an unique id of an artifact.
+As you can see, we've got listing of two artifacts and they're represented by uuid. One is **912c3cc4-7bd3-445d-9927-5063ba3b3bc1** which is ``hawkular-javaagent-1.0.1.Final-redhat-2-shaded.jar``. Second one is **d9171217-744e-43af-8d2f-5ee04f2fd741** which is ``jolokia-jvm-1.5.0.redhat-1-agent.jar``. The artifacts uuids are auto generated when artifact is cached and serves as an unique id of an artifact.
 
 .. note::
-   Artifact uuid is also used as a filename for an artifact, you can see them in your `~/.cekit/cache` directory.
+   Artifact uuid is also used as a filename for an artifact, you can see them in your ``~/.cekit/cache`` directory.
 
 Removing cached artifact
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -101,4 +101,4 @@ it by executing following command:
 
 
 .. note::
-   You can get uuid of any artifact by invoking `cekit-cache ls` command. Please consult :ref:`listing_cached_artifacts`
+   You can get uuid of any artifact by invoking ``cekit-cache ls`` command. Please consult :ref:`listing_cached_artifacts`
