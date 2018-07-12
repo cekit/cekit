@@ -98,6 +98,7 @@ It changes following things:
 
 * runs ``rhpkg`` instead of ``fedpkg``
 * runs ``odcs`` command with ``--redhat`` option set
+* sets cache_url to Red Hat internal artifact cacher URL
 * injects following Labels and Environment variables into the image container:
   
   * Environment variables:

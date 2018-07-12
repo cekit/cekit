@@ -178,6 +178,10 @@ class Cekit(object):
 
             if self.args.redhat:
                 tools.cfg['common']['redhat'] = True
+
+            if tools.cfg['common']['redhat'] and 'cache_url' not in tools.cfg['common']:
+                tools.cfg['common']['cache_url'] = \
+                    'http://ce-cacher.usersys.redhat.com/get?#algorithm#=#hash#'
             if self.args.work_dir:
                 tools.cfg['common']['work_dir'] = self.args.work_dir
 
