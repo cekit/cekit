@@ -13,6 +13,7 @@ map:
   schema_version: {type: int}
   release: {type: text}
   from: {type: str}
+  usage: {type: text}
   description: {type: text}
   labels: {type: any}
   envs:  {type: any}
