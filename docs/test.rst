@@ -1,7 +1,7 @@
 Testing images
 ==============
 
-Cekit is able to run `behave <https://pythonhosted.org/behave/>`_ based
+Cekit is able to run `behave <https://behave.readthedocs.io/>`_ based
 tests for images. We suggest you read the Behave documentation before reading
 this chapter.
 
