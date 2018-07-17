@@ -32,6 +32,12 @@ Cekit contains command line tool called ``cekit-cache`` which is used to manage 
 * ``--verbose`` -- setups verbose output
 * ``--work-dir`` -- sets Cekit works directory where cache directory is located. See :ref:`Configuration section for work_dir<workdir_config>`
 * ``--version`` -- prints Cekit version
+
+.. note::
+
+   All cache related files are places in your ``--work-dir`` inside ``cache`` subdirectory. This is ``~/.cekit/cache`` by default. This means that
+   cache is realted to your ``--work-dir`` and switching your ``--work-dir`` will use different artifact cache.
+
   
 
 Caching an artifact manually
@@ -102,3 +108,14 @@ it by executing following command:
 
 .. note::
    You can get uuid of any artifact by invoking ``cekit-cache ls`` command. Please consult :ref:`listing_cached_artifacts`
+
+
+Wiping whole cache
+^^^^^^^^^^^^^^^^^^
+To wipe whole artifact cache you need to manually remove ``cache`` subdirectory inside your ``--work-dir``.
+
+*Example:* To remove your cache located in ~/.cekit/cache directory run:
+
+.. code:: bash
+
+	  $ rm -rf ~/.cekit/cache

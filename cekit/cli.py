@@ -48,7 +48,7 @@ class Cekit(object):
 
         parser.add_argument('--config',
                             default='~/.cekit/config',
-                            help='path for cekit config file (~/.cekit/config is default)')
+                            help='path for Cekit config file (~/.cekit/config is default)')
 
         parser.add_argument('--redhat',
                             action='store_true',
@@ -56,8 +56,7 @@ class Cekit(object):
 
         parser.add_argument('--work-dir',
                             dest='work_dir',
-                            help="Location of cekit working directory, it's "
-                            "used to store dist-git repos.")
+                            help="Location of Cekit working directory.")
 
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
