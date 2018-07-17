@@ -114,7 +114,7 @@ Wiping whole cache
 ^^^^^^^^^^^^^^^^^^
 To wipe whole artifact cache you need to manually remove ``cache`` subdirectory inside your ``--work-dir``.
 
-*Example:* To remove your cache located in ~/.cekit/cache directory run:
+*Example:* To remove your cache located in ``~/.cekit/cache`` directory run:
 
 .. code:: bash
 
