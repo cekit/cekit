@@ -11,3 +11,5 @@ and be familiar with building and testing images with it.
     overrides
     test
     local_development
+    repository_management
+    redhat

@@ -19,7 +19,7 @@ You can execute an container image build by running:
 **Options affecting builder:**
 
 * ``--tag`` -- an image tag used to build image (can be specified multiple times)
-* ``--redhat`` -- build image using Red Hat defaults. See :ref:`Configuration section for Red Hat specific options<redhat_config>` for additional details.
+* ``--redhat`` -- build image using Red Hat defaults. See :ref:`Configuration section for Red Hat specific options<redhat_env>` for additional details.
 * ``--work-dir`` -- sets Cekit works directory where dist_git repositories are cloned into See :ref:`Configuration section for work_dir<workdir_config>`
 * ``--build-engine`` -- a builder engine to use ``osbs``, ``buildah`` or ``docker`` [#f1]_
 * ``--build-pull`` -- ask a builder engine to check and fetch latest base image
