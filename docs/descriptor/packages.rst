@@ -43,7 +43,7 @@ This is the default option. With this approach you specify repository id and Cek
         repositories:
             - name: extras
               id: rhel7-extras-rpm
-	      description: "Repository containing extras RHEL7 extras packages"
+              description: "Repository containing extras RHEL7 extras packages"
 
 .. note::
    Behavior of plain repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
