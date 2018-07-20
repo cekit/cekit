@@ -1,5 +1,5 @@
-``description``
----------------
+Description
+-----------
 
 Short summary of the image.
 

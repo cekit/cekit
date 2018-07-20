@@ -1,5 +1,5 @@
-``volumes``
------------
+Volumes
+-------
 
 In case you want to define volumes for your image, just use the ``volumes`` section!
 

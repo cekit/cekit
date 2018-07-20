@@ -1,5 +1,5 @@
-``user``
-^^^^^^^^
+User
+^^^^
 
 Specifies the user (can be username or uid) that should be used to launch the entrypoint
 process.
