@@ -3,7 +3,7 @@
 
 Red Hat Environment
 ===================
-If you running Cekit in Red Hat internal infrastructure it behaves differently. This behavior is triggered by changing :ref:`redhat configuration option<redhat_config>` in Cekit configuration file.
+If you are running Cekit in Red Hat internal infrastructure it behaves differently. This behavior is triggered by changing :ref:`redhat configuration option<redhat_config>` in Cekit configuration file.
 
 
 Tools
@@ -29,15 +29,13 @@ Following labels are added into the image:
 
 * ``name`` - contains name of the image
 * ``version`` - contains version of the image
-* ``architecture`` - contains architecture of the image
 
 .. _redhat_repo:
 
 Repositories
 ------------
 
-As we are building on not properly subscribed RHEL system and using internal repositories we need
-to convert our plain type repositories into OSBS ones.
+In Red Hat we are using ODCS to access repositories for building our container images. To make our life little bit easier Cekit converts all :ref:`Plain<repo_plain>` type repositories into :ref:`ODCS<repo_odcs>` ones. This assures we can perform reproducible builds of our images without any overrides or changes into image descriptors.
 
 *Example:* Following :ref:`Plain<repo_plain>` repository:
 
