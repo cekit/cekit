@@ -4,10 +4,10 @@
 Repository management
 ======================
 
-One of the hardest challenges with we faced with Cekit is how to manage and define package repositories
+One of the hardest challenges we faced with Cekit is how to manage and define package repositories
 correctly. Our current solution works in following scenarios:
 
-1) Building CentOS based images
+1) Building CentOS or Fedora based images
 2) Building RHEL based images on subscribed hosts
 3) Building RHEL based images on unsubscribed hosts
 
@@ -20,7 +20,7 @@ To achieve such behavior in Red Hat Middleware Container Images we created follo
 Defining repositories in container images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You should use :ref:`Plain<repo_plain>` repository definition for every repository as this will work easily on Red Hat subscribed host and will assume everyone one can rebuild are RHEL based images.
+You should use :ref:`Plain<repo_plain>` repository definition for every repository as this will work easily on Red Hat subscribed host and will assume everyone can rebuild are RHEL based images.
 
 
 *Example:* Define Software Collections repository
@@ -32,7 +32,7 @@ You should use :ref:`Plain<repo_plain>` repository definition for every reposito
             - name: SCL
               id: rhel-server-rhscl-7-rpms
 
-If you have repository defined this way, Cekit will not try to enable it and will expect the repository to be forwarded from your host via Docker subscription plugin. When you want to build our image with CentOS base you need to override this repository.
+If you have repository defined this way, Cekit will not try to enable it and will expect the repository to be forwarded from your host via Docker subscription plugin. When you want to build our image with CentOS base you need to override this repository. To override a repository definition you need to specify a repository with same ``name``.
 
 *Example:* Override Software Collection repository for CentOS base
 
