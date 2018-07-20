@@ -1,6 +1,7 @@
 import pytest
 import yaml
 
+from cekit import tools
 from cekit.errors import CekitError
 from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
     Repository
@@ -63,6 +64,7 @@ def test_osbs():
 
 
 def test_packages(mocker):
+    tools.cfg['common'] = {'redhat': True}
     mocker.patch.object(Repository, '_get_repo_url', return_value='foo')
     pkg = Packages(yaml.safe_load("""
       repositories:

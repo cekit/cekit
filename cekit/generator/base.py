@@ -182,7 +182,7 @@ class Generator(object):
 
         injected_repos = []
 
-        for repo in [x for x in repos if x.get('present')]:
+        for repo in repos:
             if self._handle_repository(repo):
                 injected_repos.append(repo)
 
@@ -204,6 +204,9 @@ class Generator(object):
         logger.debug("Loading configuration for repository: '%s' from '%s'."
                      % (repo['name'],
                         'repositories-%s' % self._type))
+
+        if 'id' in repo:
+            return False
 
         if 'odcs' in repo:
             self._fetch_repos = True
