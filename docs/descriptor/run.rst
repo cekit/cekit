@@ -1,5 +1,5 @@
-``run``
--------
+Run
+---
 
 The ``run`` section encapsulates instructions related to launching main process
 in the container including: ``cmd``, ``entrypoint``, ``user`` and ``workdir``.
@@ -19,8 +19,8 @@ Below you can find full example that uses every possible option.
         workdir: "/home/jboss"
 
 
-``cmd``
-^^^^^^^
+Cmd
+^^^
 
 Command that should be executed by the container at run time.
 
@@ -31,8 +31,8 @@ Command that should be executed by the container at run time.
             - "some cmd"
             - "argument"
 
-``entrypoint``
-^^^^^^^^^^^^^^
+Entrypoint
+^^^^^^^^^^
 
 Entrypoint that should be executed by the container at run time.
 

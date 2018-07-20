@@ -1,6 +1,5 @@
-
-``artifacts``
--------------
+Artifacts
+---------
 
 It's common for images to require external artifacts.
 In most cases you will want to add files into the image and use them at

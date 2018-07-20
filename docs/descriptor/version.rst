@@ -1,5 +1,5 @@
-``version``
------------
+Version
+-------
 
 This key is **required**.
 

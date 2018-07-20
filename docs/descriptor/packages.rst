@@ -1,5 +1,5 @@
-``packages``
-------------
+Packages
+--------
 
 To install additional RPM packages you can use the ``packages``
 section where you specify package names and repositories to be used.
@@ -16,8 +16,8 @@ section where you specify package names and repositories to be used.
 
 Packages are defined in the ``install`` subsection.
 
-``repositories``
-----------------
+Repositories
+------------
 Cekit uses all repositories configured inside the image. You can also specify additional
 repositories using repositories subsection. Cekit currently supports following multiple ways of defining
 additional repositories:
@@ -49,8 +49,8 @@ This is the default option. With this approach you specify repository id and Cek
    Behavior of plain repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
 
 
-``RPM``
-^^^^^^^^
+RPM
+^^^^
 This ways is using repository configuration files and related keys packaged as an RPM.
 
 **Example**: To enable `CentOS SCL <https://wiki.centos.org/AdditionalResources/Repositories/SCL>`_ inside the
@@ -65,8 +65,8 @@ image you should define repository in a following way:
 
 .. _repo_odcs:
 
-``ODCS``
-^^^^^^^^
+ODCS
+^^^^
 This way is instructs `ODCS <https://pagure.io/odcs>`_ to generate on demand pulp repositories.
 To use ODCS define repository section in following way:
 
@@ -84,8 +84,8 @@ To use ODCS define repository section in following way:
    Only on demand pulp ODCS repositories are supported now.
 
 
-``URL``
-^^^^^^^^
+URL
+^^^^
 This approach enables you to download a yum repository file and corresponding GPG key. To do it, define
 repositories section in a way of:
 
