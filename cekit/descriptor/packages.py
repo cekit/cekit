@@ -73,7 +73,7 @@ class Repository(Descriptor):
                 ('id' in descriptor) ^
                 ('rpm' in descriptor)):
             raise CekitError("Repository '%s' is invalid, you can use only one of "
-                             "['id', 'pulp', 'rpm', 'url']"
+                             "['id', 'odcs', 'rpm', 'url']"
                              % descriptor['name'])
 
         if tools.cfg['common']['redhat'] and 'id' in descriptor:
@@ -89,7 +89,7 @@ class Repository(Descriptor):
         # we dont want to merge any of theese
         self.skip_merging = ['rpm',
                              'id',
-                             'pulp',
+                             'odcs',
                              'url']
 
         if 'present' not in self._descriptor:
