@@ -32,7 +32,10 @@ You should use :ref:`Plain<repo_plain>` repository definition for every reposito
             - name: SCL
               id: rhel-server-rhscl-7-rpms
 
-If you have repository defined this way, Cekit will not try to enable it and will expect the repository to be forwarded from your host via Docker subscription plugin. When you want to build our image with CentOS base you need to override this repository. To override a repository definition you need to specify a repository with same ``name``.
+If you have repository defined this way, Cekit will not try to inject it and will expect the repository to be already available inside your container image. If it's not provided by the image (for example repository definition already available in ``/etc/yum.repos.d/`` directory) or the host (for example on via `subscribed RHEL host <https://access.redhat.com/solutions/1443553>`_) you need to override this repository. To override a repository definition you need to specify a repository with same ``name``. By overriding Plain repository type, you are actually saying that you have an external mechanism to inject the repository inside the image. This can be any supported :ref:`repository type<repo>`.
+
+.. note::
+   You can view Plain repository type as an abstract classes and ODCS, RPM and URL repositories as an actual implementation.
 
 *Example:* Override Software Collection repository for CentOS base
 
@@ -42,6 +45,27 @@ If you have repository defined this way, Cekit will not try to enable it and wil
         repositories:
             - name: SCL
               rpm: centos-release-scl
+
+*Example:* Override Software Collections repository with a custom yum repository file
+
+.. code:: yaml
+
+    packages:
+        repositories:
+            - name: SCL
+              url:
+	        repository: https://foo.lan/scl.repo
+		gpg: https://foo.lan/scl.gpg
+
+*Example:* Override Software Collections repository with an ODCS
+
+.. code:: yaml
+
+    packages:
+        repositories:
+            - name: SCL
+              odcs:
+	        pulp: rhel-server-rhscl-7-rpms
 
 
 .. note::

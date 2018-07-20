@@ -16,6 +16,8 @@ section where you specify package names and repositories to be used.
 
 Packages are defined in the ``install`` subsection.
 
+.. _repo:
+
 Repositories
 ------------
 Cekit uses all repositories configured inside the image. You can also specify additional

@@ -206,6 +206,9 @@ class Generator(object):
                         'repositories-%s' % self._type))
 
         if 'id' in repo:
+            logger.warning("Repository '%s' is defined as plain. It must be available "
+                           "inside the image as Cekit will not inject it."
+                           % repo['name'])
             return False
 
         if 'odcs' in repo:
