@@ -33,8 +33,8 @@ additional repositories:
 
 .. _repo_plain:
 
-``Plain``
-^^^^^^^^^
+Plain
+^^^^^
 This is the default option. With this approach you specify repository id and Cekit will not perform any action and expect the repository definition exists inside the image. This is useful as a hint which repository must be present for particular image to be buildable. The definition can be overridden by your preferred way of injecting repositories inside the image.
 
 .. code:: yaml
