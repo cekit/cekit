@@ -40,10 +40,12 @@ BuildRequires:  python-jinja2
 BuildRequires:  pytest
 Requires:       python-jinja2
 Requires:       python-setuptools
+Requires:       python-docker-py
 %else
 BuildRequires:  python2-pytest
 Requires:       python2-jinja2
 Requires:       python2-setuptools
+Requires:       python2-docker
 %endif
 
 Requires:       python2-pykwalify
@@ -76,6 +78,7 @@ Requires:       python3-pykwalify
 Requires:       python3-colorlog
 Requires:       python3-jinja2
 Requires:       python3-setuptools
+Requires:       python3-docker
 Requires:       git
 
 %description -n python3-%{modname} %_description
