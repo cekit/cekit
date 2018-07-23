@@ -18,7 +18,9 @@ logger = logging.getLogger('cekit')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
-    def __init__(self, build_engine, target, params={}):
+    def __init__(self, build_engine, target, params=None):
+        if not params:
+            params = {}
         self._tags = params.get('tags', [])
         self._pull = params.get('pull', False)
         super(DockerBuilder, self).__init__(build_engine, target, params)
@@ -79,4 +81,4 @@ class DockerBuilder(Builder):
 
                 logger.error("You can look inside the failed image by running "
                              "'docker run --rm -ti %s bash'" % failed_img)
-            raise CekitError("Image build failed, see logs above.")
+            raise CekitError("Image build failed, see logs above.", ex)
