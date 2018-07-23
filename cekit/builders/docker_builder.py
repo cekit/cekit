@@ -30,8 +30,8 @@ class DockerBuilder(Builder):
             raise CekitError("Docker build engine needs docker with python bindings installed "
                              " and configured, error: %s" % ex)
 
-    def build(self):
-        """After the source siles are generated, the container image can be built.
+    def build(self, build_args=None):
+        """After the source files are generated, the container image can be built.
         We're using Docker to build the image currently.
         """
         args = {}
