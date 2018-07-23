@@ -17,7 +17,7 @@ class Builder(object):
         if cls is Builder:
             if 'docker' == build_engine:
                 # import is delayed until here to prevent circular import error
-                from cekit.builders.docker import DockerBuilder as BuilderImpl
+                from cekit.builders.docker_builder import DockerBuilder as BuilderImpl
                 logger.info("Using Docker builder to build the image.")
             elif 'osbs' == build_engine:
                 # import is delayed until here to prevent circular import error

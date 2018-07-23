@@ -132,15 +132,6 @@ def test_docker_builder_defaults():
     assert builder._tags == ['foo', 'bar']
 
 
-def test_docker_builder_run(mocker):
-    params = {'tags': ['foo', 'bar']}
-    check_call = mocker.patch.object(subprocess, 'check_call')
-    builder = create_osbs_build_object(mocker, 'docker', params)
-    builder.build()
-
-    check_call.assert_called_once_with(['docker', 'build', '-t', 'foo', '-t', 'bar', 'tmp/image'])
-
-
 def test_buildah_builder_run(mocker):
     params = {'tags': ['foo', 'bar']}
     check_call = mocker.patch.object(subprocess, 'check_call')
