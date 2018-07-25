@@ -54,7 +54,8 @@ class ArtifactCache():
             artifact.guarded_copy(artifact_file)
 
         if chksum:
-            check_sum(artifact_file, alg, chksum)
+            if not check_sum(artifact_file, alg, chksum):
+                raise CekitError('Artifact contains invalid checksum!')
         else:
             chksum = get_sum(artifact_file, alg)
 

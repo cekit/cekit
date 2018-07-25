@@ -91,7 +91,7 @@ class Resource(Descriptor):
         if os.path.isdir(target):
             target = os.path.join(target, self.target_file_name())
 
-        logger.debug("Fetching resource '%s'" % (self.name))
+        logger.debug("Preparing resource '%s'" % (self.name))
 
         if os.path.exists(target) and self.__verify(target):
             logger.debug("Local resource '%s' exists and is valid, skipping" % self.name)
@@ -99,15 +99,17 @@ class Resource(Descriptor):
 
         if self.cache.is_cached(self):
             cached_resource = self.cache.get(self)
-            print(cached_resource)
             shutil.copy(cached_resource['cached_path'],
                         target)
+            logger.info("Using cached artifact '%s'." % self.name)
+
         else:
             try:
                 self.cache.add(self)
                 cached_resource = self.cache.get(self)
                 shutil.copy(cached_resource['cached_path'],
                             target)
+
             except ValueError:
                 return self.guarded_copy(target)
 
@@ -125,7 +127,8 @@ class Resource(Descriptor):
             raise CekitError("Error copying resource: '%s'. See logs for more info."
                              % self.name, ex)
 
-        self.__verify(target)
+        if self.checksums and not self.__verify(target):
+            raise CekitError('Artifact verification failed!')
 
         return target
 
