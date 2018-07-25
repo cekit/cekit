@@ -19,7 +19,7 @@ def check_sum(target, algorithm, expected):
     """ Check that file chksum is correct
     Args:
       alg - algorithm which will be used for diget
-      expected_chksum - checksum which artifact must mathc
+      expected_chksum - checksum which artifact must match
     """
 
     logger.debug("Checking '%s' %s hash..." % (target, algorithm))
