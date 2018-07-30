@@ -107,3 +107,15 @@ This option changes Cekit default options to comply with Red Hat internal infras
 .. note::
 
    If you are using Cekit within Red Hat infrastructure you should have valid Kerberos ticket.
+
+``addhelp``
+^^^^^^^^^^
+This option instructs Cekit to install the generated `help.md` file into the generate image
+sources. The file is inserted at the root path (`/`). The default value is False.
+
+**Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
+
+.. code::
+
+   [common]
+   addhelp = true
