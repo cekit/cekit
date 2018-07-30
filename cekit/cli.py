@@ -201,6 +201,7 @@ class Cekit(object):
             if self.args.commands:
                 generator.prepare_modules()
                 generator.prepare_repositories()
+                generator.image.remove_none_keys()
                 generator.prepare_artifacts()
                 if self.args.build_tech_preview:
                     generator.generate_tech_preview()

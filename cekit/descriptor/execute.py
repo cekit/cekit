@@ -55,6 +55,9 @@ class ExecuteContainer(Descriptor):
     def __iter__(self):
         return iter(self._get_real_executes())
 
+    def remove_none_keys(self):
+        return
+
     def merge(self, descriptor):
         """To merge modules in correct order we need to insert
         new executes before the last module. This the reason why noop

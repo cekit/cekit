@@ -34,14 +34,16 @@ class ArtifactCache():
         return self._get_cache()
 
     def add(self, artifact):
-        if not artifact.checksums:
+        if 'md5' not in artifact and \
+           'sha256' not in artifact and \
+           'sha512' not in artifact:
             raise ValueError('Cannot cache Artifact without checksum')
 
         artifact_id = str(uuid.uuid4())
 
         for alg in SUPPORTED_HASH_ALGORITHMS:
-            if alg in artifact.checksums:
-                self._index_artifact(artifact, artifact_id, alg, artifact.checksums[alg])
+            if alg in artifact:
+                self._index_artifact(artifact, artifact_id, alg, artifact[alg])
             else:
                 self._index_artifact(artifact, artifact_id, alg)
 
@@ -77,8 +79,8 @@ class ArtifactCache():
 
     def get(self, artifact):
         for alg in SUPPORTED_HASH_ALGORITHMS:
-            if alg in artifact.checksums:
-                return self._find_artifact(alg, artifact.checksums[alg])
+            if alg in artifact:
+                return self._find_artifact(alg, artifact[alg])
         raise CekitError('Artifact is not cached.')
 
     def _find_artifact(self, alg, chksum):
