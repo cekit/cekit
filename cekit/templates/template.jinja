@@ -130,3 +130,7 @@ ENTRYPOINT {{ helper.cmd(run['entrypoint']) }}
 CMD {{ helper.cmd(run['cmd']) }}
 {% endif %}
 {% endif %}
+
+{% if addhelp %}
+ADD help.md /
+{% endif %}

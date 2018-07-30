@@ -160,6 +160,7 @@ class Generator(object):
         loader = FileSystemLoader(os.path.dirname(template_file))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
+        env.globals['addhelp'] = self._params.get('addhelp')
         template = env.get_template(os.path.basename(template_file))
 
         dockerfile = os.path.join(self.target,

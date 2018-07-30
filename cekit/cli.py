@@ -141,6 +141,20 @@ class Cekit(object):
                             default="image.yaml",
                             help="path to image descriptor file, default: image.yaml")
 
+        addhelp_group = parser.add_mutually_exclusive_group()
+
+        addhelp_group.add_argument('--add-help',
+                                   dest='addhelp',
+                                   action='store_const',
+                                   const=True,
+                                   help="Include generate help files in the image")
+
+        addhelp_group.add_argument('--no-add-help',
+                                   dest='addhelp',
+                                   action='store_const',
+                                   const=False,
+                                   help="Do not include generate help files in the image")
+
         parser.add_argument('commands',
                             nargs='+',
                             choices=['generate', 'build', 'test'],
@@ -178,10 +192,18 @@ class Cekit(object):
             tools.cfg['common']['redhat'] = True
         if self.args.work_dir:
             tools.cfg['common']['work_dir'] = self.args.work_dir
+        if bool == type(self.args.addhelp):
+            tools.cfg['common']['addhelp'] = self.args.addhelp
+        else: # NoneType
+            if not 'addhelp' in tools.cfg['common']:
+                tools.cfg['common']['addhelp'] = False
 
         # We need to construct Generator first, because we need overrides
         # merged in
-        params = {'redhat': tools.cfg['common']['redhat']}
+        params = {
+            'addhelp': tools.cfg['common']['addhelp'],
+            'redhat':  tools.cfg['common']['redhat'],
+        }
         self.generator = Generator(self.args.descriptor,
                                    self.args.target,
                                    self.args.build_engine,
