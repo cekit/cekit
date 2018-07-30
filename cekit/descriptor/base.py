@@ -126,6 +126,26 @@ class Descriptor(collections.MutableMapping):
         if 'user' not in self._descriptor['run']:
             self._descriptor['run']['user'] = cekit.DEFAULT_USER
 
+    def remove_none_keys(self):
+        if isinstance(self, Descriptor):
+            _remove_none_keys(self)
+        else:
+            # it means it list
+            for desc in self:
+                _remove_none_keys(desc)
+
+
+def _remove_none_keys(desc):
+    for k, v in desc.items():
+        if v is None:
+            del desc[k]
+        if isinstance(v, Descriptor):
+            v.remove_none_keys()
+        elif isinstance(v, list):
+            for d in v:
+                if isinstance(d, Descriptor):
+                    d.remove_none_keys()
+
 
 def _merge_descriptors(desc1, desc2):
     """
@@ -147,6 +167,7 @@ def _merge_descriptors(desc1, desc2):
                 desc1[k2].merge(v2)
             elif isinstance(v2, list):
                 desc1[k2] = _merge_lists(desc1[k2], v2)
+
     return desc1
 
 

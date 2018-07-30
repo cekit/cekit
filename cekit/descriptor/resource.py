@@ -62,11 +62,6 @@ class Resource(Descriptor):
         if 'description' in descriptor:
             self.description = descriptor['description']
 
-        self.checksums = {}
-        for algorithm in SUPPORTED_HASH_ALGORITHMS:
-            if algorithm in descriptor:
-                self.checksums[algorithm] = descriptor[algorithm]
-
     def __eq__(self, other):
         # All subclasses of Resource are considered same object type
         if isinstance(other, Resource):
@@ -127,15 +122,20 @@ class Resource(Descriptor):
             raise CekitError("Error copying resource: '%s'. See logs for more info."
                              % self.name, ex)
 
-        if self.checksums and not self.__verify(target):
+        if ('md5' in self or
+            'sha256' in self or
+            'sha256' in self) and \
+                not self.__verify(target):
             raise CekitError('Artifact verification failed!')
 
         return target
 
     def __verify(self, target):
         """ Checks all defined check_sums for an aritfact """
-        if not self.checksums:
-            logger.debug("Artifact '%s' lacks any checksum definition, it will be replaced"
+        if 'md5' not in self and \
+           'sha256' not in self and \
+           'sha512' not in self:
+            logger.debug("Artifact '%s' lacks any checksum definition."
                          % self.name)
             return False
         if not Resource.CHECK_INTEGRITY:
@@ -144,9 +144,10 @@ class Resource(Descriptor):
         if os.path.isdir(target):
             logger.info("Target is directory, cannot verify checksum.")
             return True
-        for algorithm, checksum in self.checksums.items():
-            if not check_sum(target, algorithm, checksum):
-                return False
+        for algorithm in SUPPORTED_HASH_ALGORITHMS:
+            if algorithm in self:
+                if not check_sum(target, algorithm, self[algorithm]):
+                    return False
         return True
 
     def __substitute_cache_url(self, url):
@@ -155,12 +156,12 @@ class Resource(Descriptor):
             return url
 
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
-            if algorithm in self.checksums:
+            if algorithm in self:
                 logger.debug("Using %s to fetch artifacts from cacher."
                              % algorithm)
                 return (cache.replace('#filename#', self.name)
                         .replace('#algorithm#', algorithm)
-                        .replace('#hash#', self.checksums[algorithm]))
+                        .replace('#hash#', self[algorithm]))
         return url
 
     def _download_file(self, url, destination, use_cache=True):

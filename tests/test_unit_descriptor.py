@@ -103,3 +103,19 @@ def test_image_missing_name():
         Image(yaml.safe_load("""
         from: foo
         version: 1.9"""), 'foo')
+
+
+def test_remove_none_key():
+    tools.cfg['common'] = {'work_dir': '/tmp'}
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    artifacts:
+      - path: /tmp/abs
+        md5: ~
+    """), 'foo')
+    image.remove_none_keys()
+
+    assert image['artifacts'][0]['path'] == '/tmp/abs'
+    assert 'md5' not in image['artifacts'][0]

@@ -166,16 +166,16 @@ def test_generated_url_without_cacher():
 
 def test_resource_verify(mocker):
     mock = mocker.patch('cekit.descriptor.resource.check_sum')
-    res = Resource({'url': 'dummy'})
-    res.checksums = {'sha256': 'justamocksum'}
+    res = Resource({'url': 'dummy',
+                    'sha256': 'justamocksum'})
     res._Resource__verify('dummy')
     mock.assert_called_with('dummy', 'sha256', 'justamocksum')
 
 
 def test_generated_url_with_cacher():
     tools.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
-    res = Resource({'url': 'dummy'})
-    res.checksums = {'sha256': 'justamocksum'}
+    res = Resource({'url': 'dummy',
+                    'sha256': 'justamocksum'})
     res.name = 'file'
     assert res._Resource__substitute_cache_url('file') == 'file,sha256,justamocksum'
     tools.cfg = {}

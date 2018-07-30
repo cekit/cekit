@@ -34,7 +34,7 @@ def test_cekit_cache_add_artifact(mocker, tmpdir, capsys):
 
     artifact = os.path.join(work_dir, 'artifact')
     open(artifact, 'a').close()
-    
+
     mocker.patch.object(sys, 'argv', ['cekit-cache',
                                       '--work-dir',
                                       work_dir,
@@ -81,6 +81,7 @@ def test_cekit_cache_delete_artifact(mocker, tmpdir, capsys):
     run_cekit_cache(0)
     out, err = capsys.readouterr()
     artifact_id = out[:-1]
+    print('Removing artifact: "%s"' % out)
 
     mocker.patch.object(sys, 'argv', ['cekit-cache',
                                       '--work-dir',
