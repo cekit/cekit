@@ -149,8 +149,11 @@ Mappings are merged via *name* key. If Cekit is overriding an mapping or array o
 	  - name: "FOO"
 	    value: "new value"
 
+
+.. _remove_keys:
+
 Removing keys
-^^^^^^^^^^^^^
+---------------
 
 Overriding can result into a need of removing any key from a descriptor. You can achieve this by overriding a key with a YAML null value ``~``.
 
