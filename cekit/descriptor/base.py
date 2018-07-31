@@ -136,7 +136,7 @@ class Descriptor(collections.MutableMapping):
 
 
 def _remove_none_keys(desc):
-    for key in {k: v for k, v in desc.items()}:
+    for key in dict(desc.items()):
         if isinstance(desc[key], Descriptor):
             desc[key].remove_none_keys()
         if isinstance(desc[key], list):
