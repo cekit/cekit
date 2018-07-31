@@ -122,19 +122,15 @@ class Resource(Descriptor):
             raise CekitError("Error copying resource: '%s'. See logs for more info."
                              % self.name, ex)
 
-        if ('md5' in self or
-            'sha256' in self or
-            'sha256' in self) and \
-                not self.__verify(target):
+        if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and \
+           not self.__verify(target):
             raise CekitError('Artifact verification failed!')
 
         return target
 
     def __verify(self, target):
         """ Checks all defined check_sums for an aritfact """
-        if 'md5' not in self and \
-           'sha256' not in self and \
-           'sha512' not in self:
+        if not set(SUPPORTED_HASH_ALGORITHMS).intersection(self):
             logger.debug("Artifact '%s' lacks any checksum definition."
                          % self.name)
             return False
