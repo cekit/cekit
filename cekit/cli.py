@@ -160,7 +160,7 @@ class Cekit(object):
 
         return self
 
-    def run(self):
+    def configure(self):
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
@@ -171,23 +171,28 @@ class Cekit(object):
             logger.warning("You are running unreleased development version of Cekit, "
                            "use it only at your own risk!")
 
+        tools.cfg = tools.get_cfg(self.args.config)
+        tools.cleanup(self.args.target)
+
+        if self.args.redhat:
+            tools.cfg['common']['redhat'] = True
+        if self.args.work_dir:
+            tools.cfg['common']['work_dir'] = self.args.work_dir
+
+        # We need to construct Generator first, because we need overrides
+        # merged in
+        params = {'redhat': tools.cfg['common']['redhat']}
+        self.generator = Generator(self.args.descriptor,
+                                   self.args.target,
+                                   self.args.build_engine,
+                                   self.args.overrides,
+                                   params)
+
+    def run(self):
+
         try:
-            tools.cfg = tools.get_cfg(self.args.config)
-            tools.cleanup(self.args.target)
-
-            if self.args.redhat:
-                tools.cfg['common']['redhat'] = True
-            if self.args.work_dir:
-                tools.cfg['common']['work_dir'] = self.args.work_dir
-
-            # We need to construct Generator first, because we need overrides
-            # merged in
-            params = {'redhat': tools.cfg['common']['redhat']}
-            generator = Generator(self.args.descriptor,
-                                  self.args.target,
-                                  self.args.build_engine,
-                                  self.args.overrides,
-                                  params)
+            self.configure()
+            generator = self.generator
 
             # Now we can fetch repositories of modules (we have all overrides)
             get_dependencies(generator.image,
