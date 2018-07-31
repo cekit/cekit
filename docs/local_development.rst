@@ -54,19 +54,20 @@ To override an artifact imagine, that you have an artifact defined in a way:
 
 .. code:: yaml
 
-- md5: d31c6b1525e6d2d24062ef26a9f639a8
-  name: jolokia.jar
-  url: https://maven.repository.redhat.com/ga/org/jolokia/jolokia-jvm/1.5.0.redhat-1/jolokia-jvm-1.5.0.redhat-1-agent.jar
+	  - md5: d31c6b1525e6d2d24062ef26a9f639a8
+	    name: jolokia.jar
+	    url: https://maven.repository.redhat.com/ga/org/jolokia/jolokia-jvm/1.5.0.redhat-1/jolokia-jvm-1.5.0.redhat-1-agent.jar
 
 And you want to inject a local build of new version of our artifact. To archive it you need to create following override:
 
 .. code:: yaml
 
-- md5: ~
-  name: jolokia.jar
-  path: /tmp/build/jolokia.jar
+	  - md5: ~
+	    name: jolokia.jar
+	    path: /tmp/build/jolokia.jar
+
+Note ``~`` for ``md5`` key. Its very important as it removes value of this key. This will result in an artifact without any checksum defined and Cekit will replace its every time. See :ref:`Removing keys<remove_keys>` for more details.
 
 
 .. note::
    If the artifacts lacks the name key, its automatically created by using basename of the artifact path or url.
-
