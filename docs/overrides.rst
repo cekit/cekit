@@ -148,3 +148,38 @@ Mappings are merged via *name* key. If Cekit is overriding an mapping or array o
 	  envs:
 	  - name: "FOO"
 	    value: "new value"
+
+Removing keys
+^^^^^^^^^^^^^
+
+Overriding can result into a need of removing any key from a descriptor. You can achieve this by overriding a key with a YAML null value ``~``.
+
+**Example**: Override checksum in an artifact:
+
+If you have artifact defined in a following way:
+
+.. code:: yaml
+
+	  artifacts:
+	    - name: foo
+	      url: https://foo.lan/foo
+	      md5: aaaaaaaaaaaaaaaaaaaaaaa
+
+you can remove ``md5`` key via following override:
+
+.. code:: yaml
+
+	  artifacts:
+	    - name: foo
+	      md5: ~
+
+It will result into following artifact definition:
+
+
+.. code:: yaml
+
+	  artifacts:
+	    - name: foo
+	      url: https://foo.lan/foo
+
+
