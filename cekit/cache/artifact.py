@@ -34,9 +34,7 @@ class ArtifactCache():
         return self._get_cache()
 
     def add(self, artifact):
-        if 'md5' not in artifact and \
-           'sha256' not in artifact and \
-           'sha512' not in artifact:
+        if not set(SUPPORTED_HASH_ALGORITHMS).intersection(artifact):
             raise ValueError('Cannot cache Artifact without checksum')
 
         artifact_id = str(uuid.uuid4())
