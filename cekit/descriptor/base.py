@@ -136,15 +136,15 @@ class Descriptor(collections.MutableMapping):
 
 
 def _remove_none_keys(desc):
-    for k, v in desc.items():
-        if v is None:
-            del desc[k]
-        if isinstance(v, Descriptor):
-            v.remove_none_keys()
-        elif isinstance(v, list):
-            for d in v:
+    for key in {k: v for k, v in desc.items()}:
+        if isinstance(desc[key], Descriptor):
+            desc[key].remove_none_keys()
+        if isinstance(desc[key], list):
+            for d in desc[key]:
                 if isinstance(d, Descriptor):
                     d.remove_none_keys()
+        elif desc[key] is None:
+            del desc[key]
 
 
 def _merge_descriptors(desc1, desc2):
