@@ -42,3 +42,31 @@ Now imagine,  we have found a bug in its s2i-common module. We will clone the mo
   $ cekit generate --overrides overrides.yaml
 
 4. When your work is finished, commit and push your changes to a module repository and remove overrides.yaml
+
+Injecting local artifacts
+=========================
+
+During module/image development there can be a need to use locally built artifact instead of a released one. The easiest way to inject
+such artifact is to use override mechanism.
+
+
+To override an artifact imagine, that you have an artifact defined in a way:
+
+.. code:: yaml
+
+- md5: d31c6b1525e6d2d24062ef26a9f639a8
+  name: jolokia.jar
+  url: https://maven.repository.redhat.com/ga/org/jolokia/jolokia-jvm/1.5.0.redhat-1/jolokia-jvm-1.5.0.redhat-1-agent.jar
+
+And you want to inject a local build of new version of our artifact. To archive it you need to create following override:
+
+.. code:: yaml
+
+- md5: ~
+  name: jolokia.jar
+  path: /tmp/build/jolokia.jar
+
+
+.. note::
+   If the artifacts lacks the name key, its automatically created by using basename of the artifact path or url.
+
