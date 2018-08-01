@@ -56,12 +56,12 @@ def test_confNone_cmdlineNone(mocker, workdir, tmpdir):
     assert False == run_cekit(workdir)
 
 def test_confFalse_cmdlineNone(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, "[common]\naddhelp = False")
+    config = setup_config(tmpdir, "[doc]\naddhelp = False")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
     assert False == run_cekit(workdir)
 
 def test_confTrue_cmdlineNone(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, "[common]\naddhelp = True")
+    config = setup_config(tmpdir, "[doc]\naddhelp = True")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
     assert True == run_cekit(workdir)
 
@@ -71,12 +71,12 @@ def test_confNone_cmdlineTrue(mocker, workdir, tmpdir):
     assert True == run_cekit(workdir)
 
 def test_confFalse_cmdlineTrue(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, "[common]\naddhelp = False")
+    config = setup_config(tmpdir, "[doc]\naddhelp = False")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
     assert True == run_cekit(workdir)
 
 def test_confTrue_cmdlineTrue(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, "[common]\naddhelp = True")
+    config = setup_config(tmpdir, "[doc]\naddhelp = True")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
     assert True == run_cekit(workdir)
 
@@ -86,11 +86,11 @@ def test_confNone_cmdlineFalse(mocker, workdir, tmpdir):
     assert False == run_cekit(workdir)
 
 def test_confFalse_cmdlineFalse(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, "[common]\naddhelp = False")
+    config = setup_config(tmpdir, "[doc]\naddhelp = False")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
     assert False == run_cekit(workdir)
 
 def test_confTrue_cmdlineFalse(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, "[common]\naddhelp = True")
+    config = setup_config(tmpdir, "[doc]\naddhelp = True")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
     assert False == run_cekit(workdir)

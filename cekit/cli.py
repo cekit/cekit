@@ -192,16 +192,15 @@ class Cekit(object):
             tools.cfg['common']['redhat'] = True
         if self.args.work_dir:
             tools.cfg['common']['work_dir'] = self.args.work_dir
+
+        addhelp = tools.cfg.get('doc',{}).get('addhelp', False)
         if bool == type(self.args.addhelp):
-            tools.cfg['common']['addhelp'] = self.args.addhelp
-        else: # NoneType
-            if not 'addhelp' in tools.cfg['common']:
-                tools.cfg['common']['addhelp'] = False
+            addhelp = self.args.addhelp
 
         # We need to construct Generator first, because we need overrides
         # merged in
         params = {
-            'addhelp': tools.cfg['common']['addhelp'],
+            'addhelp': addhelp,
             'redhat':  tools.cfg['common']['redhat'],
         }
         self.generator = Generator(self.args.descriptor,
