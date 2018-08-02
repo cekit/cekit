@@ -203,6 +203,10 @@ class Cekit(object):
             'addhelp': addhelp,
             'redhat':  tools.cfg['common']['redhat'],
         }
+
+        if 'help_template' in tools.cfg.get('doc',{}):
+            params['help_template'] = tools.cfg['doc']['help_template']
+
         self.generator = Generator(self.args.descriptor,
                                    self.args.target,
                                    self.args.build_engine,

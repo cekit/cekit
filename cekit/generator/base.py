@@ -174,11 +174,20 @@ class Generator(object):
                 self.image).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
-        template_file = os.path.join(os.path.dirname(__file__),
-                                     '..',
-                                     'templates',
-                                     'help.jinja')
-        help_template = env.get_template(os.path.basename(template_file))
+        if 'help_template' in self._params:
+            help_template_path = self._params['help_template']
+        else:
+            help_template_path = os.path.join(os.path.dirname(__file__),
+                                              '..',
+                                              'templates',
+                                              'help.jinja')
+
+        help_dirname, help_basename = os.path.split(help_template_path)
+        loader = FileSystemLoader(help_dirname)
+        env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+        env.globals['helper'] = TemplateHelper()
+        help_template = env.get_template(help_basename)
+
         helpfile = os.path.join(self.target, 'image', 'help.md')
         with open(helpfile, 'wb') as f:
             f.write(help_template.render(
