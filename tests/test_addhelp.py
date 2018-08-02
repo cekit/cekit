@@ -1,4 +1,5 @@
 # test the "addhelp" feature
+# -*- encoding: utf-8 -*-
 # we need to test cartesian product of:
 #   cekit config {no addhelp, addhelp=True, addhelp=False}
 #   cmdline      {nothing, --add-help, --no-add-help})
@@ -43,8 +44,9 @@ def setup_config(tmpdir, contents):
 def test_addhelp_mutex_cmdline(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', '--no-add-help', 'generate'])
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as excinfo:
         run_cekit(workdir)
+    assert 0 != excinfo.value.code
 
 # test method naming scheme:
 #   test_confX_cmdlineY where {X,Y} ∈ {None,True,False}
