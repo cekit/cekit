@@ -28,7 +28,7 @@ def get_cfg(config_path):
     cfg['common'] = cfg.get('common', {})
     cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.cekit')
     cfg['common']['redhat'] = cfg.get('common', {}).get('redhat', False)
-    if 'doc' in cp and cp.has_option('doc', 'addhelp'):
+    if cp.has_section('doc') and cp.has_option('doc', 'addhelp'):
         cfg['doc']['addhelp'] = cp.getboolean('doc', 'addhelp')
     return cfg
 
