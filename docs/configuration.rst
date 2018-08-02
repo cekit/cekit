@@ -108,6 +108,11 @@ This option changes Cekit default options to comply with Red Hat internal infras
 
    If you are using Cekit within Red Hat infrastructure you should have valid Kerberos ticket.
 
+``doc``
+-------
+
+This section collects together configuration options relating to documentation.
+
 ``addhelp``
 ^^^^^^^^^^
 This option instructs Cekit to install the generated `help.md` file into the generate image
@@ -117,5 +122,17 @@ sources. The file is inserted at the root path (`/`). The default value is False
 
 .. code::
 
-   [common]
+   [doc]
    addhelp = true
+
+``help_template``
+^^^^^^^^^^^^^^^^^
+
+This option overrides the default Jinja template used in the generation of `help.md` files.
+
+**Example**:
+
+.. code::
+
+   [doc]
+   help_template = /home/jon/something/my_help.md
