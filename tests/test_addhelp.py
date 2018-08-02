@@ -6,6 +6,7 @@
 
 import os
 import sys
+import shutil
 import yaml
 import pytest
 from cekit.builders.osbs import Chdir
@@ -47,6 +48,47 @@ def test_addhelp_mutex_cmdline(mocker, workdir, tmpdir):
     with pytest.raises(SystemExit) as excinfo:
         run_cekit(workdir)
     assert 0 != excinfo.value.code
+
+template_teststr = "This string does not occur in the default help.md template."
+
+def cleanup(workdir):
+    if os.path.exists('target'):
+        shutil.rmtree('target')
+
+def test_config_override_help_template(mocker, workdir, tmpdir):
+    cleanup(workdir)
+    help_template = os.path.join(workdir,"help.jinja")
+    with open(help_template, "w") as fd:
+        fd.write(template_teststr)
+    config = setup_config(tmpdir, "[doc]\nhelp_template = {}".format(help_template))
+
+    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
+    with Chdir(workdir):
+        c = Cekit().parse()
+        c.configure()
+        try:
+            c.run()
+        except SystemExit:
+            pass
+        with open("target/image/help.md", "r") as fd:
+            contents = fd.read()
+            assert contents.find(template_teststr) >= 0
+
+def test_no_override_help_template(mocker, workdir, tmpdir):
+    cleanup(workdir)
+    config = setup_config(tmpdir, "")
+    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
+    with Chdir(workdir):
+        c = Cekit().parse()
+        c.configure()
+        try:
+            c.run()
+        except SystemExit:
+            pass
+        with open("target/image/help.md", "r") as fd:
+            contents = fd.read()
+            sys.stderr.write("JMTD: {}\n".format(contents.find(template_teststr)))
+            assert -1 == contents.find(template_teststr)
 
 # test method naming scheme:
 #   test_confX_cmdlineY where {X,Y} ∈ {None,True,False}
