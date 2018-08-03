@@ -50,16 +50,23 @@ class DockerBuilder(Builder):
         try:
             last_tag = ""
             out = docker_client.build(**args)
+            lastmsg = ""
             for line in out:
                 if b'stream' in line:
                     line = re.sub('\n$', '', yaml.safe_load(line)['stream'])
+                elif b'status' in line:
+                    line = re.sub('\n$', '', yaml.safe_load(line)['status'])
                 elif b'errorDetail' in line:
                     line = line['errorDetail']['message']
                     raise CekitError("Image build failed: '%s'" % line)
 
                 if '---> Running in ' in line:
                     last_tag = line.split(' ')[-1]
-                logger.info("Docker: %s" % line)
+
+                if line != lastmsg:
+                    # this prevents poluting cekit log with dowloading/extracting msgs
+                    logger.info("Docker: %s" % line)
+                    lastmsg = line
 
             for tag in self._tags[1:]:
                 if ':' in tag:
