@@ -181,7 +181,7 @@ class Cekit(object):
             logger.setLevel(logging.INFO)
 
         logger.debug("Running version %s", version)
-        if 'dev' in version:
+        if 'dev' in version or 'rc' in version:
             logger.warning("You are running unreleased development version of Cekit, "
                            "use it only at your own risk!")
 
