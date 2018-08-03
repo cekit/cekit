@@ -62,7 +62,6 @@ _cekit() {
 _cekit_build() {
     _arguments \
         "--build-engine[an engine used to build the image]" \
-        "*--build-tag[tag to assign to the built image, can be used multiple times]" \
         "--build-pull[Always fetch latest base image during build]" \
         "--build-osbs-release[execute OSBS release build]" \
         "--build-osbs-user[user for rphkg tool]" \

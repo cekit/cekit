@@ -78,12 +78,6 @@ class Cekit(object):
                                  choices=['docker', 'osbs', 'buildah'],
                                  help='an engine used to build the image.')
 
-        build_group.add_argument('--build-tag',
-                                 dest='build_tags',
-                                 action='append',
-                                 help='tag to assign to the built image, '
-                                 'can be used multiple times')
-
         build_group.add_argument('--build-pull',
                                  dest='build_pull',
                                  action='store_true',
@@ -162,15 +156,6 @@ class Cekit(object):
                                 you can specify multiple commands")
 
         self.args = parser.parse_args()
-
-        # DEPRECATED - remove following lines and --build-tag option
-        if self.args.build_tags:
-            logger.warning("--build-tag is deprecated and will be removed in cekit 2.0,"
-                           " please use --tag instead.")
-            if not self.args.tags:
-                self.args.tags = self.args.build_tags
-            else:
-                self.args.tags += self.args.build_tags
 
         return self
 
