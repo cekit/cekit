@@ -16,7 +16,6 @@ _cekit_build_options()
 {
     local options
     options+='--build-engine '
-    options+='--build-tag '
     options+='--build-pull '
     options+='--build-osbs-release '
     options+='--build-osbs-user '
