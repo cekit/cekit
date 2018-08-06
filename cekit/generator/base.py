@@ -176,6 +176,8 @@ class Generator(object):
 
         if 'help_template' in self._params:
             help_template_path = self._params['help_template']
+        elif 'help_template' in self.image:
+            help_template_path = self.image['help_template']
         else:
             help_template_path = os.path.join(os.path.dirname(__file__),
                                               '..',
