@@ -100,7 +100,7 @@ def test_image_override_help_template(mocker, tmpdir):
 
     config = setup_config(tmpdir, "")
     my_image_descriptor = image_descriptor.copy()
-    my_image_descriptor['help_template'] = help_template
+    my_image_descriptor['help'] = {'template': help_template}
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
 
     with Chdir(str(tmpdir)):
@@ -129,7 +129,7 @@ def test_image_override_config_help_template(mocker, tmpdir):
     with open(help_template2, "w") as fd:
         fd.write("2")
     my_image_descriptor = image_descriptor.copy()
-    my_image_descriptor['help_template'] = help_template2
+    my_image_descriptor['help'] = {'template': help_template2}
 
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
 

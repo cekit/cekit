@@ -23,7 +23,9 @@ map:
   packages: {type: any}
   osbs: {type: any}
   volumes: {type: any}
-  help_template: {type: text}""")
+  help:
+    map:
+      template: {type: text}""")
 
 
 def get_image_schema():
