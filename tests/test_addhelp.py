@@ -91,6 +91,9 @@ def test_no_override_help_template(mocker, workdir, tmpdir):
             assert -1 == contents.find(template_teststr)
 
 def test_image_override_help_template(mocker, tmpdir):
+    """Test that help_template defined in image.yaml is used for
+       generating help.md"""
+
     help_template = os.path.join(str(tmpdir),"help.jinja")
     with open(help_template, "w") as fd:
         fd.write(template_teststr)
@@ -112,6 +115,36 @@ def test_image_override_help_template(mocker, tmpdir):
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
             assert contents.find(template_teststr) >= 0
+
+def test_image_override_config_help_template(mocker, tmpdir):
+    """Test that help_template defined in image.yaml overrides help_template
+       defined in the config"""
+
+    help_template1 = os.path.join(str(tmpdir),"help1.jinja")
+    with open(help_template1, "w") as fd:
+        fd.write("1")
+    config = setup_config(tmpdir, "[doc]\nhelp_template = {}".format(help_template1))
+
+    help_template2 = os.path.join(str(tmpdir),"help2.jinja")
+    with open(help_template2, "w") as fd:
+        fd.write("2")
+    my_image_descriptor = image_descriptor.copy()
+    my_image_descriptor['help_template'] = help_template2
+
+    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
+
+    with Chdir(str(tmpdir)):
+        with open('image.yaml', 'w') as fd:
+            yaml.dump(my_image_descriptor, fd, default_flow_style=False)
+        c = Cekit().parse()
+        c.configure()
+        try:
+            c.run()
+        except SystemExit:
+            pass
+        with open("target/image/help.md", "r") as fd:
+            contents = fd.read()
+            assert contents == "2"
 
 # test method naming scheme:
 #   test_confX_cmdlineY where {X,Y} ∈ {None,True,False}
