@@ -174,8 +174,8 @@ class Generator(object):
                 self.image).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
-        if 'help_template' in self.image:
-            help_template_path = self.image['help_template']
+        if self.image.get('help', {}).get('template', ""):
+            help_template_path = self.image['help']['template']
         elif 'help_template' in self._params:
             help_template_path = self._params['help_template']
         else:
