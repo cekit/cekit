@@ -8,6 +8,7 @@ Image descriptor contains all information Cekit needs to build and test a contai
 .. include:: version.rst
 .. include:: description.rst
 .. include:: from.rst
+.. include:: help.rst
 .. include:: envs.rst
 
 .. _labels:
