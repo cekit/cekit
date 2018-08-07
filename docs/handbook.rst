@@ -13,4 +13,5 @@ and be familiar with building and testing images with it.
     test
     local_development
     repository_management
+    image_help_pages
     redhat
