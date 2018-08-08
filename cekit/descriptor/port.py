@@ -4,6 +4,8 @@ from cekit.descriptor.base import Descriptor
 port_schemas = [yaml.safe_load("""
 map:
   value: {type: int, required: True}
+  proto: {type: str}
+  service: {type: str}
   expose: {type: bool}
   description: {type: str}""")]
 
