@@ -38,11 +38,7 @@ LABEL \
 
 {% if ports %}
 # Exposed ports
-EXPOSE {%- for port in helper.ports(ports) %} {{ port.value }}{% endfor %}
-
-LABEL io.openshift.expose-services={%- for port in helper.ports(ports) %}{{ port.value }}/{{ port.protocol }}
-    {%- if port.service %}:{{ port.service }}{% endif %}
-    {%- if loop.index < loop.length %},{% endif %}{% endfor %}
+EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
 
 {% endif %}
 

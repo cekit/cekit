@@ -2,6 +2,7 @@
 
 import logging
 import os
+import socket
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -126,6 +127,30 @@ class Generator(object):
         descriptor.merge(self.image)
         return descriptor
 
+    def _generate_expose_services(self):
+        """Generate the label io.openshift.expose-services based on the port
+        definitions."""
+        ports = []
+        for p in self.image['ports']:
+            if p.get('expose', True):
+
+                r = "{}/{}".format(p['value'], p.get('protocol', 'tcp'))
+
+                if 'service' in p:
+                    r += ":{}".format(p['service'])
+                    ports.append(r)
+                else:
+                    # attempt to supply a service name by looking up the socket number
+                    try:
+                        service = socket.getservbyport(p['value'], p.get('protocol','tcp'))
+                        r += ":{}".format(service)
+                        ports.append(r)
+
+                    except socket.error:
+                        pass
+
+        return ",".join(ports)
+
     def _inject_redhat_defaults(self):
         envs = [{'name': 'JBOSS_IMAGE_NAME',
                  'value': '%s' % self.image['name']},
@@ -136,6 +161,11 @@ class Generator(object):
                    'value': '%s' % self.image['name']},
                   {'name': 'version',
                    'value': '%s' % self.image['version']}]
+
+        # do not override this label if it's already set
+        if 'io.openshift.expose-services' not in [ k['name'] for k in self.image['labels'] ]:
+            labels.append({'name': 'io.openshift.expose-services',
+                           'value': self._generate_expose_services()})
 
         redhat_override = {'envs': envs,
                            'labels': labels}
