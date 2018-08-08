@@ -1,6 +1,5 @@
 import os
 import re
-import socket
 
 
 class TemplateHelper(object):
@@ -48,18 +47,6 @@ class TemplateHelper(object):
 
         for p in available_ports:
             if p.get('expose', True):
-                # default protocol to TCP
-                if not 'protocol' in p:
-                    p['protocol'] = 'tcp'
-
-                # attempt to supply a service name by looking up the socket number
-                if not 'service' in p:
-                    try:
-                        service = socket.getservbyport(p['value'], p['protocol'])
-                        p['service'] = service
-                    except socket.error:
-                        pass
-
-                port_list.append(p)
+                port_list.append(p.get('value'))
 
         return port_list
