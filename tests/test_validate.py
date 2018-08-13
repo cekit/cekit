@@ -235,6 +235,7 @@ def check_dockerfile(image_dir, match):
 def check_dockerfile_text(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         dockerfile = fd.read()
+        print(dockerfile)
         if match in dockerfile:
             return True
     return False
@@ -402,6 +403,26 @@ USER root
 RUN rm -rf /tmp/scripts
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
+
+
+def test_override_modules_child(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_3'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+    assert check_dockerfile_text(image_dir, 'foo="master"')
 
 
 def test_execution_order_flat(tmpdir, mocker):
