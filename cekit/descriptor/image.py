@@ -90,4 +90,3 @@ class Image(Descriptor):
         if 'osbs' in self._descriptor:
             self._descriptor['osbs'] = Osbs(self._descriptor['osbs'])
         self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
-
