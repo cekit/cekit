@@ -1,4 +1,7 @@
 schema_version: 1
 name: child_of_child
+envs:
+  - name: foo
+    value: child_of_child
 execute:
   - script: script_d

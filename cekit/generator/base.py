@@ -91,7 +91,7 @@ class Generator(object):
 
         modules = descriptor.get('modules', {}).get('install', [])[:]
 
-        for module in modules:
+        for module in reversed(modules):
             logger.debug("Preparing module '%s' requested by '%s'."
                          % (module['name'], descriptor['name']))
             version = module.get('version', None)
@@ -101,8 +101,9 @@ class Generator(object):
                                                os.path.join(self.target, 'image', 'modules'))
 
             self.prepare_modules(req_module)
-            logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
             descriptor.merge(req_module)
+            logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
+
 
     def prepare_artifacts(self):
         """Goes through artifacts section of image descriptor

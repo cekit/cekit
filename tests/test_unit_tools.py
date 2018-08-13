@@ -86,8 +86,8 @@ def test_merging_emdedded_descriptors():
 
 
 def test_merging_plain_lists():
-    list1 = [1, 2, 3]
-    list2 = [2, 3, 4, 5]
+    list1 = [2, 3, 4, 5]
+    list2 = [1, 2, 3]
     expected = [1, 2, 3, 4, 5]
     assert _merge_lists(list1, list2) == expected
 
@@ -110,11 +110,11 @@ def test_merging_list_of_descriptors():
                              'b': 3,
                              'c': 3})]
 
-    expected = [TestDescriptor({'name': 1,
+    expected = [TestDescriptor({'name': 2,
+                                'a': 123}),
+                TestDescriptor({'name': 1,
                                 'a': 1,
                                 'b': 2,
-                                'c': 3}),
-                TestDescriptor({'name': 2,
-                                'a': 123})]
+                                'c': 3})]
 
     assert expected == _merge_lists(desc1, desc2)
