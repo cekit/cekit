@@ -425,6 +425,29 @@ def test_override_modules_child(tmpdir, mocker):
     assert check_dockerfile_text(image_dir, 'foo="master"')
 
 
+def test_override_modules_flat(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'mod_1'},
+                                      {'name': 'mod_2'},
+                                      {'name': 'mod_3'},
+                                      {'name': 'mod_4'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_4'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+    assert check_dockerfile_text(image_dir, 'foo="mod_2"')
+
+
 def test_execution_order_flat(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
