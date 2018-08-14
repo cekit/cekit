@@ -75,6 +75,7 @@ class Descriptor(collections.MutableMapping):
         """
         try:
             _merge_descriptors(self, descriptor)
+            return self
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise CekitError("Cannot merge descriptors, see log message for more information")
@@ -183,10 +184,8 @@ def _merge_lists(list1, list2):
     for v2 in reversed(list2):
         if isinstance(v2, Descriptor):
             if v2 in list1:
-                v1 = list1[list1.index(v2)]
-                list1.remove(v1)
-                v1.merge(v2)
-                list1.insert(0, v1)
+                v1 = list1.pop(list1.index(v2))
+                list1.insert(0, v1.merge(v2))
             else:
                 list1.insert(0, v2)
         elif isinstance(v2, list):

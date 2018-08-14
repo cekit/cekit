@@ -1,5 +1,8 @@
 schema_version: 1
 name: mod_1
+envs:
+  - name: foo
+    value: mod_1
 execute:
   - script: a
   - script: b
