@@ -15,7 +15,8 @@ An image can be tested by running:
 
 * ``--test-wip`` -- only run tests tagged with the ``@wip`` tag.
 * ``--test-steps-url`` -- a git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
-* ``--tag altname`` --  Overrides the name of the Image used for testing to ``altname``. Only the first occurrence of this argument is honoured.
+* ``--tag altname`` --  overrides the name of the Image used for testing to ``altname``. Only the first occurrence of this argument is honoured.
+* ``--test-name`` -- part of the Scenario name to be executed
 
 
 About Tests
@@ -87,3 +88,32 @@ of related images:
 
    The purpose of this behavior is to ease specifying tests that are only
    executed when run within Jenkins CI.
+
+
+Running specific test
+---------------------
+
+Cekit enables you to run specific Scenario only. To do it you need to run Cekit with
+``--test-name <name of the tests>`` command line argument.
+
+**Example**: If you have following Scenario in your feature files:
+
+.. code:: cucumber
+
+	    Scenario: Check custom debug port is available
+            When container is started with env
+            | variable   | value |
+            | DEBUG      | true  |
+            | DEBUG_PORT | 8798  |
+            Then check that port 8798 is open
+
+
+Then you can instruct Cekit to run this test in a following way:
+
+.. code:: bash
+
+          $ cekit test --test-name 'Check custom debug port is available'
+
+.. note::
+   ``--test-name`` switch can be specified multiple times and only the Scenarios
+   matching all of the names are executed. 

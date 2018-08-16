@@ -65,6 +65,11 @@ class Cekit(object):
                                 action='store_true',
                                 help='Run @wip tests only')
 
+        test_group.add_argument('--test-name',
+                                dest='test_names',
+                                action='append',
+                                help='Name of the Scenario to be executed')
+
         steps_url = 'https://github.com/cekit/behave-test-steps.git'
         test_group.add_argument('--test-steps-url',
                                 default=steps_url,
@@ -258,7 +263,7 @@ class Cekit(object):
                 # we run the test only if we collect any
                 if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
                     runner = TestRunner(self.args.target)
-                    runner.run(self.args.tags[0], test_tags)
+                    runner.run(self.args.tags[0], test_tags, test_names=self.args.test_names)
                 else:
                     logger.warning("No test collected, test can't be run.")
 
