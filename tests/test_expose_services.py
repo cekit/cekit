@@ -1,7 +1,6 @@
 # test the generation of io.openshift.expose-services label
 # -*- encoding: utf-8 -*-
 
-import copy
 import os
 import pytest
 import re
@@ -36,6 +35,8 @@ def getservbyport_works(number, protocol):
 
 def getservbyport_doesnt(number, protocol):
     """an always-fails alternative for socket.getservbyport"""
+    if (sys.version_info <= (3, 0)):
+        raise socket.error("port/proto not found")
     raise OSError("port/proto not found")
 
 def run_cekit_return_dockerfile(mocker, workdir, argv, getservbyport=getservbyport_works):

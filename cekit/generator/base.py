@@ -147,7 +147,9 @@ class Generator(object):
                         r += ":{}".format(service)
                         ports.append(r)
 
-                    except socket.error:
+                    except OSError: # py3
+                        pass
+                    except socket.error: # py2
                         pass
 
         return ",".join(ports)
