@@ -61,19 +61,21 @@ class Cekit(object):
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
-        test_group.add_argument('--test-wip',
-                                action='store_true',
-                                help='Run @wip tests only')
-
-        test_group.add_argument('--test-name',
-                                dest='test_names',
-                                action='append',
-                                help='Name of the Scenario to be executed')
+        limit_test_group = test_group.add_mutually_exclusive_group()
 
         steps_url = 'https://github.com/cekit/behave-test-steps.git'
         test_group.add_argument('--test-steps-url',
                                 default=steps_url,
                                 help='contains url for cekit test stesp')
+
+        limit_test_group.add_argument('--test-wip',
+                                      action='store_true',
+                                      help='Run @wip tests only')
+
+        limit_test_group.add_argument('--test-name',
+                                      dest='test_names',
+                                      action='append',
+                                      help='Name of the Scenario to be executed')
 
         build_group = parser.add_argument_group('build',
                                                 "Arguments valid for the 'build' target")
