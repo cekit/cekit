@@ -129,3 +129,14 @@ def test_expose_services_not_generated_no_service(mocker, workdir):
 
     assert not re.match(r'.*LABEL.*io\.openshift\.expose-services=.*8080/tcp',
         dockerfile, re.DOTALL)
+
+def test_expose_services_service_included(mocker, workdir):
+    """Test to ensure that auto-generated io.openshift.expose-services
+    label includes the service name for a port"""
+
+    dockerfile = run_cekit_return_dockerfile(mocker, workdir,
+        ['cekit', '-v', '--config', '/dev/null', '--redhat',
+         '--overrides', '{ports: [{value: 8080}]}', 'generate'])
+
+    assert re.match(r'.*LABEL.*io\.openshift\.expose-services=.*8080/tcp:MyHTTP',
+        dockerfile, re.DOTALL)
