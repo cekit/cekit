@@ -33,7 +33,7 @@ class TestRunner(object):
         if test_names:
             for name in test_names:
                 cmd.append('--name')
-                cmd.append("'%s'" % name)
+                cmd.append("%s" % name)
         else:
             for tag in run_tags:
                 if ':' in tag:
@@ -52,7 +52,7 @@ class TestRunner(object):
                 cmd.append("-t")
                 cmd.append("~ci ")
 
-        logger.debug("Running '%s'" % ' '.join(cmd))
+        logger.debug("Running '%s' in '%s'." % (' '.join(cmd), os.path.join(self.target, 'test')))
         try:
             subprocess.check_call(cmd,
                                   stderr=subprocess.STDOUT,
