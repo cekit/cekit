@@ -16,7 +16,6 @@ _cekit_build_options()
 {
     local options
     options+='--build-engine '
-    options+='--build-tag '
     options+='--build-pull '
     options+='--build-osbs-release '
     options+='--build-osbs-user '
@@ -44,46 +43,45 @@ _cekit_complete()
     # process all valid options here
 
     if [[ '--config' == $prev ]]; then
-	_filedir
-	return
+        _filedir
+        return
 
     elif [[ '--descriptor --overrides-file' =~ .*$prev.* ]]; then
-	_filedir yaml
-	return
+        _filedir yaml
+        return
 
     elif [[ '--target' == $prev ]]; then
-	_filedir -d
-	return
+        _filedir -d
+        return
 
     elif [[ '--work-dir' == $prev ]]; then
-	_filedir -d
-	return
+        _filedir -d
+        return
 
     elif [[ 'build generate' =~ .*$prev.* ]]; then
-	local options
-	options+=$(_cekit_global_options)
-	options+=$(_cekit_build_options)
-	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
-	return
+        local options
+        options+=$(_cekit_global_options)
+        options+=$(_cekit_build_options)
+        COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+        return
 
     elif [[ 'test' == $prev ]]; then
-	local options
-	options+=$(_cekit_global_options)
-	options+=$(_cekit_test_options)
-	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
-	return
+        local options
+        options+=$(_cekit_global_options)
+        options+=$(_cekit_test_options)
+        COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+        return
 
     elif [[ "$cur" == -* ]]; then
-	local options
-	options+=$(_cekit_global_options)
-	options+='--help '
-	options+='--verbose '
-	options+='--version '
-	options+='--config '
-	options+='--redhat '
-	COMPREPLY=( $( compgen -W "$options" -- $cur ) )
-	return
-
+        local options
+        options+=$(_cekit_global_options)
+        options+='--help '
+        options+='--verbose '
+        options+='--version '
+        options+='--config '
+        options+='--redhat '
+        COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+        return
     fi
 
     COMPREPLY=( $(compgen -W "generate build test" -- $cur))

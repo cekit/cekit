@@ -48,7 +48,7 @@ class Cekit(object):
 
         parser.add_argument('--config',
                             default='~/.cekit/config',
-                            help='path for cekit config file (~/.cekit/config is default)')
+                            help='path for Cekit config file (~/.cekit/config is default)')
 
         parser.add_argument('--redhat',
                             action='store_true',
@@ -56,20 +56,26 @@ class Cekit(object):
 
         parser.add_argument('--work-dir',
                             dest='work_dir',
-                            help="Location of cekit working directory, it's "
-                            "used to store dist-git repos.")
+                            help="Location of Cekit working directory.")
 
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
-        test_group.add_argument('--test-wip',
-                                action='store_true',
-                                help='Run @wip tests only')
+        limit_test_group = test_group.add_mutually_exclusive_group()
 
         steps_url = 'https://github.com/cekit/behave-test-steps.git'
         test_group.add_argument('--test-steps-url',
                                 default=steps_url,
                                 help='contains url for cekit test stesp')
+
+        limit_test_group.add_argument('--test-wip',
+                                      action='store_true',
+                                      help='Run @wip tests only')
+
+        limit_test_group.add_argument('--test-name',
+                                      dest='test_names',
+                                      action='append',
+                                      help='Name of the Scenario to be executed')
 
         build_group = parser.add_argument_group('build',
                                                 "Arguments valid for the 'build' target")
@@ -78,12 +84,6 @@ class Cekit(object):
                                  default='docker',
                                  choices=['docker', 'osbs', 'buildah'],
                                  help='an engine used to build the image.')
-
-        build_group.add_argument('--build-tag',
-                                 dest='build_tags',
-                                 action='append',
-                                 help='tag to assign to the built image, '
-                                 'can be used multiple times')
 
         build_group.add_argument('--build-pull',
                                  dest='build_pull',
@@ -125,9 +125,11 @@ class Cekit(object):
         overrides_group = parser.add_mutually_exclusive_group()
 
         overrides_group.add_argument('--overrides',
+                                     action='append',
                                      help='a YAML object to override image descriptor')
 
         overrides_group.add_argument('--overrides-file',
+                                     action='append',
                                      dest='overrides',
                                      help='path to a file containing overrides')
 
@@ -140,6 +142,20 @@ class Cekit(object):
                             default="image.yaml",
                             help="path to image descriptor file, default: image.yaml")
 
+        addhelp_group = parser.add_mutually_exclusive_group()
+
+        addhelp_group.add_argument('--add-help',
+                                   dest='addhelp',
+                                   action='store_const',
+                                   const=True,
+                                   help="Include generate help files in the image")
+
+        addhelp_group.add_argument('--no-add-help',
+                                   dest='addhelp',
+                                   action='store_const',
+                                   const=False,
+                                   help="Do not include generate help files in the image")
+
         parser.add_argument('commands',
                             nargs='+',
                             choices=['generate', 'build', 'test'],
@@ -148,45 +164,52 @@ class Cekit(object):
 
         self.args = parser.parse_args()
 
-        # DEPRECATED - remove following lines and --build-tag option
-        if self.args.build_tags:
-            logger.warning("--build-tag is deprecated and will be removed in cekit 2.0,"
-                           " please use --tag instead.")
-            if not self.args.tags:
-                self.args.tags = self.args.build_tags
-            else:
-                self.args.tags += self.args.build_tags
-
         return self
 
-    def run(self):
+    def configure(self):
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)
 
         logger.debug("Running version %s", version)
-        if 'dev' in version:
+        if 'dev' in version or 'rc' in version:
             logger.warning("You are running unreleased development version of Cekit, "
                            "use it only at your own risk!")
 
+        tools.cfg = tools.get_cfg(self.args.config)
+        tools.cleanup(self.args.target)
+
+        if self.args.redhat:
+            tools.cfg['common']['redhat'] = True
+        if self.args.work_dir:
+            tools.cfg['common']['work_dir'] = self.args.work_dir
+
+        addhelp = tools.cfg.get('doc',{}).get('addhelp', False)
+        if bool == type(self.args.addhelp):
+            addhelp = self.args.addhelp
+
+        # We need to construct Generator first, because we need overrides
+        # merged in
+        params = {
+            'addhelp': addhelp,
+            'redhat':  tools.cfg['common']['redhat'],
+        }
+
+        if 'help_template' in tools.cfg.get('doc',{}):
+            params['help_template'] = tools.cfg['doc']['help_template']
+
+        self.generator = Generator(self.args.descriptor,
+                                   self.args.target,
+                                   self.args.build_engine,
+                                   self.args.overrides,
+                                   params)
+
+    def run(self):
+
         try:
-            tools.cfg = tools.get_cfg(self.args.config)
-            tools.cleanup(self.args.target)
-
-            if self.args.redhat:
-                tools.cfg['common']['redhat'] = True
-            if self.args.work_dir:
-                tools.cfg['common']['work_dir'] = self.args.work_dir
-
-            # We need to construct Generator first, because we need overrides
-            # merged in
-            params = {'redhat': tools.cfg['common']['redhat']}
-            generator = Generator(self.args.descriptor,
-                                  self.args.target,
-                                  self.args.build_engine,
-                                  self.args.overrides,
-                                  params)
+            self.configure()
+            generator = self.generator
 
             # Now we can fetch repositories of modules (we have all overrides)
             get_dependencies(generator.image,
@@ -200,6 +223,7 @@ class Cekit(object):
             if self.args.commands:
                 generator.prepare_modules()
                 generator.prepare_repositories()
+                generator.image.remove_none_keys()
                 generator.prepare_artifacts()
                 if self.args.build_tech_preview:
                     generator.generate_tech_preview()
@@ -241,7 +265,7 @@ class Cekit(object):
                 # we run the test only if we collect any
                 if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
                     runner = TestRunner(self.args.target)
-                    runner.run(self.args.tags[0], test_tags)
+                    runner.run(self.args.tags[0], test_tags, test_names=self.args.test_names)
                 else:
                     logger.warning("No test collected, test can't be run.")
 

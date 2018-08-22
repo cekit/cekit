@@ -2,6 +2,9 @@ schema_version: 1
 name: child
 execute:
   - script: script_b
+envs:
+  - name: foo
+    value: child
 modules:
   install:
     - name: child_of_child

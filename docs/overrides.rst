@@ -16,9 +16,18 @@ To use an override descriptor you need to pass ``--overides-file`` argument to a
 
 .. code:: bash
 
-	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
+	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'overridden'}]}"
 
+Overrides Chaining
+------------------
 
+You can even specify multiple overrides. Overrides are resolved that last specified is the most important one. This means that values from *last override specified overrides all values from former ones*.
+
+**Example**: If you run following command, label `foo` will be set to `baz`.
+
+.. code:: bash
+
+	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'bar'}]} --overrides "{'labels': [{'name': 'foo', 'value': 'baz'}]}"
 
 How overrides works
 -------------------
@@ -139,3 +148,41 @@ Mappings are merged via *name* key. If Cekit is overriding an mapping or array o
 	  envs:
 	  - name: "FOO"
 	    value: "new value"
+
+
+.. _remove_keys:
+
+Removing keys
+---------------
+
+Overriding can result into a need of removing any key from a descriptor. You can achieve this by overriding a key with a YAML null value ``~``.
+
+**Example**: Override checksum in an artifact:
+
+If you have artifact defined in a following way:
+
+.. code:: yaml
+
+	  artifacts:
+	    - name: foo
+	      url: https://foo.lan/foo
+	      md5: aaaaaaaaaaaaaaaaaaaaaaa
+
+you can remove ``md5`` key via following override:
+
+.. code:: yaml
+
+	  artifacts:
+	    - name: foo
+	      md5: ~
+
+It will result into following artifact definition:
+
+
+.. code:: yaml
+
+	  artifacts:
+	    - name: foo
+	      url: https://foo.lan/foo
+
+

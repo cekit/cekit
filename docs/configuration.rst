@@ -27,7 +27,7 @@ Below you can find description of available sections together with options descr
 ^^^^^^^^^^^^
 
 Contains location of Cekit working directory, which is used to store some persistent data like
-dist_git repositories.
+dist_git repositories and artifact cache.
 
 .. code:: yaml
 
@@ -94,21 +94,7 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 ``redhat``
 ^^^^^^^^^^
 This option changes Cekit default options to comply with Red Hat internal infrastructure and policies.
-It changes following things:
 
-* runs ``rhpkg`` instead of ``fedpkg``
-* runs ``odcs`` command with ``--redhat`` option set
-* injects following Labels and Environment variables into the image container:
-  
-  * Environment variables:
-    
-    * ``JBOSS_IMAGE_NAME`` - contains name of the image
-    * ``JBOSS_IMAGE_VERSION`` - contains version of the image
-  * Labels:
-    
-    * ``name`` - contains name of the image
-    * ``version`` - contains version of the image
-    * ``architecture`` - contains architecture of the image
 
 
 **Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
@@ -121,3 +107,32 @@ It changes following things:
 .. note::
 
    If you are using Cekit within Red Hat infrastructure you should have valid Kerberos ticket.
+
+``doc``
+-------
+
+This section collects together configuration options relating to documentation.
+
+``addhelp``
+^^^^^^^^^^
+This option instructs Cekit to install the generated `help.md` file into the generate image
+sources. The file is inserted at the root path (`/`). The default value is False.
+
+**Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
+
+.. code::
+
+   [doc]
+   addhelp = true
+
+``help_template``
+^^^^^^^^^^^^^^^^^
+
+This option overrides the default Jinja template used in the generation of `help.md` files.
+
+**Example**:
+
+.. code::
+
+   [doc]
+   help_template = /home/jon/something/my_help.md

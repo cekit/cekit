@@ -18,19 +18,6 @@ def test_args_not_valid_command(mocker):
         Cekit().parse()
 
 
-@pytest.mark.parametrize('tags, build_tags, expected', [
-    (['foo'], ['bar'], ['foo', 'bar']),
-    ([], ['bar'], ['bar']),
-    (['foo'], [], ['foo']),
-    (['foo', 'bar'], ['baz', 'foe'], ['foo', 'bar', 'baz', 'foe'])])
-def test_args_tags(mocker, tags, build_tags, expected):
-    tags = sum([['--tag', t] for t in tags], [])
-    build_tags = sum([['--build-tag', t] for t in build_tags], [])
-
-    mocker.patch.object(sys, 'argv', ['cekit', 'generate'] + tags + build_tags)
-    assert Cekit().parse().args.tags == expected
-
-
 def test_args_build_pull(mocker):
     mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-pull'])
 
@@ -144,7 +131,7 @@ def test_args_overrides(mocker):
                                       '--overrides',
                                       'foo'])
 
-    assert Cekit().parse().args.overrides == 'foo'
+    assert Cekit().parse().args.overrides == ['foo']
 
 
 def test_args_overrides_file(mocker):
@@ -153,7 +140,7 @@ def test_args_overrides_file(mocker):
                                       '--overrides-file',
                                       'foo'])
 
-    assert Cekit().parse().args.overrides == 'foo'
+    assert Cekit().parse().args.overrides == ['foo']
 
 
 def test_args_overrides_exclusiver(mocker):

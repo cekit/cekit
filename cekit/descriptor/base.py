@@ -75,6 +75,7 @@ class Descriptor(collections.MutableMapping):
         """
         try:
             _merge_descriptors(self, descriptor)
+            return self
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
             raise CekitError("Cannot merge descriptors, see log message for more information")
@@ -126,6 +127,26 @@ class Descriptor(collections.MutableMapping):
         if 'user' not in self._descriptor['run']:
             self._descriptor['run']['user'] = cekit.DEFAULT_USER
 
+    def remove_none_keys(self):
+        if isinstance(self, Descriptor):
+            _remove_none_keys(self)
+        else:
+            # it means it list
+            for desc in self:
+                _remove_none_keys(desc)
+
+
+def _remove_none_keys(desc):
+    for key in dict(desc.items()):
+        if isinstance(desc[key], Descriptor):
+            desc[key].remove_none_keys()
+        if isinstance(desc[key], list):
+            for d in desc[key]:
+                if isinstance(d, Descriptor):
+                    d.remove_none_keys()
+        elif desc[key] is None:
+            del desc[key]
+
 
 def _merge_descriptors(desc1, desc2):
     """
@@ -147,6 +168,7 @@ def _merge_descriptors(desc1, desc2):
                 desc1[k2].merge(v2)
             elif isinstance(v2, list):
                 desc1[k2] = _merge_lists(desc1[k2], v2)
+
     return desc1
 
 
@@ -159,15 +181,17 @@ def _merge_lists(list1, list2):
 
     Returns merged list
     """
-    for v2 in list2:
+    for v2 in reversed(list2):
         if isinstance(v2, Descriptor):
             if v2 in list1:
-                list1[list1.index(v2)].merge(v2)
+                v1 = list1.pop(list1.index(v2))
+                list1.insert(0, v1.merge(v2))
             else:
-                list1.append(v2)
+                list1.insert(0, v2)
         elif isinstance(v2, list):
             raise CekitError("Cannot merge list of lists")
         else:
             if v2 not in list1:
-                list1.append(v2)
+                list1.insert(0, v2)
+
     return list1

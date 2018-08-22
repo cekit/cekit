@@ -3,7 +3,7 @@ import os
 import yaml
 
 from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
-    Packages, Osbs, Volume, Resource, ExecuteContainer
+    Packages, Osbs, Volume, Resource
 from cekit.version import version as cekit_version
 
 _image_schema = yaml.safe_load("""
@@ -22,7 +22,10 @@ map:
   modules: {type: any}
   packages: {type: any}
   osbs: {type: any}
-  volumes: {type: any}""")
+  volumes: {type: any}
+  help:
+    map:
+      template: {type: text}""")
 
 
 def get_image_schema():
@@ -40,7 +43,6 @@ class Image(Descriptor):
                              'name',
                              'release']
         self._prepare()
-        self._descriptor['execute'] = ExecuteContainer([{'name': 'noop'}], 'Image')
 
     def _prepare(self):
         """Updates self._descriptor with objects and prepare sane label"""

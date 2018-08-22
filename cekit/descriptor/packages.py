@@ -21,12 +21,14 @@ map:
 repository_schema = yaml.safe_load("""
 map:
   name: {type: str, required: True}
+  id: {type: str}
   present: {type: bool}
   url:
     map:
       repository: {type: str}
       gpg: {type: str}
   rpm: {type: str}
+  description: {type: str}
   odcs:
     map:
      pulp: {type: str}
@@ -58,18 +60,37 @@ class Repository(Descriptor):
     """
 
     def __init__(self, descriptor):
-        # we test parameter is not dict asi there is no easy way how to test
+        # we test parameter is not dict as there is no easy way how to test
         # if something is string both in py2 and py3
         if not isinstance(descriptor, dict):
             descriptor = self._create_repo_object(descriptor)
 
         if 'filename' not in descriptor:
             descriptor['filename'] = '%s.repo' % descriptor['name'].replace(' ', '_')
+
+        if not (('url' in descriptor) ^
+                ('odcs' in descriptor) ^
+                ('id' in descriptor) ^
+                ('rpm' in descriptor)):
+            raise CekitError("Repository '%s' is invalid, you can use only one of "
+                             "['id', 'odcs', 'rpm', 'url']"
+                             % descriptor['name'])
+
+        if tools.cfg['common']['redhat'] and 'id' in descriptor:
+            descriptor['odcs'] = {'pulp': descriptor['id']}
+            del descriptor['id']
+
         if 'url' not in descriptor:
             descriptor['url'] = {}
 
         self.schemas = [repository_schema]
         super(Repository, self).__init__(descriptor)
+
+        # we dont want to merge any of theese
+        self.skip_merging = ['rpm',
+                             'id',
+                             'odcs',
+                             'url']
 
         if 'present' not in self._descriptor:
             self._descriptor['present'] = True

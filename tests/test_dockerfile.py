@@ -4,6 +4,7 @@ import re
 import subprocess
 import yaml
 
+from cekit import tools
 from cekit.generator.base import Generator
 from cekit.descriptor import Module, Repository
 from cekit.version import version as cekit_version
@@ -13,6 +14,7 @@ basic_config = {'release': 1,
                 'from': 'scratch',
                 'name': 'testimage'}
 
+tools.cfg['common'] = {'redhat': True}
 
 def print_test_name(value):
     if str(value).startswith('test'):
@@ -158,6 +160,39 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
         content_sets = yaml.safe_load(_file)
         assert 'x86_64' in content_sets
         assert 'foo' in content_sets['x86_64']
+
+
+def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
+    tools.cfg['common']['redhat'] = True
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'id': 'foo'},
+                                               ],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.prepare_repositories()
+    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
+        content_sets = yaml.safe_load(_file)
+        assert 'x86_64' in content_sets
+        assert 'foo' in content_sets['x86_64']
+
+
+def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
+    tools.cfg['common']['redhat'] = False
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'id': 'foo'},
+                                               ],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.prepare_repositories()
+    assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
 
 
 def test_dockerfile_osbs_url_only(tmpdir, mocker):

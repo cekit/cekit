@@ -1,5 +1,5 @@
-``envs``
-----------
+Environment variables
+---------------------
 
 Similar to labels -- we can specify environment variables that should be
 present in the container after running the image. We provide ``envs``

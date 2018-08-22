@@ -2,6 +2,7 @@
 
 import logging
 import os
+import socket
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -56,7 +57,8 @@ class Generator(object):
         self._fetch_repos = False
 
         if overrides:
-            self.image = self.override(overrides)
+            for override in overrides:
+                self.image = self.override(override)
 
         logger.info("Initializing image descriptor...")
 
@@ -90,7 +92,7 @@ class Generator(object):
 
         modules = descriptor.get('modules', {}).get('install', [])[:]
 
-        for module in modules:
+        for module in reversed(modules):
             logger.debug("Preparing module '%s' requested by '%s'."
                          % (module['name'], descriptor['name']))
             version = module.get('version', None)
@@ -100,8 +102,9 @@ class Generator(object):
                                                os.path.join(self.target, 'image', 'modules'))
 
             self.prepare_modules(req_module)
-            logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
             descriptor.merge(req_module)
+            logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
+
 
     def prepare_artifacts(self):
         """Goes through artifacts section of image descriptor
@@ -125,6 +128,32 @@ class Generator(object):
         descriptor.merge(self.image)
         return descriptor
 
+    def _generate_expose_services(self):
+        """Generate the label io.openshift.expose-services based on the port
+        definitions."""
+        ports = []
+        for p in self.image['ports']:
+            if p.get('expose', True):
+
+                r = "{}/{}".format(p['value'], p.get('protocol', 'tcp'))
+
+                if 'service' in p:
+                    r += ":{}".format(p['service'])
+                    ports.append(r)
+                else:
+                    # attempt to supply a service name by looking up the socket number
+                    try:
+                        service = socket.getservbyport(p['value'], p.get('protocol','tcp'))
+                        r += ":{}".format(service)
+                        ports.append(r)
+
+                    except OSError: # py3
+                        pass
+                    except socket.error: # py2
+                        pass
+
+        return ",".join(ports)
+
     def _inject_redhat_defaults(self):
         envs = [{'name': 'JBOSS_IMAGE_NAME',
                  'value': '%s' % self.image['name']},
@@ -135,6 +164,11 @@ class Generator(object):
                    'value': '%s' % self.image['name']},
                   {'name': 'version',
                    'value': '%s' % self.image['version']}]
+
+        # do not override this label if it's already set
+        if 'io.openshift.expose-services' not in [ k['name'] for k in self.image['labels'] ]:
+            labels.append({'name': 'io.openshift.expose-services',
+                           'value': self._generate_expose_services()})
 
         redhat_override = {'envs': envs,
                            'labels': labels}
@@ -159,6 +193,7 @@ class Generator(object):
         loader = FileSystemLoader(os.path.dirname(template_file))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
+        env.globals['addhelp'] = self._params.get('addhelp')
         template = env.get_template(os.path.basename(template_file))
 
         dockerfile = os.path.join(self.target,
@@ -172,6 +207,28 @@ class Generator(object):
                 self.image).encode('utf-8'))
         logger.debug("Dockerfile rendered")
 
+        if self.image.get('help', {}).get('template', ""):
+            help_template_path = self.image['help']['template']
+        elif 'help_template' in self._params:
+            help_template_path = self._params['help_template']
+        else:
+            help_template_path = os.path.join(os.path.dirname(__file__),
+                                              '..',
+                                              'templates',
+                                              'help.jinja')
+
+        help_dirname, help_basename = os.path.split(help_template_path)
+        loader = FileSystemLoader(help_dirname)
+        env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+        env.globals['helper'] = TemplateHelper()
+        help_template = env.get_template(help_basename)
+
+        helpfile = os.path.join(self.target, 'image', 'help.md')
+        with open(helpfile, 'wb') as f:
+            f.write(help_template.render(
+                self.image).encode('utf-8'))
+        logger.debug("help.md rendered")
+
     def prepare_repositories(self):
         """ Prepare repositories for build time injection. """
         if 'packages' not in self.image:
@@ -181,7 +238,7 @@ class Generator(object):
 
         injected_repos = []
 
-        for repo in [x for x in repos if x.get('present')]:
+        for repo in repos:
             if self._handle_repository(repo):
                 injected_repos.append(repo)
 
@@ -203,6 +260,12 @@ class Generator(object):
         logger.debug("Loading configuration for repository: '%s' from '%s'."
                      % (repo['name'],
                         'repositories-%s' % self._type))
+
+        if 'id' in repo:
+            logger.warning("Repository '%s' is defined as plain. It must be available "
+                           "inside the image as Cekit will not inject it."
+                           % repo['name'])
+            return False
 
         if 'odcs' in repo:
             self._fetch_repos = True

@@ -96,6 +96,42 @@ def test_simple_image_test(tmpdir, mocker):
     run_cekit(image_dir)
 
 
+def test_image_generate_with_multiple_overrides(tmpdir, mocker):
+    override1 = "{'labels': [{'name': 'foo', 'value': 'bar'}]}"
+
+    override2 = "{'labels': [{'name': 'foo', 'value': 'baz'}]}"
+
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '--overrides',
+                                      override1,
+                                      '--overrides',
+                                      override2,
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'modules': {'repositories': [{'name': 'modules',
+                                      'path': 'tests/modules/repo_2'}]}}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    effective_image = {}
+    with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
+        effective_image = yaml.safe_load(file_)
+
+    assert {'name': 'foo', 'value': 'baz'} in effective_image['labels']
+
+
 def test_image_test_with_override(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '--overrides',
@@ -199,6 +235,7 @@ def check_dockerfile(image_dir, match):
 def check_dockerfile_text(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         dockerfile = fd.read()
+        print(dockerfile)
         if match in dockerfile:
             return True
     return False
@@ -366,6 +403,49 @@ USER root
 RUN rm -rf /tmp/scripts
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
+
+
+def test_override_modules_child(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_3'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+    assert check_dockerfile_text(image_dir, 'foo="master"')
+
+
+def test_override_modules_flat(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'mod_1'},
+                                      {'name': 'mod_2'},
+                                      {'name': 'mod_3'},
+                                      {'name': 'mod_4'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_4'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+    assert check_dockerfile_text(image_dir, 'foo="mod_2"')
 
 
 def test_execution_order_flat(tmpdir, mocker):

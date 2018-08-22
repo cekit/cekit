@@ -1,6 +1,5 @@
-
-``artifacts``
--------------
+Artifacts
+---------
 
 It's common for images to require external artifacts.
 In most cases you will want to add files into the image and use them at
@@ -59,3 +58,6 @@ add a description detailing a location from which the artifact can be obtained.
 If Cekit is not able to download an artifact and this artifact has a ``description`` defined -- the build
 will fail but a message with the description will be printed together with information on where to place
 the manually downloaded artifact.
+
+.. note::
+   All artifacts are automatically cached during an image build. To learn more about cache please take a look at :ref:`artifacts_caching`

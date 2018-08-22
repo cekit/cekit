@@ -1,5 +1,5 @@
-``workdir``
-^^^^^^^^^^^
+Workdir
+^^^^^^^
 
 Sets the current working directory of the entrypoint process in the container.
 
