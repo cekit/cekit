@@ -14,6 +14,8 @@ except AttributeError:
 
 logger = logging.getLogger('cekit')
 
+ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+
 
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
@@ -53,11 +55,11 @@ class DockerBuilder(Builder):
             lastmsg = ""
             for line in out:
                 if b'stream' in line:
-                    line = re.sub('\n$', '', yaml.safe_load(line)['stream'])
+                    line = yaml.safe_load(line)['stream']
                 elif b'status' in line:
-                    line = re.sub('\n$', '', yaml.safe_load(line)['status'])
+                    line = yaml.safe_load(line)['status']
                 elif b'errorDetail' in line:
-                    line = line['errorDetail']['message']
+                    line = yaml.safe_load(line)['errorDetail']['message']
                     raise CekitError("Image build failed: '%s'" % line)
 
                 if '---> Running in ' in line:
@@ -65,7 +67,8 @@ class DockerBuilder(Builder):
 
                 if line != lastmsg:
                     # this prevents poluting cekit log with dowloading/extracting msgs
-                    logger.info("Docker: %s" % line)
+                    log_msg = ANSI_ESCAPE.sub('', line).strip()
+                    map(lambda x: logger.info('Docker: %s' % x), log_msg.split('\n'))
                     lastmsg = line
 
             for tag in self._tags[1:]:
