@@ -6,6 +6,11 @@ from cekit import tools
 from cekit.errors import CekitError
 from cekit.descriptor import Descriptor, Resource
 
+try:
+    import ConfigParser as configparser
+except:
+    import configparser
+
 logger = logging.getLogger('cekit')
 
 packages_schema = [yaml.safe_load("""
@@ -62,6 +67,7 @@ class Repository(Descriptor):
     def __init__(self, descriptor):
         # we test parameter is not dict as there is no easy way how to test
         # if something is string both in py2 and py3
+        self._repofile = None
         if not isinstance(descriptor, dict):
             descriptor = self._create_repo_object(descriptor)
 
@@ -101,8 +107,8 @@ class Repository(Descriptor):
                        "for more details." % repository)
         descriptor = {}
         descriptor['name'] = repository
-        descriptor['url'] = {}
-        descriptor['url']['repository'] = self._get_repo_url(descriptor)
+        descriptor['url'] = {'repository': 'dummy'}
+        self._repofile = self._get_repo_url(descriptor)
         return descriptor
 
     def _get_repo_url(self, descriptor):
@@ -132,5 +138,18 @@ class Repository(Descriptor):
     def fetch(self, target_dir):
         if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
-        Resource({'url': self._descriptor['url']['repository']}) \
-            .copy(os.path.join(target_dir, self._descriptor['filename']))
+        if self._repofile:
+            Resource({'url': self._repofile}) \
+                .copy(os.path.join(target_dir, self._descriptor['filename']))
+        else:
+            config = configparser.ConfigParser()
+            sectionName = self._descriptor['name']
+            config.add_section(sectionName);
+            config.set(sectionName, 'name', sectionName);
+            config.set(sectionName, 'baseurl', self._descriptor['url']['repository'])
+            config.set(sectionName, 'enabled', 1)
+            if 'gpg' in self._descriptor['url']:
+                config.set(sectionName, 'gpgkey', self._descriptor['url']['gpg'])
+                config.set(sectionName, 'gpgcheck', 1)
+            with open(os.path.join(target_dir, self._descriptor['filename']), 'w') as repofile:
+                config.write(repofile)
