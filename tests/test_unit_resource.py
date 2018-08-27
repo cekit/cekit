@@ -1,7 +1,8 @@
 import pytest
 import os
+import yaml
 
-from cekit.descriptor import Resource
+from cekit.descriptor import Resource, Image, Overrides
 from cekit import tools
 from cekit.errors import CekitError
 
@@ -191,3 +192,30 @@ def test_path_resource_relative():
     res = Resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')
     assert res.path == '/foo/bar'
+
+
+def test_overide_resource_remove_chksum():
+    tools.cfg['common'] = {'work_dir': '/tmp'}
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    artifacts:
+      - name: abs
+        path: /tmp/abs
+        md5: 'foo'
+        sha1: 'foo'
+        sha256: 'foo'
+    """), 'foo')
+    overrides = Overrides(yaml.safe_load("""
+    artifacts:
+      - name: abs
+        path: /tmp/over
+"""), 'foo')
+    overrides.merge(image)
+
+    assert overrides['from'] == 'foo'
+    assert overrides['artifacts'][0]['path'] == '/tmp/over'
+    assert 'md5' not in overrides['artifacts'][0]
+    assert 'sha1' not in overrides['artifacts'][0]
+    assert 'sha256' not in overrides['artifacts'][0]
