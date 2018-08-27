@@ -31,6 +31,7 @@ class TestRunner(object):
                 '--junit',
                 '--junit-directory', 'results',
                 '--no-skipped',
+                '-t', '~ignore',
                 '-D', 'IMAGE=%s' % image]
 
         if test_names:
