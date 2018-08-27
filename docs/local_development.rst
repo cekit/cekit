@@ -39,7 +39,7 @@ Now imagine,  we have found a bug in its s2i-common module. We will clone the mo
 
 .. code:: bash
 
-  $ cekit generate --overrides overrides.yaml
+  $ cekit generate --overrides-file overrides.yaml
 
 4. When your work is finished, commit and push your changes to a module repository and remove overrides.yaml
 
