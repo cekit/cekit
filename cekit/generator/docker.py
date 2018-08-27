@@ -30,7 +30,7 @@ class DockerGenerator(Generator):
 
             logger.debug("Creating ODCS content set via '%s'" % cmd)
 
-            output = subprocess.check_output(cmd)
+            output = subprocess.check_output(cmd).decode()
             normalized_output = '\n'.join(output.replace(" u'", " '")
                                           .replace(' u"', ' "')
                                           .split('\n')[1:])
