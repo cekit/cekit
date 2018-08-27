@@ -117,3 +117,31 @@ Then you can instruct Cekit to run this test in a following way:
 .. note::
    ``--test-name`` switch can be specified multiple times and only the Scenarios
    matching all of the names are executed. 
+
+Skipping tests
+--------------
+If there is a particular test which needs to be temporally disabled, you can use ``@ignore``
+tag to disable it.
+
+For example to disable following Scenario:
+
+.. code:: cucumber
+
+	    Scenario: Check custom debug port is available
+            When container is started with env
+            | variable   | value |
+            | DEBUG      | true  |
+            | DEBUG_PORT | 8798  |
+            Then check that port 8798 is open
+
+You need to tag it with ``@ignore`` tag in a following way:
+
+.. code:: cucumber
+
+            @ignore
+            Scenario: Check custom debug port is available
+            When container is started with env
+            | variable   | value |
+            | DEBUG      | true  |
+            | DEBUG_PORT | 8798  |
+            Then check that port 8798 is open
