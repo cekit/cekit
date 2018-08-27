@@ -68,7 +68,8 @@ class DockerBuilder(Builder):
                 if line != lastmsg:
                     # this prevents poluting cekit log with dowloading/extracting msgs
                     log_msg = ANSI_ESCAPE.sub('', line).strip()
-                    map(lambda x: logger.info('Docker: %s' % x), log_msg.split('\n'))
+                    for msg in log_msg.split('\n'):
+                        logger.info('Docker: %s' % msg)
                     lastmsg = line
 
             for tag in self._tags[1:]:
