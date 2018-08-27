@@ -22,7 +22,7 @@ def print_test_name(value):
     return "\b"
 
 
-odcs_fake_resp = """Result:
+odcs_fake_resp = b"""Result:
 {u'arches': u'x86_64',
  u'flags': [],
  u'id': 2019,
