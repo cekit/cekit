@@ -51,6 +51,7 @@ class Resource(Descriptor):
           description: {type: str}
         assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"""")]
         super(Resource, self).__init__(descriptor)
+        self.skip_merging = ['md5', 'sha1', 'sha256']
 
         # forwarded import to prevent circural imports
         from cekit.cache.artifact import ArtifactCache
