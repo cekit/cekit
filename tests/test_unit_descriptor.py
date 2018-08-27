@@ -111,11 +111,11 @@ def test_remove_none_key():
     from: foo
     name: test/foo
     version: 1.9
-    artifacts:
-      - path: /tmp/abs
-        md5: ~
+    envs:
+     - name: foo
+       value: ~
     """), 'foo')
     image.remove_none_keys()
 
-    assert image['artifacts'][0]['path'] == '/tmp/abs'
-    assert 'md5' not in image['artifacts'][0]
+    assert 'envs' in image
+    assert 'value' not in image['envs'][0]
