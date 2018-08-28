@@ -14,7 +14,10 @@ logger = logging.getLogger('cekit')
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
-    def __init__(self, build_engine, target, params={}):
+    def __init__(self, build_engine, target, params=None):
+        if not params:
+            params = {}
+        self._commit_msg = params.get('commit_msg')
         self._user = params.get('user')
         self._nowait = params.get('nowait', False)
         self._release = params.get('release', False)
@@ -147,7 +150,7 @@ class OSBSBuilder(Builder):
             self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
-                self.dist_git.commit()
+                self.dist_git.commit(self._commit_msg)
                 self.dist_git.push()
             else:
                 logger.info("No changes made to the code, committing skipped")
@@ -249,14 +252,15 @@ class DistGit(object):
             # we probably do not care about non existing files and other errors here
             subprocess.call(["git", "add", "--all", d])
 
-    def commit(self):
-        commit_msg = "Sync"
+    def commit(self, commit_msg):
+        if not commit_msg:
+            commit_msg = "Sync"
 
-        if self.source_repo_name:
-            commit_msg += " with %s" % self.source_repo_name
+            if self.source_repo_name:
+                commit_msg += " with %s" % self.source_repo_name
 
-        if self.source_repo_commit:
-            commit_msg += ", commit %s" % self.source_repo_commit
+            if self.source_repo_commit:
+                commit_msg += ", commit %s" % self.source_repo_commit
 
         # Commit the change
         logger.info("Commiting with message: '%s'" % commit_msg)

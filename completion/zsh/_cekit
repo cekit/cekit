@@ -68,6 +68,7 @@ _cekit_build() {
         "--build-osbs-nowait[run rhpkg container build with --nowait option]" \
         "--build-osbs-stage[use rhpkg-stage instead of rhpkg]" \
         "--build-osbs-target[overrides the default rhpkg target]" \
+	"--build-osbs-commit-msg[commit message for dist-git]" \
         "--build-tech-preview[perform tech preview build]"
 }
 

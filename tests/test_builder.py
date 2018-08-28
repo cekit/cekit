@@ -31,6 +31,16 @@ def test_osbs_builder_use_rhpkg_staget(mocker):
     assert builder._rhpkg == 'rhpkg-stage'
 
 
+def test_osbs_builder_custom_commit_msg(mocker):
+    mocker.patch.object(subprocess, 'check_output')
+
+    params = {'stage': True,
+              'commit_msg': 'foo'}
+    builder = Builder('osbs', 'tmp', params)
+
+    assert builder._commit_msg == 'foo'
+
+
 def test_osbs_builder_nowait(mocker):
     mocker.patch.object(subprocess, 'check_output')
 
