@@ -25,7 +25,7 @@ class TestRunner(object):
 
     def run(self, image, run_tags, test_names):
         """Run test suite"""
-        test_path = os.path.join(self.target, 'test')
+        test_path = os.path.join(self.target, 'tests')
         logger.debug("Running behave in '%s'." % test_path)
         args = [test_path,
                 '--junit',

@@ -4,7 +4,7 @@ import argparse
 import os
 import logging
 import sys
-
+import yaml
 
 from cekit import tools
 from cekit.builder import Builder
@@ -185,7 +185,7 @@ class Cekit(object):
         if self.args.work_dir:
             tools.cfg['common']['work_dir'] = self.args.work_dir
 
-        addhelp = tools.cfg.get('doc',{}).get('addhelp', False)
+        addhelp = tools.cfg.get('doc', {}).get('addhelp', False)
         if bool == type(self.args.addhelp):
             addhelp = self.args.addhelp
 
@@ -196,7 +196,7 @@ class Cekit(object):
             'redhat':  tools.cfg['common']['redhat'],
         }
 
-        if 'help_template' in tools.cfg.get('doc',{}):
+        if 'help_template' in tools.cfg.get('doc', {}):
             params['help_template'] = tools.cfg['doc']['help_template']
 
         self.generator = Generator(self.args.descriptor,
@@ -224,15 +224,28 @@ class Cekit(object):
                 generator.prepare_modules()
                 generator.prepare_repositories()
                 generator.image.remove_none_keys()
-                generator.prepare_artifacts()
-                if self.args.build_tech_preview:
-                    generator.generate_tech_preview()
-                generator.image.write(os.path.join(self.args.target, 'image.yaml'))
-                generator.render_dockerfile()
+                # we dont want to fetch artifacts for standalone tests command
+                if 'build' in self.args.commands or \
+                   'generate' in self.args.commands:
+                    generator.prepare_artifacts()
+                    if self.args.build_tech_preview:
+                        generator.generate_tech_preview()
+                    generator.image.write(os.path.join(self.args.target, 'image.yaml'))
+                    generator.render_dockerfile()
 
                 # if tags are not specified on command line we take them from image descriptor
                 if not self.args.tags:
                     self.args.tags = generator.get_tags()
+                with open(self.args.descriptor, 'r') as _file:
+                    image_desc = yaml.safe_load(_file)
+                    image_desc['modules']['repositories'] = [{'name': 'modules',
+                                                              'path': 'modules'}]
+                with open(os.path.join(self.args.target, 'image', 'image.yaml'), 'w') as _file:
+                    yaml.dump(image_desc, _file,  default_flow_style=False)
+                # we need to collect tests in generate phase so they can be committed in build
+                tc = TestCollector(os.path.dirname(self.args.descriptor),
+                                   self.args.target)
+                collected = tc.collect(generator.image.get('schema_version'), self.args.test_steps_url)
 
             if 'build' in self.args.commands:
                 params = {'user': self.args.build_osbs_user,
@@ -258,13 +271,9 @@ class Cekit(object):
                 if self.args.test_wip:
                     test_tags = ['@wip']
 
-                # at first we collect tests
-                tc = TestCollector(os.path.dirname(self.args.descriptor),
-                                   self.args.target)
-
                 # we run the test only if we collect any
-                if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
-                    runner = TestRunner(self.args.target)
+                if collected:
+                    runner = TestRunner(os.path.join(self.args.target, 'image', 'modules'))
                     runner.run(self.args.tags[0], test_tags, test_names=self.args.test_names)
                 else:
                     logger.warning("No test collected, test can't be run.")

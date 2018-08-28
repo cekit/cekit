@@ -88,6 +88,8 @@ class OSBSBuilder(Builder):
                     shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
             shutil.copy("Dockerfile", os.path.join(
                 self.dist_git_dir, "Dockerfile"))
+            shutil.copy("image.yaml", os.path.join(
+                self.dist_git_dir, "image.yaml"))
             if os.path.exists("container.yaml"):
                 shutil.copy("container.yaml", os.path.join(
                     self.dist_git_dir, "container.yaml"))
@@ -240,6 +242,7 @@ class DistGit(object):
     def add(self):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
+        subprocess.check_call(["git", "add", "image.yaml"])
         if os.path.exists("container.yaml"):
             subprocess.check_call(["git", "add", "container.yaml"])
         if os.path.exists("content_sets.yml"):
@@ -248,6 +251,8 @@ class DistGit(object):
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here
             subprocess.call(["git", "add", "--all", d])
+        if os.path.exists("modules/tests"):
+            subprocess.call(["git", "add", "--all", "modules/tests"])
 
     def commit(self):
         commit_msg = "Sync"
