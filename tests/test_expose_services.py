@@ -67,13 +67,22 @@ def test_expose_services_label_not_generated_wo_redhat(mocker, workdir):
 
 def test_expose_services_label_generated(mocker, workdir):
     """Test to ensure that io.openshift.expose-services is auto-generated
-    if the --redhat argument is supplied."""
+    if the --redhat argument is supplied and ports are defined."""
 
     dockerfile = run_cekit_return_dockerfile(mocker, workdir,
         ['cekit', '-v', '--config', '/dev/null', '--redhat',
              '--overrides', '{ports: [{value: 8080}]}', 'generate'])
 
     assert dockerfile.find("io.openshift.expose-services") >= 0
+
+def test_expose_services_label_no_ports_not_generated(mocker, workdir):
+    """Test to ensure that io.openshift.expose-services is not auto-generated
+    if the --redhat argument is supplied but no ports are defined."""
+
+    dockerfile = run_cekit_return_dockerfile(mocker, workdir,
+        ['cekit', '-v', '--config', '/dev/null', '--redhat', 'generate'])
+
+    assert dockerfile.find("io.openshift.expose-services") < 0
 
 def test_expose_services_label_not_generated_without_expose(mocker, workdir):
     """Test to ensure that io.openshift.expose-services label does not
