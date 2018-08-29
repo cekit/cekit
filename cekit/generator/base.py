@@ -166,7 +166,8 @@ class Generator(object):
                    'value': '%s' % self.image['version']}]
 
         # do not override this label if it's already set
-        if 'io.openshift.expose-services' not in [ k['name'] for k in self.image['labels'] ]:
+        if self.image.get('ports', []) and \
+            'io.openshift.expose-services' not in [ k['name'] for k in self.image['labels'] ]:
             labels.append({'name': 'io.openshift.expose-services',
                            'value': self._generate_expose_services()})
 
