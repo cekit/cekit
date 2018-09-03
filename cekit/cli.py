@@ -66,7 +66,7 @@ class Cekit(object):
         steps_url = 'https://github.com/cekit/behave-test-steps.git'
         test_group.add_argument('--test-steps-url',
                                 default=steps_url,
-                                help='contains url for cekit test stesp')
+                                help='contains url for cekit test steps')
 
         limit_test_group.add_argument('--test-wip',
                                       action='store_true',
