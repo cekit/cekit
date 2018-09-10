@@ -1,4 +1,7 @@
+import glob
+import os
 import subprocess
+import yaml
 
 from cekit.builder import Builder
 
@@ -47,6 +50,47 @@ def test_osbs_builder_user(mocker):
     builder = Builder('osbs', 'tmp', params)
 
     assert builder._user == 'UserFoo'
+
+
+def test_merge_container_yaml_no_limit_arch(mocker, tmpdir):
+    mocker.patch.object(glob, 'glob', return_value=False)
+    builder = Builder('osbs', 'tmp', {})
+    builder.dist_git_dir = str(tmpdir.mkdir('target'))
+
+    container_yaml_f = 'container.yaml'
+
+    source = 'souce_cont.yaml'
+    with open(source, 'w') as file_:
+        yaml.dump({'tags': ['foo']}, file_)
+
+    builder._merge_container_yaml(source, container_yaml_f)
+
+    with open(container_yaml_f, 'r') as file_:
+        container_yaml = yaml.safe_load(file_)
+    os.remove(container_yaml_f)
+
+    assert 'paltforms' not in container_yaml
+
+
+def test_merge_container_yaml_limit_arch(mocker, tmpdir):
+    mocker.patch.object(glob, 'glob', return_value=True)
+    builder = Builder('osbs', 'tmp', {})
+    builder.dist_git_dir = str(tmpdir.mkdir('target'))
+
+    container_yaml_f = 'container.yaml'
+
+    source = 'souce_cont.yaml'
+    with open(source, 'w') as file_:
+        yaml.dump({'tags': ['foo']}, file_)
+
+    builder._merge_container_yaml(source, container_yaml_f)
+
+    with open(container_yaml_f, 'r') as file_:
+        container_yaml = yaml.safe_load(file_)
+    os.remove(container_yaml_f)
+
+    assert 'x86_64' in container_yaml['platforms']['only']
+    assert len(container_yaml['platforms']['only']) == 1
 
 
 class DistGitMock(object):
