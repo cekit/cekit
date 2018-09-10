@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import sys
+import yaml
 
 from cekit import tools
 from cekit.builder import Builder
@@ -92,7 +93,7 @@ class OSBSBuilder(Builder):
             shutil.copy("Dockerfile", os.path.join(
                 self.dist_git_dir, "Dockerfile"))
             if os.path.exists("container.yaml"):
-                shutil.copy("container.yaml", os.path.join(
+                self._merge_container_yaml("container.yaml", os.path.join(
                     self.dist_git_dir, "container.yaml"))
             if os.path.exists("content_sets.yml"):
                 shutil.copy("content_sets.yml", os.path.join(
@@ -105,6 +106,20 @@ class OSBSBuilder(Builder):
                                      artifact),
                         os.path.join(self.dist_git_dir,
                                      artifact))
+
+    def _merge_container_yaml(self, src, dest):
+        # FIXME - this is temporary needs to be refactored to proper merging
+        with open(src, 'r') as _file:
+            generated = yaml.safe_load(_file)
+
+        target = {}
+        if os.path.exists(dest):
+            with open(dest, 'r') as _file:
+                target = yaml.safe_load(_file)
+
+        target.update(generated)
+        with open(dest, 'w') as _file:
+            yaml.dump(target, _file, default_flow_style=False)
 
     def update_lookaside_cache(self):
         logger.info("Updating lookaside cache...")
