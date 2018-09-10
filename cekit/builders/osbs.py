@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import shutil
@@ -159,6 +160,13 @@ class OSBSBuilder(Builder):
 
         if not self._release:
             cmd.append("--scratch")
+
+        #FIXME - run x86-build if there is *repo commited to dist-git
+        if glob.glob(os.path.join(self.dist_git_dir,
+                                  'repos',
+                                  '*.repo')):
+            cmd.append('--arches')
+            cmd.append('x86_64')
 
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
