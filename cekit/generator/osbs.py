@@ -2,13 +2,18 @@ import logging
 import yaml
 import os
 
+from cekit import tools
 from cekit.generator.base import Generator
 
 logger = logging.getLogger('cekit')
 
+PPC_REPOS_TABLE = {}
+PPC_REPOS_TABLE['rhel-7-server-rpms'] = 'rhel-7-for-power-le-rpms'
+PPC_REPOS_TABLE['rhel-7-extras-rpms'] = 'rhel-7-for-power-le-extras-rpms'
+PPC_REPOS_TABLE['rhel-server-rhscl-7-rpms'] = 'rhel-7-server-for-power-le-rhscl-rpms'
+
 
 class OSBSGenerator(Generator):
-
     def __init__(self, descriptor_path, target, builder, overrides, params):
         self._wipe = False
         super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
@@ -34,6 +39,18 @@ class OSBSGenerator(Generator):
             cur_repos.append(repo_name)
 
         content_set['x86_64'] = cur_repos
+        if tools.cfg['common']['redhat']:
+            ppc_repos = []
+            for repo in cur_repos:
+                if repo in PPC_REPOS_TABLE:
+                    ppc_repos.append(PPC_REPOS_TABLE[repo])
+                else:
+                    ppc_repos.append(repo)
+
+        else:
+            ppc_repos = cur_repos
+
+        content_set['ppc64le'] = ppc_repos
 
         if not os.path.exists(os.path.dirname(content_set_f)):
             os.makedirs(os.path.dirname(content_set_f))
