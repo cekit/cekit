@@ -119,6 +119,16 @@ class OSBSBuilder(Builder):
                 target = yaml.safe_load(_file)
 
         target.update(generated)
+        # FIXME - run x86-build if there is *repo commited to dist-git
+        if glob.glob(os.path.join(self.dist_git_dir,
+                                  'repos',
+                                  '*.repo')):
+
+            if 'platforms' in target:
+                target['platforms']['only'] = ['x86_64']
+            else:
+                target['platforms'] = {'only': ['x86_64']}
+
         with open(dest, 'w') as _file:
             yaml.dump(target, _file, default_flow_style=False)
 
@@ -160,13 +170,6 @@ class OSBSBuilder(Builder):
 
         if not self._release:
             cmd.append("--scratch")
-
-        #FIXME - run x86-build if there is *repo commited to dist-git
-        if glob.glob(os.path.join(self.dist_git_dir,
-                                  'repos',
-                                  '*.repo')):
-            cmd.append('--arches')
-            cmd.append('x86_64')
 
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
