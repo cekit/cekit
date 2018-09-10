@@ -267,6 +267,8 @@ def prepare_generator(target, desc_part, desc_type="image", engine="docker"):
     generator._wipe = False
     generator._params = {}
     generator._fetch_repos = False
+    generator._content_set_f = os.path.join(target, 'image', 'content_sets.yml')
+    generator._container_f = os.path.join(target, 'image', 'container.yaml')
     return generator
 
 
