@@ -146,10 +146,12 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    tools.cfg['common'] = {'redhat': True}
+
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'odcs': {
-                                                   'pulp': 'foo'
+                                                   'pulp': 'rhel-7-server-rpms'
                                                 }},
                                                ],
                               'install': ['a']}}
@@ -159,7 +161,32 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
         content_sets = yaml.safe_load(_file)
         assert 'x86_64' in content_sets
-        assert 'foo' in content_sets['x86_64']
+        assert 'rhel-7-server-rpms' in content_sets['x86_64']
+        assert 'ppc64le' in content_sets
+        assert 'rhel-7-for-power-le-rpms' in content_sets['ppc64le']
+
+
+def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    tools.cfg['common'] = {'redhat': False}
+
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'odcs': {
+                                                   'pulp': 'rhel-7-server-rpms'
+                                                }},
+                                               ],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.prepare_repositories()
+    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
+        content_sets = yaml.safe_load(_file)
+        assert 'x86_64' in content_sets
+        assert 'rhel-7-server-rpms' in content_sets['x86_64']
+        assert 'ppc64le' in content_sets
+        assert 'rhel-7-server-rpms' in content_sets['ppc64le']
 
 
 def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
