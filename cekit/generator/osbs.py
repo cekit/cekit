@@ -7,15 +7,15 @@ from cekit.generator.base import Generator
 
 logger = logging.getLogger('cekit')
 
-PPC_REPOS_TABLE = {}
-PPC_REPOS_TABLE['rhel-7-server-rpms'] = 'rhel-7-for-power-le-rpms'
-PPC_REPOS_TABLE['rhel-7-extras-rpms'] = 'rhel-7-for-power-le-extras-rpms'
-PPC_REPOS_TABLE['rhel-server-rhscl-7-rpms'] = 'rhel-7-server-for-power-le-rhscl-rpms'
+RHEL_REPOS_MAP = {}
+RHEL_REPOS_MAP['rhel-7-server-rpms'] = 'rhel-7-for-power-le-rpms'
+RHEL_REPOS_MAP['rhel-7-extras-rpms'] = 'rhel-7-for-power-le-extras-rpms'
+RHEL_REPOS_MAP['rhel-server-rhscl-7-rpms'] = 'rhel-7-server-for-power-le-rhscl-rpms'
 
 
 class OSBSGenerator(Generator):
     def __init__(self, descriptor_path, target, builder, overrides, params):
-        self._wipe = False
+        self._wipe = True
         super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
 
     def _prepare_repository_odcs_pulp(self, repo):
@@ -42,8 +42,8 @@ class OSBSGenerator(Generator):
         if tools.cfg['common']['redhat']:
             ppc_repos = []
             for repo in cur_repos:
-                if repo in PPC_REPOS_TABLE:
-                    ppc_repos.append(PPC_REPOS_TABLE[repo])
+                if repo in RHEL_REPOS_MAP:
+                    ppc_repos.append(RHEL_REPOS_MAP[repo])
                 else:
                     ppc_repos.append(repo)
 
