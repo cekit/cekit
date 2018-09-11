@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
-from cekit.descriptor import Descriptor, Image, Module, Overrides
+from cekit.descriptor import Descriptor, Image, Module, Overrides, Run
 from cekit.errors import CekitError
 
 
@@ -118,3 +118,12 @@ def test_merging_list_of_descriptors():
                                 'c': 3})]
 
     assert expected == _merge_lists(desc1, desc2)
+
+
+def test_merge_run_cmd():
+    run1 = Run({'user': 'foo', 'cmd': ['a', 'b', 'c'], 'entrypoint': ['a', 'b']})
+    run2 = Run({'user': 'foo', 'cmd': ['1', '2', '3'], 'entrypoint': ['1', '2']})
+
+    run1.merge(run2)
+    assert run1['cmd'] == ['a', 'b', 'c']
+    assert run1['entrypoint'] == ['a', 'b']
