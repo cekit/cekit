@@ -68,7 +68,7 @@ Scalar nodes are easy to override, if Cekit finds any scalar node in an override
 
 Sequence nodes
 ^^^^^^^^^^^^^^
-Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so Cekit is just merging arrays from image and override descriptors together.
+Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so Cekit is just replacing the whole sequence.
 
 **Example**: Overriding plain array node:
 
@@ -105,10 +105,7 @@ Sequence nodes are little bit tricky, if they're representing plain arrays, we c
 	  run:
 	    cmd:
   	    - "bar"
-	    - "echo"
-	    - "foo"
 
-**Known issues**: Merging sequence nodes can have surprising results, please see `corresponding issue. <https://github.com/cekit/cekit/issues/106>`_
 
 Mapping nodes
 ^^^^^^^^^^^^^

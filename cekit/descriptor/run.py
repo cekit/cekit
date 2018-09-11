@@ -27,3 +27,4 @@ class Run(Descriptor):
         super(Run, self).__init__(descriptor)
         if 'name' not in self._descriptor:
             self._descriptor['name'] = 'run'
+        self.skip_merging = ['cmd', 'entrypoint']
