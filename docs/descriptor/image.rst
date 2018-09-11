@@ -22,3 +22,4 @@ Image descriptor contains all information Cekit needs to build and test a contai
 .. include:: modules.rst
 .. include:: workdir.rst
 .. include:: run.rst
+.. include:: osbs.rst

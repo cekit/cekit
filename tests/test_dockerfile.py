@@ -118,8 +118,8 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'odcs': {
-                                                   'pulp': 'foo'
+                                                'content_sets': {
+                                                   'x86_64': 'foo'
                                                 }},
                                                ],
                               'install': ['a']}}
@@ -162,12 +162,13 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
-    config.cfg['common'] = {'redhat': True}
+    tools.cfg['common'] = {'redhat': True}
 
     target = str(tmpdir.mkdir('target'))
+    os.makedirs(os.path.join(target, 'image'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'odcs': {
-                                                   'pulp': 'rhel-7-server-rpms'
+                                                'content_sets': {
+                                                   'x86_64': 'foo'
                                                 }},
                                                ],
                               'install': ['a']}}
@@ -224,7 +225,7 @@ def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
-    config.cfg['common']['redhat'] = False
+    config.get('common', 'redhat') = True
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))

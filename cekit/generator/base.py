@@ -254,9 +254,10 @@ class Generator(object):
                            % repo['name'])
             return False
 
-        if 'odcs' in repo:
+        if 'content_sets' in repo:
             self._fetch_repos = True
-            return self._prepare_repository_odcs_pulp(repo)
+            return self._prepare_content_sets(repo)
+            return True
 
         elif 'rpm' in repo:
             self._prepare_repository_rpm(repo)
@@ -267,8 +268,8 @@ class Generator(object):
 
         return False
 
-    def _prepare_repository_odcs_pulp(self, repo, **kwargs):
-        raise NotImplementedError("ODCS pulp repository injection not implemented!")
+    def _prepare_content_sets(self, repo, **kwargs):
+        raise NotImplementedError("Content sets repository injection not implemented!")
 
     def _prepare_repository_rpm(self, repo):
         raise NotImplementedError("RPM repository injection was not implemented!")

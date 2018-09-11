@@ -22,18 +22,23 @@ class DockerGenerator(Generator):
         super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
         self._fetch_repos = True
 
-    def _prepare_repository_odcs_pulp(self, repo):
-        """Create pulp content set in ODCS and returns its url
+    def _prepare_content_sets(self, repo):
+        if not config.cfg['common']['redhat']:
+            return False
 
-        Args:
-          repo - repository object to generate ODCS pulp for"""
+        arch = platform.machine()
+        if arch not in repo['content_sets']:
+            raise CekitError("There are not contet_sets defined for you platform '%s'!")
+
+        repos = ' '.join(repo['content_sets'][arch])
+
         try:
             # idealy this will be API for ODCS, but there is no python3 package for ODCS
             cmd = ['odcs']
 
             if self._params.get('redhat', False):
                 cmd.append('--redhat')
-            cmd.extend(['create', 'pulp', repo['odcs']['pulp']])
+            cmd.extend(['create', 'pulp', repos])
 
             logger.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
 

@@ -30,6 +30,8 @@ map:
       gpg: {type: str}
   rpm: {type: str}
   description: {type: str}
+  content_sets: {type: any}
+  content_sets_file: {type: str}
   odcs:
     map:
      pulp: {type: str}
@@ -72,17 +74,23 @@ class Repository(Descriptor):
         if not (('url' in descriptor) ^
                 ('odcs' in descriptor) ^
                 ('id' in descriptor) ^
-                ('rpm' in descriptor)):
+                ('rpm' in descriptor) ^
+                ('content_sets' in descriptor) ^
+                ('content_sets_file' in descriptor)):
             raise CekitError("Repository '%s' is invalid, you can use only one of "
                              "['id', 'odcs', 'rpm', 'url']"
                              % descriptor['name'])
 
-        if config.get('common', 'redhat') and 'id' in descriptor:
-            descriptor['odcs'] = {'pulp': descriptor['id']}
-            del descriptor['id']
+        if ('content_sets_file' in descriptor and 'content_sets' in descriptor):
+            raise CekitError("You cannot specify content_sets and content_sets_file together!")
 
         if 'url' not in descriptor:
             descriptor['url'] = {}
+
+        if 'content_sets_file' in descriptor:
+            with open(descriptor['content_sets_file'], 'r') as file_:
+                descriptor['content_sets'] = yaml.safe_load(file_)
+                del descriptor['content_sets_file']
 
         self.schemas = [repository_schema]
         super(Repository, self).__init__(descriptor)
@@ -90,8 +98,9 @@ class Repository(Descriptor):
         # we dont want to merge any of theese
         self.skip_merging = ['rpm',
                              'id',
-                             'odcs',
-                             'url']
+                             'url',
+                             'content_sets_file',
+                             'content_sets']
 
         if 'present' not in self._descriptor:
             self._descriptor['present'] = True
