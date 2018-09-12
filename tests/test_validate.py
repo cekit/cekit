@@ -160,6 +160,56 @@ def test_image_test_with_override(tmpdir, mocker):
 
     run_cekit(image_dir)
 
+    effective_image = {}
+    with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
+        effective_image = yaml.safe_load(file_)
+
+    assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
+
+
+def test_image_test_with_multiple_overrides(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '--overrides-file',
+                                      'overrides.yaml',
+                                      '--overrides-file',
+                                      'overrides2.yaml',
+                                      '--overrides',
+                                      "{'labels': [{'name': 'foo', 'value': 'overriden'}]}",
+                                      '-v',
+                                      'build',
+                                      'test'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    feature_files = os.path.join(image_dir, 'tests', 'features', 'test.feature')
+
+    os.makedirs(os.path.dirname(feature_files))
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {'labels': [{'name': 'foo', 'value': 'X'}]}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor2 = {'labels': [{'name': 'foo', 'value': 'Y'}]}
+
+    with open(os.path.join(image_dir, 'overrides2.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor2, fd, default_flow_style=False)
+
+    with open(feature_files, 'w') as fd:
+        fd.write(feature_label_test_overriden)
+
+    run_cekit(image_dir)
+
+    effective_image = {}
+    with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
+        effective_image = yaml.safe_load(file_)
+
+    assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
+
 
 def test_image_test_with_override_on_cmd(tmpdir, mocker):
     overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
