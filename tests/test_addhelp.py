@@ -87,7 +87,6 @@ def test_no_override_help_template(mocker, workdir, tmpdir):
             pass
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
-            sys.stderr.write("JMTD: {}\n".format(contents.find(template_teststr)))
             assert -1 == contents.find(template_teststr)
 
 def test_image_override_help_template(mocker, tmpdir):
