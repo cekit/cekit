@@ -54,6 +54,8 @@ def test_osbs_builder_user(mocker):
 
 def test_merge_container_yaml_no_limit_arch(mocker, tmpdir):
     mocker.patch.object(glob, 'glob', return_value=False)
+    mocker.patch.object(subprocess, 'check_output')
+
     builder = Builder('osbs', 'tmp', {})
     builder.dist_git_dir = str(tmpdir.mkdir('target'))
 
@@ -74,6 +76,7 @@ def test_merge_container_yaml_no_limit_arch(mocker, tmpdir):
 
 def test_merge_container_yaml_limit_arch(mocker, tmpdir):
     mocker.patch.object(glob, 'glob', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
     builder = Builder('osbs', 'tmp', {})
     builder.dist_git_dir = str(tmpdir.mkdir('target'))
 
