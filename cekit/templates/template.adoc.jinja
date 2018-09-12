@@ -1,0 +1,150 @@
+{%- macro resource_location(resource) -%}
+  {%- if resource.path -%}
+    {%- if resource.path.startswith("/") or resource.path.startswith("./") or resource.path.startswith("../") -%}
+      {{resource.path}}
+    {%- else -%}
+      ./{{resource.path}}
+    {%- endif -%}
+  {%- elif resource.url -%}
+    {{resource.url}}
+  {%- elif resource.git -%}
+    {%- if repository.git.url.endswith(".git") -%}
+      {{repository.git.url[0:-4]}}
+    {%- else -%}
+      {{repository.git.url}}
+    {%- endif -%}
+    {%- if repository.git.ref -%}
+      /tree/{{repository.git.ref}}
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{%- macro resource_name(resource) -%}
+  {%- if resource.name -%}
+    {{resource.name}}
+  {%- else -%}
+    {{resource_location(resource).split("/")[-1]}}
+  {%- endif -%}
+{%- endmacro %}
+
+{%- macro relative_module(target) -%}
+  {%- for comp in name.split(".") -%}
+    ../
+  {%- endfor -%}
+  {{target.replace(".","/")}}
+{%- endmacro %}
+
+= link:./module.yaml[{{name}}]
+:toc:
+:toc-placement!:
+:toclevels: 5
+
+{{description}}
+
+toc::[]
+
+== Labels
+{% if labels %}
+The following labels will be defined on the image:
+    {%- for label in labels|sort(attribute="name") %}
+
+{{label.name}}:: {{label.value}}
+    {%- endfor -%}
+{%- else -%}
+No labels defined.
+{% endif %}
+
+== Environment Variables
+
+The following environment variables are used to configure the functionality provided by this module:
+
+|=======================================================================
+|Name |Description |Example
+{%- if envs -%}
+    {%- for env in envs|sort(attribute="name") -%}
+        {%- if env.description or env.example %}
+|{{env.name}} |{{env.description}} |{{env.example}}
+        {%- endif -%}
+    {%- endfor -%}
+{%- endif %}
+|=======================================================================
+
+The following environment variables will be configured on the image:
+|=======================================================================
+|Name |Value
+{%- if envs -%}
+    {%- for env in envs|sort(attribute="name") -%}
+        {%- if env.value %}
+|{{env.name}} |{{env.value}}
+        {%- endif -%}
+    {%- endfor -%}
+{%- endif %}
+|=======================================================================
+
+== Resources
+{% if artifacts %}
+The following resources will be included through this module:
+|=======================================================================
+|Name |Location |Checksum
+    {%- for artifact in artifacts|sort(attribute="name") %}
+|{{resource_name(artifact)}} 
+|{{resource_location(artifact)}} 
+a|
+md5:: {{artifact.md5}}
+
+sha1:: {{artifact.sha1}}
+
+sha256:: {{artifact.sha256}}
+    {%- endfor %}
+
+|=======================================================================
+{%- else -%}
+No additional resources will be installed through this module.
+{%- endif %}
+
+== RPM Packages
+
+=== Installed RPM Packages
+{% if packages and packages.install %}
+The following RPMs will be installed by this module:
+    {% for package in packages.install|sort %}
+* {{package}}
+    {%- endfor -%}
+{%- else -%}
+No RPMs will be installed by this module.
+{%- endif %}
+
+=== RPM Package Repositories
+{% if packages and packages.repositories %}
+Installed RPMs will be sourced from the following package repositories:
+    {% for repository in packages.repositories|sort %}
+* {{repository}}
+    {%- endfor -%}
+{%- else -%}
+No additional RPM package repositories are required to install listed RPMs.
+{%- endif %}
+
+== Modules
+
+=== Included Modules
+{% if modules and modules.install %}
+The following modules will be installed with this module: 
+    {%- for module in modules.install|sort(attribute="name") %}
+
+link:{{relative_module(module.name)}}/README.adoc[{{module.name}}{% if module.version %}:{{module.version}}{% endif %}]
+    {%- endfor -%}
+{%- else -%}
+No additional modules will be installed through this module.
+{%- endif %}
+
+=== Module Repositories
+{% if modules and modules.repositories %}
+The following module repositories will be used to locate other modules.
+    {%- for repository in modules.repositories|sort(attribute="name") %}
+
+{{resource_name(repository)}}:: {{resource_location(repository)}}
+    {%- endfor -%}
+{%- else -%}
+No module repositories defined.
+{%- endif %}
+

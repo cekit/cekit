@@ -15,6 +15,7 @@ from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
 from cekit.tools import cleanup
 from cekit.version import version
+from cekit.docgen import Docgen
 
 # FIXME we shoudl try to move this to json
 setup_logging()
@@ -166,7 +167,7 @@ class Cekit(object):
 
         parser.add_argument('commands',
                             nargs='+',
-                            choices=['generate', 'build', 'test'],
+                            choices=['generate', 'build', 'test', 'docgen'],
                             help="commands that should be executed, \
                                 you can specify multiple commands")
 
@@ -209,6 +210,10 @@ class Cekit(object):
                                    params)
 
     def run(self):
+
+        if 'docgen' in self.args.commands:
+            Docgen().docgen()
+            return
 
         try:
             self.configure()
