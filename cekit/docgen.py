@@ -17,9 +17,9 @@ autogen_warning="""////
 """
 
 class Docgen():
-    def __init__(self):
+    def __init__(self, descriptor='module.yaml'):
         # find module descriptor
-        self.descriptor = 'module.yaml'
+        self.descriptor = descriptor
         if not os.path.isfile(self.descriptor):
             logger.error("can't find module.yaml descriptor")
             sys.exit(1)

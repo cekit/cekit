@@ -1,0 +1,7 @@
+schema_version: 1
+name: os-eap-s2i
+version: '1.0'
+description: Legacy os-eap-s2i script package.
+modules:
+  install:
+  - name: jboss.container.eap.s2i.bash
