@@ -121,9 +121,9 @@ def test_merging_list_of_descriptors():
 
 
 def test_merge_run_cmd():
-    run1 = Run({'user': 'foo', 'cmd': ['a', 'b', 'c'], 'entrypoint': ['a', 'b']})
-    run2 = Run({'user': 'foo', 'cmd': ['1', '2', '3'], 'entrypoint': ['1', '2']})
+    override = Run({'user': 'foo', 'cmd': ['a', 'b', 'c'], 'entrypoint': ['a', 'b']})
+    image = Run({'user': 'foo', 'cmd': ['1', '2', '3'], 'entrypoint': ['1', '2']})
 
-    run1.merge(run2)
-    assert run1['cmd'] == ['a', 'b', 'c']
-    assert run1['entrypoint'] == ['a', 'b']
+    override.merge(image)
+    assert override['cmd'] == ['a', 'b', 'c']
+    assert override['entrypoint'] == ['a', 'b']
