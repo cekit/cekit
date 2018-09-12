@@ -41,7 +41,7 @@ class Docgen():
         with open(module_file) as open_file:
             data = yaml.load(open_file)
         output_file = os.path.join(os.path.dirname(module_file), 'README.adoc')
-        print ("Generating %s..." % os.path.join(os.path.relpath(output_file, os.getcwd())), os.path.basename(output_file))
+        logger.info("Generating %s..." % os.path.join(os.path.relpath(output_file, os.getcwd())), os.path.basename(output_file))
         with open(output_file, "w") as text_file:
             text_file.write(autogen_warning)
             text_file.write(self.template.render(data))
