@@ -46,9 +46,11 @@ class Configuration(Descriptor):
 
     def _prepare_configuration(self):
         if 'container' in self and 'container_file' in self:
-            raise CekitError('You cannot specifu container and container_file together!')
+            raise CekitError('You cannot specify container and container_file together!')
 
         if 'container_file' in self:
+            if not os.path.exists(self['container_file']):
+                raise CekitError("'%s' file not found!" % self['container_file'])
             with open(self['container_file'], 'r') as file_:
                 self['container'] = yaml.safe_load(file_)
             del self['container_file']

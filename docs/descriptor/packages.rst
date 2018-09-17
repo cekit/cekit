@@ -83,18 +83,18 @@ repositories section in a way of:
 .. _repo_contentsets:
 
 
-ContentSets
-^^^^^^^^^^^
-ContentSets are tightly integrated to OSBS style of defining repositories in ``content_sets.yml`` file.
+Content sets
+^^^^^^^^^^^^
+Content sets are tightly integrated to OSBS style of defining repositories in ``content_sets.yml`` file.
 For local Docker based build these repositories are ignored similarly to Plain repository types and
 we expect repository definitions to be available inside image. See
 `upstream docs <https://osbs.readthedocs.io/en/latest/users.html#content-sets>`_ for more details about
 content sets.
 
 .. note::
-   Behavior of ContentSets repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
+   Behavior of Content sets repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
 
-There are two possibilities how to define ContentSets type of repository:
+There are two possibilities how to define Content sets type of repository:
 
 Embedded
 """"""""
@@ -113,7 +113,7 @@ In this approach content sets are embedded inside image descriptor under the ``c
 
 Linked
 """"""
-In this approach contet sets file is linked from a separate yaml file next to image descriptor via
+In this approach Contet sets file is linked from a separate yaml file next to image descriptor via
 ``content_sets_file`` key.
 
 Image descriptor:
