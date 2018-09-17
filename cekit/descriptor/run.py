@@ -28,3 +28,8 @@ class Run(Descriptor):
         if 'name' not in self._descriptor:
             self._descriptor['name'] = 'run'
         self.skip_merging = ['cmd', 'entrypoint']
+
+    def merge(self, descriptor):
+        for k2, v2 in descriptor.items():
+            if k2 not in self:
+                self[k2] = v2

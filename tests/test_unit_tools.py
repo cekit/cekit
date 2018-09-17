@@ -127,3 +127,9 @@ def test_merge_run_cmd():
     override.merge(image)
     assert override['cmd'] == ['a', 'b', 'c']
     assert override['entrypoint'] == ['a', 'b']
+
+    override = Run({})
+    override.merge(image)
+    assert override['cmd'] == ['1', '2', '3']
+    assert override['entrypoint'] == ['1', '2']
+    assert override['user'] == 'foo'
