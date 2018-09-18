@@ -24,7 +24,7 @@ class ArtifactCache():
         cache = {}
         for index_file in glob.glob(os.path.join(self._cache_dir, '*.yaml')):
             with open(index_file, 'r') as file_:
-                cache[index_file[len(self._cache_dir)+1:-5]] = yaml.safe_load(file_)
+                cache[os.path.basename(index_file)] = yaml.safe_load(file_)
 
         return cache
 
