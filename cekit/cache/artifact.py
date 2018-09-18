@@ -67,9 +67,9 @@ class ArtifactCache():
         return artifact_id
 
     def delete(self, uuid):
-        cache = self._get_cache()
-        artifact = cache.pop(uuid)
-        os.remove(os.path.expanduser(artifact['cached_path']))
+        # check if artifact exists
+        self._get_cache()
+        os.remove(os.path.join(self._cache_dir, uuid))
         os.remove(os.path.join(self._cache_dir, uuid + '.yaml'))
 
     def get(self, artifact):
