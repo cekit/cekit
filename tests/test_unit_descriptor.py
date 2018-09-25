@@ -1,10 +1,14 @@
 import pytest
 import yaml
 
-from cekit import tools
+from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
     Repository
+
+
+config = Config()
+config.configure('/dev/null', {'redhat': True})
 
 
 def test_label():
@@ -64,7 +68,6 @@ def test_osbs():
 
 
 def test_packages(mocker):
-    tools.cfg['common'] = {'redhat': True}
     mocker.patch.object(Repository, '_get_repo_url', return_value='foo')
     pkg = Packages(yaml.safe_load("""
       repositories:
@@ -106,7 +109,6 @@ def test_image_missing_name():
 
 
 def test_remove_none_key():
-    tools.cfg['common'] = {'work_dir': '/tmp'}
     image = Image(yaml.safe_load("""
     from: foo
     name: test/foo

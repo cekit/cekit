@@ -3,8 +3,8 @@ import logging
 import sys
 import traceback
 
+from cekit.config import Config
 from cekit.log import setup_logging
-from cekit import tools
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 from cekit.cache.artifact import ArtifactCache
 from cekit.descriptor import Resource
@@ -13,6 +13,7 @@ from cekit.version import version
 # FIXME we shoudl try to move this to json
 setup_logging()
 logger = logging.getLogger('cekit')
+config = Config()
 
 
 class MyParser(argparse.ArgumentParser):
@@ -73,14 +74,13 @@ class CacheCli():
         return self
 
     def run(self):
-        tools.cfg = tools.get_cfg(self.args.config)
+
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)
 
-        if self.args.work_dir:
-            tools.cfg['common']['work_dir'] = self.args.work_dir
+        config.configure(self.args.config, {'work_dir': self.args.work_dir})
 
         if self.args.cmd == 'add':
             artifact_cache = ArtifactCache()

@@ -3,13 +3,13 @@ import os
 import yaml
 
 from cekit.descriptor import Resource, Image, Overrides
-from cekit import tools
+from cekit.config import Config
 from cekit.errors import CekitError
 
+config = Config()
 
 def setup_function(function):
-    tools.cfg = {}
-    tools.cfg['common'] = {'work_dir': '/tmp'}
+    config.cfg['common'] = {'work_dir': '/tmp'}
 
     if os.path.exists('file'):
         os.remove('file')
@@ -62,6 +62,7 @@ def get_mock_ssl(mocker, ctx):
 
 
 def test_fetching_with_ssl_verify(mocker):
+    config.cfg['common']['ssl_verify'] = True
     ctx = get_ctx(mocker)
     get_mock_ssl(mocker, ctx)
     mock_urlopen = get_mock_urlopen(mocker)
@@ -78,7 +79,7 @@ def test_fetching_with_ssl_verify(mocker):
 
 
 def test_fetching_disable_ssl_verify(mocker):
-    tools.cfg['common']['ssl_verify'] = "False"
+    config.cfg['common']['ssl_verify'] = False
 
     mock_urlopen = get_mock_urlopen(mocker)
     ctx = get_ctx(mocker)
@@ -94,8 +95,6 @@ def test_fetching_disable_ssl_verify(mocker):
 
     assert ctx.check_hostname is False
     assert ctx.verify_mode == 0
-    tools.cfg['common']['ssl_verify'] = "True"
-    tools.cfg = {}
 
 
 def test_fetching_bad_status_code():
@@ -174,12 +173,11 @@ def test_resource_verify(mocker):
 
 
 def test_generated_url_with_cacher():
-    tools.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
+    config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
     res = Resource({'url': 'dummy',
                     'sha256': 'justamocksum'})
     res.name = 'file'
     assert res._Resource__substitute_cache_url('file') == 'file,sha256,justamocksum'
-    tools.cfg = {}
 
 
 def test_path_resource_absolute():
@@ -195,7 +193,6 @@ def test_path_resource_relative():
 
 
 def test_overide_resource_remove_chksum():
-    tools.cfg['common'] = {'work_dir': '/tmp'}
     image = Image(yaml.safe_load("""
     from: foo
     name: test/foo

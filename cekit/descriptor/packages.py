@@ -2,11 +2,12 @@ import os
 import logging
 import yaml
 
-from cekit import tools
+from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.descriptor import Descriptor, Resource
 
 logger = logging.getLogger('cekit')
+config = Config()
 
 packages_schema = [yaml.safe_load("""
 map:
@@ -76,7 +77,7 @@ class Repository(Descriptor):
                              "['id', 'odcs', 'rpm', 'url']"
                              % descriptor['name'])
 
-        if tools.cfg['common']['redhat'] and 'id' in descriptor:
+        if config.get('common', 'redhat') and 'id' in descriptor:
             descriptor['odcs'] = {'pulp': descriptor['id']}
             del descriptor['id']
 
@@ -107,7 +108,7 @@ class Repository(Descriptor):
 
     def _get_repo_url(self, descriptor):
         """Retruns repository url from Cekit config files repositories section"""
-        configured_repositories = tools.cfg.get('repositories', {})
+        configured_repositories = config.get('repositories')
 
         # We need to remove the custom "__name__" element before we can show
         # which repository keys are defined in the configuration
