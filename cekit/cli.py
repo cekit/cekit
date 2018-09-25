@@ -227,7 +227,6 @@ class Cekit(object):
             # if tags are not specified on command line we take them from image descriptor
             if not self.args.tags:
                 self.args.tags = generator.get_tags()
-            print(generator.image)
 
             # we run generate for build command too
             if set(['generate', 'build']).intersection(set(self.args.commands)):
