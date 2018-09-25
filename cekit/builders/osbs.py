@@ -7,11 +7,12 @@ import sys
 import yaml
 
 from cekit import tools
+from cekit.config import Config
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
-
+config = Config()
 
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
@@ -65,7 +66,7 @@ class OSBSBuilder(Builder):
         else:
             osbs_dir = 'osbs'
 
-        self.dist_git_dir = os.path.join(os.path.expanduser(tools.cfg['common']['work_dir']),
+        self.dist_git_dir = os.path.join(os.path.expanduser(config.get('common', 'work_dir')),
                                          osbs_dir,
                                          repository)
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):

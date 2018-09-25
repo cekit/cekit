@@ -195,6 +195,7 @@ class Generator(object):
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
         env.globals['addhelp'] = self._params.get('addhelp')
+
         template = env.get_template(os.path.basename(template_file))
 
         dockerfile = os.path.join(self.target,
@@ -210,7 +211,7 @@ class Generator(object):
 
         if self.image.get('help', {}).get('template', ""):
             help_template_path = self.image['help']['template']
-        elif 'help_template' in self._params:
+        elif self._params.get('help_template'):
             help_template_path = self._params['help_template']
         else:
             help_template_path = os.path.join(os.path.dirname(__file__),

@@ -2,10 +2,11 @@ import logging
 import yaml
 import os
 
-from cekit import tools
+from cekit.config import Config
 from cekit.generator.base import Generator
 
 logger = logging.getLogger('cekit')
+config = Config()
 
 RHEL_REPOS_MAP = {}
 RHEL_REPOS_MAP['rhel-7-server-rpms'] = 'rhel-7-for-power-le-rpms'
@@ -46,7 +47,7 @@ class OSBSGenerator(Generator):
             cur_repos.append(repo_name)
 
         content_set['x86_64'] = cur_repos
-        if tools.cfg['common']['redhat']:
+        if config.get('common', 'redhat'):
             ppc_repos = []
             for repo in cur_repos:
                 if repo in RHEL_REPOS_MAP:

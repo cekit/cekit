@@ -13,13 +13,14 @@ except ImportError:
     from urlparse import urlparse
     from urllib2 import urlopen
 
-from cekit import tools
+from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
 
 
 logger = logging.getLogger('cekit')
+config = Config()
 
 
 class Resource(Descriptor):
@@ -148,7 +149,7 @@ class Resource(Descriptor):
         return True
 
     def __substitute_cache_url(self, url):
-        cache = tools.cfg.get('common', {}).get('cache_url', None)
+        cache = config.get('common', 'cache_url')
         if not cache:
             return url
 
@@ -176,7 +177,7 @@ class Resource(Descriptor):
             else:
                 shutil.copy(parsedUrl.path, destination)
         elif parsedUrl.scheme in ['http', 'https']:
-            verify = tools.cfg.get('common', {}).get('ssl_verify', True)
+            verify = config.get('common', 'ssl_verify')
             if str(verify).lower() == 'false':
                 verify = False
 
@@ -216,7 +217,7 @@ class _PathResource(Resource):
 
     def _copy_impl(self, target):
         if not os.path.exists(self.path):
-            cache = tools.cfg.get('common', {}).get('cache_url', None)
+            cache = config.get('common', 'cache_url')
 
             # If cache_url is specified in Cekit configuration
             # file - try to fetch the 'path' artifact from cacher

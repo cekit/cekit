@@ -1,6 +1,6 @@
 import os
 
-from cekit import tools
+from cekit.config import Config
 from cekit.descriptor import Module
 from cekit.module import modules
 
@@ -17,9 +17,8 @@ module_desc = {
 }
 
 
-def setup_function(function):
-    tools.cfg = {}
-    tools.cfg['common'] = {'work_dir': '/tmp'}
+config = Config()
+config.cfg['common'] = {'work_dir': '/tmp'}
 
 
 def test_modules_repos(tmpdir):

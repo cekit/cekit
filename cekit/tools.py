@@ -6,31 +6,7 @@ import yaml
 
 from cekit.errors import CekitError
 
-try:
-    import ConfigParser as configparser
-except:
-    import configparser
-
 logger = logging.getLogger('cekit')
-
-cfg = {}
-
-
-def get_cfg(config_path):
-    """Returns configuration from cekit config file and prepares sensible defaults
-
-    params:
-        config_path - path to a cekit config file (expanding user)
-    """
-    cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser(config_path))
-    cfg = cp._sections
-    cfg['common'] = cfg.get('common', {})
-    cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.cekit')
-    cfg['common']['redhat'] = cfg.get('common', {}).get('redhat', False)
-    if cp.has_section('doc') and cp.has_option('doc', 'addhelp'):
-        cfg['doc']['addhelp'] = cp.getboolean('doc', 'addhelp')
-    return cfg
 
 
 def cleanup(target):

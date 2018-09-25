@@ -4,7 +4,7 @@ import re
 import subprocess
 import yaml
 
-from cekit import tools
+from cekit.config import Config
 from cekit.generator.base import Generator
 from cekit.descriptor import Module, Repository
 from cekit.version import version as cekit_version
@@ -14,7 +14,8 @@ basic_config = {'release': 1,
                 'from': 'scratch',
                 'name': 'testimage'}
 
-tools.cfg['common'] = {'redhat': True}
+config = Config()
+config.cfg['common'] = {'redhat': True}
 
 def print_test_name(value):
     if str(value).startswith('test'):
@@ -146,7 +147,7 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
-    tools.cfg['common'] = {'redhat': True}
+    config.cfg['common'] = {'redhat': True}
 
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
@@ -169,7 +170,7 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
-    tools.cfg['common'] = {'redhat': False}
+    config.cfg['common'] = {'redhat': False}
 
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
@@ -190,7 +191,7 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
-    tools.cfg['common']['redhat'] = True
+    config.cfg['common']['redhat'] = True
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
@@ -208,7 +209,7 @@ def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
-    tools.cfg['common']['redhat'] = False
+    config.cfg['common']['redhat'] = False
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
