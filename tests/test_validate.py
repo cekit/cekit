@@ -77,7 +77,6 @@ def test_simple_image_build(tmpdir, mocker):
 
 def test_simple_image_test(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit', '-v',
-                                      'build',
                                       'test'])
 
     image_dir = str(tmpdir.mkdir('source'))
@@ -94,6 +93,9 @@ def test_simple_image_test(tmpdir, mocker):
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
     run_cekit(image_dir)
+
+    assert os.path.exists(os.path.join(image_dir, 'target', 'image'))
+    assert not os.path.exists(os.path.join(image_dir, 'target', 'image', 'Dockerfile'))
 
 
 def test_image_generate_with_multiple_overrides(tmpdir, mocker):

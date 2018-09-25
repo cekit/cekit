@@ -220,21 +220,22 @@ class Cekit(object):
             # We have all overrided repo fetch so we can discover modules
             # and process its dependency trees
             discover_modules(os.path.join(self.args.target, 'repo'))
+            generator.prepare_modules()
+            if self.args.build_tech_preview:
+                generator.generate_tech_preview()
 
-            # we run generate for every possible command
-            if self.args.commands:
-                generator.prepare_modules()
+            # if tags are not specified on command line we take them from image descriptor
+            if not self.args.tags:
+                self.args.tags = generator.get_tags()
+            print(generator.image)
+
+            # we run generate for build command too
+            if set(['generate', 'build']).intersection(set(self.args.commands)):
                 generator.prepare_repositories()
                 generator.image.remove_none_keys()
                 generator.prepare_artifacts()
-                if self.args.build_tech_preview:
-                    generator.generate_tech_preview()
                 generator.image.write(os.path.join(self.args.target, 'image.yaml'))
                 generator.render_dockerfile()
-
-                # if tags are not specified on command line we take them from image descriptor
-                if not self.args.tags:
-                    self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
                 params = {'user': self.args.build_osbs_user,
