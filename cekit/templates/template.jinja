@@ -18,30 +18,6 @@
 
 FROM {{ from }}
 
-{% if envs %}
-# Environment variables
-ENV \
-    {% for env in helper.envs(envs)|sort(attribute='name') %}
-    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
-
-    {% endfor %}
-{% endif %}
-
-{% if labels %}
-# Labels
-LABEL \
-      {% for label in labels|sort(attribute='name') %}
-      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
-
-      {% endfor %}
-{% endif %}
-
-{% if ports %}
-# Exposed ports
-EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
-
-{% endif %}
-
 USER root
 
 {% if packages and packages.install %}
@@ -84,6 +60,30 @@ COPY \
     {{ artifact['name'] }} \
     {% endfor %}
     /tmp/artifacts/
+
+{% endif %}
+
+{% if envs %}
+# Environment variables
+ENV \
+    {% for env in helper.envs(envs)|sort(attribute='name') %}
+    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
+
+    {% endfor %}
+{% endif %}
+
+{% if labels %}
+# Labels
+LABEL \
+      {% for label in labels|sort(attribute='name') %}
+      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
+
+      {% endfor %}
+{% endif %}
+
+{% if ports %}
+# Exposed ports
+EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
 
 {% endif %}
 
