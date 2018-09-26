@@ -1,7 +1,5 @@
+class CekitError(Exception):
 
-class Error(Exception):
-    pass
-
-
-class CekitError(Error):
-    pass
+    def __init__(self, message, *args,  **kwargs):
+        super(CekitError, self).__init__(message, *args, **kwargs)
+        self.message = message
