@@ -114,6 +114,7 @@ def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
 
 
 def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
+    config.cfg['common']['redhat'] = True
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
@@ -162,7 +163,7 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
-    tools.cfg['common'] = {'redhat': True}
+    config.cfg['common'] = {'redhat': True}
 
     target = str(tmpdir.mkdir('target'))
     os.makedirs(os.path.join(target, 'image'))
@@ -225,7 +226,7 @@ def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
-    config.get('common', 'redhat') = True
+    config.cfg['common']['redhat'] = True
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
@@ -254,32 +255,6 @@ def test_dockerfile_osbs_url_only(tmpdir, mocker):
     generator.prepare_repositories()
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
     assert 'foo' in [x['url']['repository'] for x in generator.image['packages']['set_url']]
-
-
-def test_dockerfile_osbs__and_url_(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
-    mocker.patch.object(Repository, 'fetch')
-    target = str(tmpdir.mkdir('target'))
-    desc_part = {'packages': {'repositories': [{'name': 'url',
-                                                'url': {
-                                                   'repository': 'foo'
-                                                }},
-                                               {'name': 'odcs',
-                                                'odcs':{
-                                                    'pulp': 'foo'
-                                                }}
-                                               ],
-                              'install': ['a']}}
-
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.prepare_repositories()
-
-    assert 'set_url' not in generator.image['packages']
-    assert 'foo' in [x['url']['repository'] for x in generator.image['packages']['repositories_injected']]
-    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
-        content_sets = yaml.safe_load(_file)
-        assert 'x86_64' in content_sets
-        assert 'foo' in content_sets['x86_64']
 
 
 def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
