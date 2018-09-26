@@ -46,7 +46,17 @@ class Config(object):
 
     @classmethod
     def get(cls, *args):
+        """ Returns key value located by path of *args,
+        None if Key doesn't exists,
+
+        Args:
+          * args - Path of key in Cekit config
+
+        Raises:
+          KeyError if section is not available."""
         value = cls.cfg
         for arg in args:
+            if arg not in value and arg != args[-1]:
+                raise KeyError("'%s' section doesnt exists in Cekit configuration!" % '/'.join(args[:-1]))
             value = value.get(arg)
         return value
