@@ -273,7 +273,7 @@ class Cekit(object):
             if self.args.verbose:
                 logger.exception(e)
             else:
-                logger.error(str(e))
+                logger.error(e.message)
             sys.exit(1)
 
 

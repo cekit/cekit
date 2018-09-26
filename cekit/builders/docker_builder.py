@@ -50,9 +50,9 @@ class DockerBuilder(Builder):
         logger.info("Building container image...")
 
         try:
-            last_tag = ""
+            docker_layer_ids = []
             out = docker_client.build(**args)
-            lastmsg = ""
+            build_log = [""]
             for line in out:
                 if b'stream' in line:
                     line = yaml.safe_load(line)['stream']
@@ -63,14 +63,17 @@ class DockerBuilder(Builder):
                     raise CekitError("Image build failed: '%s'" % line)
 
                 if '---> Running in ' in line:
-                    last_tag = line.split(' ')[-1]
+                    docker_layer_ids.append(line.split(' ')[-1])
 
-                if line != lastmsg:
+                if '---> Using cache' in build_log[-1]:
+                    docker_layer_ids.append(line.split(' ')[-1])
+
+                if line != build_log[-1]:
                     # this prevents poluting cekit log with dowloading/extracting msgs
                     log_msg = ANSI_ESCAPE.sub('', line).strip()
                     for msg in log_msg.split('\n'):
                         logger.info('Docker: %s' % msg)
-                    lastmsg = line
+                    build_log.append(line)
 
             for tag in self._tags[1:]:
                 if ':' in tag:
@@ -82,14 +85,14 @@ class DockerBuilder(Builder):
                         % ", ".join(self._tags))
 
         except Exception as ex:
-            if last_tag:
-                failed_img = self._tags[0] + '-failed'
-                if ':' in failed_img:
-                    img_repo, img_tag = failed_img.split(":")
-                    docker_client.commit(last_tag, img_repo, tag=img_tag)
-                else:
-                    docker_client.commit(last_tag, failed_img)
-
+            msg = "Image build failed, see logs above."
+            if len(docker_layer_ids) >= 2:
                 logger.error("You can look inside the failed image by running "
-                             "'docker run --rm -ti %s bash'" % failed_img)
-            raise CekitError("Image build failed, see logs above.", ex)
+                             "'docker run --rm -ti %s bash'" % docker_layer_ids[-2])
+            if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
+               not os.path.exists(os.path.join(self.target, 'image', 'repos')):
+                msg = "Image build failed with a yum error and you don't " \
+                    "have any yum repository configured, please check " \
+                    "your image/module descriptor for proper repository " \
+                    " definitions."
+            raise CekitError(msg, ex)
