@@ -40,7 +40,7 @@ def copy_module_to_target(name, version, target):
                 check_module_version(dest, version)
 
             if not os.path.exists(dest):
-                logger.debug("Copying module '%s' to: '%s'" % (name, dest))
+                logger.debug("Copying module '%s' from '%s' to: '%s'" % (name, module.path, dest))
                 shutil.copytree(module.path, dest)
             return module
 
@@ -51,9 +51,9 @@ def check_module_version(path, version):
     descriptor = Module(tools.load_descriptor(os.path.join(path, 'module.yaml')),
                         path,
                         os.path.dirname(os.path.abspath(os.path.join(path, 'module.yaml'))))
-    if descriptor.version != version:
+    if hasattr(descriptor, 'version') and descriptor.version != version:
         raise CekitError("Requested conflicting version '%s' of module '%s'" %
-                             (version, descriptor['name']))
+                     (version, descriptor['name']))
 
 
 def get_dependencies(descriptor, base_dir):
