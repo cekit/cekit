@@ -145,12 +145,12 @@ class Generator(object):
                     try:
                         service = socket.getservbyport(p['value'], p.get('protocol','tcp'))
                         r += ":{}".format(service)
-                        ports.append(r)
-
                     except OSError: # py3
                         pass
                     except socket.error: # py2
                         pass
+
+                    ports.append(r)
 
         return ",".join(ports)
 
