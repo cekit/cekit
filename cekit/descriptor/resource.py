@@ -34,7 +34,9 @@ class Resource(Descriptor):
                 return super(Resource, cls).__new__(_UrlResource)
             elif 'git' in resource:
                 return super(Resource, cls).__new__(_GitResource)
-            raise ValueError("Resource type is not supported: %s" (resource))
+            elif 'md5' in resource and 'name' in resource:
+                return super(Resource, cls).__new__(_PlainResource)
+            raise CekitError("Resource type is not supported: %s" % resource)
 
     def __init__(self, descriptor):
         self.schemas = [yaml.safe_load("""
@@ -50,8 +52,8 @@ class Resource(Descriptor):
           sha1: {type: str}
           sha256: {type: str}
           description: {type: str}
-        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"
-        """)]
+          target: {type: str}
+        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None or val['md5'] is not None\"""")]
         super(Resource, self).__init__(descriptor)
         self.skip_merging = ['md5', 'sha1', 'sha256']
 
@@ -83,7 +85,9 @@ class Resource(Descriptor):
                                   type(self).__name__)
 
     def target_file_name(self):
-        return os.path.basename(self.name)
+        if 'target' not in self:
+            self['target'] = os.path.basename(self.name)
+        return self['target']
 
     def copy(self, target=os.getcwd()):
         if os.path.isdir(target):
@@ -271,12 +275,29 @@ class _GitResource(Resource):
         self.ref = descriptor['git']['ref']
 
     def target_file_name(self):
-        # XXX: We could make a case for using name instead of repo-ref
-        return "%s-%s" % (os.path.basename(self.url), self.ref)
+        if 'target' not in self:
+            # XXX: We could make a case for using name instead of repo-ref
+            self['target'] = "%s-%s" % (os.path.basename(self.url), self.ref)
+
+        return self['target']
 
     def _copy_impl(self, target):
         cmd = ['git', 'clone', '--depth', '1', self.url, target, '-b',
                self.ref]
         logger.debug("Running '%s'" % ' '.join(cmd))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        return target
+
+
+class _PlainResource(Resource):
+
+    def __init__(self, descriptor, **kwargs):
+        super(_PlainResource, self).__init__(descriptor)
+
+    def _copy_impl(self, target):
+        try:
+            self._download_file(self.url, target)
+        except:
+            logger.debug("Cannot hit artifact: '%s' via cacher, trying directly." % self.name)
+            self._download_file(self.url, target, use_cache=False)
         return target

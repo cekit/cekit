@@ -105,22 +105,6 @@ class Generator(object):
             descriptor.merge(req_module)
             logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
 
-
-    def prepare_artifacts(self):
-        """Goes through artifacts section of image descriptor
-        and fetches all of them
-        """
-        if 'artifacts' not in self.image:
-            logger.debug("No artifacts to fetch")
-            return
-
-        logger.info("Handling artifacts...")
-        target_dir = os.path.join(self.target, 'image')
-
-        for artifact in self.image['artifacts']:
-            artifact.copy(target_dir)
-        logger.debug("Artifacts handled")
-
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
         descriptor = Overrides(tools.load_descriptor(overrides_path),
@@ -288,3 +272,6 @@ class Generator(object):
 
     def _prepare_repository_rpm(self, repo):
         raise NotImplementedError("RPM repository injection was not implemented!")
+
+    def prepare_artifacts(self):
+        raise NotImplementedError("Artifacts handling is not implemented")

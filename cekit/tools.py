@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import sys
+import subprocess
 import yaml
 
 from cekit.errors import CekitError
@@ -52,3 +53,33 @@ def decision(question):
             return True
 
     return False
+
+
+def get_brew_url(md5):
+    try:
+        logger.info("Getting brew details for or artifact with '%s' md5 sum" % md5)
+        list_archives_cmd = ['brew', 'call', '--json-output', 'listArchives',
+                             'checksum=%s' % md5, 'type=maven']
+        logger.debug("Executing '%s'." % " ".join(list_archives_cmd))
+        archive = yaml.safe_load(subprocess.check_output(list_archives_cmd))[0]
+        build_id = archive['build_id']
+        filename = archive['filename']
+        group_id = archive['group_id']
+        artifact_id = archive['artifact_id']
+        version = archive['version']
+
+        get_build_cmd = ['brew', 'call', '--json-output', 'getBuild', 'buildInfo=%s' % build_id]
+        logger.debug("Executing '%s'" % " ".join(get_build_cmd))
+        build = yaml.safe_load(subprocess.check_output(get_build_cmd))
+        package = build['package_name']
+        release = build['release']
+
+        url = 'http://download.devel.redhat.com/brewroot/packages/' + package + '/' + \
+            version.replace('-', '_') + '/' + release + '/maven/' + \
+            group_id.replace('.', '/') + '/' + artifact_id.replace('.', '/') + '/' + \
+            version + '/' + filename
+    except subprocess.CalledProcessError as ex:
+        logger.error("Can't fetch artifacts details from brew: '%s'." %
+                     ex.output)
+        raise ex
+    return url

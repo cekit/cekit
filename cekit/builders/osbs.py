@@ -9,6 +9,7 @@ import yaml
 from cekit import tools
 from cekit.config import Config
 from cekit.builder import Builder
+from cekit.descriptor.resource import _PlainResource
 from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
@@ -80,7 +81,7 @@ class OSBSBuilder(Builder):
         self.dist_git.prepare(self._stage, self._user)
         self.dist_git.clean()
 
-        self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
+        self.artifacts = [a['name'] for a in descriptor.get('artifacts', []) if not isinstance(a, _PlainResource)]
 
         if 'packages' in descriptor and 'set_url' in descriptor['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository'] for x in descriptor['packages']['set_url']]
@@ -92,14 +93,17 @@ class OSBSBuilder(Builder):
             for obj in ["repos", "modules"]:
                 if os.path.exists(obj):
                     shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
-            shutil.copy("Dockerfile", os.path.join(
-                self.dist_git_dir, "Dockerfile"))
+            shutil.copy("Dockerfile",
+                        os.path.join(self.dist_git_dir, "Dockerfile"))
             if os.path.exists("container.yaml"):
-                self._merge_container_yaml("container.yaml", os.path.join(
-                    self.dist_git_dir, "container.yaml"))
+                self._merge_container_yaml("container.yaml",
+                                           os.path.join(self.dist_git_dir, "container.yaml"))
             if os.path.exists("content_sets.yml"):
-                shutil.copy("content_sets.yml", os.path.join(
-                    self.dist_git_dir, "content_sets.yml"))
+                shutil.copy("content_sets.yml",
+                            os.path.join(self.dist_git_dir, "content_sets.yml"))
+            if os.path.exists("fetch-artifacts-url.yaml"):
+                shutil.copy("fetch-artifacts-url.yaml",
+                            os.path.join(self.dist_git_dir, "fetch-artifacts-url.yaml"))
 
         # Copy also every artifact
         for artifact in self.artifacts:
@@ -274,6 +278,8 @@ class DistGit(object):
             subprocess.check_call(["git", "add", "container.yaml"])
         if os.path.exists("content_sets.yml"):
             subprocess.check_call(["git", "add", "content_sets.yml"])
+        if os.path.exists("fetch-artifacts-url.yaml"):
+            subprocess.check_call(["git", "add", "fetch-artifacts-url.yaml"])
 
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here

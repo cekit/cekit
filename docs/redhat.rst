@@ -55,3 +55,18 @@ will be automatically converted into following :ref:`ODCS<repo_odcs>` repository
             - name: SCL
               odcs:
                   pulp: rhel-server-rhscl-7-rpms
+
+Artifacts
+---------
+
+In Red Hat environment we are using Brew to build our packages and artifacts. Cekit provides an integration layer with Brew and enables to use artifact directly from Brew. To enable this set :ref:`redhat configuration option<redhat_config>` to True and define artifact **only** by specifying its ``md5`` checksum.
+
+
+*Example:* Following artifact will be fetched directly from brew for Docker build and uses `Brew/OSBS inegration <https://osbs.readthedocs.io/en/latest/users.html#fetch-artifacts-url-yaml>`_ for OSBS build.
+
+.. code:: yaml
+
+    artifacts:
+      - md5: d31c6b1525e6d2d24062ef26a9f639a8
+        name: jolokia-jvm-1.5.0.redhat-1-agent.jar
+

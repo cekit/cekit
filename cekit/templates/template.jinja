@@ -77,7 +77,7 @@ RUN {{ repo_remove(pkg_manager, packages.repositories_injected) }}
 # directory
 COPY \
 {% for artifact in artifacts %}
-    {{ artifact['name'] }} \
+    {{ artifact['target'] }} \
     {% endfor %}
     /tmp/artifacts/
 
