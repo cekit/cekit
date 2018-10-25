@@ -1,0 +1,13 @@
+schema_version: 1
+
+from: "rhel7"
+name: "testimage"
+version: "1.0"
+
+modules:
+  repositories:
+  - path: modules
+  install:
+  - name: a
+    version: "foo"
+  - name: b
