@@ -1,0 +1,7 @@
+schema_version: 1
+name: d
+version: '1.0'
+
+modules:
+  install:
+  - name: a
