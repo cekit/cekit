@@ -38,21 +38,21 @@ Plain
 ^^^^^
 
 This is the easiest way of defining an artifact. You are just specifying its name and **md5** checksum.
-This approach relies on :ref:`artifacts_caching` to provide the artifact in cache. 
+This approach relies on :ref:`artifacts_caching` to provide the artifact in cache. This section should be used to show that a particular artifact is needed for the image but its not publicly available.
 
 .. code:: yaml 
 
     artifacts:
         - name: jolokia-1.3.6-bin.tar.gz
           md5: 75e5b5ba0b804cd9def9f20a70af649f
-	  target: jolokia.jar
+          target: jolokia.jar
 
 .. note::
 
    See :ref:`Red Hat Environment<redhat_env>` for a description how Plain Artifacts are affected by Red
    Hat switch.
 
-	  
+          
 URL
 ^^^
 

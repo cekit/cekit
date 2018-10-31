@@ -408,6 +408,30 @@ def test_run_override_artifact(tmpdir, mocker):
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
 
+def test_run_path_artifact_target(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'path': 'bar.jar',
+                              'target': 'target_foo'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    assert check_dockerfile_uniq(image_dir, 'target_foo \\')
+
+
 def test_execution_order(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
