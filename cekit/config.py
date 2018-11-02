@@ -22,6 +22,8 @@ class Config(object):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
         if cmdline_args.get('work_dir'):
             cls.cfg['common']['work_dir'] = cmdline_args.get('work_dir')
+        if cmdline_args.get('package_manager'):
+            cls.cfg['common']['package_manager'] = cmdline_args.get('package_manager')
         if isinstance(cmdline_args.get('addhelp'), bool):
             cls.cfg['doc']['addhelp'] = cmdline_args.get('addhelp')
 
@@ -39,6 +41,8 @@ class Config(object):
         cls.cfg['common']['work_dir'] = cls.cfg.get('common').get('work_dir', '~/.cekit')
         cls.cfg['common']['redhat'] = yaml.safe_load(
             cls.cfg.get('common', {}).get('redhat', 'False'))
+        cls.cfg['common']['package_manager'] = yaml.safe_load(
+            cls.cfg.get('common', {}).get('package_manager', 'yum'))
 
         cls.cfg['doc'] = cls.cfg.get('doc', {})
         cls.cfg['doc']['addhelp'] = yaml.safe_load(

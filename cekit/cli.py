@@ -59,6 +59,12 @@ class Cekit(object):
                             dest='work_dir',
                             help="Location of Cekit working directory.")
 
+        parser.add_argument('--package-manager',
+                            dest='package_manager',
+                            choices=['yum', 'microdnf'],
+                            help='Package manager to use. Supports yum and microdnf, \
+                                defaults: yum')
+
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
@@ -182,7 +188,8 @@ class Cekit(object):
 
         config.configure(self.args.config, {'redhat': self.args.redhat,
                                             'work_dir': self.args.work_dir,
-                                            'addhelp': self.args.addhelp})
+                                            'addhelp': self.args.addhelp,
+                                            'package_manager': self.args.package_manager})
 
         cleanup(self.args.target)
 
@@ -191,7 +198,8 @@ class Cekit(object):
         params = {
             'addhelp': config.get('doc', 'addhelp'),
             'redhat':  config.get('common', 'redhat'),
-            'help_template': config.get('doc', 'help_template')
+            'help_template': config.get('doc', 'help_template'),
+            'package_manager': config.get('common', 'package_manager')
         }
 
         self.generator = Generator(self.args.descriptor,

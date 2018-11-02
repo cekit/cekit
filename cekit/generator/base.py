@@ -185,6 +185,7 @@ class Generator(object):
         if self._params.get('redhat'):
             self._inject_redhat_defaults()
 
+        self.image['pkg_manager'] = self._params.get('package_manager', 'yum')
         self.image.process_defaults()
 
         template_file = os.path.join(os.path.dirname(__file__),
