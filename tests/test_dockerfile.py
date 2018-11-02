@@ -143,6 +143,21 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
     generator.render_dockerfile()
     regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
 
+def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image')
+    generator._params['package_manager'] = 'microdnf'
+    generator.prepare_repositories()
+    generator.render_dockerfile()
+    regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf install -y a')
+    regex_dockerfile(target, 'rpm -q a')
 
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
@@ -279,7 +294,24 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
     generator.render_dockerfile()
     regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
 
-    
+
+def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir, mocker):
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a']}}
+
+    generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator._params['package_manager'] = 'microdnf'
+    generator.prepare_repositories()
+    generator.render_dockerfile()
+    regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf install -y a')
+    regex_dockerfile(target, 'rpm -q a')
+
+
 def prepare_generator(target, desc_part, desc_type="image", engine="docker"):
     # create basic descriptor
 

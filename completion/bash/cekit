@@ -81,6 +81,7 @@ _cekit_complete()
         options+='--version '
         options+='--config '
         options+='--redhat '
+        options+='--package-manager '
         COMPREPLY=( $( compgen -W "$options" -- $cur ) )
         return
     fi
