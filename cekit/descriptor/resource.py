@@ -34,7 +34,7 @@ class Resource(Descriptor):
                 return super(Resource, cls).__new__(_UrlResource)
             elif 'git' in resource:
                 return super(Resource, cls).__new__(_GitResource)
-            elif 'md5' in resource and 'name' in resource:
+            elif 'md5' in resource:
                 return super(Resource, cls).__new__(_PlainResource)
             raise CekitError("Resource type is not supported: %s" % resource)
 
