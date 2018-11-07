@@ -115,17 +115,7 @@ class Descriptor(collections.MutableMapping):
         return self._descriptor.get(k, default)
 
     def process_defaults(self):
-        """Prepares default values before rendering"""
-        if 'execute' in self._descriptor:
-            for execute in self._descriptor['execute']:
-                if 'user' not in execute:
-                    execute['user'] = cekit.DEFAULT_USER
-
-        if 'run' not in self._descriptor:
-            self._descriptor['run'] = {}
-
-        if 'user' not in self._descriptor['run']:
-            self._descriptor['run']['user'] = cekit.DEFAULT_USER
+        pass
 
     def remove_none_keys(self):
         if isinstance(self, Descriptor):
@@ -158,6 +148,8 @@ def _merge_descriptors(desc1, desc2):
 
     Return merged descriptor
     """
+    if desc2 == None:
+        return desc1
     for k2, v2 in desc2.items():
         if k2 in desc1.skip_merging:
             continue

@@ -2,14 +2,15 @@
 
 import logging
 import os
+import shutil
 import socket
 
 from jinja2 import Environment, FileSystemLoader
 
 from cekit import tools
-from cekit.descriptor import Image, Overrides, Repository
+from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
-from cekit.module import copy_module_to_target
+from cekit.version import version as cekit_version
 from cekit.template_helper import TemplateHelper
 
 logger = logging.getLogger('cekit')
@@ -52,58 +53,131 @@ class Generator(object):
                 modules['repositories'] = [{'path': local_mod_path, 'name': 'modules'}]
 
         self.image = Image(descriptor, os.path.dirname(os.path.abspath(descriptor_path)))
+        self._overrides = []
         self.target = target
         self._params = params
         self._fetch_repos = False
+        self._module_registry = ModuleRegistry()
 
         if overrides:
             for override in overrides:
-                self.image = self.override(override)
+                logger.debug("Loading override '%s'" % (override))
+                self._overrides.append(Overrides(tools.load_descriptor(override), os.path.dirname(os.path.abspath(override))))
+
+        # These should always come last
+        if self._params.get('tech_preview', False):
+            # Modify the image name, after all other overrides have been processed
+            self._overrides.append(self.get_tech_preview_overrides())
+        if self._params.get('redhat', False):
+            # Add the redhat specific stuff after everything else
+            self._overrides.append(self.get_redhat_overrides())
 
         logger.info("Initializing image descriptor...")
 
-    def generate_tech_preview(self):
-        """Appends '--tech-preview' to image name/family name"""
-        name = self.image.get('name')
-        if '/' in name:
-            family, name = name.split('/')
-            self.image['name'] = "%s-tech-preview/%s" % (family, name)
-        else:
-            self.image['name'] = "%s-tech-preview" % name
+    def init(self):
+        """
+        Initializes the generator.
+        """
+        self.process_image()
+        self.image.process_defaults()
+        self.copy_modules()
+
+    def generate(self):
+        self.prepare_repositories()
+        self.image.remove_none_keys()
+        self.image.write(os.path.join(self.target, 'image.yaml'))
+        self.prepare_artifacts()
+        self.render_dockerfile()
+
+    def process_image(self):
+        """
+        Updates the image descriptor based on all overrides and included modules:
+            1. Applies overrides to the image descriptor
+            2. Loads modules from defined module repositories
+            3. Flattens module dependency hierarchy
+            4. Incorporates global image settings specified by modules into image descriptor
+        The resulting image descriptor can be used in an 'offline' build mode.
+        """
+        # apply overrides to the image definition
+        self.apply_image_overrides()
+        # add build labels
+        self.add_build_labels()
+        # load the definitions of the modules
+        self.build_module_registry()
+        # process included modules
+        self.apply_module_overrides()
+
+    def apply_image_overrides(self):
+        self.image.apply_image_overrides(self._overrides)
+
+    def add_build_labels(self):
+        image_labels = self.image.labels
+        # we will persist cekit version in a label here, so we know which version of cekit
+        # was used to build the image
+        image_labels.extend([ Label({'name': 'org.concrt.version', 'value': cekit_version}),
+                              Label({'name': 'io.cekit.version', 'value': cekit_version}) ])
+
+        # If we define the label in the image descriptor
+        # we should *not* override it with value from
+        # the root's key
+        if self.image.description and not self.image.label('description'):
+            image_labels.append(Label({'name': 'description', 'value': self.image.description}))
+
+        # Last - if there is no 'summary' label added to image descriptor
+        # we should use the value of the 'description' key and create
+        # a 'summary' label with it's content. If there is even that
+        # key missing - we should not add anything.
+        description = self.image.label('description')
+
+        if not self.image.label('summary') and description:
+            image_labels.append(Label({'name': 'summary', 'value': description['value']}))
+
+    def apply_module_overrides(self):
+        self.image.apply_module_overrides(self._module_registry)
+
+    def build_module_registry(self):
+        base_dir = os.path.join(self.target, 'repo')
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
+        for repo in self.image.modules.repositories:
+            logger.debug("Downloading module repository: '%s'" % (repo.name))
+            repo.copy(base_dir)
+            self.load_repository(os.path.join(base_dir, repo.target_file_name()))
+
+    def load_repository(self, repo_dir):
+        for modules_dir, _, files in os.walk(repo_dir):
+            if 'module.yaml' in files:
+                module = Module(tools.load_descriptor(os.path.join(modules_dir, 'module.yaml')),
+                                modules_dir,
+                                os.path.dirname(os.path.abspath(os.path.join(modules_dir,
+                                                                            'module.yaml'))))
+                logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
+                self._module_registry.add_module(module)
 
     def get_tags(self):
         return ["%s:%s" % (self.image['name'], self.image[
             'version']), "%s:latest" % self.image['name']]
 
-    def prepare_modules(self, descriptor=None):
+    def copy_modules(self):
         """Prepare module to be used for Dockerfile generation.
         This means:
 
         1. Place module to args.target/image/modules/ directory
-        2. Fetch its artifacts to target/image/sources directory
-        3. Merge modules descriptor with image descriptor
 
-        Arguments:
-        descriptor: Module descriptor used to dig required modules,
-            if descriptor is not provided image descriptor is used.
         """
-        if not descriptor:
-            descriptor = self.image
+        target = os.path.join(self.target, 'image', 'modules')
+        for module in self.image.modules.install:
+            module = self._module_registry.get_module(module.name, module.version)
+            logger.debug("Copying module '%s' required by '%s'."
+                         % (module.name, self.image.name))
 
-        modules = descriptor.get('modules', {}).get('install', [])[:]
+            dest = os.path.join(target, module.name)
 
-        for module in reversed(modules):
-            logger.debug("Preparing module '%s' requested by '%s'."
-                         % (module['name'], descriptor['name']))
-            version = module.get('version', None)
-
-            req_module = copy_module_to_target(module['name'],
-                                               version,
-                                               os.path.join(self.target, 'image', 'modules'))
-
-            self.prepare_modules(req_module)
-            descriptor.merge(req_module)
-            logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
+            if not os.path.exists(dest):
+                logger.debug("Copying module '%s' to: '%s'" % (module.name, dest))
+                shutil.copytree(module.path, dest)
+            # write out the module with any overrides
+            module.write(os.path.join(dest, "module.yaml"))
 
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
@@ -138,39 +212,59 @@ class Generator(object):
 
         return ",".join(ports)
 
-    def _inject_redhat_defaults(self):
-        envs = [{'name': 'JBOSS_IMAGE_NAME',
-                 'value': '%s' % self.image['name']},
-                {'name': 'JBOSS_IMAGE_VERSION',
-                 'value': '%s' % self.image['version']}]
+    def get_tech_preview_overrides(self):
+        class TechPreviewOverrides(Overrides):
+            def __init__(self, image):
+                super(TechPreviewOverrides, self).__init__({}, None)
+                self._image = image
 
-        labels = [{'name': 'name',
-                   'value': '%s' % self.image['name']},
-                  {'name': 'version',
-                   'value': '%s' % self.image['version']}]
+            @property
+            def name(self):
+                new_name = self._image.name
+                if '/' in new_name:
+                    family, new_name = new_name.split('/')
+                    new_name = "%s-tech-preview/%s" % (family, new_name)
+                else:
+                    new_name = "%s-tech-preview" % new_name
+                return new_name
 
-        # do not override this label if it's already set
-        if self.image.get('ports', []) and \
-            'io.openshift.expose-services' not in [ k['name'] for k in self.image['labels'] ]:
-            labels.append({'name': 'io.openshift.expose-services',
-                           'value': self._generate_expose_services()})
+        return TechPreviewOverrides(self.image)
 
-        redhat_override = {'envs': envs,
-                           'labels': labels}
+    def get_redhat_overrides(self):
+        class RedHatOverrides(Overrides):
+            def __init__(self, generator):
+                super(RedHatOverrides, self).__init__({}, None)
+                self._generator = generator
 
-        descriptor = Overrides(redhat_override, None)
-        descriptor.merge(self.image)
-        self.image = descriptor
+            @property
+            def envs(self):
+                return [
+                        Env({'name': 'JBOSS_IMAGE_NAME', 'value': '%s' % self._generator.image['name']}),
+                        Env ({'name': 'JBOSS_IMAGE_VERSION', 'value': '%s' % self._generator.image['version']})
+                    ]
+
+            @property
+            def labels(self):
+                labels = [
+                        Label({'name': 'name', 'value': '%s' % self._generator.image['name']}),
+                        Label({'name': 'version', 'value': '%s' % self._generator.image['version']})
+                    ]
+
+                # do not override this label if it's already set
+                if self._generator.image.get('ports', []) and \
+                    'io.openshift.expose-services' not in [ k['name'] for k in self._generator.image['labels'] ]:
+                    labels.append(Label({'name': 'io.openshift.expose-services',
+                                'value': self._generator._generate_expose_services()}))
+
+                return labels
+
+        return RedHatOverrides(self)
 
     def render_dockerfile(self):
         """Renders Dockerfile to $target/image/Dockerfile"""
         logger.info("Rendering Dockerfile...")
 
-        if self._params.get('redhat'):
-            self._inject_redhat_defaults()
-
         self.image['pkg_manager'] = self._params.get('package_manager', 'yum')
-        self.image.process_defaults()
 
         template_file = os.path.join(os.path.dirname(__file__),
                                      '..',
@@ -178,7 +272,8 @@ class Generator(object):
                                      'template.jinja')
         loader = FileSystemLoader(os.path.dirname(template_file))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-        env.globals['helper'] = TemplateHelper()
+        env.globals['helper'] = TemplateHelper(self._module_registry)
+        env.globals['image'] = self.image
         env.globals['addhelp'] = self._params.get('addhelp')
 
         template = env.get_template(os.path.basename(template_file))
@@ -207,7 +302,7 @@ class Generator(object):
         help_dirname, help_basename = os.path.split(help_template_path)
         loader = FileSystemLoader(help_dirname)
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-        env.globals['helper'] = TemplateHelper()
+        env.globals['helper'] = TemplateHelper(self._module_registry)
         help_template = env.get_template(help_basename)
 
         helpfile = os.path.join(self.target, 'image', 'help.md')
@@ -286,3 +381,33 @@ class Generator(object):
 
     def prepare_artifacts(self):
         raise NotImplementedError("Artifacts handling is not implemented")
+
+class ModuleRegistry(object):
+    def __init__(self):
+        self._modules = {}
+
+    def get_module(self, name, version=None):
+        versions = self._modules.get(name, {})
+        if version == None:
+            default = versions.get('default')
+            if len(versions) > 2: # we always add the first seen as 'default'
+                logger.warning("Module version not specified for %s, using %s version." % (name, default.version))
+            return default
+        return versions.get(version, None)
+
+    def add_module(self, module):
+        versions = self._modules.get(module.name)
+        if not versions:
+            versions = {}
+            self._modules[module.name] = versions
+        version = module.version
+        if not version:
+            version = 'None'
+        existing = versions.get(version, None)
+        if existing:
+            raise CekitError("Duplicate module (%s:%s) found while processing module repository"
+                             % (module.name, module.version))
+        if len(versions) == 0:
+            # for better or worse...
+            versions['default'] = module
+        versions[version] = module

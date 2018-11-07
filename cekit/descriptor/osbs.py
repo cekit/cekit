@@ -33,6 +33,25 @@ class Osbs(Descriptor):
         if 'configuration' in self:
             self['configuration'] = Configuration(self['configuration'])
 
+    @property
+    def name(self):
+        return self.get('name')
+
+    @name.setter
+    def name(self, value):
+        self._descriptor['name'] = value
+
+    @property
+    def branch(self):
+        return self.get('branch')
+
+    @branch.setter
+    def branch(self, value):
+        self._descriptor['branch'] = value
+
+    @property
+    def configuration(self):
+        return self.get('configuration')
 
 class Configuration(Descriptor):
     """Internal object represeting OSBS configuration subObject

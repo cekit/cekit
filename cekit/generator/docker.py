@@ -74,14 +74,14 @@ class DockerGenerator(Generator):
         """Goes through artifacts section of image descriptor
         and fetches all of them
         """
-        if 'artifacts' not in self.image:
+        if not self.image.all_artifacts:
             logger.debug("No artifacts to fetch")
             return
 
         logger.info("Handling artifacts...")
         target_dir = os.path.join(self.target, 'image')
 
-        for artifact in self.image['artifacts']:
+        for artifact in self.image.all_artifacts:
             artifact.copy(target_dir)
 
         logger.debug("Artifacts handled")

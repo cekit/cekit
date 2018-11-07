@@ -20,3 +20,27 @@ class Label(Descriptor):
     def __init__(self, descriptor):
         self.schemas = label_schemas
         super(Label, self).__init__(descriptor)
+
+    @property
+    def name(self):
+        return self.get('name')
+
+    @name.setter
+    def name(self, value):
+        self._descriptor['name'] = value
+
+    @property
+    def value(self):
+        return self.get('value')
+
+    @value.setter
+    def value(self, value):
+        self._descriptor['value'] = value
+
+    @property
+    def description(self):
+        return self.get('description')
+
+    @description.setter
+    def description(self, value):
+        self._descriptor['description'] = value

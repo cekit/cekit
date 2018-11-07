@@ -23,11 +23,32 @@ class Execute(Descriptor):
 
         descriptor['directory'] = module_name
 
-        if 'user' not in descriptor:
-            descriptor['user'] = cekit.DEFAULT_USER
-
         descriptor['module_name'] = module_name
 
         if 'name' not in descriptor:
             descriptor['name'] = "%s/%s" % (module_name,
                                             descriptor['script'])
+
+    @property
+    def name(self):
+        return self.get('name')
+
+    @name.setter
+    def name(self, value):
+        self._descriptor['name'] = value
+
+    @property
+    def script(self):
+        return self.get('script')
+
+    @script.setter
+    def script(self, value):
+        self._descriptor['script'] = value
+
+    @property
+    def user(self):
+        return self.get('user', cekit.DEFAULT_USER)
+
+    @user.setter
+    def user(self, value):
+        self._descriptor['user'] = value

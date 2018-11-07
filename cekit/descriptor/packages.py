@@ -62,6 +62,14 @@ class Packages(Descriptor):
         self._descriptor['repositories'] = [Repository(x)
                                             for x in self._descriptor.get('repositories', [])]
 
+    @property
+    def repositories(self):
+        return self.get('repositories', [])
+
+    @property
+    def install(self):
+        return self.get('install', [])
+
 
 class Repository(Descriptor):
     """Object representing package repository
@@ -141,3 +149,87 @@ class Repository(Descriptor):
                 os.makedirs(target_dir)
         Resource({'url': self._descriptor['url']['repository']}) \
             .copy(os.path.join(target_dir, self._descriptor['filename']))
+
+    @property
+    def name(self):
+        return self.get('name')
+
+    @name.setter
+    def name(self, value):
+        self._descriptor['name'] = value
+
+    @property
+    def description(self):
+        return self.get('description')
+
+    @description.setter
+    def description(self, value):
+        self._descriptor['description'] = value
+
+    @property
+    def present(self):
+        return self.get('present', True)
+
+    @present.setter
+    def present(self, value):
+        self._descriptor['present'] = value
+
+    @property
+    def id(self):
+        return self.get('id')
+
+    @id.setter
+    def id(self, value):
+        self._descriptor['id'] = value
+        self._descriptor.pop('url', None)
+        self._descriptor.pop('rpm', None)
+        self._descriptor.pop('odcs', None)
+        self._descriptor.pop('filename', None)
+
+    @property
+    def url(self):
+        return self.get('url')
+
+    @url.setter
+    def url(self, value):
+        self._descriptor['url'] = value
+        self._descriptor.pop('id', None)
+        self._descriptor.pop('rpm', None)
+        self._descriptor.pop('odcs', None)
+        self._descriptor.pop('filename', None)
+
+    @property
+    def rpm(self):
+        return self.get('rpm')
+
+    @rpm.setter
+    def rpm(self, value):
+        self._descriptor['rpm'] = value
+        self._descriptor.pop('id', None)
+        self._descriptor.pop('url', None)
+        self._descriptor.pop('odcs', None)
+        self._descriptor.pop('filename', None)
+
+    @property
+    def odcs(self):
+        return self.get('odcs')
+
+    @odcs.setter
+    def odcs(self, value):
+        self._descriptor['odcs'] = value
+        self._descriptor.pop('id', None)
+        self._descriptor.pop('url', None)
+        self._descriptor.pop('rpm', None)
+        self._descriptor.pop('filename', None)
+
+    @property
+    def filename(self):
+        return self.get('filename')
+
+    @filename.setter
+    def filename(self, value):
+        self._descriptor['filename'] = value
+        self._descriptor.pop('id', None)
+        self._descriptor.pop('url', None)
+        self._descriptor.pop('rpm', None)
+        self._descriptor.pop('odcs', None)
