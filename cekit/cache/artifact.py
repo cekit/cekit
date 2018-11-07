@@ -58,7 +58,7 @@ class ArtifactCache():
 
         for alg in SUPPORTED_HASH_ALGORITHMS:
             if alg in artifact:
-                if not check_sum(artifact_file, alg, artifact[alg]):
+                if not check_sum(artifact_file, alg, artifact[alg], artifact['name']):
                     raise CekitError('Artifact contains invalid checksum!')
                 chksum = artifact[alg]
             else:

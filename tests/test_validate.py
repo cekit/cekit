@@ -431,7 +431,7 @@ def test_run_path_artifact_brew(tmpdir, mocker, caplog):
 
     run_cekit_exception(image_dir)
 
-    assert "Error copying resource: 'aaa'. See logs for more info." in caplog.text
+    assert "Cannot fetch Artifact: 'aaa', please cache it via cekit-cache." in caplog.text
 
 
 def test_run_path_artifact_target(tmpdir, mocker):

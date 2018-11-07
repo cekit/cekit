@@ -15,13 +15,14 @@ def get_sum(target, algorithm):
     return hash_function.hexdigest()
     
 
-def check_sum(target, algorithm, expected):
+def check_sum(target, algorithm, expected, name=None):
     """ Check that file chksum is correct
     Args:
       alg - algorithm which will be used for diget
       expected_chksum - checksum which artifact must match
     """
-
+    if not name:
+        name = target
     logger.debug("Checking '%s' %s hash..." % (target, algorithm))
 
     checksum = get_sum(target, algorithm)
