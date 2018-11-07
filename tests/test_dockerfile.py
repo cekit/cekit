@@ -5,7 +5,7 @@ import subprocess
 import yaml
 
 from cekit.config import Config
-from cekit.generator.base import Generator
+from cekit.generator.base import Generator, ModuleRegistry
 from cekit.descriptor import Module, Repository
 from cekit.version import version as cekit_version
 
@@ -49,9 +49,9 @@ odcs_fake_resp = b"""Result:
 
 @pytest.mark.parametrize('name, desc_part, exp_regex', [
     ('test_run_user',
-     {'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n+.*CMD.*'),
+     {'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n((#.*)?\n)*CMD.*'),
     ('test_default_run_user',
-     {'run': {'cmd': ['whatever']}},  r'.*USER root\n+.*CMD.*'),
+     {'run': {'cmd': ['whatever']}},  r'.*USER root\n((#.*)?\n)*CMD.*'),
     ('test_custom_cmd',
      {'run': {'cmd': ['/usr/bin/date']}}, r'.*CMD \["/usr/bin/date"\]'),
     ('test_entrypoint',
@@ -90,10 +90,11 @@ odcs_fake_resp = b"""Result:
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
+    params = {'redhat': True}
 
-    generator = prepare_generator(target, desc_part)
-    generator._params['redhat'] = True
-    generator.render_dockerfile()
+    generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
+    generator.init()
+    generator.generate()
 
     regex_dockerfile(target, exp_regex)
 
@@ -106,10 +107,10 @@ def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
                          ids=print_test_name)
 def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
     target = str(tmpdir.mkdir('target'))
-    generator = prepare_generator(target, desc_part)
-    generator._params = {'redhat': True}
-    generator.generate_tech_preview()
-    generator.render_dockerfile()
+    params = {'redhat': True, 'tech_preview': True}
+    generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
+    generator.init()
+    generator.generate()
     regex_dockerfile(target, exp_regex)
 
 
@@ -123,8 +124,8 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
                  'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image')
-    generator.prepare_repositories()
-    generator.render_dockerfile()
+    generator.init()
+    generator.generate()
     regex_dockerfile(target, 'repos/content_sets_odcs.repo')
 
 
@@ -137,8 +138,8 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image')
-    generator.prepare_repositories()
-    generator.render_dockerfile()
+    generator.init()
+    generator.generate()
     regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
 
 def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
@@ -148,11 +149,11 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'rpm': 'foo-repo.rpm'}],
                               'install': ['a', 'b']}}
+    params = {'package_manager': 'microdnf'}
 
-    generator = prepare_generator(target, desc_part, 'image')
-    generator._params['package_manager'] = 'microdnf'
-    generator.prepare_repositories()
-    generator.render_dockerfile()
+    generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
+    generator.init()
+    generator.generate()
     regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
@@ -169,6 +170,7 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.init()
     generator.prepare_repositories()
     with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
         content_sets = yaml.safe_load(_file)
@@ -191,6 +193,7 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.init()
     generator.prepare_repositories()
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
 
@@ -206,6 +209,7 @@ def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.init()
     generator.prepare_repositories()
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
 
@@ -222,6 +226,7 @@ def test_dockerfile_osbs_url_only(tmpdir, mocker):
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
+    generator.init()
     generator.prepare_repositories()
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
     assert 'foo' in [x['url']['repository'] for x in generator.image['packages']['set_url']]
@@ -236,8 +241,8 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.prepare_repositories()
-    generator.render_dockerfile()
+    generator.init()
+    generator.generate()
     regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
 
 
@@ -248,31 +253,27 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir, mocker):
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'rpm': 'foo-repo.rpm'}],
                               'install': ['a']}}
+    params = {'package_manager': 'microdnf'}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator._params['package_manager'] = 'microdnf'
-    generator.prepare_repositories()
-    generator.render_dockerfile()
+    generator = prepare_generator(target, desc_part, 'image', 'osbs', [], params)
+    generator.init()
+    generator.generate()
     regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf install -y a')
     regex_dockerfile(target, 'rpm -q a')
 
 
-def prepare_generator(target, desc_part, desc_type="image", engine="docker"):
+def prepare_generator(target, desc_part, desc_type="image", engine="docker", overrides=[], params={}):
     # create basic descriptor
 
     desc = basic_config.copy()
     desc.update(desc_part)
 
-    image = Module(desc, '/tmp/', '/tmp')
+    tmp_image_file = os.path.join(os.path.dirname(target), 'image.yaml')
+    with open(tmp_image_file, 'w') as outfile:
+        yaml.dump(desc, outfile, default_flow_style=False)
 
-    generator = Generator.__new__(Generator, image, target, engine, None, {})
-    generator.image = image
-    generator.target = target
-    generator._type = 'docker'
-    generator._wipe = False
-    generator._params = {}
-    generator._fetch_repos = False
+    generator = Generator(tmp_image_file, target, engine, overrides, params)
     generator._content_set_f = os.path.join(target, 'image', 'content_sets.yml')
     generator._container_f = os.path.join(target, 'image', 'container.yaml')
     return generator

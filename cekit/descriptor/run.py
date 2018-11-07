@@ -2,7 +2,6 @@ import yaml
 
 from cekit.descriptor import Descriptor
 
-
 run_schema = [yaml.safe_load("""
 map:
   workdir: {type: str}
@@ -30,6 +29,9 @@ class Run(Descriptor):
         self.skip_merging = ['cmd', 'entrypoint']
 
     def merge(self, descriptor):
+        if not descriptor:
+            return self
         for k2, v2 in descriptor.items():
-            if k2 not in self:
+            if k2 not in self and v2:
                 self[k2] = v2
+        return self

@@ -39,7 +39,7 @@ class OSBSGenerator(Generator):
         """Goes through artifacts section of image descriptor
         and fetches all of them
         """
-        if 'artifacts' not in self.image:
+        if not self.image.all_artifacts:
             logger.debug("No artifacts to fetch")
             return
 
@@ -47,7 +47,7 @@ class OSBSGenerator(Generator):
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
 
-        for artifact in self.image['artifacts']:
+        for artifact in self.image.all_artifacts:
             logger.info("Preparing artifact %s" % artifact['name'])
 
             if isinstance(artifact, _PlainResource) and \

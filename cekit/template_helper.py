@@ -4,6 +4,12 @@ import re
 
 class TemplateHelper(object):
 
+    def __init__(self, module_registry):
+        self._module_registry = module_registry
+
+    def module(self, to_install):
+        return self._module_registry.get_module(to_install.name, to_install.version)
+
     def filename(self, source):
         """Simple helper to return the file specified name"""
 

@@ -11,7 +11,6 @@ from cekit.builder import Builder
 from cekit.log import setup_logging
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-from cekit.module import discover_modules, get_dependencies
 from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
 from cekit.tools import cleanup
@@ -199,7 +198,8 @@ class Cekit(object):
             'addhelp': config.get('doc', 'addhelp'),
             'redhat':  config.get('common', 'redhat'),
             'help_template': config.get('doc', 'help_template'),
-            'package_manager': config.get('common', 'package_manager')
+            'package_manager': config.get('common', 'package_manager'),
+            'tech_preview' : self.args.build_tech_preview
         }
 
         self.generator = Generator(self.args.descriptor,
@@ -214,16 +214,7 @@ class Cekit(object):
             self.configure()
             generator = self.generator
 
-            # Now we can fetch repositories of modules (we have all overrides)
-            get_dependencies(generator.image,
-                             os.path.join(self.args.target, 'repo'))
-
-            # We have all overrided repo fetch so we can discover modules
-            # and process its dependency trees
-            discover_modules(os.path.join(self.args.target, 'repo'))
-            generator.prepare_modules()
-            if self.args.build_tech_preview:
-                generator.generate_tech_preview()
+            generator.init()
 
             # if tags are not specified on command line we take them from image descriptor
             if not self.args.tags:
@@ -231,11 +222,7 @@ class Cekit(object):
 
             # we run generate for build command too
             if set(['generate', 'build']).intersection(set(self.args.commands)):
-                generator.prepare_repositories()
-                generator.image.remove_none_keys()
-                generator.prepare_artifacts()
-                generator.image.write(os.path.join(self.args.target, 'image.yaml'))
-                generator.render_dockerfile()
+                generator.generate()
 
             if 'build' in self.args.commands:
                 params = {'user': self.args.build_osbs_user,

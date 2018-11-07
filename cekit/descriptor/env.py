@@ -20,3 +20,35 @@ class Env(Descriptor):
     def __init__(self, descriptor):
         self.schemas = env_schema
         super(Env, self).__init__(descriptor)
+
+    @property
+    def name(self):
+        return self.get('name')
+
+    @name.setter
+    def name(self, value):
+        self._descriptor['name'] = value
+
+    @property
+    def value(self):
+        return self.get('value')
+
+    @value.setter
+    def value(self, value):
+        self._descriptor['value'] = value
+
+    @property
+    def example(self):
+        return self.get('example')
+
+    @example.setter
+    def example(self, value):
+        self._descriptor['example'] = value
+
+    @property
+    def description(self):
+        return self.get('description')
+
+    @description.setter
+    def description(self, value):
+        self._descriptor['description'] = value

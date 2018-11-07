@@ -83,10 +83,10 @@ class OSBSBuilder(Builder):
         self.dist_git.clean()
 
         # First get all artifacts that are not plain artifacts
-        self.artifacts = [a['name'] for a in descriptor.get('artifacts', []) if not isinstance(a, _PlainResource)]
+        self.artifacts = [a['name'] for a in descriptor.all_artifacts if not isinstance(a, _PlainResource)]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
-        self.artifacts += [a['name'] for a in descriptor.get('artifacts', []) if isinstance(a, _PlainResource) and a.get('lookaside')]
+        self.artifacts += [a['name'] for a in descriptor.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
         if 'packages' in descriptor and 'set_url' in descriptor['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository'] for x in descriptor['packages']['set_url']]
