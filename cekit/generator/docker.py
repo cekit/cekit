@@ -82,9 +82,9 @@ class DockerGenerator(Generator):
             artifact_cache = ArtifactCache()
             if isinstance(artifact, _PlainResource):
                 if artifact_cache.is_cached(artifact):
-                    continue
-                if not artifact_cache.is_cached(artifact) and \
-                   config.get('common', 'redhat'):
+                    pass
+                elif not artifact_cache.is_cached(artifact) and \
+                     config.get('common', 'redhat'):
                     artifact.url = get_brew_url(artifact['md5'])
                 else:
                     if 'description' in artifact:

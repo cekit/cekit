@@ -57,7 +57,7 @@ def decision(question):
 
 def get_brew_url(md5):
     try:
-        logger.info("Getting brew details for or artifact with '%s' md5 sum" % md5)
+        logger.info("Getting brew details for an artifact with '%s' md5 sum" % md5)
         list_archives_cmd = ['brew', 'call', '--json-output', 'listArchives',
                              'checksum=%s' % md5, 'type=maven']
         logger.debug("Executing '%s'." % " ".join(list_archives_cmd))

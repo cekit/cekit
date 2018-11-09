@@ -111,7 +111,7 @@ class Resource(Descriptor):
                 cached_resource = self.cache.get(self)
                 shutil.copy(cached_resource['cached_path'],
                             target)
-
+                logger.info("Using cached artifact '%s'." % self.name)
             except ValueError:
                 return self.guarded_copy(target)
 
