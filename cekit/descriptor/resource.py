@@ -149,7 +149,7 @@ class Resource(Descriptor):
             return True
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in self:
-                if not check_sum(target, algorithm, self[algorithm]):
+                if not check_sum(target, algorithm, self[algorithm], self['name']):
                     return False
         return True
 
