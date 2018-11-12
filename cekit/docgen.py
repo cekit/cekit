@@ -21,15 +21,15 @@ class Docgen():
         # find module descriptor
         self.descriptor = descriptor
         if not os.path.isfile(self.descriptor):
-            logger.error("can't find module.yaml descriptor")
+            logger.error("Can't find module.yaml descriptor")
             sys.exit(1)
-        logger.debug("module descriptor path {} ".format(self.descriptor))
+        logger.debug("Module descriptor path {} ".format(self.descriptor))
 
         # set up template path
         self.template_file = os.path.join(os.path.dirname(__file__),
                                           'templates',
                                           'template.adoc.jinja')
-        logger.debug("module doc template file {} ".format(self.template_file))
+        logger.debug("Module doc template file {} ".format(self.template_file))
 
     def docgen(self):
         self.template = Template(open(self.template_file).read())
