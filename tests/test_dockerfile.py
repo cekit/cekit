@@ -179,9 +179,8 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
         content_sets = yaml.safe_load(_file)
         assert 'x86_64' in content_sets
-        assert 'rhel-7-server-rpms' in content_sets['x86_64']
-        assert 'ppc64le' in content_sets
-        assert 'rhel-7-for-power-le-rpms' in content_sets['ppc64le']
+        assert 'foo' in content_sets['x86_64']
+        assert 'ppc64le' not in content_sets
 
 
 def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
@@ -199,30 +198,7 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
     generator.prepare_repositories()
-    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
-        content_sets = yaml.safe_load(_file)
-        assert 'x86_64' in content_sets
-        assert 'rhel-7-server-rpms' in content_sets['x86_64']
-        assert 'ppc64le' in content_sets
-        assert 'rhel-7-server-rpms' in content_sets['ppc64le']
-
-
-def test_dockerfile_osbs_id_redhat(tmpdir, mocker):
-    config.cfg['common']['redhat'] = True
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
-    mocker.patch.object(Repository, 'fetch')
-    target = str(tmpdir.mkdir('target'))
-    desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'id': 'foo'},
-                                               ],
-                              'install': ['a']}}
-
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.prepare_repositories()
-    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
-        content_sets = yaml.safe_load(_file)
-        assert 'x86_64' in content_sets
-        assert 'foo' in content_sets['x86_64']
+    assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
 
 
 def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
