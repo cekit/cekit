@@ -35,8 +35,6 @@ class Docgen():
         self.template = Template(open(self.template_file).read())
         self.generate_doc_for_module(self.descriptor)
 
-    module_dirs = ['./jboss']
-
     def generate_doc_for_module(self, module_file):
         with open(module_file) as open_file:
             data = yaml.load(open_file)
@@ -55,7 +53,3 @@ class Docgen():
                 scan_for_modules(self, full_file)
             elif os.path.basename(full_file) == 'module.yaml':
                 generate_doc_for_module(self, full_file)
-
-    def oldmain(self):
-        for dir in module_dirs:
-            scan_for_modules(self, dir)
