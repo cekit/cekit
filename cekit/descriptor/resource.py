@@ -50,7 +50,8 @@ class Resource(Descriptor):
           sha1: {type: str}
           sha256: {type: str}
           description: {type: str}
-        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"""")]
+        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None\"
+        """)]
         super(Resource, self).__init__(descriptor)
         self.skip_merging = ['md5', 'sha1', 'sha256']
 
