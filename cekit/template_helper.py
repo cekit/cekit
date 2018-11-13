@@ -56,3 +56,16 @@ class TemplateHelper(object):
                 port_list.append(p.get('value'))
 
         return port_list
+
+    def artifacts(self, inarts):
+        """
+        Normalizes artifacts, adding name keys if missing
+        and sorting
+        """
+        outarts = []
+        for _a in inarts:
+            a = _a.copy()
+            if not 'name' in a:
+                a['name'] = a['path'] # XXX fix
+        outarts.sort(key=lambda d: d['name'])
+        return outarts

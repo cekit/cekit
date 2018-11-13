@@ -4,7 +4,8 @@ import logging
 import os
 import yaml
 import sys
-from jinja2 import Environment, Template
+from cekit.template_helper import TemplateHelper
+from jinja2 import Environment, Template, FileSystemLoader
 
 logger = logging.getLogger('cekit')
 
@@ -32,7 +33,10 @@ class Docgen():
         logger.debug("Module doc template file {} ".format(self.template_file))
 
     def docgen(self):
-        self.template = Template(open(self.template_file).read())
+        loader = FileSystemLoader(os.path.dirname(self.template_file))
+        env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+        env.globals['helper'] = TemplateHelper()
+        self.template = env.get_template(os.path.basename(self.template_file))
         self.generate_doc_for_module(self.descriptor)
 
     def generate_doc_for_module(self, module_file):

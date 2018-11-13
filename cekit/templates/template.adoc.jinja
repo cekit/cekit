@@ -86,7 +86,7 @@ The following environment variables will be configured on the image:
 The following resources will be included through this module:
 |=======================================================================
 |Name |Location |Checksum
-    {%- for artifact in artifacts|sort(attribute="name") %}
+    {%- for artifact in helper.artifacts(artifacts) %}
 |{{resource_name(artifact)}} 
 |{{resource_location(artifact)}} 
 a|
