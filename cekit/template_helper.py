@@ -65,7 +65,15 @@ class TemplateHelper(object):
         outarts = []
         for _a in inarts:
             a = _a.copy()
+
             if not 'name' in a:
-                a['name'] = a['path'] # XXX fix
+                # one of git,path or url must be present
+                if 'path' in a:
+                    a['name'] = a['path']
+                elif 'url' in a:
+                    a['name'] = a['url']
+                else:
+                    a['name'] = a['git']['url']
+
         outarts.sort(key=lambda d: d['name'])
         return outarts

@@ -34,7 +34,7 @@ class Docgen():
 
     def docgen(self):
         loader = FileSystemLoader(os.path.dirname(self.template_file))
-        env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+        env = Environment(loader=loader)
         env.globals['helper'] = TemplateHelper()
         self.template = env.get_template(os.path.basename(self.template_file))
         self.generate_doc_for_module(self.descriptor)

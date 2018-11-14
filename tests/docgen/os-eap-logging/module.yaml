@@ -1,0 +1,13 @@
+schema_version: 1
+name: os-eap-logging
+version: '1.0'
+description: Legacy os-eap-logging script package. This module is deprecated, see https://github.com/jboss-container-images/jboss-eap-modules/jboss-eap-logging-ext for the replacement for EAP 7.1 and EAP 6.4 based images, and https://github.com/jboss-container-images/jboss-eap-modules/jboss-eap-cd-logging for all other images.
+execute:
+- script: configure.sh
+  user: '185'
+
+artifacts:
+- path: javax.json-1.0.4.jar
+  md5: 569870f975deeeb6691fcb9bc02a9555
+- url: jboss-logmanager-ext-1.0.0.Alpha5-redhat-1.jar
+  md5: 3c84f54725ea5657913cf6d1610798b0

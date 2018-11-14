@@ -16,3 +16,6 @@ def test_docgen_os_eap_s2i(tmpdir):
 
 def test_docgen_os_eap7_ping(tmpdir):
     runtest_docgen(tmpdir, "docgen/os-eap7-ping/module.yaml")
+
+def test_docgen_os_eap_logging(tmpdir):
+    runtest_docgen(tmpdir, "docgen/os-eap-logging/module.yaml")
