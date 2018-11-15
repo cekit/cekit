@@ -169,7 +169,7 @@ def test_resource_verify(mocker):
     res = Resource({'url': 'dummy',
                     'sha256': 'justamocksum'})
     res._Resource__verify('dummy')
-    mock.assert_called_with('dummy', 'sha256', 'justamocksum')
+    mock.assert_called_with('dummy', 'sha256', 'justamocksum', 'dummy')
 
 
 def test_generated_url_with_cacher():

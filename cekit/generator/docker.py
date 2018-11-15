@@ -1,11 +1,18 @@
 import logging
+import os
 import subprocess
 import yaml
 
+from cekit.cache.artifact import ArtifactCache
+from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
+from cekit.descriptor.resource import _PlainResource
+from cekit.tools import get_brew_url
+
 
 logger = logging.getLogger('cekit')
+config = Config()
 
 
 class DockerGenerator(Generator):
@@ -28,7 +35,7 @@ class DockerGenerator(Generator):
                 cmd.append('--redhat')
             cmd.extend(['create', 'pulp', repo['odcs']['pulp']])
 
-            logger.debug("Creating ODCS content set via '%s'" % cmd)
+            logger.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
 
             output = subprocess.check_output(cmd).decode()
             normalized_output = '\n'.join(output.replace(" u'", " '")
@@ -59,3 +66,33 @@ class DockerGenerator(Generator):
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template
         pass
+
+    def prepare_artifacts(self):
+        """Goes through artifacts section of image descriptor
+        and fetches all of them
+        """
+        if 'artifacts' not in self.image:
+            logger.debug("No artifacts to fetch")
+            return
+
+        logger.info("Handling artifacts...")
+        target_dir = os.path.join(self.target, 'image')
+
+        for artifact in self.image['artifacts']:
+            artifact_cache = ArtifactCache()
+            if isinstance(artifact, _PlainResource):
+                if artifact_cache.is_cached(artifact):
+                    pass
+                elif not artifact_cache.is_cached(artifact) and \
+                     config.get('common', 'redhat'):
+                    artifact.url = get_brew_url(artifact['md5'])
+                else:
+                    if 'description' in artifact:
+                        logger.error("Cannot fetch Artifact: '%s', %s" % (artifact['name'],
+                                                                          artifact['description']))
+                    raise CekitError("Cannot fetch Artifact: '%s', please cache it via cekit-cache."
+                                     % artifact['name'])
+
+            artifact.copy(target_dir)
+
+        logger.debug("Artifacts handled")

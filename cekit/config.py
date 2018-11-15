@@ -18,7 +18,7 @@ class Config(object):
 
     @classmethod
     def _override_config(cls, cmdline_args):
-        if isinstance(cmdline_args.get('redhat'), bool):
+        if cmdline_args.get('redhat'):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
         if cmdline_args.get('work_dir'):
             cls.cfg['common']['work_dir'] = cmdline_args.get('work_dir')

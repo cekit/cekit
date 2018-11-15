@@ -4,6 +4,7 @@ import yaml
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
 from cekit.descriptor import Descriptor, Image, Module, Overrides, Run
 from cekit.errors import CekitError
+from cekit import tools
 
 
 class TestDescriptor(Descriptor):
@@ -133,3 +134,34 @@ def test_merge_run_cmd():
     assert override['cmd'] == ['1', '2', '3']
     assert override['entrypoint'] == ['1', '2']
     assert override['user'] == 'foo'
+
+
+def brew_call(*args, **kwargs):
+    if 'listArchives' in args[0]:
+        return """
+        [
+          {
+            "build_id": "build_id",
+            "filename": "filename",
+            "group_id": "group_id",
+            "artifact_id": "artifact_id",
+            "version": "version",
+          }
+        ]"""
+    if 'getBuild' in args[0]:
+        return """
+        {
+          "package_name": "package_name",
+          "release": "release"
+        }
+        """
+    return ""
+
+
+def test_get_brew_url(mocker):
+    mock = mocker.patch('subprocess.check_output', side_effect=brew_call)
+    url = tools.get_brew_url('aa')
+    assert url == "http://download.devel.redhat.com/brewroot/packages/package_name/" + \
+        "version/release/maven/group_id/artifact_id/version/filename"
+
+

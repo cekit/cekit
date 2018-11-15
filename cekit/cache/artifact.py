@@ -58,12 +58,7 @@ class ArtifactCache():
 
         for alg in SUPPORTED_HASH_ALGORITHMS:
             if alg in artifact:
-                if not check_sum(artifact_file, alg, artifact[alg]):
-                    raise CekitError('Artifact contains invalid checksum!')
-                chksum = artifact[alg]
-            else:
-                chksum = get_sum(artifact_file, alg)
-            cache_entry.update({alg: chksum})
+                cache_entry.update({alg: artifact[alg]})
 
         self._update_cache(cache_entry, artifact_id)
         return artifact_id

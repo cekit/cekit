@@ -6,6 +6,7 @@ import yaml
 import pytest
 
 from cekit.builders.osbs import Chdir
+from cekit.errors import CekitError
 from cekit.cli import Cekit
 
 #pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
@@ -408,6 +409,55 @@ def test_run_override_artifact(tmpdir, mocker):
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
 
+def test_run_path_artifact_brew(tmpdir, mocker, caplog):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'name': 'aaa',
+                              'md5': 'd41d8cd98f00b204e9800998ecf8427e',
+                              'target': 'target_foo'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir)
+
+    assert "Cannot fetch Artifact: 'aaa', please cache it via cekit-cache." in caplog.text
+
+
+def test_run_path_artifact_target(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'path': 'bar.jar',
+                              'target': 'target_foo'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    assert check_dockerfile_uniq(image_dir, 'target_foo \\')
+
+
 def test_execution_order(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
@@ -570,3 +620,12 @@ def run_cekit(cwd):
         with pytest.raises(SystemExit) as system_exit:
             Cekit().parse().run()
         assert system_exit.value.code == 0
+
+
+def run_cekit_exception(cwd):
+    with Chdir(cwd):
+        # run cekit and check it exits with 0
+        with pytest.raises(SystemExit) as system_exit:
+            Cekit().parse().run()
+        assert system_exit.value.code == 1
+
