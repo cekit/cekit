@@ -104,7 +104,7 @@ In this approach content sets are embedded inside image descriptor under the ``c
 
     packages:
         repositories:
-            - name: all
+            - name: content_sets
               content_sets:
 	        x86_64:
                   - server-rpms
@@ -122,7 +122,7 @@ Image descriptor:
 
     packages:
         repositories:
-            - name: all
+            - name: content_sets
               content_sets_file: content_sets.yml
 
 

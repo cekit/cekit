@@ -34,9 +34,9 @@ In this case whole ``container.yaml`` file is embedded in an image descriptor.
 
     osbs:
         configuration:
-	  container:
-	      compose:
-	          pulp: True
+           container:
+              compose:
+                  pulp: True
 
 Linked
 """"""
