@@ -75,8 +75,8 @@ repositories section in a way of:
     packages:
         repositories:
             - name: foo
-	      url:
-	        repository: https://web.example/foo.repo
+              url:
+                repository: https://web.example/foo.repo
                 gpg: https://web.exmaple/foo.gpg
 
 
@@ -106,7 +106,7 @@ In this approach content sets are embedded inside image descriptor under the ``c
         repositories:
             - name: content_sets
               content_sets:
-	        x86_64:
+                x86_64:
                   - server-rpms
                   - server-extras-rpms
 

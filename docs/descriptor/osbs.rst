@@ -5,12 +5,16 @@ for successful and reproducible builds.
 
 It contains two main keys:
 
+* ``repository``
+* ``configuration``
+
 Repository
 ^^^^^^^^^^
 This key serves as a hint which DistGit repository and its branch we use to push generated sources into.
 
 
 **Example:**
+
 .. code:: yaml
 
     osbs:
@@ -23,7 +27,7 @@ This key serves as a hint which DistGit repository and its branch we use to push
 Configuration
 ^^^^^^^^^^^^^
 This key is holding OSBS ``container.yaml`` file ( :ref:`docs<https://osbs.readthedocs.io/en/latest/users.html?highlight=container.yaml#image-configuration>`_ )
-``container.yaml`` file can be embedded in ``container_yaml`` key or inject from a file specified in ``container_yaml_file`` key.
+``container.yaml`` file can be embedded in ``container`` key or inject from a file specified in ``container_file`` key.
 
 
 Embedded
@@ -51,6 +55,7 @@ In this case ``container.yaml`` file is save next to the image descriptor.
 
 
 and ``container.yaml`` file contains:
+
 .. code:: yaml
 
     compose:
