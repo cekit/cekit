@@ -222,6 +222,7 @@ class Generator(object):
             return
 
         if self.image.get('packages').get('content_sets'):
+            logger.warning('The image has ContentSets repositories specified, all other repositories are removed!')
             self.image['packages']['repositories'] = []
         repos = self.image.get('packages').get('repositories', [])
 
