@@ -40,7 +40,7 @@ In this case whole ``container.yaml`` file is embedded in an image descriptor.
         configuration:
            container:
               compose:
-                  pulp: True
+                  pulp_repos: true
 
 Linked
 """"""
@@ -59,4 +59,4 @@ and ``container.yaml`` file contains:
 .. code:: yaml
 
     compose:
-        pulp: True
+        pulp_repos: true
