@@ -10,21 +10,23 @@ from cekit.descriptor.resource import _PlainResource
 logger = logging.getLogger('cekit')
 config = Config()
 
+
 class OSBSGenerator(Generator):
     def __init__(self, descriptor_path, target, builder, overrides, params):
         self._wipe = True
         super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
         self._prepare_container_yaml()
 
-    def _prepare_content_sets(self, repo):
+    def _prepare_content_sets(self, content_sets):
         content_sets_f = os.path.join(self.target, 'image', 'content_sets.yml')
-        content_sets = repo['content_sets']
         with open(content_sets_f, 'w') as _file:
             yaml.safe_dump(content_sets, _file, default_flow_style=False)
 
     def _prepare_container_yaml(self):
         container_f = os.path.join(self.target, 'image', 'container.yaml')
-        container = self.image.get('osbs', {}).get('configuration').get('container')
+        container = self.image.get('osbs', {}).get('configuration', {}).get('container')
+        if not container:
+            return
 
         with open(container_f, 'w') as _file:
             yaml.safe_dump(container, _file, default_flow_style=False)

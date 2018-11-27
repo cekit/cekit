@@ -86,6 +86,7 @@ repositories section in a way of:
 Content sets
 ^^^^^^^^^^^^
 Content sets are tightly integrated to OSBS style of defining repositories in ``content_sets.yml`` file.
+If this kind of repository is present in the image descriptor it overrides all other repositories types.
 For local Docker based build these repositories are ignored similarly to Plain repository types and
 we expect repository definitions to be available inside image. See
 `upstream docs <https://osbs.readthedocs.io/en/latest/users.html#content-sets>`_ for more details about
@@ -103,12 +104,10 @@ In this approach content sets are embedded inside image descriptor under the ``c
 .. code:: yaml
 
     packages:
-        repositories:
-            - name: content_sets
-              content_sets:
-                x86_64:
-                  - server-rpms
-                  - server-extras-rpms
+        content_sets:
+            x86_64:
+            - server-rpms
+            - server-extras-rpms
 
 
 Linked
@@ -121,9 +120,7 @@ Image descriptor:
 .. code:: yaml
 
     packages:
-        repositories:
-            - name: content_sets
-              content_sets_file: content_sets.yml
+        content_sets_file: content_sets.yml
 
 
 content_sets.yml located next to image descriptor:

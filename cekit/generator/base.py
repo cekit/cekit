@@ -7,7 +7,7 @@ import socket
 from jinja2 import Environment, FileSystemLoader
 
 from cekit import tools
-from cekit.descriptor import Image, Overrides
+from cekit.descriptor import Image, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.module import copy_module_to_target
 from cekit.template_helper import TemplateHelper
@@ -221,6 +221,8 @@ class Generator(object):
         if 'packages' not in self.image:
             return
 
+        if self.image.get('packages').get('content_sets'):
+            self.image['packages']['repositories'] = []
         repos = self.image.get('packages').get('repositories', [])
 
         injected_repos = []
@@ -228,6 +230,14 @@ class Generator(object):
         for repo in repos:
             if self._handle_repository(repo):
                 injected_repos.append(repo)
+
+        if self.image.get('packages').get('content_sets'):
+            url = self._prepare_content_sets(self.image.get('packages').get('content_sets'))
+            if url:
+                repo = Repository({'name': 'content_sets_odcs',
+                                   'url': {'repository': url}})
+                injected_repos.append(repo)
+                self._fetch_repos = True
 
         if self._fetch_repos:
             for repo in injected_repos:

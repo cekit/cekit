@@ -19,7 +19,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {%- endmacro %}
 {% macro pkg_install(pkg_manager, packages) -%}
     {% if pkg_manager in ['microdnf', 'yum'] %}
-{{ pkg_manager }} install -y {%- for package in packages %} {{ package }}{% endfor %} \
+{{ pkg_manager }} install -y {%- for package in packages %} {{ package }} {% endfor %} \
     && {{ pkg_manager }} clean all && rm -rf /var/cache/yum \
     && rpm -q {% for package in packages %}{{ package }}{% endfor %}
     {% endif %}

@@ -118,17 +118,14 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
-    desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'content_sets': {
-                                                   'x86_64': 'foo'
-                                                }},
-                                               ],
-                              'install': ['a']}}
+    desc_part = {'packages': {'content_sets': {
+        'x86_64': 'foo'},
+                 'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image')
     generator.prepare_repositories()
     generator.render_dockerfile()
-    regex_dockerfile(target, 'repos/foo.repo')
+    regex_dockerfile(target, 'repos/content_sets_odcs.repo')
 
 
 def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
@@ -167,11 +164,8 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
 
     target = str(tmpdir.mkdir('target'))
     os.makedirs(os.path.join(target, 'image'))
-    desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'content_sets': {
-                                                   'x86_64': 'foo'
-                                                }},
-                                               ],
+    desc_part = {'packages': {'content_sets': {
+                                 'x86_64': 'foo'},
                               'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
