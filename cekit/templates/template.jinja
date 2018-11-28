@@ -1,3 +1,29 @@
+{% macro repo_create(pkg_manager, repositories) -%}
+    {% if pkg_manager in ['microdnf', 'yum'] %}
+        {% for repo in repositories %}
+repos/{{ repo.filename }} \
+        {% endfor %}
+    /etc/yum.repos.d/
+    {% endif %}
+{%- endmacro %}
+{% macro repo_remove(pkg_manager, repositories) -%}
+    {% if pkg_manager in ['microdnf', 'yum'] %}
+rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
+    {% endif %}
+{%- endmacro %}
+{% macro repo_install(pkg_manager, rpm) -%}
+    {% if pkg_manager in ['microdnf', 'yum'] %}
+{{ pkg_manager }} install -y {{ rpm }} \
+    && {{ pkg_manager }} clean all && rm -rf /var/cache/yum
+    {% endif %}
+{%- endmacro %}
+{% macro pkg_install(pkg_manager, packages) -%}
+    {% if pkg_manager in ['microdnf', 'yum'] %}
+{{ pkg_manager }} install -y {%- for package in packages %} {{ package }}{% endfor %} \
+    && {{ pkg_manager }} clean all && rm -rf /var/cache/yum \
+    && rpm -q{% for package in packages %} {{ package }}{% endfor %}
+    {% endif %}
+{%- endmacro %}
 # Copyright 2017 Red Hat
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +43,45 @@
 # This is a Dockerfile for the {{ name }}:{{ version }} image.
 
 FROM {{ from }}
+
+USER root
+
+{% if packages and packages.install %}
+{% if packages.repositories_injected %}
+# Add custom repo files
+COPY {{ repo_create(pkg_manager, packages.repositories_injected) }}
+
+{% endif %}
+{% if packages.repositories %}
+{% for repo in packages.repositories %}
+{% if repo.present and repo.rpm %}
+RUN {{ repo_install(pkg_manager, repo.rpm) }}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+# Install required RPMs and ensure that the packages were installed
+RUN {{ pkg_install(pkg_manager, packages.install) }}
+
+{% if packages.repositories_injected %}
+# Remove custom repo files
+RUN {{ repo_remove(pkg_manager, packages.repositories_injected) }}
+
+{% endif %}
+
+{% endif %}
+
+{%- if artifacts %}
+# Add all artifacts to the /tmp/artifacts
+# directory
+COPY \
+{% for artifact in artifacts %}
+    {{ artifact['target'] }} \
+    {% endfor %}
+    /tmp/artifacts/
+
+{% endif %}
 
 {% if envs %}
 # Environment variables
@@ -39,51 +104,6 @@ LABEL \
 {% if ports %}
 # Exposed ports
 EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
-
-{% endif %}
-
-USER root
-
-{% if packages and packages.install %}
-{% if packages.repositories_injected %}
-# Add custom repo files
-COPY \ {% for repo in packages.repositories_injected %} 
-    repos/{{ repo.filename }} \
-{% endfor %}
-    /etc/yum.repos.d/
-
-{% endif %}
-{% if packages.repositories %}
-{% for repo in packages.repositories %}
-{% if repo.present and repo.rpm %}
-RUN yum install -y {{ repo.rpm }} \
-    && yum clean all && rm -rf /var/cache/yum
-
-{% endif %}
-{% endfor %}
-{% endif %}
-
-# Install required RPMs and ensure that the packages were installed
-RUN yum install -y {%- for package in packages.install %} {{ package }}{% endfor %} \
-    && yum clean all && rm -rf /var/cache/yum && \
-    rpm -q {% for package in packages.install %} {{ package }}{% endfor %}
-
-{% if packages.repositories_injected %}
-# Remove custom repo files
-RUN rm{% for repo in packages.repositories_injected %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
-
-{% endif %}
-
-{% endif %}
-
-{%- if artifacts %}
-# Add all artifacts to the /tmp/artifacts
-# directory
-COPY \
-{% for artifact in artifacts %}
-    {{ artifact['name'] }} \
-    {% endfor %}
-    /tmp/artifacts/
 
 {% endif %}
 

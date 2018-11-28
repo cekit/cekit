@@ -6,7 +6,7 @@ import logging
 import sys
 
 
-from cekit import tools
+from cekit.config import Config
 from cekit.builder import Builder
 from cekit.log import setup_logging
 from cekit.errors import CekitError
@@ -14,12 +14,13 @@ from cekit.generator.base import Generator
 from cekit.module import discover_modules, get_dependencies
 from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
+from cekit.tools import cleanup
 from cekit.version import version
 
 # FIXME we shoudl try to move this to json
 setup_logging()
 logger = logging.getLogger('cekit')
-
+config = Config()
 
 class MyParser(argparse.ArgumentParser):
 
@@ -58,6 +59,12 @@ class Cekit(object):
                             dest='work_dir',
                             help="Location of Cekit working directory.")
 
+        parser.add_argument('--package-manager',
+                            dest='package_manager',
+                            choices=['yum', 'microdnf'],
+                            help='Package manager to use. Supports yum and microdnf, \
+                                defaults: yum')
+
         test_group = parser.add_argument_group('test',
                                                "Arguments valid for the 'test' target")
 
@@ -66,7 +73,7 @@ class Cekit(object):
         steps_url = 'https://github.com/cekit/behave-test-steps.git'
         test_group.add_argument('--test-steps-url',
                                 default=steps_url,
-                                help='contains url for cekit test stesp')
+                                help='contains url for cekit test steps')
 
         limit_test_group.add_argument('--test-wip',
                                       action='store_true',
@@ -112,6 +119,10 @@ class Cekit(object):
         build_group.add_argument('--build-osbs-target',
                                  dest='build_osbs_target',
                                  help='overrides the default rhpkg target')
+
+        build_group.add_argument('--build-osbs-commit-msg',
+                                 dest='build_osbs_commit_msg',
+                                 help='commit message for dist-git')
 
         build_group.add_argument('--build-tech-preview',
                                  action='store_true',
@@ -175,27 +186,21 @@ class Cekit(object):
             logger.warning("You are running unreleased development version of Cekit, "
                            "use it only at your own risk!")
 
-        tools.cfg = tools.get_cfg(self.args.config)
-        tools.cleanup(self.args.target)
+        config.configure(self.args.config, {'redhat': self.args.redhat,
+                                            'work_dir': self.args.work_dir,
+                                            'addhelp': self.args.addhelp,
+                                            'package_manager': self.args.package_manager})
 
-        if self.args.redhat:
-            tools.cfg['common']['redhat'] = True
-        if self.args.work_dir:
-            tools.cfg['common']['work_dir'] = self.args.work_dir
-
-        addhelp = tools.cfg.get('doc',{}).get('addhelp', False)
-        if bool == type(self.args.addhelp):
-            addhelp = self.args.addhelp
+        cleanup(self.args.target)
 
         # We need to construct Generator first, because we need overrides
         # merged in
         params = {
-            'addhelp': addhelp,
-            'redhat':  tools.cfg['common']['redhat'],
+            'addhelp': config.get('doc', 'addhelp'),
+            'redhat':  config.get('common', 'redhat'),
+            'help_template': config.get('doc', 'help_template'),
+            'package_manager': config.get('common', 'package_manager')
         }
-
-        if 'help_template' in tools.cfg.get('doc',{}):
-            params['help_template'] = tools.cfg['doc']['help_template']
 
         self.generator = Generator(self.args.descriptor,
                                    self.args.target,
@@ -216,21 +221,21 @@ class Cekit(object):
             # We have all overrided repo fetch so we can discover modules
             # and process its dependency trees
             discover_modules(os.path.join(self.args.target, 'repo'))
+            generator.prepare_modules()
+            if self.args.build_tech_preview:
+                generator.generate_tech_preview()
 
-            # we run generate for every possible command
-            if self.args.commands:
-                generator.prepare_modules()
+            # if tags are not specified on command line we take them from image descriptor
+            if not self.args.tags:
+                self.args.tags = generator.get_tags()
+
+            # we run generate for build command too
+            if set(['generate', 'build']).intersection(set(self.args.commands)):
                 generator.prepare_repositories()
                 generator.image.remove_none_keys()
                 generator.prepare_artifacts()
-                if self.args.build_tech_preview:
-                    generator.generate_tech_preview()
                 generator.image.write(os.path.join(self.args.target, 'image.yaml'))
                 generator.render_dockerfile()
-
-                # if tags are not specified on command line we take them from image descriptor
-                if not self.args.tags:
-                    self.args.tags = generator.get_tags()
 
             if 'build' in self.args.commands:
                 params = {'user': self.args.build_osbs_user,
@@ -239,8 +244,9 @@ class Cekit(object):
                           'release': self.args.build_osbs_release,
                           'tags': self.args.tags,
                           'pull': self.args.build_pull,
-                          'redhat': tools.cfg['common']['redhat'],
-                          'target': self.args.build_osbs_target
+                          'redhat': config.get('common', 'redhat'),
+                          'target': self.args.build_osbs_target,
+                          'commit_msg': self.args.build_osbs_commit_msg
                           }
 
                 builder = Builder(self.args.build_engine,
@@ -275,7 +281,7 @@ class Cekit(object):
             if self.args.verbose:
                 logger.exception(e)
             else:
-                logger.error(str(e))
+                logger.error(e.message)
             sys.exit(1)
 
 

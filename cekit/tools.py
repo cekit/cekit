@@ -2,35 +2,12 @@ import logging
 import os
 import shutil
 import sys
+import subprocess
 import yaml
 
 from cekit.errors import CekitError
 
-try:
-    import ConfigParser as configparser
-except:
-    import configparser
-
 logger = logging.getLogger('cekit')
-
-cfg = {}
-
-
-def get_cfg(config_path):
-    """Returns configuration from cekit config file and prepares sensible defaults
-
-    params:
-        config_path - path to a cekit config file (expanding user)
-    """
-    cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser(config_path))
-    cfg = cp._sections
-    cfg['common'] = cfg.get('common', {})
-    cfg['common']['work_dir'] = cfg.get('common').get('work_dir', '~/.cekit')
-    cfg['common']['redhat'] = cfg.get('common', {}).get('redhat', False)
-    if cp.has_section('doc') and cp.has_option('doc', 'addhelp'):
-        cfg['doc']['addhelp'] = cp.getboolean('doc', 'addhelp')
-    return cfg
 
 
 def cleanup(target):
@@ -76,3 +53,33 @@ def decision(question):
             return True
 
     return False
+
+
+def get_brew_url(md5):
+    try:
+        logger.info("Getting brew details for an artifact with '%s' md5 sum" % md5)
+        list_archives_cmd = ['brew', 'call', '--json-output', 'listArchives',
+                             'checksum=%s' % md5, 'type=maven']
+        logger.debug("Executing '%s'." % " ".join(list_archives_cmd))
+        archive = yaml.safe_load(subprocess.check_output(list_archives_cmd))[0]
+        build_id = archive['build_id']
+        filename = archive['filename']
+        group_id = archive['group_id']
+        artifact_id = archive['artifact_id']
+        version = archive['version']
+
+        get_build_cmd = ['brew', 'call', '--json-output', 'getBuild', 'buildInfo=%s' % build_id]
+        logger.debug("Executing '%s'" % " ".join(get_build_cmd))
+        build = yaml.safe_load(subprocess.check_output(get_build_cmd))
+        package = build['package_name']
+        release = build['release']
+
+        url = 'http://download.devel.redhat.com/brewroot/packages/' + package + '/' + \
+            version.replace('-', '_') + '/' + release + '/maven/' + \
+            group_id.replace('.', '/') + '/' + artifact_id.replace('.', '/') + '/' + \
+            version + '/' + filename
+    except subprocess.CalledProcessError as ex:
+        logger.error("Can't fetch artifacts details from brew: '%s'." %
+                     ex.output)
+        raise ex
+    return url

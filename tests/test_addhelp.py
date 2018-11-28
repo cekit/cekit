@@ -22,6 +22,9 @@ image_descriptor = {
     'run': {'cmd': ['sleep', '60']},
 }
 
+template_teststr = "This string does not occur in the default help.md template."
+
+
 @pytest.fixture(scope="module")
 def workdir(tmpdir_factory):
     tdir = str(tmpdir_factory.mktemp("image"))
@@ -30,11 +33,13 @@ def workdir(tmpdir_factory):
     return tdir
     # XXX cleanup?
 
+
 def run_cekit(cwd):
     with Chdir(cwd):
         c = Cekit().parse()
         c.configure()
         return c.generator._params['addhelp']
+
 
 def setup_config(tmpdir, contents):
     p = str(tmpdir.join("config"))
@@ -42,22 +47,26 @@ def setup_config(tmpdir, contents):
         fd.write(contents)
     return p
 
-def test_addhelp_mutex_cmdline(mocker, workdir, tmpdir):
-    config = setup_config(tmpdir, '')
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', '--no-add-help', 'generate'])
-    with pytest.raises(SystemExit) as excinfo:
-        run_cekit(workdir)
-    assert 0 != excinfo.value.code
-
-template_teststr = "This string does not occur in the default help.md template."
 
 def cleanup(workdir):
     if os.path.exists('target'):
         shutil.rmtree('target')
 
+
+def test_addhelp_mutex_cmdline(mocker, workdir, tmpdir):
+    config = setup_config(tmpdir, '')
+    mocker.patch.object(sys,
+                        'argv',
+                        ['cekit', '-v', '--config', config,
+                         '--add-help', '--no-add-help', 'generate'])
+    with pytest.raises(SystemExit) as excinfo:
+        run_cekit(workdir)
+    assert 0 != excinfo.value.code
+
+
 def test_config_override_help_template(mocker, workdir, tmpdir):
     cleanup(workdir)
-    help_template = os.path.join(workdir,"help.jinja")
+    help_template = os.path.join(workdir, "help.jinja")
     with open(help_template, "w") as fd:
         fd.write(template_teststr)
     config = setup_config(tmpdir, "[doc]\nhelp_template = {}".format(help_template))
@@ -74,6 +83,7 @@ def test_config_override_help_template(mocker, workdir, tmpdir):
             contents = fd.read()
             assert contents.find(template_teststr) >= 0
 
+
 def test_no_override_help_template(mocker, workdir, tmpdir):
     cleanup(workdir)
     config = setup_config(tmpdir, "")
@@ -87,14 +97,14 @@ def test_no_override_help_template(mocker, workdir, tmpdir):
             pass
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
-            sys.stderr.write("JMTD: {}\n".format(contents.find(template_teststr)))
             assert -1 == contents.find(template_teststr)
+
 
 def test_image_override_help_template(mocker, tmpdir):
     """Test that help_template defined in image.yaml is used for
        generating help.md"""
 
-    help_template = os.path.join(str(tmpdir),"help.jinja")
+    help_template = os.path.join(str(tmpdir), "help.jinja")
     with open(help_template, "w") as fd:
         fd.write(template_teststr)
 
@@ -116,16 +126,17 @@ def test_image_override_help_template(mocker, tmpdir):
             contents = fd.read()
             assert contents.find(template_teststr) >= 0
 
+
 def test_image_override_config_help_template(mocker, tmpdir):
     """Test that help_template defined in image.yaml overrides help_template
        defined in the config"""
 
-    help_template1 = os.path.join(str(tmpdir),"help1.jinja")
+    help_template1 = os.path.join(str(tmpdir), "help1.jinja")
     with open(help_template1, "w") as fd:
         fd.write("1")
     config = setup_config(tmpdir, "[doc]\nhelp_template = {}".format(help_template1))
 
-    help_template2 = os.path.join(str(tmpdir),"help2.jinja")
+    help_template2 = os.path.join(str(tmpdir), "help2.jinja")
     with open(help_template2, "w") as fd:
         fd.write("2")
     my_image_descriptor = image_descriptor.copy()
@@ -150,47 +161,59 @@ def test_image_override_config_help_template(mocker, tmpdir):
 #   test_confX_cmdlineY where {X,Y} ∈ {None,True,False}
 # XXX: would be nicer to dynamically generate these
 
+
 def test_confNone_cmdlineNone(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-    assert False == run_cekit(workdir)
+    assert not run_cekit(workdir)
+
 
 def test_confFalse_cmdlineNone(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = False")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-    assert False == run_cekit(workdir)
+    assert not run_cekit(workdir)
+
 
 def test_confTrue_cmdlineNone(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = True")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-    assert True == run_cekit(workdir)
+    assert run_cekit(workdir)
+
 
 def test_confNone_cmdlineTrue(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
-    assert True == run_cekit(workdir)
+    assert run_cekit(workdir)
+
 
 def test_confFalse_cmdlineTrue(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = False")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
-    assert True == run_cekit(workdir)
+    assert run_cekit(workdir)
+
 
 def test_confTrue_cmdlineTrue(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = True")
     mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
-    assert True == run_cekit(workdir)
+    assert run_cekit(workdir)
+
 
 def test_confNone_cmdlineFalse(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
-    assert False == run_cekit(workdir)
+    mocker.patch.object(sys, 'argv',
+                        ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
+    assert not run_cekit(workdir)
+
 
 def test_confFalse_cmdlineFalse(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = False")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
-    assert False == run_cekit(workdir)
+    mocker.patch.object(sys, 'argv',
+                        ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
+    assert not run_cekit(workdir)
+
 
 def test_confTrue_cmdlineFalse(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = True")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
-    assert False == run_cekit(workdir)
+    mocker.patch.object(sys, 'argv',
+                        ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
+    assert not run_cekit(workdir)

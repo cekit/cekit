@@ -13,8 +13,8 @@ know how and when it'll be executed.
 
 .. contents::
 
-``name``
---------
+name
+----
 
 This key is **required**.
 

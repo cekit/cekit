@@ -30,6 +30,7 @@ _cekit() {
     "--config[path for cekit config file (~/.cekit/config is default)]:config:_files" \
     "--redhat[Set default options for Red Hat internal infrastructure]" \
     "--work-dir[Location of cekit working directory, it's used to store dist-git repos]:workdir:_files -/" \
+    "--package-manager[Package  manager to use for installing dependencies. default: 'yum']:package_manager:" \
     "*--tag[tag used to build/test the image, can be used multiple times]:tags:" \
     "*--overrides[a YAML object to override image descriptor, can be used multiple times]:overrides:" \
     "*--overrides-file[path to a file containing overrides, can be used multiple times]:overrides-files:_files" \
@@ -68,6 +69,7 @@ _cekit_build() {
         "--build-osbs-nowait[run rhpkg container build with --nowait option]" \
         "--build-osbs-stage[use rhpkg-stage instead of rhpkg]" \
         "--build-osbs-target[overrides the default rhpkg target]" \
+	"--build-osbs-commit-msg[commit message for dist-git]" \
         "--build-tech-preview[perform tech preview build]"
 }
 

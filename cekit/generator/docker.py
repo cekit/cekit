@@ -1,11 +1,19 @@
 import logging
+import os
+import platform
 import subprocess
 import yaml
 
+from cekit.cache.artifact import ArtifactCache
+from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
+from cekit.descriptor.resource import _PlainResource
+from cekit.tools import get_brew_url
+
 
 logger = logging.getLogger('cekit')
+config = Config()
 
 
 class DockerGenerator(Generator):
@@ -15,20 +23,25 @@ class DockerGenerator(Generator):
         super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
         self._fetch_repos = True
 
-    def _prepare_repository_odcs_pulp(self, repo):
-        """Create pulp content set in ODCS and returns its url
+    def _prepare_content_sets(self, content_sets):
+        if not config.cfg['common']['redhat']:
+            return False
 
-        Args:
-          repo - repository object to generate ODCS pulp for"""
+        arch = platform.machine()
+        if arch not in content_sets:
+            raise CekitError("There are no contet_sets defined for platform '%s'!")
+
+        repos = ' '.join(content_sets[arch])
+
         try:
             # idealy this will be API for ODCS, but there is no python3 package for ODCS
             cmd = ['odcs']
 
             if self._params.get('redhat', False):
                 cmd.append('--redhat')
-            cmd.extend(['create', 'pulp', repo['odcs']['pulp']])
+            cmd.extend(['create', 'pulp', repos])
 
-            logger.debug("Creating ODCS content set via '%s'" % cmd)
+            logger.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
 
             output = subprocess.check_output(cmd).decode()
             normalized_output = '\n'.join(output.replace(" u'", " '")
@@ -42,10 +55,7 @@ class DockerGenerator(Generator):
                                  % odcs_result['state_reason'])
 
             repo_url = odcs_result['result_repofile']
-
-            repo['url']['repository'] = repo_url
-
-            return True
+            return repo_url
 
         except CekitError as ex:
             raise ex
@@ -59,3 +69,33 @@ class DockerGenerator(Generator):
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template
         pass
+
+    def prepare_artifacts(self):
+        """Goes through artifacts section of image descriptor
+        and fetches all of them
+        """
+        if 'artifacts' not in self.image:
+            logger.debug("No artifacts to fetch")
+            return
+
+        logger.info("Handling artifacts...")
+        target_dir = os.path.join(self.target, 'image')
+
+        for artifact in self.image['artifacts']:
+            artifact_cache = ArtifactCache()
+            if isinstance(artifact, _PlainResource):
+                if artifact_cache.is_cached(artifact):
+                    pass
+                elif not artifact_cache.is_cached(artifact) and \
+                     config.get('common', 'redhat'):
+                    artifact.url = get_brew_url(artifact['md5'])
+                else:
+                    if 'description' in artifact:
+                        logger.error("Cannot fetch Artifact: '%s', %s" % (artifact['name'],
+                                                                          artifact['description']))
+                    raise CekitError("Cannot fetch Artifact: '%s', please cache it via cekit-cache."
+                                     % artifact['name'])
+
+            artifact.copy(target_dir)
+
+        logger.debug("Artifacts handled")

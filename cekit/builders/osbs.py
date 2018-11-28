@@ -7,16 +7,21 @@ import sys
 import yaml
 
 from cekit import tools
+from cekit.config import Config
 from cekit.builder import Builder
+from cekit.descriptor.resource import _PlainResource
 from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
-
+config = Config()
 
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
-    def __init__(self, build_engine, target, params={}):
+    def __init__(self, build_engine, target, params=None):
+        if not params:
+            params = {}
+        self._commit_msg = params.get('commit_msg')
         self._user = params.get('user')
         self._nowait = params.get('nowait', False)
         self._release = params.get('release', False)
@@ -62,7 +67,7 @@ class OSBSBuilder(Builder):
         else:
             osbs_dir = 'osbs'
 
-        self.dist_git_dir = os.path.join(os.path.expanduser(tools.cfg['common']['work_dir']),
+        self.dist_git_dir = os.path.join(os.path.expanduser(config.get('common', 'work_dir')),
                                          osbs_dir,
                                          repository)
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
@@ -76,7 +81,7 @@ class OSBSBuilder(Builder):
         self.dist_git.prepare(self._stage, self._user)
         self.dist_git.clean()
 
-        self.artifacts = [a['name'] for a in descriptor.get('artifacts', [])]
+        self.artifacts = [a['name'] for a in descriptor.get('artifacts', []) if not isinstance(a, _PlainResource)]
 
         if 'packages' in descriptor and 'set_url' in descriptor['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository'] for x in descriptor['packages']['set_url']]
@@ -88,14 +93,17 @@ class OSBSBuilder(Builder):
             for obj in ["repos", "modules"]:
                 if os.path.exists(obj):
                     shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
-            shutil.copy("Dockerfile", os.path.join(
-                self.dist_git_dir, "Dockerfile"))
+            shutil.copy("Dockerfile",
+                        os.path.join(self.dist_git_dir, "Dockerfile"))
             if os.path.exists("container.yaml"):
-                self._merge_container_yaml("container.yaml", os.path.join(
-                    self.dist_git_dir, "container.yaml"))
+                self._merge_container_yaml("container.yaml",
+                                           os.path.join(self.dist_git_dir, "container.yaml"))
             if os.path.exists("content_sets.yml"):
-                shutil.copy("content_sets.yml", os.path.join(
-                    self.dist_git_dir, "content_sets.yml"))
+                shutil.copy("content_sets.yml",
+                            os.path.join(self.dist_git_dir, "content_sets.yml"))
+            if os.path.exists("fetch-artifacts-url.yaml"):
+                shutil.copy("fetch-artifacts-url.yaml",
+                            os.path.join(self.dist_git_dir, "fetch-artifacts-url.yaml"))
 
         # Copy also every artifact
         for artifact in self.artifacts:
@@ -173,7 +181,7 @@ class OSBSBuilder(Builder):
             self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
-                self.dist_git.commit()
+                self.dist_git.commit(self._commit_msg)
                 self.dist_git.push()
             else:
                 logger.info("No changes made to the code, committing skipped")
@@ -270,19 +278,22 @@ class DistGit(object):
             subprocess.check_call(["git", "add", "container.yaml"])
         if os.path.exists("content_sets.yml"):
             subprocess.check_call(["git", "add", "content_sets.yml"])
+        if os.path.exists("fetch-artifacts-url.yaml"):
+            subprocess.check_call(["git", "add", "fetch-artifacts-url.yaml"])
 
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here
             subprocess.call(["git", "add", "--all", d])
 
-    def commit(self):
-        commit_msg = "Sync"
+    def commit(self, commit_msg):
+        if not commit_msg:
+            commit_msg = "Sync"
 
-        if self.source_repo_name:
-            commit_msg += " with %s" % self.source_repo_name
+            if self.source_repo_name:
+                commit_msg += " with %s" % self.source_repo_name
 
-        if self.source_repo_commit:
-            commit_msg += ", commit %s" % self.source_repo_commit
+            if self.source_repo_commit:
+                commit_msg += ", commit %s" % self.source_repo_commit
 
         # Commit the change
         logger.info("Commiting with message: '%s'" % commit_msg)

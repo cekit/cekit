@@ -3,10 +3,11 @@ import yaml
 import os
 import uuid
 
-
+from cekit.config import Config
 from cekit.errors import CekitError
-from cekit import tools
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum, get_sum
+
+config = Config()
 
 
 class ArtifactCache():
@@ -16,7 +17,8 @@ class ArtifactCache():
     """
 
     def __init__(self):
-        self._cache_dir = os.path.expanduser(os.path.join(tools.cfg['common']['work_dir'], 'cache'))
+        self._cache_dir = os.path.expanduser(
+            os.path.join(config.get('common', 'work_dir'), 'cache'))
         if not os.path.exists(self._cache_dir):
             os.makedirs(self._cache_dir)
 
@@ -56,12 +58,7 @@ class ArtifactCache():
 
         for alg in SUPPORTED_HASH_ALGORITHMS:
             if alg in artifact:
-                if not check_sum(artifact_file, alg, artifact[alg]):
-                    raise CekitError('Artifact contains invalid checksum!')
-                chksum = artifact[alg]
-            else:
-                chksum = get_sum(artifact_file, alg)
-            cache_entry.update({alg: chksum})
+                cache_entry.update({alg: artifact[alg]})
 
         self._update_cache(cache_entry, artifact_id)
         return artifact_id

@@ -14,7 +14,8 @@ class TestRunner(object):
         """Check if behave and docker is installed properly"""
         self.target = os.path.abspath(target)
         try:
-            subprocess.check_output(['behave', '--version'], stderr=subprocess.STDOUT)
+            # check that we have behave installed
+            from behave.__main__ import main as behave_main
         except subprocess.CalledProcessError as ex:
             raise CekitError("Test Runner needs 'behave' installed, '%s'" %
                              ex.output)
@@ -24,39 +25,39 @@ class TestRunner(object):
 
     def run(self, image, run_tags, test_names):
         """Run test suite"""
-        cmd = ['behave',
-               '--junit',
-               '--junit-directory', 'results',
-               '--no-skipped',
-               '-t', '~ignore',
-               '-D', 'IMAGE=%s' % image]
+        test_path = os.path.join(self.target, 'test')
+        logger.debug("Running behave in '%s'." % test_path)
+        args = [test_path,
+                '--junit',
+                '--junit-directory', 'results',
+                '--no-skipped',
+                '-t', '~ignore',
+                '-D', 'IMAGE=%s' % image]
 
         if test_names:
             for name in test_names:
-                cmd.append('--name')
-                cmd.append("%s" % name)
+                args.append('--name')
+                args.append("%s" % name)
         else:
             for tag in run_tags:
                 if ':' in tag:
                     test_tag = tag.split(':')[0]
 
-                cmd.append('-t')
+                args.append('-t')
                 if '/' in tag:
-                    cmd.append("@%s,@%s" % (test_tag.split('/')[0], test_tag))
+                    args.append("@%s,@%s" % (test_tag.split('/')[0], test_tag))
                 else:
-                    cmd.append(tag)
+                    args.append(tag)
 
             # Check if we're running runtests on CI or locally
             # If we run tests locally - skip all features that
             # are marked with the @ci annotation
             if getpass.getuser() != "jenkins":
-                cmd.append("-t")
-                cmd.append("~ci ")
+                args.append("-t")
+                args.append("~ci ")
 
-        logger.debug("Running '%s' in '%s'." % (' '.join(cmd), os.path.join(self.target, 'test')))
         try:
-            subprocess.check_call(cmd,
-                                  stderr=subprocess.STDOUT,
-                                  cwd=os.path.join(self.target, 'test'))
+            from behave.__main__ import main as behave_main
+            behave_main(args)
         except:
             raise CekitError("Test execution failed, please consult output above")

@@ -23,15 +23,17 @@ You can execute an container image build by running:
 * `--add-help`` -- add generated `help.md` file to the image
 * `--no-add-help`` -- don't add generated `help.md` file to the image
 * ``--work-dir`` -- sets Cekit works directory where dist_git repositories are cloned into See :ref:`Configuration section for work_dir<workdir_config>`
+* ``--package-manager`` -- allows selecting between different package managers such as ``yum`` or ``microdnf``. Defaults to ``yum```
 * ``--build-engine`` -- a builder engine to use ``osbs``, ``buildah`` or ``docker`` [#f1]_
 * ``--build-pull`` -- ask a builder engine to check and fetch latest base image
 * ``--build-osbs-stage`` -- use ``rhpkg-stage`` tool instead of ``rhpkg``
 * ``--build-osbs-release`` [#f2]_ -- perform a OSBS release build
 * ``--build-osbs-user`` -- alternative user passed to `rhpkg --user`
 * ``--build-osbs-target`` -- overrides the default ``rhpkg`` target
+* ``--build-osbs-commit-msg`` -- custom commit message for dist-git
 * ``--build-osbs-nowait`` -- run `rhpkg container-build` with `--nowait` option specified
 * ``--build-tech-preview`` [#f2]_ -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
-  
+
   **Example**: If your ``name`` in image descriptor is: ``jboss-eap-7/eap7``, generated name will be: ``jboss-eap-7-tech-preview/eap7``.
 
 .. [#f1] docker build engine is default

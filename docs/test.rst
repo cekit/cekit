@@ -118,6 +118,7 @@ Then you can instruct Cekit to run this test in a following way:
    ``--test-name`` switch can be specified multiple times and only the Scenarios
    matching all of the names are executed. 
 
+
 Skipping tests
 --------------
 If there is a particular test which needs to be temporally disabled, you can use ``@ignore``

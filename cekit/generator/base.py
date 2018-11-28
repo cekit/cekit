@@ -7,7 +7,7 @@ import socket
 from jinja2 import Environment, FileSystemLoader
 
 from cekit import tools
-from cekit.descriptor import Image, Overrides
+from cekit.descriptor import Image, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.module import copy_module_to_target
 from cekit.template_helper import TemplateHelper
@@ -105,22 +105,6 @@ class Generator(object):
             descriptor.merge(req_module)
             logger.debug("Merging '%s' module into '%s'." % (req_module['name'], descriptor['name']))
 
-
-    def prepare_artifacts(self):
-        """Goes through artifacts section of image descriptor
-        and fetches all of them
-        """
-        if 'artifacts' not in self.image:
-            logger.debug("No artifacts to fetch")
-            return
-
-        logger.info("Handling artifacts...")
-        target_dir = os.path.join(self.target, 'image')
-
-        for artifact in self.image['artifacts']:
-            artifact.copy(target_dir)
-        logger.debug("Artifacts handled")
-
     def override(self, overrides_path):
         logger.info("Using overrides file from '%s'." % overrides_path)
         descriptor = Overrides(tools.load_descriptor(overrides_path),
@@ -185,6 +169,7 @@ class Generator(object):
         if self._params.get('redhat'):
             self._inject_redhat_defaults()
 
+        self.image['pkg_manager'] = self._params.get('package_manager', 'yum')
         self.image.process_defaults()
 
         template_file = os.path.join(os.path.dirname(__file__),
@@ -195,6 +180,7 @@ class Generator(object):
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper()
         env.globals['addhelp'] = self._params.get('addhelp')
+
         template = env.get_template(os.path.basename(template_file))
 
         dockerfile = os.path.join(self.target,
@@ -210,7 +196,7 @@ class Generator(object):
 
         if self.image.get('help', {}).get('template', ""):
             help_template_path = self.image['help']['template']
-        elif 'help_template' in self._params:
+        elif self._params.get('help_template'):
             help_template_path = self._params['help_template']
         else:
             help_template_path = os.path.join(os.path.dirname(__file__),
@@ -235,6 +221,9 @@ class Generator(object):
         if 'packages' not in self.image:
             return
 
+        if self.image.get('packages').get('content_sets'):
+            logger.warning('The image has ContentSets repositories specified, all other repositories are removed!')
+            self.image['packages']['repositories'] = []
         repos = self.image.get('packages').get('repositories', [])
 
         injected_repos = []
@@ -242,6 +231,14 @@ class Generator(object):
         for repo in repos:
             if self._handle_repository(repo):
                 injected_repos.append(repo)
+
+        if self.image.get('packages').get('content_sets'):
+            url = self._prepare_content_sets(self.image.get('packages').get('content_sets'))
+            if url:
+                repo = Repository({'name': 'content_sets_odcs',
+                                   'url': {'repository': url}})
+                injected_repos.append(repo)
+                self._fetch_repos = True
 
         if self._fetch_repos:
             for repo in injected_repos:
@@ -268,9 +265,9 @@ class Generator(object):
                            % repo['name'])
             return False
 
-        if 'odcs' in repo:
+        if 'content_sets' in repo:
             self._fetch_repos = True
-            return self._prepare_repository_odcs_pulp(repo)
+            return self._prepare_content_sets(repo)
 
         elif 'rpm' in repo:
             self._prepare_repository_rpm(repo)
@@ -281,8 +278,11 @@ class Generator(object):
 
         return False
 
-    def _prepare_repository_odcs_pulp(self, repo, **kwargs):
-        raise NotImplementedError("ODCS pulp repository injection not implemented!")
+    def _prepare_content_sets(self, content_sets):
+        raise NotImplementedError("Content sets repository injection not implemented!")
 
     def _prepare_repository_rpm(self, repo):
         raise NotImplementedError("RPM repository injection was not implemented!")
+
+    def prepare_artifacts(self):
+        raise NotImplementedError("Artifacts handling is not implemented")
