@@ -147,15 +147,15 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'rpm': 'foo-repo.rpm'}],
-                              'install': ['a']}}
+                              'install': ['a', 'b']}}
 
     generator = prepare_generator(target, desc_part, 'image')
     generator._params['package_manager'] = 'microdnf'
     generator.prepare_repositories()
     generator.render_dockerfile()
     regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf install -y a')
-    regex_dockerfile(target, 'rpm -q a')
+    regex_dockerfile(target, 'RUN microdnf install -y a b')
+    regex_dockerfile(target, 'rpm -q a b')
 
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
