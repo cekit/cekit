@@ -78,7 +78,7 @@ class ArtifactCache():
     def _find_artifact(self, alg, chksum):
         cache = self._get_cache()
         for _, artifact in cache.items():
-            if artifact[alg] == chksum:
+            if alg in artifact and artifact[alg] == chksum:
                 return artifact
 
         raise CekitError('Artifact is not cached.')
