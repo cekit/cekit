@@ -278,7 +278,7 @@ class Generator(object):
 
         return False
 
-    def _prepare_content_sets(self, repo):
+    def _prepare_content_sets(self, content_sets):
         raise NotImplementedError("Content sets repository injection not implemented!")
 
     def _prepare_repository_rpm(self, repo):
