@@ -7,7 +7,7 @@ import socket
 from jinja2 import Environment, FileSystemLoader
 
 from cekit import tools
-from cekit.descriptor import Image, Overrides
+from cekit.descriptor import Image, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.module import copy_module_to_target
 from cekit.template_helper import TemplateHelper
@@ -221,6 +221,9 @@ class Generator(object):
         if 'packages' not in self.image:
             return
 
+        if self.image.get('packages').get('content_sets'):
+            logger.warning('The image has ContentSets repositories specified, all other repositories are removed!')
+            self.image['packages']['repositories'] = []
         repos = self.image.get('packages').get('repositories', [])
 
         injected_repos = []
@@ -228,6 +231,14 @@ class Generator(object):
         for repo in repos:
             if self._handle_repository(repo):
                 injected_repos.append(repo)
+
+        if self.image.get('packages').get('content_sets'):
+            url = self._prepare_content_sets(self.image.get('packages').get('content_sets'))
+            if url:
+                repo = Repository({'name': 'content_sets_odcs',
+                                   'url': {'repository': url}})
+                injected_repos.append(repo)
+                self._fetch_repos = True
 
         if self._fetch_repos:
             for repo in injected_repos:
@@ -254,9 +265,9 @@ class Generator(object):
                            % repo['name'])
             return False
 
-        if 'odcs' in repo:
+        if 'content_sets' in repo:
             self._fetch_repos = True
-            return self._prepare_repository_odcs_pulp(repo)
+            return self._prepare_content_sets(repo)
 
         elif 'rpm' in repo:
             self._prepare_repository_rpm(repo)
@@ -267,8 +278,8 @@ class Generator(object):
 
         return False
 
-    def _prepare_repository_odcs_pulp(self, repo, **kwargs):
-        raise NotImplementedError("ODCS pulp repository injection not implemented!")
+    def _prepare_content_sets(self, content_sets):
+        raise NotImplementedError("Content sets repository injection not implemented!")
 
     def _prepare_repository_rpm(self, repo):
         raise NotImplementedError("RPM repository injection was not implemented!")

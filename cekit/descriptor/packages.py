@@ -11,6 +11,8 @@ config = Config()
 
 packages_schema = [yaml.safe_load("""
 map:
+  content_sets: {type: any}
+  content_sets_file: {type: str}
   repositories:
     seq:
       - {type: any}
@@ -46,6 +48,14 @@ class Packages(Descriptor):
     def __init__(self, descriptor):
         self.schemas = packages_schema
         super(Packages, self).__init__(descriptor)
+        if ('content_sets_file' in descriptor and 'content_sets' in descriptor):
+            raise CekitError("You cannot specify content_sets and content_sets_file together!")
+
+        if 'content_sets_file' in descriptor:
+            with open(descriptor['content_sets_file'], 'r') as file_:
+                descriptor['content_sets'] = yaml.safe_load(file_)
+                del descriptor['content_sets_file']
+
         self._prepare()
 
     def _prepare(self):
@@ -77,12 +87,9 @@ class Repository(Descriptor):
                              "['id', 'odcs', 'rpm', 'url']"
                              % descriptor['name'])
 
-        if config.get('common', 'redhat') and 'id' in descriptor:
-            descriptor['odcs'] = {'pulp': descriptor['id']}
-            del descriptor['id']
-
         if 'url' not in descriptor:
             descriptor['url'] = {}
+
 
         self.schemas = [repository_schema]
         super(Repository, self).__init__(descriptor)
@@ -90,7 +97,6 @@ class Repository(Descriptor):
         # we dont want to merge any of theese
         self.skip_merging = ['rpm',
                              'id',
-                             'odcs',
                              'url']
 
         if 'present' not in self._descriptor:

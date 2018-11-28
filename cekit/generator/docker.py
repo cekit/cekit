@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import subprocess
 import yaml
 
@@ -22,18 +23,23 @@ class DockerGenerator(Generator):
         super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
         self._fetch_repos = True
 
-    def _prepare_repository_odcs_pulp(self, repo):
-        """Create pulp content set in ODCS and returns its url
+    def _prepare_content_sets(self, content_sets):
+        if not config.cfg['common']['redhat']:
+            return False
 
-        Args:
-          repo - repository object to generate ODCS pulp for"""
+        arch = platform.machine()
+        if arch not in content_sets:
+            raise CekitError("There are no contet_sets defined for platform '%s'!")
+
+        repos = ' '.join(content_sets[arch])
+
         try:
             # idealy this will be API for ODCS, but there is no python3 package for ODCS
             cmd = ['odcs']
 
             if self._params.get('redhat', False):
                 cmd.append('--redhat')
-            cmd.extend(['create', 'pulp', repo['odcs']['pulp']])
+            cmd.extend(['create', 'pulp', repos])
 
             logger.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
 
@@ -49,10 +55,7 @@ class DockerGenerator(Generator):
                                  % odcs_result['state_reason'])
 
             repo_url = odcs_result['result_repofile']
-
-            repo['url']['repository'] = repo_url
-
-            return True
+            return repo_url
 
         except CekitError as ex:
             raise ex

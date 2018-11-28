@@ -35,26 +35,10 @@ Following labels are added into the image:
 Repositories
 ------------
 
-In Red Hat we are using ODCS to access repositories for building our container images. To make our life little bit easier Cekit converts all :ref:`Plain<repo_plain>` type repositories into :ref:`ODCS<repo_odcs>` ones. This assures we can perform reproducible builds of our images without any overrides or changes into image descriptors.
-
-*Example:* Following :ref:`Plain<repo_plain>` repository:
-
-.. code:: yaml
-
-    packages:
-        repositories:
-            - name: SCL
-              id: rhel-server-rhscl-7-rpms
-
-will be automatically converted into following :ref:`ODCS<repo_odcs>` repository:
-
-.. code:: yaml
-
-    packages:
-        repositories:
-            - name: SCL
-              odcs:
-                  pulp: rhel-server-rhscl-7-rpms
+In Red Hat we are using ODCS/OSBS integration to access repositories for building our container images. To make our life easier
+for local development Cekit is able to ask ODCS to create ``content_sets.yml`` based repositories even for local Docker builds.
+This means that if you set :ref:`redhat configuration option<redhat_config>` to True, your content_sets repositories will be
+injected into the image you are building and you can successfully build an image on non-subscribed hosts.
 
 Artifacts
 ---------

@@ -26,8 +26,8 @@ additional repositories:
 
 * Plain
 * RPM
-* ODCS
 * URL
+* ContentSets
 
 .. note::
    See :ref:`Repository mangement<repository_management>` to learn about best practices for repository
@@ -47,9 +47,6 @@ This is the default option. With this approach you specify repository id and Cek
               id: rhel7-extras-rpm
               description: "Repository containing extras RHEL7 extras packages"
 
-.. note::
-   Behavior of plain repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
-
 
 RPM
 ^^^^
@@ -67,24 +64,6 @@ image you should define repository in a following way:
 
 .. _repo_odcs:
 
-ODCS
-^^^^
-This way is instructs `ODCS <https://pagure.io/odcs>`_ to generate on demand pulp repositories.
-To use ODCS define repository section in following way:
-
-.. code:: yaml
-
-    packages:
-        repositories:
-            - name: Extras
-              odcs:
-                  repository: rhel-7-extras-rpm
-
-
-.. note::
-
-   Only on demand pulp ODCS repositories are supported now.
-
 
 URL
 ^^^^
@@ -96,6 +75,58 @@ repositories section in a way of:
     packages:
         repositories:
             - name: foo
-	      url:
-	        repository: https://web.example/foo.repo
+              url:
+                repository: https://web.example/foo.repo
                 gpg: https://web.exmaple/foo.gpg
+
+
+.. _repo_contentsets:
+
+
+Content sets
+^^^^^^^^^^^^
+Content sets are tightly integrated to OSBS style of defining repositories in ``content_sets.yml`` file.
+If this kind of repository is present in the image descriptor it overrides all other repositories types.
+For local Docker based build these repositories are ignored similarly to Plain repository types and
+we expect repository definitions to be available inside image. See
+`upstream docs <https://osbs.readthedocs.io/en/latest/users.html#content-sets>`_ for more details about
+content sets.
+
+.. note::
+   Behavior of Content sets repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
+
+There are two possibilities how to define Content sets type of repository:
+
+Embedded
+""""""""
+In this approach content sets are embedded inside image descriptor under the ``content_sets`` key.
+
+.. code:: yaml
+
+    packages:
+        content_sets:
+            x86_64:
+            - server-rpms
+            - server-extras-rpms
+
+
+Linked
+""""""
+In this approach Contet sets file is linked from a separate yaml file next to image descriptor via
+``content_sets_file`` key.
+
+Image descriptor:
+
+.. code:: yaml
+
+    packages:
+        content_sets_file: content_sets.yml
+
+
+``content_sets.yml`` located next to image descriptor:
+
+.. code:: yaml
+
+     x86_64:
+       - server-rpms
+       - server-extras-rpms
