@@ -123,7 +123,7 @@ Image descriptor:
         content_sets_file: content_sets.yml
 
 
-content_sets.yml located next to image descriptor:
+``content_sets.yml`` located next to image descriptor:
 
 .. code:: yaml
 

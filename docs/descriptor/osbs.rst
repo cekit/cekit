@@ -45,7 +45,7 @@ In this case whole ``container.yaml`` file is embedded in an image descriptor.
 Linked
 """"""
 
-In this case ``container.yaml`` file is save next to the image descriptor.
+In this case ``container.yaml`` file is read from a file located next to the image descriptor.
 
 .. code:: yaml
 

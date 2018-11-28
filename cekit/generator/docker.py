@@ -29,7 +29,7 @@ class DockerGenerator(Generator):
 
         arch = platform.machine()
         if arch not in content_sets:
-            raise CekitError("There are not contet_sets defined for platform '%s'!")
+            raise CekitError("There are no contet_sets defined for platform '%s'!")
 
         repos = ' '.join(content_sets[arch])
 
