@@ -3,7 +3,7 @@ import getpass
 import logging
 import subprocess
 
-
+from cekit.tools import Chdir
 from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
@@ -58,6 +58,8 @@ class TestRunner(object):
 
         try:
             from behave.__main__ import main as behave_main
-            behave_main(args)
+
+            with Chdir(os.path.join(self.target, 'test')):
+                behave_main(args)
         except:
             raise CekitError("Test execution failed, please consult output above")

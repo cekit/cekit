@@ -5,7 +5,7 @@ import sys
 import yaml
 import pytest
 
-from cekit.builders.osbs import Chdir
+from cekit.tools import Chdir
 from cekit.errors import CekitError
 from cekit.cli import Cekit
 

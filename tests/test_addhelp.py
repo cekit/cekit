@@ -9,7 +9,7 @@ import sys
 import shutil
 import yaml
 import pytest
-from cekit.builders.osbs import Chdir
+from cekit.tools import Chdir
 from cekit.cli import Cekit
 
 image_descriptor = {
