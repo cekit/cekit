@@ -11,6 +11,7 @@ from cekit.config import Config
 from cekit.builder import Builder
 from cekit.descriptor.resource import _PlainResource
 from cekit.errors import CekitError
+from cekit.tools import Chdir
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -336,16 +337,3 @@ class DistGit(object):
             logger.info("Changes are not pushed, exiting")
             sys.exit(0)
 
-
-class Chdir(object):
-    """ Context manager for changing the current working directory """
-
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
-
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
-
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
