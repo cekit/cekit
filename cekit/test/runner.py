@@ -60,6 +60,9 @@ class TestRunner(object):
             from behave.__main__ import main as behave_main
 
             with Chdir(os.path.join(self.target, 'test')):
-                behave_main(args)
+                if behave_main(args) != 0:
+                    raise CekitError("Test execution failed, please consult output above")
+        except CekitError:
+            raise
         except:
-            raise CekitError("Test execution failed, please consult output above")
+            raise CekitError("An error occurred while executing tests")
