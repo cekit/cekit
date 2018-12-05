@@ -3,3 +3,4 @@ Jinja2>=2.7
 pykwalify>=1.6.0
 colorlog>=2.10.0
 docker
+docker-squash

@@ -6,6 +6,7 @@ import yaml
 
 from cekit.builder import Builder
 from cekit.errors import CekitError
+from docker_squash.squash import Squash
 
 try:
     docker_client = docker.Client(version="1.22")
@@ -25,6 +26,7 @@ class DockerBuilder(Builder):
             params = {}
         self._tags = params.get('tags', [])
         self._pull = params.get('pull', False)
+        self._base = params.get('base')
         super(DockerBuilder, self).__init__(build_engine, target, params)
 
     def check_prerequisities(self):
@@ -62,18 +64,21 @@ class DockerBuilder(Builder):
                     line = yaml.safe_load(line)['errorDetail']['message']
                     raise CekitError("Image build failed: '%s'" % line)
 
-                if '---> Running in ' in line:
-                    docker_layer_ids.append(line.split(' ')[-1])
-
-                if '---> Using cache' in build_log[-1]:
-                    docker_layer_ids.append(line.split(' ')[-1])
-
                 if line != build_log[-1]:
                     # this prevents poluting cekit log with dowloading/extracting msgs
                     log_msg = ANSI_ESCAPE.sub('', line).strip()
                     for msg in log_msg.split('\n'):
                         logger.info('Docker: %s' % msg)
                     build_log.append(line)
+
+                    if '---> Running in ' in line:
+                        docker_layer_ids.append(line.split(' ')[-1].strip())
+                    elif 'Successfully built ' in line:
+                        docker_layer_ids.append(line.split(' ')[-1].strip())
+                    elif '---> Using cache' in build_log[-2]:
+                        docker_layer_ids.append(line.split(' ')[-1].strip())
+
+            self.squash_image(docker_layer_ids[-1])
 
             for tag in self._tags[1:]:
                 if ':' in tag:
@@ -96,3 +101,9 @@ class DockerBuilder(Builder):
                     "your image/module descriptor for proper repository " \
                     " definitions."
             raise CekitError(msg, ex)
+
+    def squash_image(self, layer_id):
+        logger.info("Squashing image %s..." % (layer_id))
+        # XXX: currently, cleanup throws a 409 error from the docker daemon.  this needs to be investigated in docker_squash
+        squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=layer_id, tag=self._tags[0], cleanup=False)
+        squash.run()

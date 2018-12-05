@@ -233,7 +233,8 @@ class Cekit(object):
                           'pull': self.args.build_pull,
                           'redhat': config.get('common', 'redhat'),
                           'target': self.args.build_osbs_target,
-                          'commit_msg': self.args.build_osbs_commit_msg
+                          'commit_msg': self.args.build_osbs_commit_msg,
+                          'base': generator.image.base
                           }
 
                 builder = Builder(self.args.build_engine,
