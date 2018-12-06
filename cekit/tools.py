@@ -57,11 +57,16 @@ def decision(question):
 
 def get_brew_url(md5):
     try:
-        logger.info("Getting brew details for an artifact with '%s' md5 sum" % md5)
+        logger.debug("Getting brew details for an artifact with '%s' md5 sum" % md5)
         list_archives_cmd = ['brew', 'call', '--json-output', 'listArchives',
                              'checksum=%s' % md5, 'type=maven']
         logger.debug("Executing '%s'." % " ".join(list_archives_cmd))
-        archive = yaml.safe_load(subprocess.check_output(list_archives_cmd))[0]
+        archive_yaml = yaml.safe_load(subprocess.check_output(list_archives_cmd))
+
+        if not archive_yaml:
+            raise CekitError("Artifact with md5 checksum %s could not be found in Brew" % md5)
+
+        archive = archive_yaml[0]
         build_id = archive['build_id']
         filename = archive['filename']
         group_id = archive['group_id']

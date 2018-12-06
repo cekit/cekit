@@ -48,17 +48,27 @@ class OSBSGenerator(Generator):
         fetch_artifacts_url = []
 
         for artifact in self.image['artifacts']:
+            logger.info("Preparing artifact %s" % artifact['name'])
+
             if isinstance(artifact, _PlainResource) and \
                config.get('common', 'redhat'):
-                fetch_artifacts_url.append({'md5': artifact['md5'],
-                                            'url': get_brew_url(artifact['md5']),
-                                            'target': os.path.join(artifact['target'])})
-                artifact['target'] = os.path.join('artifacts', artifact['target'])
+                try:
+                    fetch_artifacts_url.append({'md5': artifact['md5'],
+                                                'url': get_brew_url(artifact['md5']),
+                                                'target': os.path.join(artifact['target'])})
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
+                    logger.debug("Artifact added to fetch-artifacts-url.yaml")
+                except:
+                    logger.warning("Plain artifact %s could not be found in Brew, trying to handle it using lookaside cache" % artifact['name'])
+                    artifact.copy(target_dir)
+                    # TODO: This is ugly, rewrite this!
+                    artifact['lookaside'] = True
+
             else:
                 artifact.copy(target_dir)
 
         if fetch_artifacts_url:
-            with open('target/image/fetch-artifacts-url.yaml', 'w') as _file:
+            with open(os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml'), 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
 
         logger.debug("Artifacts handled")
