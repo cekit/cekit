@@ -431,7 +431,7 @@ def test_run_path_artifact_brew(tmpdir, mocker, caplog):
 
     run_cekit_exception(image_dir)
 
-    assert "Cannot fetch Artifact: 'aaa', please cache it via cekit-cache." in caplog.text
+    assert "Cekit is not able to fetch resource 'aaa' automatically. Please use cekit-cache command to add this artifact manually." in caplog.text
 
 
 def test_run_path_artifact_target(tmpdir, mocker):
