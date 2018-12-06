@@ -5,7 +5,6 @@ import subprocess
 import ssl
 import yaml
 
-
 try:
     from urllib.parse import urlparse
     from urllib.request import urlopen
@@ -17,7 +16,7 @@ from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-
+from cekit.tools import get_brew_url
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -93,10 +92,10 @@ class Resource(Descriptor):
         if os.path.isdir(target):
             target = os.path.join(target, self.target_file_name())
 
-        logger.debug("Preparing resource '%s'" % (self.name))
+        logger.info("Preparing resource '%s'" % (self.name))
 
         if os.path.exists(target) and self.__verify(target):
-            logger.debug("Local resource '%s' exists and is valid, skipping" % self.name)
+            logger.debug("Local resource '%s' exists and is valid" % self.name)
             return target
 
         if self.cache.is_cached(self):
@@ -120,7 +119,7 @@ class Resource(Descriptor):
             self._copy_impl(target)
         except Exception as ex:
             logger.warn("Cekit is not able to fetch resource '%s' automatically. "
-                        "You can manually place required artifact as '%s'" % (self.name, target))
+                        "Please use cekit-cache command to add this artifact manually." % self.name)
 
             if self.description:
                 logger.info(self.description)
@@ -130,7 +129,7 @@ class Resource(Descriptor):
                              % self.name, ex)
 
         if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and \
-           not self.__verify(target):
+                not self.__verify(target):
             raise CekitError('Artifact verification failed!')
 
         return target
@@ -171,6 +170,9 @@ class Resource(Descriptor):
         """ Downloads a file from url and save it as destination """
         if use_cache:
             url = self.__substitute_cache_url(url)
+
+        if not url:
+            raise CekitError("Artifact %s cannot be downloaded, no URL provided" % self.name)
 
         logger.debug("Downloading from '%s' as %s" % (url, destination))
 
@@ -294,10 +296,30 @@ class _PlainResource(Resource):
     def __init__(self, descriptor, **kwargs):
         super(_PlainResource, self).__init__(descriptor)
 
+        # Set target based on name
+        self.target = self.target_file_name()
+
     def _copy_impl(self, target):
-        try:
-            self._download_file(self.url, target)
-        except:
-            logger.debug("Cannot hit artifact: '%s' via cacher, trying directly." % self.name)
-            self._download_file(self.url, target, use_cache=False)
-        return target
+
+        if config.get('common', 'cache_url'):
+            logger.debug("Trying to download artifact %s from remote cache" % self.name)
+            # If cacher URL is set, use it
+            try:
+                self._download_file(self.url, target)
+                return target
+            except:
+                logger.warning("Could not download artifact %s from the remote cache" % self.name)
+
+        md5 = self.get('md5')
+
+        if md5:
+            logger.debug("Trying to download artifact %s from Brew directly" % self.name)
+
+            try:
+                self.url = get_brew_url(md5)
+                self._download_file(self.url, target, use_cache=False)
+                return target
+            except:
+                logger.warning("Could not download artifact %s from Brew" % self.name)
+
+        raise CekitError("Artifact %s could not be found" % self.name)

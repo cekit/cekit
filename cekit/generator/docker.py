@@ -82,20 +82,6 @@ class DockerGenerator(Generator):
         target_dir = os.path.join(self.target, 'image')
 
         for artifact in self.image['artifacts']:
-            artifact_cache = ArtifactCache()
-            if isinstance(artifact, _PlainResource):
-                if artifact_cache.is_cached(artifact):
-                    pass
-                elif not artifact_cache.is_cached(artifact) and \
-                     config.get('common', 'redhat'):
-                    artifact.url = get_brew_url(artifact['md5'])
-                else:
-                    if 'description' in artifact:
-                        logger.error("Cannot fetch Artifact: '%s', %s" % (artifact['name'],
-                                                                          artifact['description']))
-                    raise CekitError("Cannot fetch Artifact: '%s', please cache it via cekit-cache."
-                                     % artifact['name'])
-
             artifact.copy(target_dir)
 
         logger.debug("Artifacts handled")
