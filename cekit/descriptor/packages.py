@@ -45,16 +45,22 @@ class Packages(Descriptor):
     Args:
       descriptor - yaml containing Packages section
     """
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, descriptor_path):
         self.schemas = packages_schema
+        self.descriptor_path = descriptor_path
         super(Packages, self).__init__(descriptor)
         if ('content_sets_file' in descriptor and 'content_sets' in descriptor):
             raise CekitError("You cannot specify content_sets and content_sets_file together!")
 
         if 'content_sets_file' in descriptor:
-            with open(descriptor['content_sets_file'], 'r') as file_:
+            content_sets_file = os.path.join(self.descriptor_path, descriptor['content_sets_file'])
+
+            if not os.path.exists(content_sets_file):
+                raise CekitError("'%s' file not found!" % content_sets_file)
+
+            with open(content_sets_file, 'r') as file_:
                 descriptor['content_sets'] = yaml.safe_load(file_)
-                del descriptor['content_sets_file']
+            del descriptor['content_sets_file']
 
         self._prepare()
 

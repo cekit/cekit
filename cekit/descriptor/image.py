@@ -59,9 +59,9 @@ class Image(Descriptor):
         self._descriptor['artifacts'] = [Resource(a, directory=self._artifact_dir)
                                          for a in self._descriptor.get('artifacts', [])]
         self._descriptor['modules'] = Modules(self._descriptor.get('modules', {}), self.path)
-        self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}))
+        self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}), self.path)
         if 'osbs' in self._descriptor:
-            self._descriptor['osbs'] = Osbs(self._descriptor['osbs'])
+            self._descriptor['osbs'] = Osbs(self._descriptor['osbs'], self.path)
         self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
 
         # make sure image declarations override any module definitions
@@ -151,11 +151,11 @@ class Image(Descriptor):
 
     @property
     def packages(self):
-        return self.get('packages', Packages({}))
+        return self.get('packages', Packages({}, self.path))
 
     @property
     def osbs(self):
-        return self.get('osbs', Osbs({}))
+        return self.get('osbs', Osbs({}, self.path))
 
     @osbs.setter
     def osbs(self, value):

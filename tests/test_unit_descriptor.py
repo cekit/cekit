@@ -61,7 +61,7 @@ def test_osbs():
     repository:
       name: foo
       branch: bar
-"""))
+"""), "a/path/image.yaml")
 
     assert osbs['repository']['name'] == 'foo'
     assert osbs['repository']['branch'] == 'bar'
@@ -74,7 +74,7 @@ def test_packages(mocker):
           - repo-foo
           - repo-bar
       install:
-          - pkg-foo"""))
+          - pkg-foo"""), "a/path/image.yaml")
 
     assert Repository('repo-foo') in pkg['repositories']
     assert Repository('repo-bar') in pkg['repositories']
