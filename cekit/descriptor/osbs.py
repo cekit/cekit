@@ -26,12 +26,13 @@ class Osbs(Descriptor):
     Args:
       descriptor - yaml containing Osbs object
     """
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, descriptor_path):
         self.schemas = osbs_schema
+        self.descriptor_path = descriptor_path
         super(Osbs, self).__init__(descriptor)
 
         if 'configuration' in self:
-            self['configuration'] = Configuration(self['configuration'])
+            self['configuration'] = Configuration(self['configuration'], self.descriptor_path)
 
     @property
     def name(self):
@@ -59,8 +60,9 @@ class Configuration(Descriptor):
     Args:
       descriptor - yaml contianing OSBS configuration"""
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, descriptor_path):
         self.schemas = configuration_schema
+        self.descriptor_path = descriptor_path
         super(Configuration, self).__init__(descriptor)
         self.skip_merging = ['container', 'container_file']
 
@@ -69,8 +71,9 @@ class Configuration(Descriptor):
             raise CekitError('You cannot specify container and container_file together!')
 
         if 'container_file' in self:
-            if not os.path.exists(self['container_file']):
-                raise CekitError("'%s' file not found!" % self['container_file'])
-            with open(self['container_file'], 'r') as file_:
+            container_file = os.path.join(self.descriptor_path, self['container_file'])
+            if not os.path.exists(container_file):
+                raise CekitError("'%s' file not found!" % container_file)
+            with open(container_file, 'r') as file_:
                 self['container'] = yaml.safe_load(file_)
             del self['container_file']
