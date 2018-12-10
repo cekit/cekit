@@ -70,6 +70,23 @@ class Packages(Descriptor):
     def install(self):
         return self.get('install', [])
 
+    @property
+    def content_sets(self):
+        return self.get('content_sets')
+
+    @content_sets.setter
+    def content_sets(self, value):
+        self._descriptor['content_sets'] = value
+        self._descriptor.pop('content_sets_file')
+
+    @property
+    def content_sets_file(self):
+        return self.get('content_sets_file')
+
+    @content_sets_file.setter
+    def content_sets_file(self, value):
+        self._descriptor['content_sets_file'] = value
+        self._descriptor.pop('content_sets')
 
 class Repository(Descriptor):
     """Object representing package repository
