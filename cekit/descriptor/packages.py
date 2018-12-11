@@ -77,7 +77,7 @@ class Packages(Descriptor):
     @content_sets.setter
     def content_sets(self, value):
         self._descriptor['content_sets'] = value
-        self._descriptor.pop('content_sets_file')
+        self._descriptor.pop('content_sets_file', None)
 
     @property
     def content_sets_file(self):
@@ -86,7 +86,7 @@ class Packages(Descriptor):
     @content_sets_file.setter
     def content_sets_file(self, value):
         self._descriptor['content_sets_file'] = value
-        self._descriptor.pop('content_sets')
+        self._descriptor.pop('content_sets', None)
 
 class Repository(Descriptor):
     """Object representing package repository
