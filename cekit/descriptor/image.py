@@ -6,7 +6,7 @@ import cekit
 
 from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
     Packages, Osbs, Volume, Resource
-from cekit.descriptor.base import logger
+from cekit.descriptor.base import logger, _merge_descriptors
 from cekit.errors import CekitError
 from cekit.version import version as cekit_version
 from collections import OrderedDict
@@ -229,6 +229,11 @@ class Image(Descriptor):
                 else:
                     package_repositories[name] = repository
             self.packages._descriptor['repositories'] = list(package_repositories.values())
+
+            if override.packages.content_sets:
+                self.packages.content_sets = _merge_descriptors(override.packages.content_sets, self.packages.content_sets)
+            elif override.packages.content_sets_file:
+                self.packages.content_sets_file =  override.packages.content_sets_file
 
             if override.osbs != None:
                 self.osbs = override.osbs.merge(self.osbs)

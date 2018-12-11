@@ -2,11 +2,12 @@ import os
 import shutil
 import sys
 
+import subprocess
 import yaml
 import pytest
 
 from cekit.tools import Chdir
-from cekit.errors import CekitError
+from cekit.descriptor import Repository
 from cekit.cli import Cekit
 
 #pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
@@ -24,6 +25,29 @@ def setup_function():
 
     reload(cekit.module)
 
+
+odcs_fake_resp = b"""Result:
+{u'arches': u'x86_64',
+ u'flags': [],
+ u'id': 2019,
+ u'koji_event': None,
+ u'koji_task_id': None,
+ u'owner': u'dbecvari',
+ u'packages': None,
+ u'removed_by': None,
+ u'result_repo': u'http://hidden/compose/Temporary',
+ u'result_repofile': u'http://hidden/Temporary/odcs-2019.repo',
+ u'results': [u'repository'],
+ u'sigkeys': u'FD431D51',
+ u'source': u'rhel-7-server-rpms',
+ u'source_type': 4,
+ u'state': 2,
+ u'state_name': u'done',
+ u'state_reason': u'Compose is generated successfully',
+ u'time_done': u'2018-05-02T14:11:19Z',
+ u'time_removed': None,
+ u'time_submitted': u'2018-05-02T14:11:16Z',
+ u'time_to_expire': u'2018-05-03T14:11:16Z'}"""
 
 image_descriptor = {
     'schema_version': 1,
@@ -55,6 +79,104 @@ Feature: Test test
     then the image should contain label foo with value overriden
 """
 
+
+def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '--config',
+                                      'config',
+                                      '--overrides',
+                                      'overrides.yaml',
+                                      '-v',
+                                      'generate'])
+
+    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch.object(Repository, 'fetch')
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'config'), 'w') as fd:
+        fd.write("[common]\n")
+        fd.write("redhat = True")
+
+    img_desc = image_descriptor.copy()
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+def test_content_sets_file_container_file(tmpdir, mocker, caplog):
+    overrides_descriptor = {
+        'schema_version': 1,
+        'packages': {'content_sets_file': 'content_sets.yml'},
+        'osbs': {'configuration': {'container_file': 'container.yaml'}}}
+
+    content_sets = {'x86_64': ['aaa', 'bbb']}
+    container = {'compose': {'pulp_repos': True}}
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    with open(os.path.join(image_dir, 'content_sets.yml'), 'w') as fd:
+        yaml.dump(content_sets, fd, default_flow_style=False)
+
+    with open(os.path.join(image_dir, 'container.yaml'), 'w') as fd:
+        yaml.dump(container, fd, default_flow_style=False)
+
+    run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
+
+    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
+
+def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
+    overrides_descriptor = {
+        'schema_version': 1,
+        'packages': {'content_sets_file': 'content_sets.yml'},
+        'osbs': {'configuration': {'container': {'compose': {'pulp_repos': True}}}}}
+
+    content_sets = {'x86_64': ['aaa', 'bbb']}
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    with open(os.path.join(image_dir, 'content_sets.yml'), 'w') as fd:
+        yaml.dump(content_sets, fd, default_flow_style=False)
+
+    run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
+
+    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
+
+def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
+    overrides_descriptor = {
+        'schema_version': 1,
+        'packages': {'content_sets': {'x86_64': ['aaa', 'bbb']}},
+        'osbs': {'configuration': {'container': {'compose': {'pulp_repos': True}}}}}
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
+
+    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
+
+def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
+    overrides_descriptor = {
+        'schema_version': 1,
+        'packages': {'content_sets': {'x86_64': ['aaa', 'bbb']}},
+        'osbs': {'configuration': {'container_file': 'container.yaml'}}}
+
+    image_dir = str(tmpdir.mkdir('source'))
+    container = {'compose': {'pulp_repos': True}}
+
+    with open(os.path.join(image_dir, 'container.yaml'), 'w') as fd:
+        yaml.dump(container, fd, default_flow_style=False)
+
+    run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
+
+    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 def copy_repos(dst):
     shutil.copytree(os.path.join(os.path.dirname(__file__),
