@@ -119,6 +119,10 @@ class Cekit(object):
                                  dest='build_osbs_target',
                                  help='overrides the default rhpkg target')
 
+        build_group.add_argument('--build-osbs-commit',
+                                 dest='build_osbs_commit',
+                                 help='commits source to dist-git repository')
+
         build_group.add_argument('--build-osbs-commit-msg',
                                  dest='build_osbs_commit_msg',
                                  help='commit message for dist-git')
@@ -233,6 +237,7 @@ class Cekit(object):
                           'pull': self.args.build_pull,
                           'redhat': config.get('common', 'redhat'),
                           'target': self.args.build_osbs_target,
+                          'commit': self.args.build_osbs_commit,
                           'commit_msg': self.args.build_osbs_commit_msg,
                           'base': generator.image.base
                           }

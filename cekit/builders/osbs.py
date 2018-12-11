@@ -22,6 +22,7 @@ class OSBSBuilder(Builder):
     def __init__(self, build_engine, target, params=None):
         if not params:
             params = {}
+        self._commit = params.get('commit')
         self._commit_msg = params.get('commit_msg')
         self._user = params.get('user')
         self._nowait = params.get('nowait', False)
@@ -90,8 +91,8 @@ class OSBSBuilder(Builder):
 
         if 'packages' in descriptor and 'set_url' in descriptor['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository'] for x in descriptor['packages']['set_url']]
-
-        self.update_osbs_image_source()
+        if (self._commit):
+            self.update_osbs_image_source()
 
     def update_osbs_image_source(self):
         with Chdir(os.path.join(self.target, 'image')):
@@ -182,21 +183,22 @@ class OSBSBuilder(Builder):
             cmd.append("--scratch")
 
         with Chdir(self.dist_git_dir):
-            self.dist_git.add()
-            self.update_lookaside_cache()
+            if (self._commit):
+                self.dist_git.add()
+                self.update_lookaside_cache()
 
-            if self.dist_git.stage_modified():
-                self.dist_git.commit(self._commit_msg)
-                self.dist_git.push()
-            else:
-                logger.info("No changes made to the code, committing skipped")
+                if self.dist_git.stage_modified():
+                    self.dist_git.commit(self._commit_msg)
+                    self.dist_git.push()
+                else:
+                    logger.info("No changes made to the code, committing skipped")
 
-            logger.info("About to execute '%s'." % ' '.join(cmd))
-            if tools.decision("Do you want to build the image in OSBS?"):
-                build_type = "release" if self._release else "scratch"
-                logger.info("Executing %s container build in OSBS..." % build_type)
+        logger.info("About to execute '%s'." % ' '.join(cmd))
+        if tools.decision("Do you want to build the image in OSBS?"):
+            build_type = "release" if self._release else "scratch"
+            logger.info("Executing %s container build in OSBS..." % build_type)
 
-                subprocess.check_call(cmd)
+            subprocess.check_call(cmd)
 
 
 class DistGit(object):
