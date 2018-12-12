@@ -124,19 +124,22 @@ class Repository(Descriptor):
             configured_repository_names.remove('__name__')
 
         if descriptor['name'] not in configured_repositories:
-            if configured_repository_names:
-                raise CekitError("Package repository '%s' used in descriptor is not "
+            if len(configured_repository_names):
+                logger.warning("Package repository '%s' used in descriptor is not "
                                  "available in Cekit configuration file. "
                                  "Available repositories: %s"
                                  % (descriptor['name'], ' '.join(configured_repository_names)))
             else:
-                raise CekitError("Package repository '%s' used in descriptor is not "
+                logger.warning("Package repository '%s' used in descriptor is not "
                                  "available in Cekit configuration file. "
                                  % descriptor['name'])
+            return None
 
         return configured_repositories[descriptor['name']]
 
     def fetch(self, target_dir):
+        if not self._descriptor['url']['repository']:
+            raise CekitError("Repository not defined for '%s'." % (self.name))
         if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
         Resource({'url': self._descriptor['url']['repository']}) \

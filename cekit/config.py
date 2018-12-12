@@ -47,6 +47,7 @@ class Config(object):
         cls.cfg['doc'] = cls.cfg.get('doc', {})
         cls.cfg['doc']['addhelp'] = yaml.safe_load(
             cls.cfg.get('doc').get('addhelp', 'False'))
+        cls.cfg['repositories'] = cls.cfg.get('repositories', {})
 
     @classmethod
     def get(cls, *args):
