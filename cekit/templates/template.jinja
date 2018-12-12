@@ -62,7 +62,10 @@ RUN {{ repo_install(pkg_manager, repo.rpm) }}
 {% endif %}
 {% endfor %}
 {% endif %}
+{% if packages.repositories_injected or packages.repositories %}
+
 RUN yum makecache
+{% endif %}
 
 # Add scripts used to configure the image
 COPY modules /tmp/scripts/
@@ -132,11 +135,13 @@ VOLUME ["{{ volume['path'] }}"]
 USER root
 RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
 RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+{% if packages.repositories_injected or packages.repositories %}
 RUN {{ repo_clear_cache(pkg_manager) }}
 {% if packages.repositories_injected %}
 
 # Remove custom repo files
 RUN {{ repo_remove(pkg_manager, packages.repositories_injected) }}
+{% endif %}
 {% endif %}
 
 # run user
