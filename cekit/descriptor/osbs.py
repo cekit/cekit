@@ -66,7 +66,6 @@ class Configuration(Descriptor):
         super(Configuration, self).__init__(descriptor)
         self.skip_merging = ['container', 'container_file']
 
-    def _prepare_configuration(self):
         if 'container' in self and 'container_file' in self:
             raise CekitError('You cannot specify container and container_file together!')
 
