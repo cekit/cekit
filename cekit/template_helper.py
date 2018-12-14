@@ -4,11 +4,13 @@ import re
 
 class TemplateHelper(object):
 
-    def __init__(self, module_registry):
+    def __init__(self, module_registry=None):
         self._module_registry = module_registry
 
     def module(self, to_install):
-        return self._module_registry.get_module(to_install.name, to_install.version)
+        if self._module_registry:
+            return self._module_registry.get_module(to_install.name, to_install.version)
+        raise Exception("TemplateHelper::module called but no module_registry was provided to constructor")
 
     def filename(self, source):
         """Simple helper to return the file specified name"""
