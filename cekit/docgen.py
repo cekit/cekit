@@ -21,7 +21,7 @@ class Docgen():
         # set up template path
         self.template_file = os.path.join(os.path.dirname(__file__),
                                           'templates',
-                                          'template.adoc.jinja')
+                                          'module.adoc.jinja')
         logger.debug("Module doc template file {} ".format(self.template_file))
 
     def docgen(self):
