@@ -23,14 +23,22 @@ class OSBSGenerator(Generator):
 
     def _prepare_content_sets(self, content_sets):
         content_sets_f = os.path.join(self.target, 'image', 'content_sets.yml')
+
+        if not os.path.exists(os.path.dirname(content_sets_f)):
+            os.makedirs(os.path.dirname(content_sets_f))
+
         with open(content_sets_f, 'w') as _file:
             yaml.safe_dump(content_sets, _file, default_flow_style=False)
 
     def _prepare_container_yaml(self):
         container_f = os.path.join(self.target, 'image', 'container.yaml')
         container = self.image.get('osbs', {}).get('configuration', {}).get('container')
+
         if not container:
             return
+
+        if not os.path.exists(os.path.dirname(container_f)):
+            os.makedirs(os.path.dirname(container_f))
 
         with open(container_f, 'w') as _file:
             yaml.safe_dump(container, _file, default_flow_style=False)
