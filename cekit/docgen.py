@@ -38,13 +38,3 @@ class Docgen():
         logger.info("Generating %s..." % os.path.join(os.path.relpath(output_file, os.getcwd())), os.path.basename(output_file))
         with open(output_file, "w") as text_file:
             text_file.write(self.template.render(data))
-
-    def scan_for_modules(self, curdir=os.getcwd()):
-        if not os.path.isdir(curdir):
-            return
-        for file in sorted(os.listdir(curdir)):
-            full_file = os.path.join(curdir, file)
-            if os.path.isdir(full_file):
-                scan_for_modules(self, full_file)
-            elif os.path.basename(full_file) == 'module.yaml':
-                generate_doc_for_module(self, full_file)
