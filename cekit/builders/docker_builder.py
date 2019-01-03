@@ -44,6 +44,7 @@ class DockerBuilder(Builder):
         args['path'] = os.path.join(self.target, 'image')
         args['tag'] = self._tags[0]
         args['pull'] = self._pull
+        args['rm'] = True
 
         # Custom tags for the container image
         logger.debug("Building image with tags: '%s'" %
