@@ -1,4 +1,3 @@
-import docker
 import logging
 import os
 import re
@@ -9,11 +8,24 @@ from cekit.errors import CekitError
 from docker_squash.squash import Squash
 
 try:
-    docker_client = docker.Client(version="1.22")
-except AttributeError:
-    docker_client = docker.APIClient(version="1.22")
+    from docker.api.client import APIClient as APIClientClass
+except ImportError:
+    from docker.client import Client as APIClientClass
 
 logger = logging.getLogger('cekit')
+
+# Default timeout 10 minutes
+try:
+    timeout = int(os.getenv('DOCKER_TIMEOUT', 600))
+except ValueError as e:
+    raise CekitError("Provided timeout value: %s cannot be parsed as integer, exiting." %
+                     os.getenv('DOCKER_TIMEOUT'))
+
+if not timeout > 0:
+    raise CekitError(
+        "Provided timeout value needs to be greater than zero, currently: %s, exiting." % timeout)
+
+docker_client = APIClientClass(version="1.22", timeout=timeout)
 
 ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 
@@ -96,15 +108,17 @@ class DockerBuilder(Builder):
                 logger.error("You can look inside the failed image by running "
                              "'docker run --rm -ti %s bash'" % docker_layer_ids[-2])
             if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
-               not os.path.exists(os.path.join(self.target, 'image', 'repos')):
+                    not os.path.exists(os.path.join(self.target, 'image', 'repos')):
                 msg = "Image build failed with a yum error and you don't " \
-                    "have any yum repository configured, please check " \
-                    "your image/module descriptor for proper repository " \
-                    " definitions."
+                      "have any yum repository configured, please check " \
+                      "your image/module descriptor for proper repository " \
+                      " definitions."
             raise CekitError(msg, ex)
 
     def squash_image(self, layer_id):
         logger.info("Squashing image %s..." % (layer_id))
         # XXX: currently, cleanup throws a 409 error from the docker daemon.  this needs to be investigated in docker_squash
-        squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=layer_id, tag=self._tags[0], cleanup=False)
+        squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=layer_id,
+                        tag=self._tags[0],
+                        cleanup=False)
         squash.run()
