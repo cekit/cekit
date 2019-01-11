@@ -17,15 +17,16 @@ class BuildahBuilder(Builder):
         self._pull = params.get('pull', False)  # --pull-always
         super(BuildahBuilder, self).__init__(build_engine, target, params)
 
-    def check_prerequisities(self):
-        try:
-            subprocess.check_output(['sudo', 'buildah', 'version'], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as ex:
-            raise CekitError("Buildah build engine needs buildah"
-                             " installed and configured, error: %s"
-                             % ex.output)
-        except Exception as ex:
-            raise CekitError("Buildah build engine needs buildah installed and configured!", ex)
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        deps['buildah'] = {
+            'package': 'buildah',
+            'command': 'buildah --version'
+        }
+
+        return deps
 
     def build(self):
         """Build container image using buildah."""

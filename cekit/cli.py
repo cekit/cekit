@@ -13,13 +13,14 @@ from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
-from cekit.tools import cleanup
+from cekit.tools import cleanup, DependencyHandler
 from cekit.version import version
 
 # FIXME we shoudl try to move this to json
 setup_logging()
 logger = logging.getLogger('cekit')
 config = Config()
+
 
 class MyParser(argparse.ArgumentParser):
 
@@ -185,6 +186,10 @@ class Cekit(object):
             logger.warning("You are running unreleased development version of Cekit, "
                            "use it only at your own risk!")
 
+        # Initialize Cekit dependency handler, check if core dependencies are provided
+        logger.debug("Checking Cekit core dependencies...")
+        self.dependency_handler = DependencyHandler()
+
         config.configure(self.args.config, {'redhat': self.args.redhat,
                                             'work_dir': self.args.work_dir,
                                             'addhelp': self.args.addhelp,
@@ -199,7 +204,7 @@ class Cekit(object):
             'redhat':  config.get('common', 'redhat'),
             'help_template': config.get('doc', 'help_template'),
             'package_manager': config.get('common', 'package_manager'),
-            'tech_preview' : self.args.build_tech_preview
+            'tech_preview': self.args.build_tech_preview
         }
 
         self.generator = Generator(self.args.descriptor,
@@ -213,6 +218,10 @@ class Cekit(object):
         try:
             self.configure()
             generator = self.generator
+
+            # Handle dependencies for selected generator, if any
+            logger.debug("Checking Cekit generate dependencies...")
+            self.dependency_handler.handle(generator)
 
             generator.init()
 
@@ -240,6 +249,11 @@ class Cekit(object):
                 builder = Builder(self.args.build_engine,
                                   self.args.target,
                                   params)
+
+                # Handle dependencies for selected builder, if any
+                logger.debug("Checking Cekit build dependencies...")
+                self.dependency_handler.handle(builder)
+
                 builder.prepare(generator.image)
                 builder.build()
 

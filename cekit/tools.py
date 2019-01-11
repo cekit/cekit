@@ -89,6 +89,7 @@ def get_brew_url(md5):
         raise ex
     return url
 
+
 class Chdir(object):
     """ Context manager for changing the current working directory """
 
@@ -101,3 +102,141 @@ class Chdir(object):
 
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
+
+
+class DependencyHandler(object):
+    """
+    External dependency manager. Understands on what platform are we currently
+    running and what dependencies are required to be installed to satisfy the
+    requirements.
+    """
+
+    # List of operating system families on which Cekit is known to work.
+    # It may work on other operating systems too, but it was not tested.
+    KNOWN_OPERATING_SYSTEMS = ['fedora', 'centos', 'rhel']
+
+    # Set of core Cekit external dependencies.
+    # Format is defined below, in the handle_dependencies() method
+    EXTERNAL_CORE_DEPENDENCIES = {
+        'git': {
+            'package': 'git',
+            'command': 'git --version'
+        }
+    }
+
+    def __init__(self):
+        os_release_path = "/etc/os-release"
+
+        if (os.path.exists(os_release_path)):
+            # Read the file containing operating system information
+            self.os_release = dict(l.strip().split('=') for l in open(os_release_path))
+
+            # Remove the quote character, if it's there
+            for key in self.os_release.keys():
+                self.os_release[key] = self.os_release[key].strip('"')
+        else:
+            logger.warning(
+                "You are running Cekit on an unknown platform. External dependencies suggestions may not work!")
+            return
+
+        if self.os_release['ID'] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+            logger.warning(
+                "You are running Cekit on an untested platform: {} {}. External dependencies suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
+            return
+
+        DependencyHandler.handle_dependencies(
+            DependencyHandler.EXTERNAL_CORE_DEPENDENCIES, self.os_release['ID'])
+
+    @staticmethod
+    def handle_dependencies(dependencies, platform):
+        """
+        The dependencies provided is expected to be a dict in following format:
+
+        {
+            PACKAGE_ID: { 'package': PACKAGE_NAME, 'command': COMMAND_TO_TEST_FOR_PACKACGE_EXISTENCE },
+        }
+
+        Additionally every package can contain platform specific information, for example:
+
+        {
+            'git': {
+                'package': 'git',
+                'command': 'git --version',
+                'fedora': {
+                    'package': 'git-latest',
+                    'command': 'git --version',
+                }
+            }
+        }
+
+        If the platform on which Cekit is currently running is available, it takes precedence before
+        defaults.
+        """
+
+        for dependency in dependencies.keys():
+            current_dependency = dependencies[dependency]
+
+            package = current_dependency.get('package')
+            library = current_dependency.get('library')
+            command = current_dependency.get('command')
+
+            if platform in current_dependency:
+                package = current_dependency[platform].get('package', package)
+                library = current_dependency[platform].get('library', library)
+                command = current_dependency[platform].get('command', command)
+
+            logger.debug("Checking if '{}' dependency is provided...".format(dependency))
+
+            if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                try:
+                    # TODO: Do not use shell here!
+                    subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+                    logger.debug("Cekit dependency '{}' provided via the '{}' package.".format(
+                        dependency, package))
+                    continue
+                except subprocess.CalledProcessError:
+                    raise CekitError(
+                        "Cekit dependency: '{}' was not found, please install the '{}' package.".format(dependency, package))
+
+            if library:
+                found = False
+                if sys.version_info[0] < 3:
+                    import imp
+                    try:
+                        imp.find_module(library)
+                        found = True
+                    except ImportError:
+                        pass
+                else:
+                    import importlib
+                    if importlib.util.find_spec(library):
+                        found = True
+
+                if not found:
+                    raise CekitError(
+                        "Cekit dependency: {} was not found, please use the Python library manager of your choice (pip, setuptools) to install '{}'.".format(dependency, library))
+
+                logger.debug("Cekit dependency '{}' provided via the '{}' library.".format(
+                    dependency, library))
+
+        logger.debug("All dependencies provided!")
+
+    def handle(self, o):
+        """
+        Handles dependencies from selected object. If the object has 'dependencies' method,
+        it will be called to retrieve a set of dependencies to check for.
+        """
+
+        if not o:
+            return
+
+        # Get the class of the object
+        clazz = type(o)
+
+        # Check if the method or variable of 'dependencies' name exists
+        dependencies = getattr(clazz, "dependencies", None)
+
+        # Check if we have a method
+        if callable(dependencies):
+            # Execute that method to get list of dependecies and try to handle them
+            DependencyHandler.handle_dependencies(clazz.dependencies(), self.os_release['ID'])

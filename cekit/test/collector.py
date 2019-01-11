@@ -62,7 +62,7 @@ class TestCollector(object):
         for req in ['behave', 'requests']:
             if not self._requirement_available(req):
                 raise CekitError("Handling of test steps requirements "
-                                     "failed, see log for more info.")
+                                 "failed, see log for more info.")
 
     def _fetch_steps(self, version, url):
         """ Method fetches common steps """

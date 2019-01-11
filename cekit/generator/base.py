@@ -62,7 +62,8 @@ class Generator(object):
         if overrides:
             for override in overrides:
                 logger.debug("Loading override '%s'" % (override))
-                self._overrides.append(Overrides(tools.load_descriptor(override), os.path.dirname(os.path.abspath(override))))
+                self._overrides.append(Overrides(tools.load_descriptor(
+                    override), os.path.dirname(os.path.abspath(override))))
 
         # These should always come last
         if self._params.get('tech_preview', False):
@@ -114,8 +115,8 @@ class Generator(object):
         image_labels = self.image.labels
         # we will persist cekit version in a label here, so we know which version of cekit
         # was used to build the image
-        image_labels.extend([ Label({'name': 'org.concrt.version', 'value': cekit_version}),
-                              Label({'name': 'io.cekit.version', 'value': cekit_version}) ])
+        image_labels.extend([Label({'name': 'org.concrt.version', 'value': cekit_version}),
+                             Label({'name': 'io.cekit.version', 'value': cekit_version})])
 
         # If we define the label in the image descriptor
         # we should *not* override it with value from
@@ -150,7 +151,7 @@ class Generator(object):
                 module = Module(tools.load_descriptor(os.path.join(modules_dir, 'module.yaml')),
                                 modules_dir,
                                 os.path.dirname(os.path.abspath(os.path.join(modules_dir,
-                                                                            'module.yaml'))))
+                                                                             'module.yaml'))))
                 logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
                 self._module_registry.add_module(module)
 
@@ -201,13 +202,13 @@ class Generator(object):
                 else:
                     # attempt to supply a service name by looking up the socket number
                     try:
-                        service = socket.getservbyport(p['value'], p.get('protocol','tcp'))
+                        service = socket.getservbyport(p['value'], p.get('protocol', 'tcp'))
                         r += ":{}".format(service)
                         ports.append(r)
 
-                    except OSError: # py3
+                    except OSError:  # py3
                         pass
-                    except socket.error: # py2
+                    except socket.error:  # py2
                         pass
 
         return ",".join(ports)
@@ -239,22 +240,24 @@ class Generator(object):
             @property
             def envs(self):
                 return [
-                        Env({'name': 'JBOSS_IMAGE_NAME', 'value': '%s' % self._generator.image['name']}),
-                        Env ({'name': 'JBOSS_IMAGE_VERSION', 'value': '%s' % self._generator.image['version']})
-                    ]
+                    Env({'name': 'JBOSS_IMAGE_NAME',
+                         'value': '%s' % self._generator.image['name']}),
+                    Env({'name': 'JBOSS_IMAGE_VERSION',
+                         'value': '%s' % self._generator.image['version']})
+                ]
 
             @property
             def labels(self):
                 labels = [
-                        Label({'name': 'name', 'value': '%s' % self._generator.image['name']}),
-                        Label({'name': 'version', 'value': '%s' % self._generator.image['version']})
-                    ]
+                    Label({'name': 'name', 'value': '%s' % self._generator.image['name']}),
+                    Label({'name': 'version', 'value': '%s' % self._generator.image['version']})
+                ]
 
                 # do not override this label if it's already set
                 if self._generator.image.get('ports', []) and \
-                    'io.openshift.expose-services' not in [ k['name'] for k in self._generator.image['labels'] ]:
+                        'io.openshift.expose-services' not in [k['name'] for k in self._generator.image['labels']]:
                     labels.append(Label({'name': 'io.openshift.expose-services',
-                                'value': self._generator._generate_expose_services()}))
+                                         'value': self._generator._generate_expose_services()}))
 
                 return labels
 
@@ -317,7 +320,8 @@ class Generator(object):
             return
 
         if self.image.get('packages').get('content_sets'):
-            logger.warning('The image has ContentSets repositories specified, all other repositories are removed!')
+            logger.warning(
+                'The image has ContentSets repositories specified, all other repositories are removed!')
             self.image['packages']['repositories'] = []
         repos = self.image.get('packages').get('repositories', [])
 
@@ -382,6 +386,7 @@ class Generator(object):
     def prepare_artifacts(self):
         raise NotImplementedError("Artifacts handling is not implemented")
 
+
 class ModuleRegistry(object):
     def __init__(self):
         self._modules = {}
@@ -390,8 +395,9 @@ class ModuleRegistry(object):
         versions = self._modules.get(name, {})
         if version == None:
             default = versions.get('default')
-            if len(versions) > 2: # we always add the first seen as 'default'
-                logger.warning("Module version not specified for %s, using %s version." % (name, default.version))
+            if len(versions) > 2:  # we always add the first seen as 'default'
+                logger.warning("Module version not specified for %s, using %s version." %
+                               (name, default.version))
             return default
         return versions.get(version, None)
 

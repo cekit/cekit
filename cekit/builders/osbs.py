@@ -16,6 +16,7 @@ from cekit.tools import Chdir
 logger = logging.getLogger('cekit')
 config = Config()
 
+
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
@@ -41,16 +42,24 @@ class OSBSBuilder(Builder):
 
         super(OSBSBuilder, self).__init__(build_engine, target, params={})
 
-    def check_prerequisities(self):
-        try:
-            subprocess.check_output(
-                [self._rhpkg, 'help'], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as ex:
-            raise CekitError("OSBS build engine needs 'rhpkg' tools installed, error: %s"
-                             % ex.output)
-        except Exception as ex:
-            raise CekitError(
-                "OSBS build engine needs '%s' tools installed!" % self._rhpkg, ex)
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        if config.cfg['common'].get('redhat'):
+            if config.cfg['common'].get('stage'):
+                package = 'rhpkg-stage'
+            else:
+                package = 'rhpkg'
+        else:
+            package = 'fedpkg'
+
+        deps[package] = {
+            'package': package,
+            'command': "{} --help".format(package)
+        }
+
+        return deps
 
     def prepare(self, descriptor):
         """Prepares dist-git repository for OSBS build."""
@@ -83,13 +92,16 @@ class OSBSBuilder(Builder):
         self.dist_git.clean()
 
         # First get all artifacts that are not plain artifacts
-        self.artifacts = [a['name'] for a in descriptor.all_artifacts if not isinstance(a, _PlainResource)]
+        self.artifacts = [a['name']
+                          for a in descriptor.all_artifacts if not isinstance(a, _PlainResource)]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
-        self.artifacts += [a['name'] for a in descriptor.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
+        self.artifacts += [a['name']
+                           for a in descriptor.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
         if 'packages' in descriptor and 'set_url' in descriptor['packages']:
-            self._rhpkg_set_url_repos = [x['url']['repository'] for x in descriptor['packages']['set_url']]
+            self._rhpkg_set_url_repos = [x['url']['repository']
+                                         for x in descriptor['packages']['set_url']]
 
         self.update_osbs_image_source()
 
@@ -308,13 +320,13 @@ class DistGit(object):
             ["git", "ls-files", "--others", "--exclude-standard"]).decode("utf8")
 
         if untracked:
-            logger.warn("There are following untracked files: %s. Please review your commit."
+            logger.warning("There are following untracked files: %s. Please review your commit."
                         % ", ".join(untracked.splitlines()))
 
         diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode("utf8")
 
         if diffs:
-            logger.warn("There are uncommited changes in following files: '%s'. "
+            logger.warning("There are uncommited changes in following files: '%s'. "
                         "Please review your commit."
                         % ", ".join(diffs.splitlines()))
 
@@ -340,4 +352,3 @@ class DistGit(object):
         else:
             logger.info("Changes are not pushed, exiting")
             sys.exit(0)
-

@@ -23,6 +23,23 @@ class DockerGenerator(Generator):
         super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
         self._fetch_repos = True
 
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        if config.cfg['common']['redhat']:
+            deps['odcs-client'] = {
+                'package': 'odcs-client',
+                'command': 'odcs --help'
+            }
+
+            deps['brew'] = {
+                'package': 'brewkoji',
+                'command': 'brew --help'
+            }
+
+        return deps
+
     def _prepare_content_sets(self, content_sets):
         if not config.cfg['common']['redhat']:
             return False
