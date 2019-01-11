@@ -41,12 +41,35 @@ class DockerBuilder(Builder):
         self._base = params.get('base')
         super(DockerBuilder, self).__init__(build_engine, target, params)
 
-    def check_prerequisities(self):
-        try:
-            docker_client.images
-        except Exception as ex:
-            raise CekitError("Docker build engine needs docker with python bindings installed "
-                             " and configured, error: %s" % ex)
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        deps['python-docker'] = {
+            'library': 'docker',
+            'fedora': {
+                'package': 'python3-docker',
+                'command': 'rpm -q python3-docker'
+            },
+            'rhel': {
+                'package': 'python-docker-py',
+                'command': 'rpm -q python-docker-py'
+            },
+            'centos': {
+                'package': 'python-docker-py',
+                'command': 'rpm -q python-docker-py'
+            }
+        }
+
+        deps['docker-squash'] = {
+            'library': 'docker-squash',
+            'fedora': {
+                'package': 'python3-docker-squash',
+                'command': 'rpm -q python3-docker-squash'
+            }
+        }
+
+        return deps
 
     def build(self, build_args=None):
         """After the source files are generated, the container image can be built.

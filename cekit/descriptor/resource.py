@@ -118,7 +118,7 @@ class Resource(Descriptor):
         try:
             self._copy_impl(target)
         except Exception as ex:
-            logger.warn("Cekit is not able to fetch resource '%s' automatically. "
+            logger.warning("Cekit is not able to fetch resource '%s' automatically. "
                         "Please use cekit-cache command to add this artifact manually." % self.name)
 
             if self.description:
@@ -312,7 +312,7 @@ class _PlainResource(Resource):
 
         md5 = self.get('md5')
 
-        if md5:
+        if md5 and config.get('common', 'redhat'):
             logger.debug("Trying to download artifact %s from Brew directly" % self.name)
 
             try:

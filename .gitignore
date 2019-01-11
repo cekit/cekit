@@ -16,3 +16,4 @@ docs/_build
 .settings/
 .idea
 *.egg-info
+.vscode
