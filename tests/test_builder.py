@@ -80,6 +80,7 @@ def test_merge_container_yaml_no_limit_arch(mocker, tmpdir):
     with open(container_yaml_f, 'r') as file_:
         container_yaml = yaml.safe_load(file_)
     os.remove(container_yaml_f)
+    os.remove(source)
 
     assert 'paltforms' not in container_yaml
 
@@ -101,6 +102,7 @@ def test_merge_container_yaml_limit_arch(mocker, tmpdir):
     with open(container_yaml_f, 'r') as file_:
         container_yaml = yaml.safe_load(file_)
     os.remove(container_yaml_f)
+    os.remove(source)
 
     assert 'x86_64' in container_yaml['platforms']['only']
     assert len(container_yaml['platforms']['only']) == 1
