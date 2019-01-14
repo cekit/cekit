@@ -62,7 +62,7 @@ class DockerBuilder(Builder):
         }
 
         deps['docker-squash'] = {
-            'library': 'docker-squash',
+            'library': 'docker_squash',
             'fedora': {
                 'package': 'python3-docker-squash',
                 'command': 'rpm -q python3-docker-squash'

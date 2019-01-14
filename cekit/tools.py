@@ -187,6 +187,31 @@ class DependencyHandler(object):
 
             logger.debug("Checking if '{}' dependency is provided...".format(dependency))
 
+            library_found = False
+
+            if library:
+                if sys.version_info[0] < 3:
+                    import imp
+                    try:
+                        imp.find_module(library)
+                        library_found = True
+                    except ImportError:
+                        pass
+                else:
+                    import importlib
+                    if importlib.util.find_spec(library):
+                        library_found = True
+
+                if library_found:
+                    logger.debug("Required Cekit library '{}' was found as a '{}' module!".format(
+                        dependency, library))
+                    continue
+                else:
+                    # Library was not found, check if we have a hint
+                    if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                        raise CekitError("Required Cekit library '{}' could not be found. Try to install the '{}' package.".format(
+                            dependency, package))
+
             if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
                 try:
                     # TODO: Do not use shell here!
@@ -197,27 +222,6 @@ class DependencyHandler(object):
                 except subprocess.CalledProcessError:
                     raise CekitError(
                         "Cekit dependency: '{}' was not found, please install the '{}' package.".format(dependency, package))
-
-            if library:
-                found = False
-                if sys.version_info[0] < 3:
-                    import imp
-                    try:
-                        imp.find_module(library)
-                        found = True
-                    except ImportError:
-                        pass
-                else:
-                    import importlib
-                    if importlib.util.find_spec(library):
-                        found = True
-
-                if not found:
-                    raise CekitError(
-                        "Cekit dependency: {} was not found, please use the Python library manager of your choice (pip, setuptools) to install '{}'.".format(dependency, library))
-
-                logger.debug("Cekit dependency '{}' provided via the '{}' library.".format(
-                    dependency, library))
 
         logger.debug("All dependencies provided!")
 
