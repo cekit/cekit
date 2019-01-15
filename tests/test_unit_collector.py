@@ -19,7 +19,6 @@ def prepare_dirs():
 
 
 def test_collect_test_from_image_repo(prepare_dirs, mocker):
-    mocker.patch.object(TestCollector, '_validate_steps_requirements')
     mocker.patch.object(TestCollector, '_fetch_steps')
     collector = TestCollector(desc_dir, target_dir)
 
@@ -43,7 +42,6 @@ def test_collect_test_from_image_repo(prepare_dirs, mocker):
 
 def test_collect_test_from_repository_root(prepare_dirs, mocker):
     mocker.patch.object(TestCollector, '_fetch_steps')
-    mocker.patch.object(TestCollector, '_validate_steps_requirements')
     collector = TestCollector(desc_dir, target_dir)
 
     features_file = os.path.join(target_dir,
@@ -68,7 +66,6 @@ def test_collect_test_from_repository_root(prepare_dirs, mocker):
 
 def test_collect_test_from_module(prepare_dirs, mocker):
     mocker.patch.object(TestCollector, '_fetch_steps')
-    mocker.patch.object(TestCollector, '_validate_steps_requirements')
     collector = TestCollector(desc_dir, target_dir)
 
     features_file = os.path.join(target_dir,
@@ -94,7 +91,8 @@ def test_collect_test_from_module(prepare_dirs, mocker):
 
 def test_collect_return_false(prepare_dirs, mocker):
     mocker.patch.object(TestCollector, '_fetch_steps')
-    mocker.patch.object(TestCollector, '_validate_steps_requirements')
 
     collector = TestCollector(desc_dir, target_dir)
+
     assert not collector.collect('1', steps_url)
+

@@ -3,19 +3,13 @@ import sys
 import logging
 import shutil
 import subprocess
-import pkg_resources
-
-from cekit.errors import CekitError
-from pkg_resources import DistributionNotFound, VersionConflict
 
 logger = logging.getLogger('cekit')
 
 
 class TestCollector(object):
-    collected = False
-    test_dir = None
-
     def __init__(self, descriptor_dir, target_dir):
+        self.collected = False
         self.descriptor_dir = os.path.abspath(descriptor_dir)
         self.target_dir = os.path.abspath(target_dir)
         self.test_dir = os.path.join(self.target_dir, 'test')
@@ -24,23 +18,21 @@ class TestCollector(object):
         shutil.rmtree(self.test_dir, ignore_errors=True)
         os.makedirs(self.test_dir)
 
-    @staticmethod
-    def dependencies():
+    def dependencies(self):
         deps = {}
 
-        if TestCollector.collected:
-            loader_file = os.path.join(TestCollector.test_dir, "loader.py")
+        loader_file = os.path.join(self.test_dir, "loader.py")
 
-            if os.path.exists(loader_file):
-                try:
-                    sys.path.append(TestCollector.test_dir)
-                    from loader import StepsLoader
-                    sys.path.remove(TestCollector.test_dir)
-                    return StepsLoader.dependencies()
-                except Exception as e:
-                    logger.warning(
-                        "Fetching information about test dependencies failed, running tests may not be possible!")
-                    logger.debug("Exception: {}".format(e))
+        if os.path.exists(loader_file):
+            try:
+                sys.path.append(self.test_dir)
+                from loader import StepsLoader
+                sys.path.remove(self.test_dir)
+                return StepsLoader.dependencies()
+            except Exception as e:
+                logger.warning(
+                    "Fetching information about test dependencies failed, running tests may not be possible!")
+                logger.debug("Exception: {}".format(e))
 
         return deps
 
@@ -80,7 +72,7 @@ class TestCollector(object):
         logger.debug("Collected tests from image")
         logger.info("Tests collected!")
 
-        return TestCollector.collected
+        return self.collected
 
     def _copy_tests(self, source, name, target_dir=''):
         for obj_name in ['steps', 'features']:
@@ -94,6 +86,5 @@ class TestCollector(object):
                 logger.debug("Collecting tests from '%s' into '%s'" % (obj_path,
                                                                        target))
                 if obj_name == 'features':
-                    TestCollector.collected = True
-                    TestCollector.test_dir = self.test_dir
+                    self.collected = True
                 shutil.copytree(obj_path, target)

@@ -250,10 +250,15 @@ class DependencyHandler(object):
         # Get the class of the object
         clazz = type(o)
 
-        # Check if the method or variable of 'dependencies' name exists
-        dependencies = getattr(clazz, "dependencies", None)
+        for var in [clazz, o]:
+            # Check if a static method or variable 'dependencies' exists
+            dependencies = getattr(var, "dependencies", None)
 
-        # Check if we have a method
-        if callable(dependencies):
-            # Execute that method to get list of dependecies and try to handle them
-            DependencyHandler.handle_dependencies(clazz.dependencies(), self.os_release['ID'])
+            if not dependencies:
+                continue
+
+            # Check if we have a method
+            if callable(dependencies):
+                # Execute that method to get list of dependecies and try to handle them
+                DependencyHandler.handle_dependencies(o.dependencies(), self.os_release['ID'])
+                return
