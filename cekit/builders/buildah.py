@@ -5,7 +5,6 @@ import os
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
-
 logger = logging.getLogger('cekit')
 
 

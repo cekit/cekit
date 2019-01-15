@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import shutil
 import subprocess
@@ -7,12 +8,12 @@ import pkg_resources
 from cekit.errors import CekitError
 from pkg_resources import DistributionNotFound, VersionConflict
 
-
 logger = logging.getLogger('cekit')
 
 
 class TestCollector(object):
     collected = False
+    test_dir = None
 
     def __init__(self, descriptor_dir, target_dir):
         self.descriptor_dir = os.path.abspath(descriptor_dir)
@@ -23,46 +24,25 @@ class TestCollector(object):
         shutil.rmtree(self.test_dir, ignore_errors=True)
         os.makedirs(self.test_dir)
 
-    def _requirement_available(self, req, silent=False):
-        try:
-            pkg_resources.require(req)
-            return True
-        except DistributionNotFound as e:
-            if not silent:
-                logger.error("Test steps require library '%s' that is not available." % req)
-                self._suggest_package(req)
-            return False
-        except VersionConflict as e:
-            logger.error("Test steps dependencies have version conflict; %s" % str(e))
-            return False
+    @staticmethod
+    def dependencies():
+        deps = {}
 
-    def _suggest_package(self, name):
-        deps = {
-            'docker': ['python-docker-py', 'python2-docker', 'python3-docker'],
-            'behave': ['python2-behave', 'python3-behave'],
-            'requests': ['python2-requests', 'python3-requests']
-        }
+        if TestCollector.collected:
+            loader_file = os.path.join(TestCollector.test_dir, "loader.py")
 
-        if name in deps:
-            logger.error("Try to install %s RPM package using yum/dnf depending on what OS "
-                         "are you and what Python version you use. You can also use Python "
-                         "package manager of your choice to install '%s' library." %
-                         (" or ".join(deps[name]), name))
+            if os.path.exists(loader_file):
+                try:
+                    sys.path.append(TestCollector.test_dir)
+                    from loader import StepsLoader
+                    sys.path.remove(TestCollector.test_dir)
+                    return StepsLoader.dependencies()
+                except Exception as e:
+                    logger.warning(
+                        "Fetching information about test dependencies failed, running tests may not be possible!")
+                    logger.debug("Exception: {}".format(e))
 
-    def _validate_steps_requirements(self):
-        logger.debug("Validating steps requirements...")
-
-        req_docker = self._requirement_available('docker', True)
-        req_docker_py = self._requirement_available('docker-py', True)
-
-        if not (req_docker or req_docker_py):
-            self._suggest_package('docker')
-            raise CekitError("Could not find Docker client library, see logs above")
-
-        for req in ['behave', 'requests']:
-            if not self._requirement_available(req):
-                raise CekitError("Handling of test steps requirements "
-                                 "failed, see log for more info.")
+        return deps
 
     def _fetch_steps(self, version, url):
         """ Method fetches common steps """
@@ -81,7 +61,6 @@ class TestCollector(object):
     def collect(self, version, url):
         # first clone common steps
         self._fetch_steps(version, url)
-        self._validate_steps_requirements()
         # copy tests from repository root
         tests_root = os.path.join(self.target_dir, 'repo')
         if os.path.exists(tests_root):
@@ -100,7 +79,8 @@ class TestCollector(object):
         self._copy_tests(self.descriptor_dir, '', 'image')
         logger.debug("Collected tests from image")
         logger.info("Tests collected!")
-        return self.collected
+
+        return TestCollector.collected
 
     def _copy_tests(self, source, name, target_dir=''):
         for obj_name in ['steps', 'features']:
@@ -114,5 +94,6 @@ class TestCollector(object):
                 logger.debug("Collecting tests from '%s' into '%s'" % (obj_path,
                                                                        target))
                 if obj_name == 'features':
-                    self.collected = True
+                    TestCollector.collected = True
+                    TestCollector.test_dir = self.test_dir
                 shutil.copytree(obj_path, target)

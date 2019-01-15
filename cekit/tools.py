@@ -176,11 +176,13 @@ class DependencyHandler(object):
         for dependency in dependencies.keys():
             current_dependency = dependencies[dependency]
 
+            binary = current_dependency.get('binary')
             package = current_dependency.get('package')
             library = current_dependency.get('library')
             command = current_dependency.get('command')
 
             if platform in current_dependency:
+                binary = current_dependency[platform].get('binary', binary)
                 package = current_dependency[platform].get('package', package)
                 library = current_dependency[platform].get('library', library)
                 command = current_dependency[platform].get('command', command)
@@ -222,6 +224,17 @@ class DependencyHandler(object):
                 except subprocess.CalledProcessError:
                     raise CekitError(
                         "Cekit dependency: '{}' was not found, please install the '{}' package.".format(dependency, package))
+
+            if binary:
+                try:
+                    # TODO: Do not use shell here!
+                    subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+                    logger.debug("Cekit dependency '{}' provided via the '{}' binary.".format(
+                        dependency, binary))
+                    continue
+                except subprocess.CalledProcessError:
+                    raise CekitError(
+                        "Cekit dependency: '{}' was not found, please install the '{}' binary.".format(dependency, binary))
 
         logger.debug("All dependencies provided!")
 
