@@ -5,27 +5,28 @@ import yaml
 
 from cekit.builder import Builder
 from cekit.errors import CekitError
-from docker_squash.squash import Squash
-
-try:
-    from docker.api.client import APIClient as APIClientClass
-except ImportError:
-    from docker.client import Client as APIClientClass
 
 logger = logging.getLogger('cekit')
 
-# Default timeout 10 minutes
+# Ignore any failure on non-core modules, we will catch it later
+# and suggest a solution
 try:
-    timeout = int(os.getenv('DOCKER_TIMEOUT', 600))
-except ValueError as e:
-    raise CekitError("Provided timeout value: %s cannot be parsed as integer, exiting." %
-                     os.getenv('DOCKER_TIMEOUT'))
+    # Squash library
+    from docker_squash.squash import Squash
+except ImportError:
+    pass
 
-if not timeout > 0:
-    raise CekitError(
-        "Provided timeout value needs to be greater than zero, currently: %s, exiting." % timeout)
+try:
+    # Docker Python library, the old one
+    from docker.api.client import APIClient as APIClientClass
+except ImportError:
+    pass
 
-docker_client = APIClientClass(version="1.22", timeout=timeout)
+try:
+    # Docker Python library, the new one
+    from docker.client import Client as APIClientClass
+except ImportError:
+    pass
 
 ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 
@@ -40,6 +41,21 @@ class DockerBuilder(Builder):
         self._pull = params.get('pull', False)
         self._base = params.get('base')
         super(DockerBuilder, self).__init__(build_engine, target, params)
+
+        # Default Docker daemon connection timeout 10 minutes
+        # It needs to be high enough to allow Docker daemon to export the
+        # image for squashing.
+        try:
+            timeout = int(os.getenv('DOCKER_TIMEOUT', 600))
+        except ValueError:
+            raise CekitError("Provided timeout value: %s cannot be parsed as integer, exiting." %
+                             os.getenv('DOCKER_TIMEOUT'))
+
+        if not timeout > 0:
+            raise CekitError(
+                "Provided timeout value needs to be greater than zero, currently: %s, exiting." % timeout)
+
+        self.docker_client = APIClientClass(version="1.22", timeout=timeout)
 
     @staticmethod
     def dependencies():
@@ -89,7 +105,7 @@ class DockerBuilder(Builder):
 
         try:
             docker_layer_ids = []
-            out = docker_client.build(**args)
+            out = self.docker_client.build(**args)
             build_log = [""]
             for line in out:
                 if b'stream' in line:
@@ -119,9 +135,9 @@ class DockerBuilder(Builder):
             for tag in self._tags[1:]:
                 if ':' in tag:
                     img_repo, img_tag = tag.split(":")
-                    docker_client.tag(self._tags[0], img_repo, tag=img_tag)
+                    self.docker_client.tag(self._tags[0], img_repo, tag=img_tag)
                 else:
-                    docker_client.tag(self._tags[0], tag)
+                    self.docker_client.tag(self._tags[0], tag)
             logger.info("Image built and available under following tags: %s"
                         % ", ".join(self._tags))
 
@@ -141,7 +157,7 @@ class DockerBuilder(Builder):
     def squash_image(self, layer_id):
         logger.info("Squashing image %s..." % (layer_id))
         # XXX: currently, cleanup throws a 409 error from the docker daemon.  this needs to be investigated in docker_squash
-        squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=layer_id,
+        squash = Squash(docker=self.docker_client, log=logger, from_layer=self._base, image=layer_id,
                         tag=self._tags[0],
                         cleanup=False)
         squash.run()

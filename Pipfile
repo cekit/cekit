@@ -10,12 +10,12 @@ mock = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-mock = "*"
+docker = "*"
+docker-squash = "*"
 
 [packages]
 pykwalify = ">=1.6.0"
 colorlog = ">=2.10.0"
-docker = "*"
-docker-squash = "*"
 PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
 

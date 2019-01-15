@@ -1,6 +1,13 @@
+# Here are listed only *core* Cekit dependencies that can be installed
+# using Python dependency management. Everything else are weak depdendencies
+# handled by the DependencyHandler class. Any part of Cekit can define dependencies
+# and these are evaluated at runtime. If something is not avaialbe, execution
+# is terminated and user is notified what dependencies are missing.
+#
+# This is the only way we could satisfy dependency requirements coming from
+# various places in different types (Python library, an external tool, a binary).
+
 PyYAML>=3.10
 Jinja2>=2.7
 pykwalify>=1.6.0
 colorlog>=2.10.0
-docker
-docker-squash

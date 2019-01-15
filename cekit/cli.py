@@ -270,6 +270,11 @@ class Cekit(object):
 
                 # we run the test only if we collect any
                 if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
+
+                    # Handle test dependencies, if any
+                    logger.debug("Checking Cekit test dependencies...")
+                    self.dependency_handler.handle(tc)
+
                     runner = TestRunner(self.args.target)
                     runner.run(self.args.tags[0], test_tags, test_names=self.args.test_names)
                 else:
