@@ -4,14 +4,15 @@ Configuration file
 Cekit can be configured using a configuration file. We use the
 properties file format.
 
-Cekit will look for this file at the path ``~/.cekit/config``. Its location can be changed via command line ``--config`` option.
+Cekit will look for this file at the path ``~/.cekit/config``. Its location
+can be changed via command line ``--config`` option.
 
 **Example**
 Running Cekit with different config file:
 
 .. code:: sh
-	  
-	  $ cekit --config ~/alternative_path build
+
+    $ cekit --config ~/alternative_path build
 
 Below you can find description of available sections together with options described in detail.
 
@@ -95,8 +96,6 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 ^^^^^^^^^^
 This option changes Cekit default options to comply with Red Hat internal infrastructure and policies.
 
-
-
 **Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
 
 .. code::
@@ -114,7 +113,7 @@ This option changes Cekit default options to comply with Red Hat internal infras
 This section collects together configuration options relating to documentation.
 
 ``addhelp``
-^^^^^^^^^^
+^^^^^^^^^^^^^
 This option instructs Cekit to install the generated `help.md` file into the generate image
 sources. The file is inserted at the root path (`/`). The default value is False.
 
