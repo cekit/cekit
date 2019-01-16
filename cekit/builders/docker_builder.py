@@ -46,16 +46,14 @@ class DockerBuilder(Builder):
         # It needs to be high enough to allow Docker daemon to export the
         # image for squashing.
         try:
-            timeout = int(os.getenv('DOCKER_TIMEOUT', 600))
+            self.timeout = int(os.getenv('DOCKER_TIMEOUT', 600))
         except ValueError:
             raise CekitError("Provided timeout value: %s cannot be parsed as integer, exiting." %
                              os.getenv('DOCKER_TIMEOUT'))
 
-        if not timeout > 0:
+        if not self.timeout > 0:
             raise CekitError(
-                "Provided timeout value needs to be greater than zero, currently: %s, exiting." % timeout)
-
-        self.docker_client = APIClientClass(version="1.22", timeout=timeout)
+                "Provided timeout value needs to be greater than zero, currently: %s, exiting." % self.timeout)
 
     @staticmethod
     def dependencies():
@@ -63,31 +61,23 @@ class DockerBuilder(Builder):
 
         deps['python-docker'] = {
             'library': 'docker',
+            'package': 'python-docker-py',
             'fedora': {
-                'package': 'python3-docker',
-                'command': 'rpm -q python3-docker'
-            },
-            'rhel': {
-                'package': 'python-docker-py',
-                'command': 'rpm -q python-docker-py'
-            },
-            'centos': {
-                'package': 'python-docker-py',
-                'command': 'rpm -q python-docker-py'
-            }
+                'package': 'python3-docker'}
         }
 
         deps['docker-squash'] = {
             'library': 'docker_squash',
             'fedora': {
-                'package': 'python3-docker-squash',
-                'command': 'rpm -q python3-docker-squash'
+                'package': 'python3-docker-squash'
             }
         }
 
         return deps
 
     def build(self, build_args=None):
+        self.docker_client = APIClientClass(version="1.22", timeout=self.timeout)
+
         """After the source files are generated, the container image can be built.
         We're using Docker to build the image currently.
         """

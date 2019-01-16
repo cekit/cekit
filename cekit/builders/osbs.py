@@ -56,7 +56,7 @@ class OSBSBuilder(Builder):
 
         deps[package] = {
             'package': package,
-            'command': "{} --help".format(package)
+            'executable': package
         }
 
         return deps

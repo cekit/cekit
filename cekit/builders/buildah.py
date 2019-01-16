@@ -22,7 +22,7 @@ class BuildahBuilder(Builder):
 
         deps['buildah'] = {
             'package': 'buildah',
-            'command': 'buildah --version'
+            'executable': 'buildah'
         }
 
         return deps

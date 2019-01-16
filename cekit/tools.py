@@ -120,7 +120,7 @@ class DependencyHandler(object):
     EXTERNAL_CORE_DEPENDENCIES = {
         'git': {
             'package': 'git',
-            'command': 'git --version'
+            'executable': 'git'
         }
     }
 
@@ -161,10 +161,9 @@ class DependencyHandler(object):
         {
             'git': {
                 'package': 'git',
-                'command': 'git --version',
+                'executable': 'git',
                 'fedora': {
-                    'package': 'git-latest',
-                    'command': 'git --version',
+                    'package': 'git-latest'
                 }
             }
         }
@@ -173,19 +172,21 @@ class DependencyHandler(object):
         defaults.
         """
 
+        if not dependencies:
+            logger.debug("No dependencies found, skipping...")
+            return
+
         for dependency in dependencies.keys():
             current_dependency = dependencies[dependency]
 
-            binary = current_dependency.get('binary')
             package = current_dependency.get('package')
             library = current_dependency.get('library')
-            command = current_dependency.get('command')
+            executable = current_dependency.get('executable')
 
             if platform in current_dependency:
-                binary = current_dependency[platform].get('binary', binary)
                 package = current_dependency[platform].get('package', package)
                 library = current_dependency[platform].get('library', library)
-                command = current_dependency[platform].get('command', command)
+                executable = current_dependency[platform].get('executable', executable)
 
             logger.debug("Checking if '{}' dependency is provided...".format(dependency))
 
@@ -209,34 +210,43 @@ class DependencyHandler(object):
                         dependency, library))
                     continue
                 else:
+                    msg = "Required Cekit library '{}' was not found; required module '{}' could not be found.".format(
+                        dependency, library)
+
                     # Library was not found, check if we have a hint
                     if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
-                        raise CekitError("Required Cekit library '{}' could not be found. Try to install the '{}' package.".format(
-                            dependency, package))
+                        msg += " Try to install the '{}' package.".format(package)
 
-            if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
-                try:
-                    # TODO: Do not use shell here!
-                    subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
-                    logger.debug("Cekit dependency '{}' provided via the '{}' package.".format(
-                        dependency, package))
-                    continue
-                except subprocess.CalledProcessError:
-                    raise CekitError(
-                        "Cekit dependency: '{}' was not found, please install the '{}' package.".format(dependency, package))
+                    raise CekitError(msg)
 
-            if binary:
-                try:
-                    # TODO: Do not use shell here!
-                    subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
-                    logger.debug("Cekit dependency '{}' provided via the '{}' binary.".format(
-                        dependency, binary))
-                    continue
-                except subprocess.CalledProcessError:
-                    raise CekitError(
-                        "Cekit dependency: '{}' was not found, please install the '{}' binary.".format(dependency, binary))
+            if executable:
+                if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                    DependencyHandler._check(dependency, executable, package)
+                else:
+                    DependencyHandler._check(dependency, executable)
 
         logger.debug("All dependencies provided!")
+
+    @staticmethod
+    def _check(dependency, executable, package=None):
+        path = os.getenv("PATH", os.defpath)
+        path = path.split(os.pathsep)
+
+        for directory in path:
+            file_path = os.path.join(os.path.normcase(directory), executable)
+
+            if os.path.exists(file_path) and os.access(file_path, os.F_OK | os.X_OK) and not os.path.isdir(file_path):
+                logger.debug("Cekit dependency '{}' provided via the '{}' executable.".format(
+                    dependency, file_path))
+                return
+
+        msg = "Cekit dependency: '{}' was not found, please provide the '{}' executable.".format(
+            dependency, executable)
+
+        if package:
+            msg += " To satisfy this requrement you can install the '{}' package.".format(package)
+
+        raise CekitError(msg)
 
     def handle(self, o):
         """
