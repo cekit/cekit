@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Cekit'
-copyright = u'2017-2018, Cekit Team'
+copyright = u'2017-2019, Cekit Team'
 author = u'Cekit Team'
 
 # The version info for the project you're documenting, acts as replacement for

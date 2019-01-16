@@ -1,5 +1,5 @@
-Documentation contribution
-==========================
+Contributing to documentation
+=============================
 
 We use the `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ format to
 write our documentation because this is the de-facto standard for Python documentation.
@@ -35,3 +35,25 @@ Support for auto generating documentation is avialable for local development. Ru
 
 Afterwards you can see generated documentation at `<http://127.0.0.1:8000>`_. When you edit any file,
 documentation will be regenerated and immediately available in your browser.
+
+Guidelines
+-----------
+
+Below you can find a list of conventions used to write Cekit documentation.
+
+Headers
+^^^^^^^
+
+Because reStructredText does not enforce what characters are used to mark header
+to be a certain level, we use following guidelines:
+
+.. code::
+
+    h1 header
+    =========
+
+    h2 header
+    ---------
+
+    h3 header
+    ^^^^^^^^^

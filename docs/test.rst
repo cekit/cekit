@@ -8,7 +8,7 @@ this chapter.
 An image can be tested by running:
 
 .. code:: bash
-	  
+
 	  $ cekit test
 
 **Test options**
@@ -31,7 +31,7 @@ contains the modules.
 The tests directory is structured as follows:
 
 .. code::
-   
+
           tests/features
           tests/features/amq.feature
           tests/steps
@@ -59,7 +59,7 @@ examples of ways ways that tags could be used for managing tests across a set
 of related images:
 
 1. `Product tags`
-   
+
    Tags based on image names. Cekit derives two test tag names from the
    name of the Image being tested. The whole image name is converted into one
    tag, and everything before the first '/' character is converted into
@@ -73,7 +73,7 @@ of related images:
    ``@foo`` and ``@foo/bar``.
 
 2. `Wip tags`
-   
+
    This is very special behavior used mainly in development. Its purpose is to
    to limit the tests to be run to a subset you are working on. To achieve this
    you should mark your in-development test scenarios with the ``@wip`` tag and
@@ -116,7 +116,7 @@ Then you can instruct Cekit to run this test in a following way:
 
 .. note::
    ``--test-name`` switch can be specified multiple times and only the Scenarios
-   matching all of the names are executed. 
+   matching all of the names are executed.
 
 
 Skipping tests
