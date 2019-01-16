@@ -30,12 +30,12 @@ class DockerGenerator(Generator):
         if config.cfg['common']['redhat']:
             deps['odcs-client'] = {
                 'package': 'odcs-client',
-                'command': 'odcs --help'
+                'executable': 'odcs'
             }
 
             deps['brew'] = {
                 'package': 'brewkoji',
-                'command': 'brew --help'
+                'executable': 'brew'
             }
 
         return deps

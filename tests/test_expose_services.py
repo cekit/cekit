@@ -40,16 +40,16 @@ def getservbyport_doesnt(number, protocol):
     raise OSError("port/proto not found")
 
 def run_cekit_return_dockerfile(mocker, workdir, argv, getservbyport=getservbyport_works):
+    # Do not try to validate dependencies while running tests, these are not neccessary
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     """utility function to invoke cekit and return the generated Dockerfile"""
     mocker.patch.object(sys, 'argv', argv)
     mocker.patch.object(socket, 'getservbyport', getservbyport)
     with Chdir(str(workdir)):
         if os.path.exists('target'):
             shutil.rmtree('target')
-        c = Cekit().parse()
-        c.configure()
         try:
-            c.run()
+            Cekit().parse().run()
         except SystemExit:
             pass
         with open("target/image/Dockerfile", "r") as fd:

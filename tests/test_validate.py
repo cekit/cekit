@@ -109,6 +109,8 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
     run_cekit(image_dir)
 
 def test_content_sets_file_container_file(tmpdir, mocker, caplog):
+    # Do not try to validate dependencies while running tests, these are not neccessary
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets_file': 'content_sets.yml'},
@@ -131,6 +133,8 @@ def test_content_sets_file_container_file(tmpdir, mocker, caplog):
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
+    # Do not try to validate dependencies while running tests, these are not neccessary
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets_file': 'content_sets.yml'},
@@ -149,6 +153,8 @@ def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
+    # Do not try to validate dependencies while running tests, these are not neccessary
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets': {'x86_64': ['aaa', 'bbb']}},
@@ -162,6 +168,8 @@ def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
+    # Do not try to validate dependencies while running tests, these are not neccessary
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets': {'x86_64': ['aaa', 'bbb']}},
