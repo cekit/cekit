@@ -1,7 +1,7 @@
 Cekit
 =====
 
-.. image:: images/cover.png
+.. image:: _static/cover.png
 
 About
 -----

@@ -1,7 +1,7 @@
 Cekit
 =====
 
-.. image:: docs/images/logo-wide.png
+.. image:: docs/_static/logo-wide.png
 
 About
 -----
