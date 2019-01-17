@@ -125,30 +125,38 @@ class DependencyHandler(object):
     }
 
     def __init__(self):
+        self.os_release = {}
+        self.platform = None
+
         os_release_path = "/etc/os-release"
 
-        if (os.path.exists(os_release_path)):
+        if os.path.exists(os_release_path):
             # Read the file containing operating system information
-            self.os_release = dict(l.strip().split('=') for l in open(os_release_path))
+            with open(os_release_path, 'r') as f:
+                content = f.readlines()
+
+            self.os_release = dict(l.strip().split('=') for l in content)
 
             # Remove the quote character, if it's there
             for key in self.os_release.keys():
                 self.os_release[key] = self.os_release[key].strip('"')
-        else:
+
+        if not self.os_release or 'ID' not in self.os_release or 'NAME' not in self.os_release or 'VERSION' not in self.os_release:
             logger.warning(
                 "You are running Cekit on an unknown platform. External dependencies suggestions may not work!")
             return
+
+        self.platform = self.os_release['ID']
 
         if self.os_release['ID'] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
             logger.warning(
                 "You are running Cekit on an untested platform: {} {}. External dependencies suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
             return
 
-        DependencyHandler.handle_dependencies(
-            DependencyHandler.EXTERNAL_CORE_DEPENDENCIES, self.os_release['ID'])
+        logger.info("You are running on known platform: {} {}".format(
+            self.os_release['NAME'], self.os_release['VERSION']))
 
-    @staticmethod
-    def handle_dependencies(dependencies, platform):
+    def _handle_dependencies(self, dependencies):
         """
         The dependencies provided is expected to be a dict in following format:
 
@@ -183,29 +191,15 @@ class DependencyHandler(object):
             library = current_dependency.get('library')
             executable = current_dependency.get('executable')
 
-            if platform in current_dependency:
-                package = current_dependency[platform].get('package', package)
-                library = current_dependency[platform].get('library', library)
-                executable = current_dependency[platform].get('executable', executable)
+            if self.platform in current_dependency:
+                package = current_dependency[self.platform].get('package', package)
+                library = current_dependency[self.platform].get('library', library)
+                executable = current_dependency[self.platform].get('executable', executable)
 
             logger.debug("Checking if '{}' dependency is provided...".format(dependency))
 
-            library_found = False
-
             if library:
-                if sys.version_info[0] < 3:
-                    import imp
-                    try:
-                        imp.find_module(library)
-                        library_found = True
-                    except ImportError:
-                        pass
-                else:
-                    import importlib
-                    if importlib.util.find_spec(library):
-                        library_found = True
-
-                if library_found:
+                if self._check_for_library(dependency, library):
                     logger.debug("Required Cekit library '{}' was found as a '{}' module!".format(
                         dependency, library))
                     continue
@@ -214,22 +208,40 @@ class DependencyHandler(object):
                         dependency, library)
 
                     # Library was not found, check if we have a hint
-                    if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                    if package and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
                         msg += " Try to install the '{}' package.".format(package)
 
                     raise CekitError(msg)
 
             if executable:
-                if package and platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
-                    DependencyHandler._check(dependency, executable, package)
+                if package and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                    self._check_for_executable(dependency, executable, package)
                 else:
-                    DependencyHandler._check(dependency, executable)
+                    self._check_for_executable(dependency, executable)
 
         logger.debug("All dependencies provided!")
 
-    @staticmethod
-    def _check(dependency, executable, package=None):
-        path = os.getenv("PATH", os.defpath)
+    # pylint: disable=R0201
+    def _check_for_library(self, dependency, library):
+        library_found = False
+
+        if sys.version_info[0] < 3:
+            import imp
+            try:
+                imp.find_module(library)
+                library_found = True
+            except ImportError:
+                pass
+        else:
+            import importlib
+            if importlib.util.find_spec(library):
+                library_found = True
+
+        return library_found
+
+    # pylint: disable=R0201
+    def _check_for_executable(self, dependency, executable, package=None):
+        path = os.environ.get("PATH", os.defpath)
         path = path.split(os.pathsep)
 
         for directory in path:
@@ -247,6 +259,10 @@ class DependencyHandler(object):
             msg += " To satisfy this requrement you can install the '{}' package.".format(package)
 
         raise CekitError(msg)
+
+    def handle_core_dependencies(self):
+        self._handle_dependencies(
+            DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
 
     def handle(self, o):
         """
@@ -270,5 +286,5 @@ class DependencyHandler(object):
             # Check if we have a method
             if callable(dependencies):
                 # Execute that method to get list of dependecies and try to handle them
-                DependencyHandler.handle_dependencies(o.dependencies(), self.os_release['ID'])
+                self._handle_dependencies(o.dependencies())
                 return
