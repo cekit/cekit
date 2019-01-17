@@ -1,16 +1,16 @@
-Building image
+Building images
 ================
 
 Cekit supports following builder engines:
 
-* ``Docker`` -- build the container image using `docker build <https://docs.docker.com/engine/reference/commandline/build/>`_ command and it default option
-* ``OSBS`` -- build the container image using `OSBS service <https://osbs.readthedocs.io>`_
-* ``Buildah`` -- build the container image using `Buildah <https://github.com/projectatomic/buildah>`_
+* Docker -- builds the container image using the Docker daemon, this is the default option
+* OSBS -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`_
+* Buildah -- builds the container image using `Buildah <https://github.com/projectatomic/buildah>`_
 
 Executing builds
 -----------------
 
-You can execute an container image build by running:
+You can execute container image build by running:
 
 .. code:: bash
 
@@ -20,29 +20,24 @@ You can execute an container image build by running:
 
 * ``--tag`` -- an image tag used to build image (can be specified multiple times)
 * ``--redhat`` -- build image using Red Hat defaults. See :ref:`Configuration section for Red Hat specific options<redhat_env>` for additional details.
-* `--add-help`` -- add generated `help.md` file to the image
-* `--no-add-help`` -- don't add generated `help.md` file to the image
+* ``--add-help`` -- add generated ``help.md`` file to the image
+* ``--no-add-help`` -- don't add generated ``help.md`` file to the image
 * ``--work-dir`` -- sets Cekit works directory where dist_git repositories are cloned into See :ref:`Configuration section for work_dir<workdir_config>`
 * ``--package-manager`` -- allows selecting between different package managers such as ``yum`` or ``microdnf``. Defaults to ``yum```
-* ``--build-engine`` -- a builder engine to use ``osbs``, ``buildah`` or ``docker`` [#f1]_
+* ``--build-engine`` -- a builder engine to use ``osbs``, ``buildah`` or ``docker``, deafult is ``docker``
 * ``--build-pull`` -- ask a builder engine to check and fetch latest base image
 * ``--build-osbs-stage`` -- use ``rhpkg-stage`` tool instead of ``rhpkg``
-* ``--build-osbs-release`` [#f2]_ -- perform a OSBS release build
+* ``--build-osbs-release`` -- perform a OSBS release build
 * ``--build-osbs-user`` -- alternative user passed to `rhpkg --user`
 * ``--build-osbs-target`` -- overrides the default ``rhpkg`` target
 * ``--build-osbs-commit-msg`` -- custom commit message for dist-git
 * ``--build-osbs-nowait`` -- run `rhpkg container-build` with `--nowait` option specified
-* ``--build-tech-preview`` [#f2]_ -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
-
-  **Example**: If your ``name`` in image descriptor is: ``jboss-eap-7/eap7``, generated name will be: ``jboss-eap-7-tech-preview/eap7``.
-
-.. [#f1] docker build engine is default
-.. [#f2] option is valid on for ``osbs`` build engine
+* ``--build-tech-preview`` -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
 
 Docker build
 ^^^^^^^^^^^^^^^^
 
-This is the default way to build an container image. The image is build using ``docker build``.
+This is the default way to build an container image. The image is build utilizing Docker daemon via Python binding.
 
 **Example:** Building a docker image
 
@@ -54,7 +49,7 @@ This is the default way to build an container image. The image is build using ``
 OSBS build
 ^^^^^^^^^^^^^^^
 
-This build engine is using ``rhpkg container-build`` to build the image using OSBS service. By default
+This build engine is using ``rhpkg`` or ``fedpkg`` tool to build the image using OSBS service. By default
 it performs scratch build. If you need a release build you need to specify ``--build-osbs-release`` parameter.
 
 **Example:** Performing scratch build
