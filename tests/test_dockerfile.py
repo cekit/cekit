@@ -17,6 +17,7 @@ basic_config = {'release': 1,
 config = Config()
 config.cfg['common'] = {'redhat': True}
 
+
 def print_test_name(value):
     if str(value).startswith('test'):
         return value
@@ -86,7 +87,7 @@ odcs_fake_resp = b"""Result:
     ('test_cekit_label_version',
      {},
      r'.*io.cekit.version="%s".*' % cekit_version)],
-                         ids=print_test_name)
+    ids=print_test_name)
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
@@ -104,7 +105,7 @@ def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
      {}, r'JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
     ('test_with_family',
         {'name': 'testimage/test'}, r'JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
-                         ids=print_test_name)
+    ids=print_test_name)
 def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
     target = str(tmpdir.mkdir('target'))
     params = {'redhat': True, 'tech_preview': True}
@@ -121,7 +122,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'content_sets': {
         'x86_64': 'foo'},
-                 'install': ['a']}}
+        'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image')
     generator.init()
@@ -140,7 +141,8 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
     generator = prepare_generator(target, desc_part, 'image')
     generator.init()
     generator.generate()
-    regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm')
+
 
 def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
@@ -154,9 +156,10 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
     generator.init()
     generator.generate()
-    regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf install -y a b')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
+
 
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
@@ -166,8 +169,8 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     target = str(tmpdir.mkdir('target'))
     os.makedirs(os.path.join(target, 'image'))
     desc_part = {'packages': {'content_sets': {
-                                 'x86_64': 'foo'},
-                              'install': ['a']}}
+        'x86_64': 'foo'},
+        'install': ['a']}}
 
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
     generator.init()
@@ -187,7 +190,7 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'odcs': {
-                                                   'pulp': 'rhel-7-server-rpms'
+                                                    'pulp': 'rhel-7-server-rpms'
                                                 }},
                                                ],
                               'install': ['a']}}
@@ -220,7 +223,7 @@ def test_dockerfile_osbs_url_only(tmpdir, mocker):
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'url': {
-                                                   'repository': 'foo'
+                                                    'repository': 'foo'
                                                 }},
                                                ],
                               'install': ['a']}}
@@ -243,7 +246,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
     generator = prepare_generator(target, desc_part, 'image', 'osbs')
     generator.init()
     generator.generate()
-    regex_dockerfile(target, 'RUN yum install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm')
 
 
 def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir, mocker):
@@ -258,8 +261,8 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir, mocker):
     generator = prepare_generator(target, desc_part, 'image', 'osbs', [], params)
     generator.init()
     generator.generate()
-    regex_dockerfile(target, 'RUN microdnf install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf install -y a')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a')
     regex_dockerfile(target, 'rpm -q a')
 
 
