@@ -189,6 +189,7 @@ class Cekit(object):
         # Initialize Cekit dependency handler, check if core dependencies are provided
         logger.debug("Checking Cekit core dependencies...")
         self.dependency_handler = DependencyHandler()
+        self.dependency_handler.handle_core_dependencies()
 
         config.configure(self.args.config, {'redhat': self.args.redhat,
                                             'work_dir': self.args.work_dir,

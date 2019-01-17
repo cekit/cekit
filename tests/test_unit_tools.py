@@ -1,5 +1,8 @@
+import logging
 import pytest
 import yaml
+
+from contextlib import contextmanager
 
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
 from cekit.descriptor import Descriptor, Image, Module, Overrides, Run
@@ -159,9 +162,186 @@ def brew_call(*args, **kwargs):
 
 
 def test_get_brew_url(mocker):
-    mock = mocker.patch('subprocess.check_output', side_effect=brew_call)
+    mocker.patch('subprocess.check_output', side_effect=brew_call)
     url = tools.get_brew_url('aa')
     assert url == "http://download.devel.redhat.com/brewroot/packages/package_name/" + \
         "version/release/maven/group_id/artifact_id/version/filename"
 
 
+@contextmanager
+def mocked_dependency_handler(mocker, data="ID=fedora\nNAME=somefedora\nVERSION=123"):
+    dh = None
+
+    with mocker.mock_module.patch('cekit.tools.os.path.exists') as exists_mock:
+        exists_mock.return_value = True
+        with mocker.mock_module.patch('cekit.tools.open', mocker.mock_open(read_data=data)):
+            dh = tools.DependencyHandler()
+    try:
+        yield dh
+    finally:
+        pass
+
+
+def test_dependency_handler_init_on_unknown_env_with_os_release_file(mocker, caplog):
+    with mocked_dependency_handler(mocker, ""):
+        pass
+
+    assert "You are running Cekit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
+
+
+def test_dependency_handler_init_on_known_env(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    with mocked_dependency_handler(mocker):
+        pass
+
+    assert "You are running on known platform: somefedora 123" in caplog.text
+
+
+def test_dependency_handler_init_on_unknown_env_without_os_release_file(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    with mocker.mock_module.patch('cekit.tools.os.path.exists') as exists_mock:
+        exists_mock.return_value = False
+        tools.DependencyHandler()
+
+    assert "You are running Cekit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
+    assert "You are running on known platform" not in caplog.text
+
+
+def test_dependency_handler_handle_dependencies_doesnt_fail_without_deps():
+    tools.DependencyHandler.__new__(
+        tools.DependencyHandler)._handle_dependencies(None)
+
+
+def test_dependency_handler_handle_dependencies_with_library_only(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    deps = {}
+
+    deps['python-docker'] = {
+        'library': 'docker',
+    }
+
+    with mocked_dependency_handler(mocker) as handler:
+        mocker.spy(handler, '_handle_dependencies')
+        handler._handle_dependencies(deps)
+
+    assert "Checking if 'python-docker' dependency is provided..." in caplog.text
+    assert "Required Cekit library 'python-docker' was found as a 'docker' module!" in caplog.text
+    assert "All dependencies provided!" in caplog.text
+
+
+def test_dependency_handler_handle_dependencies_with_executable_only(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    deps = {}
+
+    deps['xyz'] = {
+        'executable': 'xyz-aaa',
+    }
+
+    with mocked_dependency_handler(mocker) as handler:
+        mocker.patch.object(handler, '_check_for_executable')
+        mocker.spy(handler, '_check_for_executable')
+        handler._handle_dependencies(deps)
+
+        # pylint: disable=E1101
+        assert handler._check_for_executable.call_count == 1
+        handler._check_for_executable.assert_called_with('xyz', 'xyz-aaa')
+
+    assert "Checking if 'xyz' dependency is provided..." in caplog.text
+    assert "All dependencies provided!" in caplog.text
+
+
+def test_dependency_handler_handle_dependencies_with_executable_only_failed(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    deps = {
+        'xyz': {
+            'executable': 'xyz-aaa',
+        }
+    }
+    with mocked_dependency_handler(mocker) as handler:
+        with pytest.raises(CekitError, match="Cekit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable."):
+            handler._handle_dependencies(deps)
+
+    assert "Checking if 'xyz' dependency is provided..." in caplog.text
+
+
+def test_dependency_handler_handle_dependencies_with_executable_and_package_on_known_platform(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    deps = {}
+
+    deps['xyz'] = {
+        'executable': 'xyz-aaa',
+        'package': 'python-xyz-aaa'
+    }
+
+    with mocked_dependency_handler(mocker) as handler:
+        mocker.patch.object(handler, '_check_for_executable')
+        mocker.spy(handler, '_check_for_executable')
+        handler._handle_dependencies(deps)
+
+        # pylint: disable=E1101
+        handler._check_for_executable.assert_called_once_with('xyz', 'xyz-aaa', 'python-xyz-aaa')
+
+    assert "Checking if 'xyz' dependency is provided..." in caplog.text
+    assert "All dependencies provided!" in caplog.text
+
+
+def test_dependency_handler_handle_dependencies_with_platform_specific_package(mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    deps = {}
+
+    deps['xyz'] = {
+        'executable': 'xyz-aaa',
+        'package': 'python-xyz-aaa',
+        'fedora': {
+            'package': 'python-fedora-xyz-aaa'
+        }
+    }
+
+    with mocked_dependency_handler(mocker) as handler:
+        mocker.patch.object(handler, '_check_for_executable')
+        mocker.spy(handler, '_check_for_executable')
+        handler._handle_dependencies(deps)
+
+        # pylint: disable=E1101
+        handler._check_for_executable.assert_called_once_with(
+            'xyz', 'xyz-aaa', 'python-fedora-xyz-aaa')
+
+    assert "Checking if 'xyz' dependency is provided..." in caplog.text
+    assert "All dependencies provided!" in caplog.text
+
+
+def test_dependency_handler_check_for_executable_with_executable_only(mocker, caplog, monkeypatch):
+    caplog.set_level(logging.DEBUG)
+
+    with mocked_dependency_handler(mocker) as handler:
+        monkeypatch.setenv('PATH', '/abc:/def')
+        mocker.patch('os.path.exists').side_effect = [False, True]
+        mocker.patch('os.access').return_value = True
+        mocker.patch('os.path.isdir').return_value = False
+        handler._check_for_executable('xyz', 'xyz-aaa')
+
+    assert "Cekit dependency 'xyz' provided via the '/def/xyz-aaa' executable." in caplog.text
+
+
+def test_dependency_handler_check_for_executable_with_executable_fail(mocker, monkeypatch):
+    with mocked_dependency_handler(mocker) as handler:
+        monkeypatch.setenv('PATH', '/abc')
+        mocker.patch('os.path.exists').return_value = False
+        with pytest.raises(CekitError, match=r"^Cekit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable.$"):
+            handler._check_for_executable('xyz', 'xyz-aaa')
+
+
+def test_dependency_handler_check_for_executable_with_executable_fail_with_package(mocker, monkeypatch):
+    with mocked_dependency_handler(mocker) as handler:
+        monkeypatch.setenv('PATH', '/abc')
+        mocker.patch('os.path.exists').return_value = False
+
+        with pytest.raises(CekitError, match=r"^Cekit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable. To satisfy this requrement you can install the 'package-xyz' package.$"):
+            handler._check_for_executable('xyz', 'xyz-aaa', 'package-xyz')
