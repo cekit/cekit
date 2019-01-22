@@ -26,6 +26,7 @@ ci-publish-junit:
 clean:
 	@find . -name "*.pyc" -exec rm -rf {} \;
 	@rm -rf target
+	@rm -rf dist
 
 prepare: clean
 	@mkdir target
@@ -35,6 +36,5 @@ hook-gitter:
 
 release: clean
 	python setup.py clean
-	python setup.py register
 	python setup.py sdist
-	python setup.py sdist upload
+	twine upload dist/*
