@@ -131,7 +131,8 @@ class CacheCli():
             for artifact_id, artifact in artifacts.items():
                 print("%s:" % artifact_id)
                 for alg in SUPPORTED_HASH_ALGORITHMS:
-                    print("  %s: %s" % (alg, artifact[alg]))
+                    if alg in artifact:
+                        print("  %s: %s" % (alg, artifact[alg]))
                 if artifact['names']:
                     print("  names:")
                     for name in artifact['names']:
