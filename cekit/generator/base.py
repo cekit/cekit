@@ -61,6 +61,7 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
+                # TODO: If the overrides is provided as text, why do we try to get path to it?
                 logger.debug("Loading override '%s'" % (override))
                 self._overrides.append(Overrides(tools.load_descriptor(
                     override), os.path.dirname(os.path.abspath(override))))
@@ -148,10 +149,13 @@ class Generator(object):
     def load_repository(self, repo_dir):
         for modules_dir, _, files in os.walk(repo_dir):
             if 'module.yaml' in files:
-                module = Module(tools.load_descriptor(os.path.join(modules_dir, 'module.yaml')),
+
+                module_descriptor_path = os.path.abspath(os.path.expanduser(
+                    os.path.normcase(os.path.join(modules_dir, 'module.yaml'))))
+
+                module = Module(tools.load_descriptor(module_descriptor_path),
                                 modules_dir,
-                                os.path.dirname(os.path.abspath(os.path.join(modules_dir,
-                                                                             'module.yaml'))))
+                                os.path.dirname(module_descriptor_path))
                 logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
                 self._module_registry.add_module(module)
 
@@ -179,13 +183,6 @@ class Generator(object):
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
-
-    def override(self, overrides_path):
-        logger.info("Using overrides file from '%s'." % overrides_path)
-        descriptor = Overrides(tools.load_descriptor(overrides_path),
-                               os.path.dirname(os.path.abspath(overrides_path)))
-        descriptor.merge(self.image)
-        return descriptor
 
     def _generate_expose_services(self):
         """Generate the label io.openshift.expose-services based on the port

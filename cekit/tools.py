@@ -25,22 +25,29 @@ def load_descriptor(descriptor):
     """ parses descriptor and validate it against requested schema type
 
     Args:
-      descriptor - yaml descriptor or path to a descriptor to be loaded
+      descriptor - yaml descriptor or path to a descriptor to be loaded.
+      If a path is provided it must be an absolute path. In other case it's
+      assumed that it is a yaml descriptor.
 
     Returns descriptor as a dictionary
     """
-    if not os.path.exists(descriptor):
-        logger.debug("Descriptor path '%s' doesn't exists, trying to parse it directly."
-                     % descriptor)
-        try:
-            return yaml.safe_load(descriptor)
-        except Exception as ex:
-            raise CekitError('Cannot load descriptor.', ex)
 
-    logger.debug("Loading descriptor from path '%s'." % descriptor)
+    if descriptor.startswith('/'):
+        logger.debug("Trying to load descriptor from '{}' file...".format(descriptor))
 
-    with open(descriptor, 'r') as fh:
-        return yaml.safe_load(fh)
+        if os.path.exists(descriptor):
+            with open(descriptor, 'r') as fh:
+                return yaml.safe_load(fh)
+
+        raise CekitError(
+            "Descriptor could not be found on the '{}' path, please check your arguments!".format(descriptor))
+
+    logger.debug("Trying to load descriptor directly...")
+
+    try:
+        return yaml.safe_load(descriptor)
+    except Exception as ex:
+        raise CekitError('Cannot load descriptor', ex)
 
 
 def decision(question):
@@ -81,8 +88,8 @@ def get_brew_url(md5):
 
         url = 'http://download.devel.redhat.com/brewroot/packages/' + package + '/' + \
             version.replace('-', '_') + '/' + release + '/maven/' + \
-            group_id.replace('.', '/') + '/' + artifact_id.replace('.', '/') + '/' + \
-            version + '/' + filename
+            group_id.replace('.', '/') + '/' + \
+            artifact_id.replace('.', '/') + '/' + version + '/' + filename
     except subprocess.CalledProcessError as ex:
         logger.error("Can't fetch artifacts details from brew: '%s'." %
                      ex.output)

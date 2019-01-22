@@ -1,3 +1,4 @@
+import os
 import pytest
 import sys
 
@@ -140,7 +141,7 @@ def test_args_overrides_file(mocker):
                                       '--overrides-file',
                                       'foo'])
 
-    assert Cekit().parse().args.overrides == ['foo']
+    assert Cekit().parse().args.overrides == [os.path.join(os.getcwd(), 'foo')]
 
 
 def test_args_overrides_exclusiver(mocker):

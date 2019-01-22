@@ -30,6 +30,10 @@ class MyParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
+def absolute_path(path):
+    return os.path.abspath(os.path.expanduser(os.path.normcase(path)))
+
+
 class Cekit(object):
     """ Main application """
 
@@ -138,6 +142,7 @@ class Cekit(object):
                             help='a YAML object to override image descriptor')
 
         parser.add_argument('--overrides-file',
+                            type=absolute_path,
                             action='append',
                             dest='overrides',
                             help='path to a file containing overrides')
@@ -148,7 +153,9 @@ class Cekit(object):
                                 default: 'target' directory in current working directory")
 
         parser.add_argument('--descriptor',
-                            default="image.yaml",
+                            type=absolute_path,
+                            dest='descriptor',
+                            default='image.yaml',
                             help="path to image descriptor file, default: image.yaml")
 
         addhelp_group = parser.add_mutually_exclusive_group()
@@ -218,21 +225,20 @@ class Cekit(object):
 
         try:
             self.configure()
-            generator = self.generator
 
             # Handle dependencies for selected generator, if any
             logger.debug("Checking Cekit generate dependencies...")
-            self.dependency_handler.handle(generator)
+            self.dependency_handler.handle(self.generator)
 
-            generator.init()
+            self.generator.init()
 
             # if tags are not specified on command line we take them from image descriptor
             if not self.args.tags:
-                self.args.tags = generator.get_tags()
+                self.args.tags = self.generator.get_tags()
 
             # we run generate for build command too
             if set(['generate', 'build']).intersection(set(self.args.commands)):
-                generator.generate()
+                self.generator.generate()
 
             if 'build' in self.args.commands:
                 params = {'user': self.args.build_osbs_user,
@@ -244,7 +250,7 @@ class Cekit(object):
                           'redhat': config.get('common', 'redhat'),
                           'target': self.args.build_osbs_target,
                           'commit_msg': self.args.build_osbs_commit_msg,
-                          'base': generator.image.base
+                          'base': self.generator.image.base
                           }
 
                 builder = Builder(self.args.build_engine,
@@ -255,12 +261,12 @@ class Cekit(object):
                 logger.debug("Checking Cekit build dependencies...")
                 self.dependency_handler.handle(builder)
 
-                builder.prepare(generator.image)
+                builder.prepare(self.generator.image)
                 builder.build()
 
             if 'test' in self.args.commands:
 
-                test_tags = [generator.get_tags()[0]]
+                test_tags = [self.generator.get_tags()[0]]
                 # if wip is specifed set tags to @wip
                 if self.args.test_wip:
                     test_tags = ['@wip']
@@ -270,7 +276,7 @@ class Cekit(object):
                                    self.args.target)
 
                 # we run the test only if we collect any
-                if tc.collect(generator.image.get('schema_version'), self.args.test_steps_url):
+                if tc.collect(self.generator.image.get('schema_version'), self.args.test_steps_url):
 
                     # Handle test dependencies, if any
                     logger.debug("Checking Cekit test dependencies...")
