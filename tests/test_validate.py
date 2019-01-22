@@ -9,21 +9,11 @@ import pytest
 from cekit.tools import Chdir
 from cekit.descriptor import Repository
 from cekit.cli import Cekit
+from cekit.errors import CekitError
 
-#pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
+# pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
 #                                "Docker installed, export 'CEKIT_TEST_VALIDATE=y' variable if "
 #                                "you need to run them.")
-
-
-def setup_function():
-    """Reload cekit.module to make sure it doesnt contain old modules instances"""
-    import cekit.module
-    try:
-        from imp import reload
-    except NameError:
-        from importlib import reload
-
-    reload(cekit.module)
 
 
 odcs_fake_resp = b"""Result:
@@ -84,7 +74,7 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '--config',
                                       'config',
-                                      '--overrides',
+                                      '--overrides-file',
                                       'overrides.yaml',
                                       '-v',
                                       'generate'])
@@ -107,6 +97,7 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
         yaml.dump(overrides_descriptor, fd, default_flow_style=False)
 
     run_cekit(image_dir)
+
 
 def test_content_sets_file_container_file(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not neccessary
@@ -132,6 +123,7 @@ def test_content_sets_file_container_file(tmpdir, mocker, caplog):
     assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
+
 def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not neccessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
@@ -152,6 +144,7 @@ def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
     assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
+
 def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not neccessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
@@ -166,6 +159,7 @@ def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
 
     assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
+
 
 def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not neccessary
@@ -185,6 +179,7 @@ def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
 
     assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
+
 
 def copy_repos(dst):
     shutil.copytree(os.path.join(os.path.dirname(__file__),
@@ -267,7 +262,7 @@ def test_image_generate_with_multiple_overrides(tmpdir, mocker):
 
 def test_image_test_with_override(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
-                                      '--overrides',
+                                      '--overrides-file',
                                       'overrides.yaml',
                                       '-v',
                                       'build',
@@ -371,7 +366,7 @@ def test_image_test_with_override_on_cmd(tmpdir, mocker):
 
 def test_module_override(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
-                                      '--overrides',
+                                      '--overrides-file',
                                       'overrides.yaml',
                                       '-v',
                                       'generate'])
@@ -485,7 +480,7 @@ def test_local_module_not_injected(tmpdir, mocker):
 
 def test_run_override_user(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
-                                      '--overrides',
+                                      '--overrides-file',
                                       'overrides.yaml',
                                       '-v',
                                       'generate'])
@@ -510,7 +505,7 @@ def test_run_override_user(tmpdir, mocker):
 
 def test_run_override_artifact(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
-                                      '--overrides',
+                                      '--overrides-file',
                                       'overrides.yaml',
                                       '-v',
                                       'generate'])
@@ -815,6 +810,61 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
 
+def test_nonexisting_image_descriptor(mocker, tmpdir, caplog):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate',
+                                      '--descriptor',
+                                      'nonexisting.yaml'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+
+    run_cekit_exception(image_dir)
+
+    assert "Descriptor could not be found on the '{}/nonexisting.yaml' path, please check your arguments!".format(
+        image_dir) in caplog.text
+
+
+def test_nonexisting_override_file(mocker, tmpdir, caplog):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate',
+                                      '--overrides-file',
+                                      'nonexisting.yaml'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    img_desc = image_descriptor.copy()
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir)
+
+    assert "Loading override '{}/nonexisting.yaml'".format(image_dir) in caplog.text
+    assert "Descriptor could not be found on the '{}/nonexisting.yaml' path, please check your arguments!".format(
+        image_dir) in caplog.text
+
+
+def test_incorrect_override_file(mocker, tmpdir, caplog):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate',
+                                      '--overrides',
+                                      '{wrong!}'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    img_desc = image_descriptor.copy()
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir)
+
+    assert "Loading override '{wrong!}'" in caplog.text
+    assert "Schema validation failed" in caplog.text
+    assert "Key 'wrong!' was not defined" in caplog.text
+
+
 def run_cekit(cwd):
     with Chdir(cwd):
         # run cekit and check it exits with 0
@@ -829,4 +879,3 @@ def run_cekit_exception(cwd):
         with pytest.raises(SystemExit) as system_exit:
             Cekit().parse().run()
         assert system_exit.value.code == 1
-
