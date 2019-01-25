@@ -614,7 +614,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
 
 # end child_of_child:None
-
 # begin child2_of_child:None
 
 # Custom scripts
@@ -622,7 +621,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
 
 # end child2_of_child:None
-
 # begin child3_of_child:None
 
 # Custom scripts
@@ -630,7 +628,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
 
 # end child3_of_child:None
-
 # begin child:None
 
 # Environment variables
@@ -642,7 +639,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
 
 # end child:None
-
 # begin child_2:None
 
 # Custom scripts
@@ -650,7 +646,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
 
 # end child_2:None
-
 # begin child_of_child3:None
 
 # Custom scripts
@@ -658,7 +653,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
 
 # end child_of_child3:None
-
 # begin child2_of_child3:None
 
 # Custom scripts
@@ -666,11 +660,9 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
 
 # end child2_of_child3:None
-
 # begin child_3:None
 
 # end child_3:None
-
 # begin master:None
 
 # Environment variables
@@ -726,8 +718,10 @@ def test_override_modules_flat(tmpdir, mocker):
         yaml.dump(img_desc, fd, default_flow_style=False)
 
     run_cekit(image_dir)
+    
     assert check_dockerfile_text(image_dir, 'foo="mod_2"')
-
+    assert not check_dockerfile_text(image_dir, "RUN yum makecache")
+    assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
 def test_execution_order_flat(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -766,7 +760,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
 
 # end mod_1:None
-
 # begin mod_2:None
 
 # Environment variables
@@ -782,7 +775,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
 
 # end mod_2:None
-
 # begin mod_3:None
 
 # Custom scripts
@@ -794,7 +786,6 @@ USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
 
 # end mod_3:None
-
 # begin mod_4:None
 
 # Custom scripts
@@ -808,7 +799,75 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
 # end mod_4:None
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
+    assert not check_dockerfile_text(image_dir, "RUN yum makecache")
+    assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
+def test_package_related_commands_packages_in_module(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['modules']['install'] = [{'name': 'packages_module'}, {'name': 'packages_module_1'}]
+    img_desc['modules']['repositories'] = [{'name': 'modules',
+                                            'path': 'tests/modules/repo_packages'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    expected_packages_order_install = """
+# begin packages_module:None
+
+# Install required RPMs and ensure that the packages were installed
+USER root
+RUN yum --setopt=tsflags=nodocs install -y kernel java \\
+    && rpm -q kernel java
+
+# end packages_module:None
+# begin packages_module_1:None
+
+# Install required RPMs and ensure that the packages were installed
+USER root
+RUN yum --setopt=tsflags=nodocs install -y wget mc \\
+    && rpm -q wget mc
+
+# end packages_module_1:None
+"""
+
+    assert check_dockerfile_text(image_dir, "RUN yum makecache")
+    assert check_dockerfile_text(image_dir, expected_packages_order_install)
+    assert check_dockerfile_text(image_dir, "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum")
+
+def test_package_related_commands_packages_in_image(tmpdir, mocker):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'generate'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    img_desc = image_descriptor.copy()
+    img_desc['packages'] = {'install': ['wget', 'mc']}
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir)
+
+    expected_packages_install = """
+# Install required RPMs and ensure that the packages were installed
+USER root
+RUN yum --setopt=tsflags=nodocs install -y wget mc \\
+    && rpm -q wget mc
+"""
+
+    assert check_dockerfile_text(image_dir, "RUN yum makecache")
+    assert check_dockerfile_text(image_dir, expected_packages_install)
 
 def test_nonexisting_image_descriptor(mocker, tmpdir, caplog):
     mocker.patch.object(sys, 'argv', ['cekit',
