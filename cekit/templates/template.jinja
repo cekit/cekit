@@ -22,62 +22,16 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
 {%- endmacro %}
+{% macro repo_make_cache(pkg_manager) -%}
+    {% if pkg_manager in ['microdnf', 'yum'] %}
+{{ pkg_manager }} makecache
+    {% endif %}
+{%- endmacro %}
 {% macro repo_clear_cache(pkg_manager) -%}
     {% if pkg_manager in ['microdnf', 'yum'] %}
 {{ pkg_manager }} clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum
     {% endif %}
 {%- endmacro %}
-
-# Copyright 2017 Red Hat
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# ------------------------------------------------------------------------
-#
-# This is a Dockerfile for the {{ name }}:{{ version }} image.
-
-FROM {{ from }}
-
-USER root
-{% if packages.repositories_injected %}
-
-# Add custom repo files
-COPY {{ repo_create(pkg_manager, packages.repositories_injected) }}
-{% endif %}
-{% if packages.repositories %}
-{% for repo in packages.repositories %}
-{% if repo.present and repo.rpm %}
-
-RUN {{ repo_install(pkg_manager, repo.rpm) }}
-{% endif %}
-{% endfor %}
-{% endif %}
-{% if packages.repositories_injected or packages.repositories %}
-
-RUN yum makecache
-{% endif %}
-
-# Add scripts used to configure the image
-COPY modules /tmp/scripts/
-
-{% if image.all_artifacts|length > 0 %}
-# Add all artifacts to the /tmp/artifacts directory
-COPY \
-{% for artifact in image.all_artifacts %}
-    {{ artifact['target'] }} \
-    {% endfor %}
-    /tmp/artifacts/
-{% endif %}
 {% macro process_module(module) %}
 # begin {{ module.name }}:{{ module.version }}
 {% if module.packages and module.packages.install %}
@@ -126,7 +80,59 @@ VOLUME ["{{ volume['path'] }}"]
 {% endif %}
 
 # end {{ module.name }}:{{ module.version }}
-{% endmacro %}
+{%- endmacro %}
+
+# Copyright 2017 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ------------------------------------------------------------------------
+#
+# This is a Dockerfile for the {{ name }}:{{ version }} image.
+
+FROM {{ from }}
+
+USER root
+{% if packages.repositories_injected %}
+
+# Add custom repo files
+COPY {{ repo_create(pkg_manager, packages.repositories_injected) }}
+{% endif %}
+{% if packages.repositories %}
+{% for repo in packages.repositories %}
+{% if repo.present and repo.rpm %}
+
+RUN {{ repo_install(pkg_manager, repo.rpm) }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if helper.packages_to_install(image) %}
+RUN {{ repo_make_cache(pkg_manager) }}
+{% endif %}
+
+# Add scripts used to configure the image
+COPY modules /tmp/scripts/
+
+{% if image.all_artifacts|length > 0 %}
+# Add all artifacts to the /tmp/artifacts directory
+COPY \
+{% for artifact in image.all_artifacts %}
+    {{ artifact['target'] }} \
+    {% endfor %}
+    /tmp/artifacts/
+{% endif %}
+
 {% for to_install in image.modules.install %}
 {{ process_module(helper.module(to_install)) }}
 {% endfor %}
@@ -135,16 +141,18 @@ VOLUME ["{{ volume['path'] }}"]
 USER root
 RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
 RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
-{% if packages.repositories_injected or packages.repositories %}
-RUN {{ repo_clear_cache(pkg_manager) }}
-{% if packages.repositories_injected %}
 
+{% if helper.packages_to_install(image) %}
+# Clear package manager metadata
+RUN {{ repo_clear_cache(pkg_manager) }}
+{% endif %}
+
+{% if packages.repositories_injected %}
 # Remove custom repo files
 RUN {{ repo_remove(pkg_manager, packages.repositories_injected) }}
 {% endif %}
-{% endif %}
 
-# run user
+# Run user
 USER {{ run['user'] }}
 {% if 'workdir' in run %}
 
