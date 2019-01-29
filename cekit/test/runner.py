@@ -60,6 +60,7 @@ class TestRunner(object):
             from behave.__main__ import main as behave_main
 
             with Chdir(os.path.join(self.target, 'test')):
+                logger.debug("behave args: {}".format(args))
                 if behave_main(args) != 0:
                     raise CekitError("Test execution failed, please consult output above")
         except CekitError:
