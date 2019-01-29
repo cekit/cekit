@@ -40,8 +40,7 @@ Cekit on your system please run:
 
 .. code-block:: bash
 
-    yum install yum-plugin-copr epel-release
-    yum copr enable @cekit/cekit
+    curl https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/repo/epel-7/group_cekit-cekit-epel-7.repo -o /etc/yum.repos.d/cekit-epel-7.repo
     yum install python2-cekit
 
 Other systems
