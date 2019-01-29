@@ -95,6 +95,7 @@ html_theme_options = {
     'logo': 'logo-128.png',
     'github_user': 'cekit',
     'github_repo': 'cekit',
+    'github_type': 'star',
     'description': 'Container image creation tool',
     'fixed_sidebar': True,
     'sidebar_width': '230px',
