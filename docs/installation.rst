@@ -22,11 +22,11 @@ Fedora
 
 Supported versions: 27+.
 
-For Fedora we provide custom Copr repository. To enable the repository and install Cekit on your system please run:
+For Fedora we provide a custom Copr repository.  To `enable the "cekit" repository <https://docs.pagure.org/copr.copr/how_to_enable_repo.html>`_ and install Cekit on your system, please run:
 
 .. code-block:: bash
 
-    dnf install dnf-plugin-copr
+    dnf install dnf-plugins-core
     dnf copr enable @cekit/cekit
     dnf install python3-cekit
 
