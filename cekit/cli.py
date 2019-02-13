@@ -57,7 +57,7 @@ class Cekit(object):
 
         parser.add_argument('--redhat',
                             action='store_true',
-                            help='Set default options for Red Hat internal infrasructure.')
+                            help='Set default options for Red Hat internal infrastructure.')
 
         parser.add_argument('--work-dir',
                             dest='work_dir',
