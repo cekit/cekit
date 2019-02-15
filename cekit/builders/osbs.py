@@ -1,10 +1,17 @@
 import glob
+import json
 import logging
 import os
 import shutil
 import subprocess
 import sys
+import time
 import yaml
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 from cekit import tools
 from cekit.config import Config
@@ -36,12 +43,15 @@ class OSBSBuilder(Builder):
             if params.get('stage'):
                 self._fedpkg = 'rhpkg-stage'
                 self._koji = 'brew-stage'
+                self._koji_url = 'https://brewweb.stage.engineering.redhat.com/brew'
             else:
                 self._fedpkg = 'rhpkg'
                 self._koji = 'brew'
+                self._koji_url = 'https://brewweb.engineering.redhat.com/brew'
         else:
             self._fedpkg = 'fedpkg'
             self._koji = 'koji'
+            self._koji_url = 'https://koji.fedoraproject.org/koji'
 
         super(OSBSBuilder, self).__init__(build_engine, target, params={})
 
@@ -168,6 +178,45 @@ class OSBSBuilder(Builder):
         with open(dest, 'w') as _file:
             yaml.dump(target, _file, default_flow_style=False)
 
+    def _wait_for_osbs_task(self, task_id, current_time=0, timeout=7200):
+        """ Default timeout is 2hrs """
+
+        logger.debug("Checking if task {} is finished...".format(task_id))
+
+        # Time between subsequent querying the API
+        sleep_time = 20
+
+        if current_time > timeout:
+            raise CekitError(
+                "Timed out while waiting for the task {} to finish, please check the task logs!".format(task_id))
+
+        # Definition of task states
+        states = {'free': 0, 'open': 1, 'closed': 2, 'cancelled': 3, 'assigned': 4, 'failed': 5}
+
+        # Get information about the task
+        try:
+            json_info = subprocess.check_output(
+                ["brew", "call", "--json-output", "getTaskInfo", task_id]).strip().decode("utf8")
+        except subprocess.CalledProcessError as ex:
+            raise CekitError("Could not check the task {} result".format(task_id), ex)
+
+        # Parse the returned JSON
+        info = json.loads(json_info)
+
+        # Task is closed which means that it was successfully finished
+        if info['state'] == states['closed']:
+            return True
+
+        # Task is in progress
+        if info['state'] == states['free'] or info['state'] == states['open'] or info['state'] == states['assigned']:
+            # It's not necessary to query the API so often
+            time.sleep(sleep_time)
+            return self._wait_for_osbs_task(task_id, current_time+sleep_time, timeout)
+
+        # In all other cases (failed, cancelled) task did not finish successfully
+        raise CekitError(
+            "Task {} did not finish successfully, please check the task logs!".format(task_id))
+
     def update_lookaside_cache(self):
         logger.info("Updating lookaside cache...")
         if not self.artifacts:
@@ -188,24 +237,14 @@ class OSBSBuilder(Builder):
         logger.info("Update finished.")
 
     def build(self):
-        cmd = [self._fedpkg]
+        cmd = [self._koji]
 
         if self._user:
             cmd += ['--user', self._user]
-        cmd.append("container-build")
 
-        if self._target:
-            cmd += ['--target', self._target]
+        cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
-        if self._nowait:
-            cmd += ['--nowait']
-
-        if self._rhpkg_set_url_repos:
-            cmd += ['--repo-url']
-            cmd += self._rhpkg_set_url_repos
-
-        if not self._release:
-            cmd.append("--scratch")
+        # TODO self._nowait
 
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
@@ -217,12 +256,51 @@ class OSBSBuilder(Builder):
             else:
                 logger.info("No changes made to the code, committing skipped")
 
+            # Get the url of the repository
+            url = subprocess.check_output(
+                ["git", "remote", "get-url", "origin"]).strip().decode("utf8")
+            # Get the latest commit hash
+            commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode("utf8")
+            # Parse the dist-git repository url
+            url = urlparse(url)
+            # Construct the url again, with a hash and removed username and password, if any
+            src = "git://{}{}#{}".format(url.hostname, url.path, commit)
+
+            if not self._target:
+                self._target = "{}-containers-candidate".format(self.dist_git.branch)
+
+            scratch = True
+
+            if self._release:
+                scratch = False
+
+            kwargs = "{{'src': '{}', 'target': '{}', 'opts': {{'scratch': {}, 'git_branch': '{}', 'yum_repourls': {}}}}}".format(
+                src, self._target, scratch, self.dist_git.branch, self._rhpkg_set_url_repos)
+
+            cmd.append(kwargs)
+
             logger.info("About to execute '%s'." % ' '.join(cmd))
+
             if tools.decision("Do you want to build the image in OSBS?"):
                 build_type = "release" if self._release else "scratch"
                 logger.info("Executing %s container build in OSBS..." % build_type)
 
-                subprocess.check_call(cmd)
+                try:
+                    task_id = subprocess.check_output(
+                        cmd, stderr=subprocess.STDOUT).strip().decode("utf8")
+
+                except subprocess.CalledProcessError as ex:
+                    raise CekitError("Building conainer image in OSBS failed", ex)
+
+                logger.info("Task {} was submitted, you can watch the progress here: {}/taskinfo?taskID={}".format(
+                    task_id, self._koji_url, task_id))
+
+                if self._nowait:
+                    return
+
+                self._wait_for_osbs_task(task_id)
+
+                logger.info("Image was built successfully in OSBS!")
 
 
 class DistGit(object):
@@ -231,8 +309,7 @@ class DistGit(object):
     def repo_info(path):
 
         with Chdir(path):
-            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]) \
-                    .strip().decode("utf8") != "true":
+            if subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"]).strip().decode("utf8") != "true":
 
                 raise Exception("Directory %s doesn't seem to be a git repository. "
                                 "Please make sure you specified correct path." % path)
