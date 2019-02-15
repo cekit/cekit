@@ -34,11 +34,14 @@ class OSBSBuilder(Builder):
 
         if params.get('redhat'):
             if params.get('stage'):
-                self._rhpkg = 'rhpkg-stage'
+                self._fedpkg = 'rhpkg-stage'
+                self._koji = 'brew-stage'
             else:
-                self._rhpkg = 'rhpkg'
+                self._fedpkg = 'rhpkg'
+                self._koji = 'brew'
         else:
-            self._rhpkg = 'fedpkg'
+            self._fedpkg = 'fedpkg'
+            self._koji = 'koji'
 
         super(OSBSBuilder, self).__init__(build_engine, target, params={})
 
@@ -48,15 +51,26 @@ class OSBSBuilder(Builder):
 
         if config.cfg['common'].get('redhat'):
             if config.cfg['common'].get('stage'):
-                package = 'rhpkg-stage'
+                fedpkg = 'rhpkg-stage'
+                koji = 'brewkoji-stage'
+                koji_executable = 'brew-stage'
             else:
-                package = 'rhpkg'
+                fedpkg = 'rhpkg'
+                koji = 'brewkoji'
+                koji_executable = 'brew'
         else:
-            package = 'fedpkg'
+            fedpkg = 'fedpkg'
+            koji = 'koji'
+            koji_executable = 'koji'
 
-        deps[package] = {
-            'package': package,
-            'executable': package
+        deps[fedpkg] = {
+            'package': fedpkg,
+            'executable': fedpkg
+        }
+
+        deps[koji] = {
+            'package': koji,
+            'executable': koji_executable
         }
 
         return deps
@@ -158,7 +172,7 @@ class OSBSBuilder(Builder):
         logger.info("Updating lookaside cache...")
         if not self.artifacts:
             return
-        cmd = [self._rhpkg]
+        cmd = [self._fedpkg]
         if self._user:
             cmd += ['--user', self._user]
         cmd += ["new-sources"] + self.artifacts
@@ -174,7 +188,7 @@ class OSBSBuilder(Builder):
         logger.info("Update finished.")
 
     def build(self):
-        cmd = [self._rhpkg]
+        cmd = [self._fedpkg]
 
         if self._user:
             cmd += ['--user', self._user]
@@ -321,14 +335,14 @@ class DistGit(object):
 
         if untracked:
             logger.warning("There are following untracked files: %s. Please review your commit."
-                        % ", ".join(untracked.splitlines()))
+                           % ", ".join(untracked.splitlines()))
 
         diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode("utf8")
 
         if diffs:
             logger.warning("There are uncommited changes in following files: '%s'. "
-                        "Please review your commit."
-                        % ", ".join(diffs.splitlines()))
+                           "Please review your commit."
+                           % ", ".join(diffs.splitlines()))
 
         if not self.noninteractive:
             subprocess.call(["git", "status"])
