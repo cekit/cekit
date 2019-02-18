@@ -1,6 +1,8 @@
 import glob
 import os
+import pytest
 import subprocess
+import time
 import yaml
 
 try:
@@ -9,6 +11,7 @@ except ImportError:
     from mock import call
 
 from cekit.builder import Builder
+from cekit.errors import CekitError
 
 
 def test_osbs_builder_defaults(mocker):
@@ -240,6 +243,89 @@ def test_osbs_builder_run_brew_target(mocker):
 
     check_output.assert_called_with(['brew', 'call', '--python', 'buildContainer', '--kwargs',
                                      "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'Foo', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
+
+
+def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
+    builder = create_osbs_build_object(mocker, 'osbs')
+
+    sleep = mocker.patch.object(time, 'sleep')
+    check_output = mocker.patch.object(subprocess, 'check_output', side_effect=[
+        b'''{
+            "state": 2,
+            "create_time": "2019-02-15 13:14:58.278557",
+            "create_ts": 1550236498.27856,
+            "owner": 2485,
+            "host_id": 283,
+            "method": "buildContainer",
+            "completion_ts": 1550237431.0166,
+            "arch": "noarch",
+            "id": 20222655
+        }'''])
+
+    assert builder._wait_for_osbs_task('12345') == True
+
+    check_output.assert_called_with(['brew', 'call', '--json-output', 'getTaskInfo', '12345'])
+    sleep.assert_not_called()
+
+
+def test_osbs_wait_for_osbs_task_in_progress(mocker):
+    builder = create_osbs_build_object(mocker, 'osbs')
+
+    sleep = mocker.patch.object(time, 'sleep')
+    check_output = mocker.patch.object(subprocess, 'check_output', side_effect=[
+        b'''{
+            "state": 1,
+            "create_time": "2019-02-15 13:14:58.278557",
+            "create_ts": 1550236498.27856,
+            "owner": 2485,
+            "host_id": 283,
+            "method": "buildContainer",
+            "completion_ts": 1550237431.0166,
+            "arch": "noarch",
+            "id": 20222655
+        }''', b'''{
+            "state": 2,
+            "create_time": "2019-02-15 13:14:58.278557",
+            "create_ts": 1550236498.27856,
+            "owner": 2485,
+            "host_id": 283,
+            "method": "buildContainer",
+            "completion_ts": 1550237431.0166,
+            "arch": "noarch",
+            "id": 20222655
+        }'''])
+
+    assert builder._wait_for_osbs_task('12345') == True
+
+    check_output.assert_has_calls([
+        call(['brew', 'call', '--json-output', 'getTaskInfo', '12345']),
+        call(['brew', 'call', '--json-output', 'getTaskInfo', '12345'])
+    ])
+    sleep.assert_called_once_with(20)
+
+
+def test_osbs_wait_for_osbs_task_failed(mocker):
+    builder = create_osbs_build_object(mocker, 'osbs')
+
+    sleep = mocker.patch.object(time, 'sleep')
+    check_output = mocker.patch.object(subprocess, 'check_output', side_effect=[
+        b'''{
+            "state": 5,
+            "create_time": "2019-02-15 13:14:58.278557",
+            "create_ts": 1550236498.27856,
+            "owner": 2485,
+            "host_id": 283,
+            "method": "buildContainer",
+            "completion_ts": 1550237431.0166,
+            "arch": "noarch",
+            "id": 20222655
+        }'''])
+
+    with pytest.raises(CekitError, match="Task 12345 did not finish successfully, please check the task logs!"):
+        builder._wait_for_osbs_task('12345')
+
+    check_output.assert_called_with(['brew', 'call', '--json-output', 'getTaskInfo', '12345'])
+    sleep.assert_not_called()
 
 
 def test_docker_builder_defaults():
