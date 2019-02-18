@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import yaml
+import sys
 import traceback
 
 from requests.exceptions import ConnectionError
@@ -140,13 +141,21 @@ class DockerBuilder(Builder):
             logger.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
 
             if 'PermissionError' in exception_chain:
-                raise CekitError("Unable to contact docker daemon. Is it correctly setup?\nSee "
-                                 "https://developer.fedoraproject.org/tools/docker/docker-installation.html and "
-                                 "http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-run-docker-in-centos-fedora-or-rhel", ex) from None
+                message = "Unable to contact docker daemon. Is it correctly setup?\n" \
+                          "See https://developer.fedoraproject.org/tools/docker/docker-installation.html and " \
+                          "http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-run-docker-in-centos-fedora-or-rhel"
             elif 'FileNotFoundError' in exception_chain:
-                raise CekitError("Unable to contact docker daemon. Is it started?", ex) from None
+                message = "Unable to contact docker daemon. Is it started?"
             else:
-                raise CekitError("Unknown ConnectionError from docker", ex)
+                message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup?"
+
+            if sys.version_info.major == 3:
+                # Work-around for python 2 / 3 code - replicate exception(...) from None
+                cekit = CekitError(message, ex)
+                cekit.__cause__ = None
+                raise cekit
+            else:
+                raise CekitError(message, ex)
 
         except Exception as ex:
             msg = "Image build failed, see logs above."
