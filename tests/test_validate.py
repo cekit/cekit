@@ -2,10 +2,16 @@ import os
 import shutil
 import subprocess
 import sys
-from unittest.mock import patch
+
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 import pytest
 import yaml
+
+from requests.exceptions import ConnectionError
 
 from cekit.cli import Cekit
 from cekit.descriptor import Repository
@@ -69,6 +75,9 @@ Feature: Test test
     then the image should contain label foo with value overriden
 """
 
+if sys.version_info.major == 2:
+    PermissionError = ConnectionError
+    FileNotFoundError = ConnectionError
 
 def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -923,7 +932,6 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
     assert "Schema validation failed" in caplog.text
     assert "Key 'wrong!' was not defined" in caplog.text
 
-
 @patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', **{'side_effect': PermissionError()})
 def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -938,7 +946,10 @@ def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
 
     run_cekit_exception(image_dir)
 
-    assert "Unable to contact docker daemon. Is it correctly setup" in caplog.text
+    if sys.version_info.major == 2:
+        assert "Unknown ConnectionError from docker ; is the daemon started and correctly setup" in caplog.text
+    else:
+        assert "Unable to contact docker daemon. Is it correctly setup" in caplog.text
 
 @patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', **{'side_effect': FileNotFoundError()})
 def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
@@ -954,7 +965,10 @@ def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
 
     run_cekit_exception(image_dir)
 
-    assert "Unable to contact docker daemon. Is it started" in caplog.text
+    if sys.version_info.major == 2:
+        assert "Unknown ConnectionError from docker ; is the daemon started and correctly setup" in caplog.text
+    else:
+        assert "Unable to contact docker daemon. Is it started" in caplog.text
 
 def run_cekit(cwd):
     with Chdir(cwd):
