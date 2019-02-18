@@ -244,8 +244,6 @@ class OSBSBuilder(Builder):
 
         cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
-        # TODO self._nowait
-
         with Chdir(self.dist_git_dir):
             self.dist_git.add()
             self.update_lookaside_cache()
@@ -286,8 +284,7 @@ class OSBSBuilder(Builder):
                 logger.info("Executing %s container build in OSBS..." % build_type)
 
                 try:
-                    task_id = subprocess.check_output(
-                        cmd, stderr=subprocess.STDOUT).strip().decode("utf8")
+                    task_id = subprocess.check_output(cmd).strip().decode("utf8")
 
                 except subprocess.CalledProcessError as ex:
                     raise CekitError("Building conainer image in OSBS failed", ex)
