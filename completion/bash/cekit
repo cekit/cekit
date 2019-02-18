@@ -1,5 +1,3 @@
-#!/bin/bash
-
 _cekit_global_options()
 {
     local options
