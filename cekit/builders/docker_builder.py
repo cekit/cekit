@@ -2,7 +2,9 @@ import logging
 import os
 import re
 import yaml
+import traceback
 
+from requests.exceptions import ConnectionError
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
@@ -87,6 +89,9 @@ class DockerBuilder(Builder):
         args['pull'] = self._pull
         args['rm'] = True
 
+        build_log = [""]
+        docker_layer_ids = []
+
         # Custom tags for the container image
         logger.debug("Building image with tags: '%s'" %
                      "', '".join(self._tags))
@@ -94,9 +99,8 @@ class DockerBuilder(Builder):
         logger.info("Building container image...")
 
         try:
-            docker_layer_ids = []
+
             out = self.docker_client.build(**args)
-            build_log = [""]
             for line in out:
                 if b'stream' in line:
                     line = yaml.safe_load(line)['stream']
@@ -130,6 +134,19 @@ class DockerBuilder(Builder):
                     self.docker_client.tag(self._tags[0], tag)
             logger.info("Image built and available under following tags: %s"
                         % ", ".join(self._tags))
+
+        except ConnectionError as ex:
+            exception_chain = traceback.format_exc()
+            logger.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
+
+            if 'PermissionError' in exception_chain:
+                raise CekitError("Unable to contact docker daemon. Is it correctly setup?\nSee "
+                                 "https://developer.fedoraproject.org/tools/docker/docker-installation.html and "
+                                 "http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-run-docker-in-centos-fedora-or-rhel", ex) from None
+            elif 'FileNotFoundError' in exception_chain:
+                raise CekitError("Unable to contact docker daemon. Is it started?", ex) from None
+            else:
+                raise CekitError("Unknown ConnectionError from docker", ex)
 
         except Exception as ex:
             msg = "Image build failed, see logs above."

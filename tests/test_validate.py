@@ -1,15 +1,15 @@
 import os
 import shutil
-import sys
-
 import subprocess
-import yaml
-import pytest
+import sys
+from unittest.mock import patch
 
-from cekit.tools import Chdir
-from cekit.descriptor import Repository
+import pytest
+import yaml
+
 from cekit.cli import Cekit
-from cekit.errors import CekitError
+from cekit.descriptor import Repository
+from cekit.tools import Chdir
 
 # pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
 #                                "Docker installed, export 'CEKIT_TEST_VALIDATE=y' variable if "
@@ -924,6 +924,38 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
     assert "Key 'wrong!' was not defined" in caplog.text
 
 
+@patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', **{'side_effect': PermissionError()})
+def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'build'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir)
+
+    assert "Unable to contact docker daemon. Is it correctly setup" in caplog.text
+
+@patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', **{'side_effect': FileNotFoundError()})
+def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
+    mocker.patch.object(sys, 'argv', ['cekit',
+                                      '-v',
+                                      'build'])
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir)
+
+    assert "Unable to contact docker daemon. Is it started" in caplog.text
+
 def run_cekit(cwd):
     with Chdir(cwd):
         # run cekit and check it exits with 0
@@ -934,7 +966,7 @@ def run_cekit(cwd):
 
 def run_cekit_exception(cwd):
     with Chdir(cwd):
-        # run cekit and check it exits with 0
+        # run cekit and check it exits with 1
         with pytest.raises(SystemExit) as system_exit:
             Cekit().parse().run()
         assert system_exit.value.code == 1
