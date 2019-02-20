@@ -1,7 +1,7 @@
 # Here are listed only *core* Cekit dependencies that can be installed
-# using Python dependency management. Everything else are weak depdendencies
+# using Python dependency management. Everything else are weak dependencies
 # handled by the DependencyHandler class. Any part of Cekit can define dependencies
-# and these are evaluated at runtime. If something is not avaialbe, execution
+# and these are evaluated at runtime. If something is not available, execution
 # is terminated and user is notified what dependencies are missing.
 #
 # This is the only way we could satisfy dependency requirements coming from
