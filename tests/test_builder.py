@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 import pytest
 import subprocess
@@ -333,6 +334,63 @@ def test_docker_builder_defaults():
     builder = Builder('docker', 'tmp', params)
 
     assert builder._tags == ['foo', 'bar']
+    assert builder._no_squash == False
+
+
+def test_docker_squashing_enabled(mocker):
+    params = {'tags': ['foo', 'bar']}
+    builder = Builder('docker', 'tmp', params)
+
+    assert builder._no_squash == False
+
+    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    docker_client = docker_client_class.return_value
+    mocker.patch.object(builder, '_build_with_docker')
+    mocker.patch.object(builder, '_squash')
+    builder._build_with_docker.return_value = "1654234sdf56"
+
+    builder.build()
+
+    builder._build_with_docker.assert_called_once_with(docker_client)
+    builder._squash.assert_called_once_with(docker_client, "1654234sdf56")
+
+
+def test_docker_squashing_disabled(mocker):
+    params = {'no_squash': True, 'tags': ['foo', 'bar']}
+    builder = Builder('docker', 'tmp', params)
+
+    assert builder._no_squash == True
+
+    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    docker_client = docker_client_class.return_value
+    mocker.patch.object(builder, '_build_with_docker')
+    mocker.patch.object(builder, '_squash')
+    builder._build_with_docker.return_value = "1654234sdf56"
+
+    builder.build()
+
+    builder._build_with_docker.assert_called_once_with(docker_client)
+    builder._squash.assert_not_called()
+
+
+def test_docker_squashing_parameters(mocker):
+    params = {'tags': ['foo', 'bar']}
+    builder = Builder('docker', 'tmp', params)
+
+    assert builder._no_squash == False
+
+    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
+    squash = squash_class.return_value
+    docker_client = docker_client_class.return_value
+    mocker.patch.object(builder, '_build_with_docker', return_value="1654234sdf56")
+
+    builder.build()
+
+    squash_class.assert_called_once_with(
+        cleanup=False, docker=docker_client, from_layer=None, image="1654234sdf56", log=logging.getLogger('cekit'), tag="foo")
+    squash.run.assert_called_once_with()
+    builder._build_with_docker.assert_called_once_with(docker_client)
 
 
 def test_buildah_builder_run(mocker):

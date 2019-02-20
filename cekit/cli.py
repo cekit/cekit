@@ -101,6 +101,11 @@ class Cekit(object):
                                  action='store_true',
                                  help='Always fetch latest base image during build')
 
+        build_group.add_argument('--build-docker-no-squash',
+                                 dest='build_docker_no_squash',
+                                 action='store_true',
+                                 help='do not squash after the image is built with Docker')
+
         build_group.add_argument('--build-osbs-release',
                                  dest='build_osbs_release',
                                  action='store_true',
@@ -245,6 +250,7 @@ class Cekit(object):
                           'nowait': self.args.build_osbs_nowait,
                           'stage': self.args.build_osbs_stage,
                           'release': self.args.build_osbs_release,
+                          'no_squash': self.args.build_docker_no_squash,
                           'tags': self.args.tags,
                           'pull': self.args.build_pull,
                           'redhat': config.get('common', 'redhat'),
