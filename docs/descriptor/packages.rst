@@ -47,6 +47,7 @@ This is the default option. With this approach you specify repository id and Cek
               id: rhel7-extras-rpm
               description: "Repository containing extras RHEL7 extras packages"
 
+.. _repo_rpm:
 
 RPM
 ^^^^
@@ -62,8 +63,7 @@ image you should define repository in a following way:
             - name: scl
               rpm: centos-release-scl
 
-.. _repo_odcs:
-
+.. _repo_url:
 
 URL
 ^^^^
