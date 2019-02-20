@@ -43,6 +43,7 @@ class DockerBuilder(Builder):
         self._tags = params.get('tags', [])
         self._pull = params.get('pull', False)
         self._base = params.get('base')
+        self._no_squash = params.get('no_squash', False)
         super(DockerBuilder, self).__init__(build_engine, target, params)
 
         # Default Docker daemon connection timeout 10 minutes
@@ -78,12 +79,10 @@ class DockerBuilder(Builder):
 
         return deps
 
-    def build(self, build_args=None):
-        self.docker_client = APIClientClass(version="1.22", timeout=self.timeout)
+    def _build_with_docker(self, docker_client):
+        # Custom tags for the container image
+        logger.debug("Building image with tags: '%s'" % "', '".join(self._tags))
 
-        """After the source files are generated, the container image can be built.
-        We're using Docker to build the image currently.
-        """
         args = {}
         args['path'] = os.path.join(self.target, 'image')
         args['tag'] = self._tags[0]
@@ -93,15 +92,8 @@ class DockerBuilder(Builder):
         build_log = [""]
         docker_layer_ids = []
 
-        # Custom tags for the container image
-        logger.debug("Building image with tags: '%s'" %
-                     "', '".join(self._tags))
-
-        logger.info("Building container image...")
-
         try:
-
-            out = self.docker_client.build(**args)
+            out = docker_client.build(**args)
             for line in out:
                 if b'stream' in line:
                     line = yaml.safe_load(line)['stream']
@@ -124,18 +116,6 @@ class DockerBuilder(Builder):
                         docker_layer_ids.append(line.split(' ')[-1].strip())
                     elif '---> Using cache' in build_log[-2]:
                         docker_layer_ids.append(line.split(' ')[-1].strip())
-
-            self.squash_image(docker_layer_ids[-1])
-
-            for tag in self._tags[1:]:
-                if ':' in tag:
-                    img_repo, img_tag = tag.split(":")
-                    self.docker_client.tag(self._tags[0], img_repo, tag=img_tag)
-                else:
-                    self.docker_client.tag(self._tags[0], tag)
-            logger.info("Image built and available under following tags: %s"
-                        % ", ".join(self._tags))
-
         except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
             logger.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
@@ -170,10 +150,34 @@ class DockerBuilder(Builder):
                       " definitions."
             raise CekitError(msg, ex)
 
-    def squash_image(self, layer_id):
-        logger.info("Squashing image %s..." % (layer_id))
+        return docker_layer_ids[-1]
+
+    def _squash(self, docker_client, image_id):
+        logger.info("Squashing image %s..." % (image_id))
         # XXX: currently, cleanup throws a 409 error from the docker daemon.  this needs to be investigated in docker_squash
-        squash = Squash(docker=self.docker_client, log=logger, from_layer=self._base, image=layer_id,
+        squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=image_id,
                         tag=self._tags[0],
                         cleanup=False)
         squash.run()
+
+    def _tag(self, docker_client):
+        for tag in self._tags[1:]:
+            if ':' in tag:
+                img_repo, img_tag = tag.split(":")
+                docker_client.tag(self._tags[0], img_repo, tag=img_tag)
+            else:
+                docker_client.tag(self._tags[0], tag)
+
+    def build(self):
+        docker_client = APIClientClass(version="1.22", timeout=self.timeout)
+
+        logger.info("Building container image using Docker...")
+
+        image_id = self._build_with_docker(docker_client)
+
+        # Squash only if --build-docker-no-squash is NOT defined
+        if not self._no_squash:
+            self._squash(docker_client, image_id)
+
+        logger.info("Image built and available under following tags: %s" %
+                    ", ".join(self._tags))
