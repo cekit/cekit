@@ -4,8 +4,8 @@ import re
 import yaml
 import sys
 import traceback
+import requests
 
-from requests.exceptions import ConnectionError
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
@@ -136,7 +136,7 @@ class DockerBuilder(Builder):
             logger.info("Image built and available under following tags: %s"
                         % ", ".join(self._tags))
 
-        except ConnectionError as ex:
+        except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
             logger.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
 
@@ -151,9 +151,9 @@ class DockerBuilder(Builder):
 
             if sys.version_info.major == 3:
                 # Work-around for python 2 / 3 code - replicate exception(...) from None
-                cekit = CekitError(message, ex)
-                cekit.__cause__ = None
-                raise cekit
+                cekit_exception = CekitError(message, ex)
+                cekit_exception.__cause__ = None
+                raise cekit_exception
             else:
                 raise CekitError(message, ex)
 
