@@ -38,5 +38,5 @@ class Builder(object):
         # we dont require prepare to be implemented by builder
         pass
 
-    def build(self, build_args):
-        raise CekitError("Buider.build() is not implemented!")
+    def build(self):
+        raise CekitError("Builder.build() is not implemented!")
