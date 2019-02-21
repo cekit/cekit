@@ -388,7 +388,7 @@ def test_docker_squashing_parameters(mocker):
     builder.build()
 
     squash_class.assert_called_once_with(
-        cleanup=False, docker=docker_client, from_layer=None, image="1654234sdf56", log=logging.getLogger('cekit'), tag="foo")
+        cleanup=True, docker=docker_client, from_layer=None, image="1654234sdf56", log=logging.getLogger('cekit'), tag="foo")
     squash.run.assert_called_once_with()
     builder._build_with_docker.assert_called_once_with(docker_client)
 
