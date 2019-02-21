@@ -4,7 +4,6 @@ import re
 import yaml
 import sys
 import traceback
-import requests
 
 from cekit.builder import Builder
 from cekit.errors import CekitError
@@ -22,6 +21,14 @@ except ImportError:
 try:
     # Docker Python library, the old one
     from docker.api.client import APIClient as APIClientClass
+except ImportError:
+    pass
+
+try:
+    # The requests library is an indirect dependency, we need to put it here
+    # so that the dependency mechanism can kick in and require the docker library
+    # first which will pull requests
+    import requests
 except ImportError:
     pass
 
@@ -154,10 +161,9 @@ class DockerBuilder(Builder):
 
     def _squash(self, docker_client, image_id):
         logger.info("Squashing image %s..." % (image_id))
-        # XXX: currently, cleanup throws a 409 error from the docker daemon.  this needs to be investigated in docker_squash
         squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=image_id,
                         tag=self._tags[0],
-                        cleanup=False)
+                        cleanup=True)
         squash.run()
 
     def _tag(self, docker_client):
