@@ -266,6 +266,36 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir, mocker):
     regex_dockerfile(target, 'rpm -q a')
 
 
+# https://github.com/cekit/cekit/issues/406
+def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir, mocker):
+    target = str(tmpdir.mkdir('target'))
+    generator = prepare_generator(target, {})
+    generator.init()
+    generator.generate()
+    regex_dockerfile(target, '^((?!COPY modules /tmp/scripts/))')
+
+
+# https://github.com/cekit/cekit/issues/406
+def test_dockerfile_copy_modules_if_modules_defined(tmpdir, mocker):
+    target = str(tmpdir.mkdir('target'))
+    config.cfg['common']['work_dir'] = os.path.dirname(target)
+    module_dir = os.path.join(os.path.dirname(target), 'modules', 'foo')
+    module_yaml_path = os.path.join(module_dir, 'module.yaml')
+
+    os.makedirs(module_dir)
+
+    with open(module_yaml_path, 'w') as outfile:
+        yaml.dump({'name': 'foo'}, outfile, default_flow_style=False)
+
+    generator = prepare_generator(
+        target, {'modules': {'repositories': [{'name': 'modules',
+                                               'path': 'modules'}],
+                             'install': [{'name': 'foo'}]}})
+    generator.init()
+    generator.generate()
+    regex_dockerfile(target, 'COPY modules /tmp/scripts/')
+
+
 def prepare_generator(target, desc_part, desc_type="image", engine="docker", overrides=[], params={}):
     # create basic descriptor
 

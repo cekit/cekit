@@ -121,8 +121,10 @@ RUN {{ repo_install(pkg_manager, repo.rpm) }}
 RUN {{ repo_make_cache(pkg_manager) }}
 {% endif %}
 
+{% if image.modules.install|length > 0 %}
 # Add scripts used to configure the image
 COPY modules /tmp/scripts/
+{% endif %}
 
 {% if image.all_artifacts|length > 0 %}
 # Add all artifacts to the /tmp/artifacts directory
