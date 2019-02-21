@@ -2,12 +2,6 @@ import os
 import shutil
 import subprocess
 import sys
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-
 import pytest
 import yaml
 
@@ -78,6 +72,7 @@ Feature: Test test
 if sys.version_info.major == 2:
     PermissionError = ConnectionError
     FileNotFoundError = ConnectionError
+
 
 def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -727,10 +722,11 @@ def test_override_modules_flat(tmpdir, mocker):
         yaml.dump(img_desc, fd, default_flow_style=False)
 
     run_cekit(image_dir)
-    
+
     assert check_dockerfile_text(image_dir, 'foo="mod_2"')
     assert not check_dockerfile_text(image_dir, "RUN yum makecache")
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
+
 
 def test_execution_order_flat(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -811,6 +807,7 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
     assert not check_dockerfile_text(image_dir, "RUN yum makecache")
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
+
 def test_package_related_commands_packages_in_module(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
@@ -850,7 +847,9 @@ RUN yum --setopt=tsflags=nodocs install -y wget mc \\
 
     assert check_dockerfile_text(image_dir, "RUN yum makecache")
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
-    assert check_dockerfile_text(image_dir, "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum")
+    assert check_dockerfile_text(
+        image_dir, "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum")
+
 
 def test_package_related_commands_packages_in_image(tmpdir, mocker):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -877,6 +876,7 @@ RUN yum --setopt=tsflags=nodocs install -y wget mc \\
 
     assert check_dockerfile_text(image_dir, "RUN yum makecache")
     assert check_dockerfile_text(image_dir, expected_packages_install)
+
 
 def test_nonexisting_image_descriptor(mocker, tmpdir, caplog):
     mocker.patch.object(sys, 'argv', ['cekit',
@@ -932,8 +932,9 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
     assert "Schema validation failed" in caplog.text
     assert "Key 'wrong!' was not defined" in caplog.text
 
-@patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', **{'side_effect': PermissionError()})
+
 def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
+    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', side_effect=PermissionError())
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
                                       'build'])
@@ -951,8 +952,10 @@ def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
     else:
         assert "Unable to contact docker daemon. Is it correctly setup" in caplog.text
 
-@patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', **{'side_effect': FileNotFoundError()})
+
 def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
+    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
+                 side_effect=FileNotFoundError())
     mocker.patch.object(sys, 'argv', ['cekit',
                                       '-v',
                                       'build'])
@@ -969,6 +972,7 @@ def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
         assert "Unknown ConnectionError from docker ; is the daemon started and correctly setup" in caplog.text
     else:
         assert "Unable to contact docker daemon. Is it started" in caplog.text
+
 
 def run_cekit(cwd):
     with Chdir(cwd):
