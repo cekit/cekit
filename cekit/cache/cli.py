@@ -1,8 +1,9 @@
-import argparse
+import click
 import logging
 import sys
 import traceback
 
+from cekit.tools import Map
 from cekit.config import Config
 from cekit.log import setup_logging
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
@@ -16,120 +17,79 @@ logger = logging.getLogger('cekit')
 config = Config()
 
 
-class MyParser(argparse.ArgumentParser):
+@click.group(context_settings=dict(max_content_width=100))
+@click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
+@click.option('--config', help="Path to configuration file. [default: ~/.cekit/config]", default="~/.cekit/config")
+@click.option('--work-dir', help="Location of the working directory. [default: ~/.cekit]", default="~/.cekit")
+@click.version_option(message="%(version)s", version=version)
+def cli(verbose, config, work_dir):
+    pass
 
-    def error(self, message):
-        self.print_help()
-        sys.stderr.write('\nError: %s\n' % message)
-        sys.exit(2)
+
+@cli.command(name="ls", short_help="List cached artifacts")
+def ls():
+    CacheCli(Map(click.get_current_context().parent.params)).ls()
+
+
+@cli.command(name="add", short_help="Add artifact to cache")
+@click.option('--location', help="URL or path pointing to the artifact", required=True)
+# TODO Add checksums
+def add(location):
+    CacheCli(Map(click.get_current_context().parent.params)).add(location)
+
+
+@cli.command(name="rm", short_help="Remove artifact from cache")
+@click.option('--uuid', help="UUID of the artifact", required=True)
+def rm(uuid):
+    CacheCli(Map(click.get_current_context().parent.params)).rm(uuid)
 
 
 class CacheCli():
+    def __init__(self, args):
+        self.args = args
+        print(self.args)
 
-    def parse(self):
-        parser = MyParser(
-            description='Cekit cache manager',
-            formatter_class=argparse.RawDescriptionHelpFormatter)
-
-        parser.add_argument('-v',
-                            '--verbose',
-                            action='store_true',
-                            help='verbose output')
-
-        parser.add_argument('--version',
-                            action='version',
-                            help='show version and exit', version=version)
-
-        parser.add_argument('--config',
-                            default='~/.cekit/config',
-                            help='path for Cekit config file (~/.cekit/config is default)')
-
-        parser.add_argument('--work-dir',
-                            dest='work_dir',
-                            help="Location of Cekit working directory.")
-
-        subparsers = parser.add_subparsers(dest='cmd')
-
-        add = subparsers.add_parser('add',
-                                    help='cache artifact from url')
-
-        add.add_argument('url',
-                         help='url of the artifact')
-
-        for alg in SUPPORTED_HASH_ALGORITHMS:
-            add.add_argument('--%s' % alg,
-                             help='expected checksum of an object')
-
-        subparsers.add_parser('ls',
-                              help='list all cached artifacts')
-
-        rm = subparsers.add_parser('rm',
-                                   help='remove artifact by id')
-
-        rm.add_argument('uuid',
-                        help='uuid of an artifact which will be removed')
-
-        self.args = parser.parse_args()
-
-        return self
-
-    def run(self):
+        config.configure(self.args.config, {'work_dir': self.args.work_dir})
 
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)
 
-        config.configure(self.args.config, {'work_dir': self.args.work_dir})
+    def add(self, location):
+        artifact_cache = ArtifactCache()
 
-        if self.args.cmd == 'add':
-            artifact_cache = ArtifactCache()
+        resource = {}
+        resource['url'] = location
 
-            resource = {}
-            resource['url'] = self.args.url
+        for alg in SUPPORTED_HASH_ALGORITHMS:
+            val = getattr(self.args, alg)
+            if val:
+                resource[alg] = val
+        artifact = Resource(resource)
 
-            for alg in SUPPORTED_HASH_ALGORITHMS:
-                val = getattr(self.args, alg)
-                if val:
-                    resource[alg] = val
-            artifact = Resource(resource)
+        if artifact_cache.is_cached(artifact):
+            print('Artifact is already cached!')
+            sys.exit(0)
 
-            if artifact_cache.is_cached(artifact):
-                print('Artifact is already cached!')
-                sys.exit(0)
+        try:
+            artifact_id = artifact_cache.add(artifact)
+            if self.args.verbose:
+                print(artifact_id)
+        except Exception as ex:
+            if self.args.verbose:
+                traceback.print_exc()
+            else:
+                print(ex)
+            sys.exit(1)
 
-            try:
-                artifact_id = artifact_cache.add(artifact)
-                if self.args.verbose:
-                    print(artifact_id)
-            except Exception as ex:
-                if self.args.verbose:
-                    traceback.print_exc()
-                else:
-                    print(ex)
-                sys.exit(1)
-
-        if self.args.cmd == 'ls':
-            self.list()
-
-        if self.args.cmd == 'rm':
-            try:
-                artifact_cache = ArtifactCache()
-                artifact_cache.delete(self.args.uuid)
-                print("Artifact removed")
-            except Exception:
-                print("Artifact doesn't exists")
-                sys.exit(1)
-
-        sys.exit(0)
-
-    def list(self):
+    def ls(self):
         artifact_cache = ArtifactCache()
         artifacts = artifact_cache.list()
         if artifacts:
             print("Cached artifacts:")
-            for artifact_id, artifact in artifacts.items():
-                print("%s:" % artifact_id)
+            for artifact_filename, artifact in artifacts.items():
+                print("\n%s:" % artifact_filename.split('.')[0])
                 for alg in SUPPORTED_HASH_ALGORITHMS:
                     if alg in artifact:
                         print("  %s: %s" % (alg, artifact[alg]))
@@ -140,10 +100,15 @@ class CacheCli():
         else:
             print('No artifacts cached!')
 
-
-def run():
-    CacheCli().parse().run()
+    def rm(self, uuid):
+        try:
+            artifact_cache = ArtifactCache()
+            artifact_cache.delete(uuid)
+            print("Artifact removed")
+        except Exception:
+            print("Artifact doesn't exists")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
-    run()
+    cli()  # pylint: disable=no-value-for-parameter
