@@ -3,7 +3,10 @@
 Contributing to the project
 ===========================
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install Cekit. Please consult your package manager for the correct package name.
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to develop Cekit. Please consult your package manager for the correct package name. Currently within Fedora 29 almost all the required packages are available as RPMs. A sample set of Ansible scripts that provide **all** pre-requistites for development are available `here <https://github.com/cekit/cekit/tree/develop/ansible>`_.
+
+- If you are running inside the Red Hat infrastructure then ``rhpkg`` must be installed as well.
+- Currently ``port_for==0.3.1`` must still be installed manually.
 
 To create custom Python virtual environment please run following commands on your system:
 
@@ -13,9 +16,8 @@ To create custom Python virtual environment please run following commands on you
     virtualenv ~/cekit
     source ~/cekit/bin/activate
 
-    # Install Cekit
-    # Execute the same command to upgrade to latest version
-    pip install -U cekit
+    # Install as development version
+    pip install -e <cekit directory>
 
     # Now you are able to run Cekit
     cekit --help
@@ -26,43 +28,8 @@ It is possible to ask virtualenv to inherit pre-installed system packages thereb
 
    Every time you want to use Cekit you must activate Cekit Python virtual environment by executing ``source ~/cekit/bin/activate``
 
-.. note::
-   For those using ZSH a useful addition is `Zsh-Autoswitch-VirtualEnv <https://github.com/MichaelAquilina/zsh-autoswitch-virtualenv>`_ the use of which avoids the labour of manually creating the virtualenv and activating it each time.
+   For those using ZSH a useful addition is `Zsh-Autoswitch-VirtualEnv <https://github.com/MichaelAquilina/zsh-autoswitch-virtualenv>`_ the use of which avoids the labour of manually creating the virtualenv and activating it each time ; simply run ``mkvenv --system-site-packages`` initially and then it is handled automatically then on.
 
-Currently within Fedora 29 almost all the required packages are available as RPMs; non-python packages are:
-
-- buildah
-- docker
-- fedpkg | rhpkg
-- git
-- make
-- odcs-client
-- podman
-
-Python RPMs are:
-
-- python3-behave
-- python3-colorlog
-- python3-docker
-- python3-docker-squash
-- python3-jinja2
-- python3-lxml
-- python3-mock
-- python3-pykwalify
-- python3-pytest
-- python3-pytest-mock
-- python3-pyyaml
-- python3-tox
-- python3-virtualenv
-
-For documentation, the following RPMs apply ( ``port_for==0.3.1`` must still be installed manually )
-
-- python3-argh
-- python3-livereload
-- python3-pathtools
-- python3-sphinx
-- python3-sphinx-autobuild
-- python3-watchdog
 
 
 Running the tests
@@ -102,14 +69,9 @@ Local development
 
 .. note::
 
-    Consider using `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to use a clean development environment.
-    If you are not using Virtualenv we suggest to run below ``pip`` command with the ``--user`` flag at least.
-
-You need to install required tools to be able to generate documentation locally.
-
-.. code:: bash
-
-    pip install -U -r requirements.txt
+    The documentation has its own ``requirements.txt``. As above we would recommend using
+    `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to use a clean development environment.
+    The Ansible scripts above will install all documentation pre-requisites as well.
 
 Support for auto generating documentation is avialable for local development. Run the command below.
 
@@ -123,7 +85,8 @@ documentation will be regenerated and immediately available in your browser.
 Guidelines
 ~~~~~~~~~~
 
-Below you can find a list of conventions used to write CEKit documentation.
+Below you can find a list of conventions used to write CEKit documentation. Reference information on reStructuredText
+may be found `here <http://docutils.sourceforge.net/rst.html>`_.
 
 Headers
 ^^^^^^^

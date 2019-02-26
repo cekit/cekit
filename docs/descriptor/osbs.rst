@@ -26,7 +26,7 @@ This key serves as a hint which DistGit repository and its branch we use to push
 
 Configuration
 ^^^^^^^^^^^^^
-This key is holding OSBS ``container.yaml`` file ( :ref:`docs<https://osbs.readthedocs.io/en/latest/users.html?highlight=container.yaml#image-configuration>`_ )
+This key is holding OSBS ``container.yaml`` file ( `OSBS docs <https://osbs.readthedocs.io/en/latest/users.html?highlight=container.yaml#image-configuration>`_ )
 ``container.yaml`` file can be embedded in ``container`` key or inject from a file specified in ``container_file`` key.
 
 
