@@ -1,295 +1,347 @@
 # -*- coding: utf-8 -*-
 
-import argparse
-import os
+import click
 import logging
+import os
 import sys
 
-
-from cekit.config import Config
 from cekit.builder import Builder
-from cekit.log import setup_logging
+from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
+from cekit.image import Image
+from cekit.log import setup_logging
 from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
-from cekit.tools import cleanup, DependencyHandler
+from cekit.tools import DependencyHandler, cleanup
 from cekit.version import version
 
-# FIXME we shoudl try to move this to json
+# FIXME we should try to move this to json
 setup_logging()
 logger = logging.getLogger('cekit')
 config = Config()
 
 
-class MyParser(argparse.ArgumentParser):
+@click.group(context_settings=dict(max_content_width=100))
+@click.option('--descriptor', metavar="<descriptor>", help="Path to image descriptor file. [default: image.yaml]", default="image.yaml")
+@click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
+@click.option('--work-dir', help="Location of the working directory. [default: ~/.cekit]", default="~/.cekit")
+@click.option('--config', help="Path to configuration file. [default: ~/.cekit/config]", default="~/.cekit/config")
+@click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
+@click.option('--target', metavar="PATH", help="Path to directory where files should be generated [default: target]", default="target")
+# TODO: Remove this option
+@click.option('--package-manager', help="Package manager to use. [default: yum]", type=click.Choice(['yum', 'microdnf']), default="yum")
+@click.version_option(message="%(version)s", version=version)
+def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
+    """
+    ABOUT
 
-    def error(self, message):
-        self.print_help()
-        sys.stderr.write('\nError: %s\n' % message)
-        sys.exit(2)
+        CEKit -- container image creation tool
+
+    LINKS
+
+    \b
+        Website: https://cekit.io/
+        Documentation: https://docs.cekit.io/
+        Issue tracker: https://github.com/cekit/cekit/issues
+
+    EXAMPLES
+
+        Build container image in Docker
+
+            $ cekit build docker
+
+        Execute tests for the example/app:1.0 image
+
+            $ cekit test example/app:1.0
+    """
+    pass
 
 
-def absolute_path(path):
-    return os.path.abspath(os.path.expanduser(os.path.normcase(path)))
+@cli.group(short_help="Build container image")
+@click.option('--dry-run', help="Do not execute the build, just generate required files", is_flag=True)
+@click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format", multiple=True)
+@click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format", multiple=True)
+# TODO: Is this ok?
+@click.option('--add-help', 'addhelp', help="Include generated help files in the image", type=click.BOOL)
+def build(dry_run, overrides, addhelp):
+    """
+    DESCRIPTION
+
+        Executes container image build using selected builder.
+
+    BUILDERS
+
+        We currently support: Docker, OSBS and Buildah.
+
+            $ cekit build BUILDER
+
+        See commands cor the proper invocation.
+
+    OVERRIDES
+
+        You can specify overrides to modify the container image build. You
+        can read more about overrides in the documentation: https://docs.cekit.io/en/latest/overrides.html.
+
+        Overrides can be specified inline (--overrides) or as a path to file (--overrides-file).
+
+        Overrides can be specified multiple times.
+
+        Please note that order matters; overrides on the right hand side take precedence! For example:
+
+            $ cekit build --overrides '{"from": "custom/image:1.0"}' --overrides '{"from": "custom/image:2.0"}'
+
+        Will change the 'from' key in the descriptor to 'custom/image:2.0'.
+
+    """
+    pass
+
+
+@build.command(name="docker", short_help="Build using Docker engine")
+@click.option('--pull', help="Always try to fetch latest base image", is_flag=True)
+@click.option('--no-squash', help="Do not squash the image after build is done", is_flag=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be specified multiple times", multiple=True)
+def build_docker(pull, no_squash, tags):
+    """
+    DESCRIPTION
+
+        Executes container image build locally using Docker builder.
+
+        https://docs.docker.com/
+    """
+    run()
+
+
+@build.command(name="buildah", short_help="Build using Buildah engine")
+@click.option('--pull', help="Always try to fetch latest base image", is_flag=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be used specified times", multiple=True)
+def build_buildah(pull, tags):
+    """
+    DESCRIPTION
+
+        Executes container image build locally using Buildah builder.
+
+        https://buildah.io/
+    """
+    run()
+
+
+@build.command(name="osbs", short_help="Build using OSBS engine")
+@click.option('--release', help="Execute a release build", is_flag=True)
+# TODO: Ensure this still makes sense
+@click.option('--tech-preview', help="Execute a tech preview build", is_flag=True)
+@click.option('--user', metavar="USER", help="User used to kick the build as")
+@click.option('--nowait', help="Do not wait for the task to finish", is_flag=True)
+@click.option('--stage', help="Use stage environment", is_flag=True)
+@click.option('--target', metavar="TARGET", help="Override the default target")
+@click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message")
+def build_osbs(release, tech_preview, user, nowait, stage, target, commit_message):
+    """
+    DESCRIPTION
+
+        Executes container image build using OSBS builder.
+
+        https://osbs.readthedocs.io
+    """
+    run()
+
+
+@cli.command(short_help="Execute container image tests")
+@click.option('--steps-url', help="Behave steps library [default: https://github.com/cekit/behave-test-steps.git]", default='https://github.com/cekit/behave-test-steps.git')
+@click.option('--wip', help="Run test scenarios tagged with @wip only", is_flag=True)
+@click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times", multiple=True)
+@click.argument('image')
+def test(steps_url, wip, names, image):
+    """
+    DESCRIPTION
+
+        Execute container image tests locally using Docker
+
+        NOTE: Image to test must be available in the Docker daemon. It won't be pulled automatically!
+
+    EXAMPLES
+
+        Execute tests for the example/app:1.0 image
+
+            $ cekit test example/app:1.0
+
+        Execute tests that are currently developed and marked with @wip
+
+            $ cekit test --wip example/app:1.0
+
+        Execute specific scenario
+
+            $ cekit test --name 'Check that product labels are correctly set' example/app:1.0
+    """
+
+    if wip and names:
+        raise click.UsageError("Parameters --name and --wip cannot be used together")
+
+    run()
+
+
+def _cli_context_hierarchy(ctx, hierarchy=None):
+    if hierarchy is None:
+        hierarchy = []
+
+    if ctx.parent:
+        _cli_context_hierarchy(ctx.parent, hierarchy)
+
+    hierarchy.append(ctx)
+
+    return hierarchy
+
+
+def run():
+    contexts = _cli_context_hierarchy(click.get_current_context())
+    commands = []
+    params = {}
+
+    for context in contexts:
+        commands.append(context.command.name)
+        params.update(context.params)
+
+    # Remove the default 'cli' command
+    # Conditional here to make tests work better
+    if 'cli' in commands:
+        commands.remove('cli')
+
+    # return Map({'commands': commands, 'params': Map(params)})
+
+    Cekit(commands, Map(params)).run()
+
+
+class Map(dict):
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 class Cekit(object):
     """ Main application """
 
-    def parse(self):
-        parser = MyParser(
-            description='Dockerfile generator tool',
-            formatter_class=argparse.RawDescriptionHelpFormatter)
+    def __init__(self, commands, args):
+        self.cli_commands = commands
+        self.cli_args = args
 
-        parser.add_argument('-v',
-                            '--verbose',
-                            action='store_true',
-                            help='verbose output')
+    def _configure(self, args):
 
-        parser.add_argument('--version',
-                            action='version',
-                            help='show version and exit', version=version)
+        config.configure(args.config, {'redhat': args.redhat,
+                                       'work_dir': args.work_dir,
+                                       'addhelp': args.addhelp,
+                                       'package_manager': args.package_manager})
 
-        parser.add_argument('--config',
-                            default='~/.cekit/config',
-                            help='path for Cekit config file (~/.cekit/config is default)')
-
-        parser.add_argument('--redhat',
-                            action='store_true',
-                            help='Set default options for Red Hat internal infrastructure.')
-
-        parser.add_argument('--work-dir',
-                            dest='work_dir',
-                            help="Location of Cekit working directory.")
-
-        parser.add_argument('--package-manager',
-                            dest='package_manager',
-                            choices=['yum', 'microdnf'],
-                            help='Package manager to use. Supports yum and microdnf, \
-                                defaults: yum')
-
-        test_group = parser.add_argument_group('test',
-                                               "Arguments valid for the 'test' target")
-
-        limit_test_group = test_group.add_mutually_exclusive_group()
-
-        steps_url = 'https://github.com/cekit/behave-test-steps.git'
-        test_group.add_argument('--test-steps-url',
-                                default=steps_url,
-                                help='contains url for cekit test steps')
-
-        limit_test_group.add_argument('--test-wip',
-                                      action='store_true',
-                                      help='Run @wip tests only')
-
-        limit_test_group.add_argument('--test-name',
-                                      dest='test_names',
-                                      action='append',
-                                      help='Name of the Scenario to be executed')
-
-        build_group = parser.add_argument_group('build',
-                                                "Arguments valid for the 'build' target")
-
-        build_group.add_argument('--build-engine',
-                                 default='docker',
-                                 choices=['docker', 'osbs', 'buildah'],
-                                 help='an engine used to build the image.')
-
-        build_group.add_argument('--build-pull',
-                                 dest='build_pull',
-                                 action='store_true',
-                                 help='Always fetch latest base image during build')
-
-        build_group.add_argument('--build-docker-no-squash',
-                                 dest='build_docker_no_squash',
-                                 action='store_true',
-                                 help='do not squash after the image is built with Docker')
-
-        build_group.add_argument('--build-osbs-release',
-                                 dest='build_osbs_release',
-                                 action='store_true',
-                                 help='execute OSBS release build')
-
-        build_group.add_argument('--build-osbs-user',
-                                 dest='build_osbs_user',
-                                 help='user for rphkg tool')
-
-        build_group.add_argument('--build-osbs-nowait',
-                                 dest='build_osbs_nowait',
-                                 action='store_true',
-                                 help='run rhpkg container build with --nowait option')
-
-        build_group.add_argument('--build-osbs-stage',
-                                 dest='build_osbs_stage',
-                                 action='store_true',
-                                 help='use rhpkg-stage instead of rhpkg')
-
-        build_group.add_argument('--build-osbs-target',
-                                 dest='build_osbs_target',
-                                 help='overrides the default rhpkg target')
-
-        build_group.add_argument('--build-osbs-commit-msg',
-                                 dest='build_osbs_commit_msg',
-                                 help='commit message for dist-git')
-
-        build_group.add_argument('--build-tech-preview',
-                                 action='store_true',
-                                 help='perform tech preview build')
-
-        parser.add_argument('--tag',
-                            dest='tags',
-                            action='append',
-                            help='tag used to build/test the image, can be used multiple times')
-
-        parser.add_argument('--overrides',
-                            action='append',
-                            help='a YAML object to override image descriptor')
-
-        parser.add_argument('--overrides-file',
-                            type=absolute_path,
-                            action='append',
-                            dest='overrides',
-                            help='path to a file containing overrides')
-
-        parser.add_argument('--target',
-                            default="target",
-                            help="path to directory where to generate sources, \
-                                default: 'target' directory in current working directory")
-
-        parser.add_argument('--descriptor',
-                            type=absolute_path,
-                            dest='descriptor',
-                            default='image.yaml',
-                            help="path to image descriptor file, default: image.yaml")
-
-        addhelp_group = parser.add_mutually_exclusive_group()
-
-        addhelp_group.add_argument('--add-help',
-                                   dest='addhelp',
-                                   action='store_const',
-                                   const=True,
-                                   help="Include generate help files in the image")
-
-        addhelp_group.add_argument('--no-add-help',
-                                   dest='addhelp',
-                                   action='store_const',
-                                   const=False,
-                                   help="Do not include generate help files in the image")
-
-        parser.add_argument('commands',
-                            nargs='+',
-                            choices=['generate', 'build', 'test'],
-                            help="commands that should be executed, \
-                                you can specify multiple commands")
-
-        self.args = parser.parse_args()
-
-        return self
-
-    def configure(self):
-        if self.args.verbose:
+    def run(self):
+        if self.cli_args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)
 
         logger.debug("Running version %s", version)
+
         if 'dev' in version or 'rc' in version:
-            logger.warning("You are running unreleased development version of Cekit, "
+            logger.warning("You are running unreleased development version of CEKit, "
                            "use it only at your own risk!")
 
-        # Initialize Cekit dependency handler, check if core dependencies are provided
-        logger.debug("Checking Cekit core dependencies...")
-        self.dependency_handler = DependencyHandler()
-        self.dependency_handler.handle_core_dependencies()
+        # Initialize dependency handler
+        dependency_handler = DependencyHandler()
 
-        config.configure(self.args.config, {'redhat': self.args.redhat,
-                                            'work_dir': self.args.work_dir,
-                                            'addhelp': self.args.addhelp,
-                                            'package_manager': self.args.package_manager})
+        logger.debug("Checking CEKit core dependencies...")
+        dependency_handler.handle_core_dependencies()
 
-        cleanup(self.args.target)
+        self._configure(self.cli_args)
 
-        # We need to construct Generator first, because we need overrides
-        # merged in
+        # Cleanup the target directory
+        cleanup(self.cli_args.target)
+
         params = {
-            'addhelp': config.get('doc', 'addhelp'),
             'redhat':  config.get('common', 'redhat'),
+            # TODO: https://github.com/cekit/cekit/issues/377
+            'addhelp': config.get('doc', 'addhelp'),
             'help_template': config.get('doc', 'help_template'),
+            # TODO: Remove it from here: https://github.com/cekit/cekit/issues/400
             'package_manager': config.get('common', 'package_manager'),
-            'tech_preview': self.args.build_tech_preview
+            'tech_preview': self.cli_args.build_tech_preview
         }
 
-        self.generator = Generator(self.args.descriptor,
-                                   self.args.target,
-                                   self.args.build_engine,
-                                   self.args.overrides,
-                                   params)
-
-    def run(self):
-
         try:
-            self.configure()
-
-            # Handle dependencies for selected generator, if any
-            logger.debug("Checking Cekit generate dependencies...")
-            self.dependency_handler.handle(self.generator)
-
-            self.generator.init()
-
-            # if tags are not specified on command line we take them from image descriptor
-            if not self.args.tags:
-                self.args.tags = self.generator.get_tags()
-
             # we run generate for build command too
-            if set(['generate', 'build']).intersection(set(self.args.commands)):
+            if 'build' in self.cli_commands:
+                # TODO: When executing tests, we should not initialize generator at all
+                # If the 'build' command is specified,
+                # then the builder type is the last argument
+                self.generator = Generator(self.cli_args.descriptor,
+                                           self.cli_args.target,
+                                           self.cli_commands[-1],
+                                           self.cli_args.overrides,
+                                           params)
+
+                # Handle dependencies for selected generator, if any
+                logger.debug("Checking CEKit generate dependencies...")
+                dependency_handler.handle(self.generator)
+
+                self.generator.init()
                 self.generator.generate()
 
-            if 'build' in self.args.commands:
-                params = {'user': self.args.build_osbs_user,
-                          'nowait': self.args.build_osbs_nowait,
-                          'stage': self.args.build_osbs_stage,
-                          'release': self.args.build_osbs_release,
-                          'no_squash': self.args.build_docker_no_squash,
-                          'tags': self.args.tags,
-                          'pull': self.args.build_pull,
+                # If --dry-run is specified, do not execute the build
+                if self.cli_args.dry_run:
+                    logger.info("The --dry-run parameter was specified, build will not be executed")
+                    logger.info("Finished!")
+                    sys.exit(0)
+                    return
+
+                # If tags are not specified on command line we take them from image descriptor
+                if not self.cli_args.tags:
+                    self.cli_args.tags = self.generator.get_tags()
+
+                params = {'user': self.cli_args.build_osbs_user,
+                          'nowait': self.cli_args.build_osbs_nowait,
+                          'stage': self.cli_args.build_osbs_stage,
+                          'release': self.cli_args.build_osbs_release,
+                          'no_squash': self.cli_args.build_docker_no_squash,
+                          'tags': self.cli_args.tags,
+                          'pull': self.cli_args.build_pull,
                           'redhat': config.get('common', 'redhat'),
-                          'target': self.args.build_osbs_target,
-                          'commit_msg': self.args.build_osbs_commit_msg,
+                          'target': self.cli_args.build_osbs_target,
+                          'commit_msg': self.cli_args.build_osbs_commit_msg,
                           'base': self.generator.image.base
                           }
 
-                builder = Builder(self.args.build_engine,
-                                  self.args.target,
+                builder = Builder(self.cli_commands[-1],
+                                  self.cli_args.target,
                                   params)
 
                 # Handle dependencies for selected builder, if any
-                logger.debug("Checking Cekit build dependencies...")
-                self.dependency_handler.handle(builder)
+                logger.debug("Checking CEKit build dependencies...")
+                dependency_handler.handle(builder)
 
                 builder.prepare(self.generator.image)
                 builder.build()
 
-            if 'test' in self.args.commands:
+            if 'test' in self.cli_commands:
 
-                test_tags = [self.generator.get_tags()[0]]
-                # if wip is specifed set tags to @wip
-                if self.args.test_wip:
+                # XXX: fix this
+                test_tags = []
+                #test_tags = [self.generator.get_tags()[0]]
+                # if wip is specified set tags to @wip
+                if self.cli_args.wip:
                     test_tags = ['@wip']
 
                 # at first we collect tests
-                tc = TestCollector(os.path.dirname(self.args.descriptor),
-                                   self.args.target)
+                tc = TestCollector(os.path.dirname(self.cli_args.descriptor),
+                                   self.cli_args.target)
 
                 # we run the test only if we collect any
-                if tc.collect(self.generator.image.get('schema_version'), self.args.test_steps_url):
+                # TODO investigate if we can improve handling different schema versions
+                # self.generator.image.get('schema_version')
+                if tc.collect('1', self.cli_args.steps_url):
 
                     # Handle test dependencies, if any
-                    logger.debug("Checking Cekit test dependencies...")
-                    self.dependency_handler.handle(tc)
-
-                    runner = TestRunner(self.args.target)
-                    runner.run(self.args.tags[0], test_tags, test_names=self.args.test_names)
+                    logger.debug("Checking CEKit test dependencies...")
+                    dependency_handler.handle(tc)
+                    runner = TestRunner(self.cli_args.target)
+                    runner.run(self.cli_args.image, test_tags,
+                               test_names=self.cli_args.names)
                 else:
                     logger.warning("No test collected, test can't be run.")
 
@@ -298,16 +350,12 @@ class Cekit(object):
         except KeyboardInterrupt as e:
             pass
         except CekitError as e:
-            if self.args.verbose:
+            if self.cli_args.verbose:
                 logger.exception(e)
             else:
                 logger.error(e.message)
             sys.exit(1)
 
 
-def run():
-    Cekit().parse().run()
-
-
-if __name__ == "__main__":
-    run()
+if __name__ == '__main__':
+    cli()  # pylint: disable=no-value-for-parameter

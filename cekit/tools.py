@@ -7,7 +7,18 @@ import yaml
 
 from cekit.errors import CekitError
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 logger = logging.getLogger('cekit')
+
+
+class Map(dict):
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 def cleanup(target):
@@ -32,8 +43,13 @@ def load_descriptor(descriptor):
     Returns descriptor as a dictionary
     """
 
-    if descriptor.startswith('/'):
-        logger.debug("Trying to load descriptor from '{}' file...".format(descriptor))
+    try:
+        data = yaml.safe_load(descriptor)
+    except Exception as ex:
+        raise CekitError('Cannot load descriptor', ex)
+
+    if isinstance(data, basestring):
+        logger.debug("Reading descriptor from '{}' file...".format(descriptor))
 
         if os.path.exists(descriptor):
             with open(descriptor, 'r') as fh:
@@ -42,12 +58,9 @@ def load_descriptor(descriptor):
         raise CekitError(
             "Descriptor could not be found on the '{}' path, please check your arguments!".format(descriptor))
 
-    logger.debug("Trying to load descriptor directly...")
+    logger.debug("Reading descriptor directly...")
 
-    try:
-        return yaml.safe_load(descriptor)
-    except Exception as ex:
-        raise CekitError('Cannot load descriptor', ex)
+    return data
 
 
 def decision(question):

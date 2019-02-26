@@ -24,8 +24,8 @@ setup(
     long_description=codecs.open('README.rst', encoding="utf8").read(),
     license='MIT',
     entry_points={
-        'console_scripts': ['cekit=cekit.cli:run',
-                            'cekit-cache=cekit.cache.cli:run'],
+        'console_scripts': ['cekit=cekit.cli:cli',
+                            'cekit-cache=cekit.cache.cli:cli'],
     },
     tests_require=['mock'],
     install_requires=requirements

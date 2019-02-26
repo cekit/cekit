@@ -10,7 +10,9 @@ import shutil
 import yaml
 import pytest
 from cekit.tools import Chdir
-from cekit.cli import Cekit
+from cekit.cli import Cekit, cli
+
+from click.testing import CliRunner
 
 image_descriptor = {
     'schema_version': 1,
@@ -25,6 +27,16 @@ image_descriptor = {
 template_teststr = "This string does not occur in the default help.md template."
 
 
+def check_dockerfile_text(image_dir, match):
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
+        dockerfile = fd.read()
+        print(match)
+        print(dockerfile)
+        if match in dockerfile:
+            return True
+    return False
+
+
 @pytest.fixture(scope="module")
 def workdir(tmpdir_factory):
     tdir = str(tmpdir_factory.mktemp("image"))
@@ -34,11 +46,9 @@ def workdir(tmpdir_factory):
     # XXX cleanup?
 
 
-def run_cekit(cwd):
+def run_cekit(cwd, args=['build', '--dry-run', 'docker']):
     with Chdir(cwd):
-        c = Cekit().parse()
-        c.configure()
-        return c.generator._params['addhelp']
+        return CliRunner().invoke(cli, args, catch_exceptions=False)
 
 
 def setup_config(tmpdir, contents):
@@ -55,13 +65,11 @@ def cleanup(workdir):
 
 def test_addhelp_mutex_cmdline(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
-    mocker.patch.object(sys,
-                        'argv',
-                        ['cekit', '-v', '--config', config,
-                         '--add-help', '--no-add-help', 'generate'])
-    with pytest.raises(SystemExit) as excinfo:
-        run_cekit(workdir)
-    assert 0 != excinfo.value.code
+    result = run_cekit(workdir, ['-v', '--config', config,
+                                 '--add-help', '--no-add-help', 'build', '--dry-run', 'docker'])
+
+    assert isinstance(result.exception, SystemExit)
+    assert result.exit_code == 2
 
 
 def test_config_override_help_template(mocker, workdir, tmpdir):
@@ -71,14 +79,10 @@ def test_config_override_help_template(mocker, workdir, tmpdir):
         fd.write(template_teststr)
     config = setup_config(tmpdir, "[doc]\nhelp_template = {}".format(help_template))
 
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
     with Chdir(workdir):
-        c = Cekit().parse()
-        c.configure()
-        try:
-            c.run()
-        except SystemExit:
-            pass
+        CliRunner().invoke(cli, ['-v', '--config', config, 'build',
+                                 '--dry-run', 'docker'], catch_exceptions=False)
+
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
             assert contents.find(template_teststr) >= 0
@@ -87,14 +91,9 @@ def test_config_override_help_template(mocker, workdir, tmpdir):
 def test_no_override_help_template(mocker, workdir, tmpdir):
     cleanup(workdir)
     config = setup_config(tmpdir, "")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
     with Chdir(workdir):
-        c = Cekit().parse()
-        c.configure()
-        try:
-            c.run()
-        except SystemExit:
-            pass
+        CliRunner().invoke(cli, ['-v', '--config', config, 'build',
+                                 '--dry-run', 'docker'], catch_exceptions=False)
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
             assert -1 == contents.find(template_teststr)
@@ -111,17 +110,12 @@ def test_image_override_help_template(mocker, tmpdir):
     config = setup_config(tmpdir, "")
     my_image_descriptor = image_descriptor.copy()
     my_image_descriptor['help'] = {'template': help_template}
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
 
     with Chdir(str(tmpdir)):
         with open('image.yaml', 'w') as fd:
             yaml.dump(my_image_descriptor, fd, default_flow_style=False)
-        c = Cekit().parse()
-        c.configure()
-        try:
-            c.run()
-        except SystemExit:
-            pass
+        CliRunner().invoke(cli, ['-v', '--config', config, 'build',
+                                 '--dry-run', 'docker'], catch_exceptions=False)
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
             assert contents.find(template_teststr) >= 0
@@ -142,17 +136,11 @@ def test_image_override_config_help_template(mocker, tmpdir):
     my_image_descriptor = image_descriptor.copy()
     my_image_descriptor['help'] = {'template': help_template2}
 
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-
     with Chdir(str(tmpdir)):
         with open('image.yaml', 'w') as fd:
             yaml.dump(my_image_descriptor, fd, default_flow_style=False)
-        c = Cekit().parse()
-        c.configure()
-        try:
-            c.run()
-        except SystemExit:
-            pass
+        CliRunner().invoke(cli, ['-v', '--config', config, 'build',
+                                 '--dry-run', 'docker'], catch_exceptions=False)
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()
             assert contents == "2"
@@ -164,56 +152,71 @@ def test_image_override_config_help_template(mocker, tmpdir):
 
 def test_confNone_cmdlineNone(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-    assert not run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == False
 
 
 def test_confFalse_cmdlineNone(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = False")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-    assert not run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == False
 
 
 def test_confTrue_cmdlineNone(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = True")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, 'generate'])
-    assert run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == True
 
 
 def test_confNone_cmdlineTrue(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
-    assert run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build', '--add-help', 'y',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == True
 
 
 def test_confFalse_cmdlineTrue(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = False")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
-    assert run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build', '--add-help', 'y',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == True
 
 
 def test_confTrue_cmdlineTrue(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = True")
-    mocker.patch.object(sys, 'argv', ['cekit', '-v', '--config', config, '--add-help', 'generate'])
-    assert run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build', '--add-help', 'y',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == True
 
 
 def test_confNone_cmdlineFalse(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, '')
-    mocker.patch.object(sys, 'argv',
-                        ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
-    assert not run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build', '--add-help', 'n',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == False
 
 
 def test_confFalse_cmdlineFalse(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = False")
-    mocker.patch.object(sys, 'argv',
-                        ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
-    assert not run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build', '--add-help', 'n',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == False
 
 
 def test_confTrue_cmdlineFalse(mocker, workdir, tmpdir):
     config = setup_config(tmpdir, "[doc]\naddhelp = True")
-    mocker.patch.object(sys, 'argv',
-                        ['cekit', '-v', '--config', config, '--no-add-help', 'generate'])
-    assert not run_cekit(workdir)
+    run_cekit(workdir, ['-v', '--config', config, 'build', '--add-help', 'n',
+                        '--dry-run', 'docker'])
+    assert os.path.exists(os.path.join(workdir, 'target', 'image', 'help.md'))
+    assert check_dockerfile_text(workdir, 'ADD help.md /') == False
