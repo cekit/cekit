@@ -116,8 +116,7 @@ class Generator(object):
         image_labels = self.image.labels
         # we will persist cekit version in a label here, so we know which version of cekit
         # was used to build the image
-        image_labels.extend([Label({'name': 'org.concrt.version', 'value': cekit_version}),
-                             Label({'name': 'io.cekit.version', 'value': cekit_version})])
+        image_labels.append(Label({'name': 'io.cekit.version', 'value': cekit_version}))
 
         # If we define the label in the image descriptor
         # we should *not* override it with value from

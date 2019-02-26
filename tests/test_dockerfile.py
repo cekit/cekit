@@ -1,12 +1,13 @@
 import os
-import pytest
 import re
 import subprocess
+
+import pytest
 import yaml
 
 from cekit.config import Config
-from cekit.generator.base import Generator, ModuleRegistry
-from cekit.descriptor import Module, Repository
+from cekit.descriptor import Repository
+from cekit.generator.base import Generator
 from cekit.version import version as cekit_version
 
 basic_config = {'release': 1,
@@ -81,9 +82,6 @@ odcs_fake_resp = b"""Result:
      {'execute': [{'script': 'bar_script',
                    'user': 'bar_user'}]},
      r'.*USER bar_user\n+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
-    ('test_concrt_label_version',
-     {},
-     r'.*org.concrt.version="%s".*' % cekit_version),
     ('test_cekit_label_version',
      {},
      r'.*io.cekit.version="%s".*' % cekit_version)],
