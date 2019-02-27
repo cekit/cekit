@@ -31,6 +31,10 @@ It is possible to ask virtualenv to inherit pre-installed system packages thereb
    For those using ZSH a useful addition is `Zsh-Autoswitch-VirtualEnv <https://github.com/MichaelAquilina/zsh-autoswitch-virtualenv>`_ the use of which avoids the labour of manually creating the virtualenv and activating it each time ; simply run ``mkvenv --system-site-packages`` initially and then it is handled automatically then on.
 
 
+Pull Requests
+-------------
+
+We welcome any contributions to the project. Please reference the issue in the commit and utilise GitHubs ability to `automatically close issues <https://help.github.com/en/articles/closing-issues-using-keywords>`_ by adding e.g. ``Fixes #nnn`` within the commit description.
 
 Running the tests
 -----------------
