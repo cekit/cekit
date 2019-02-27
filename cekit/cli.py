@@ -9,7 +9,6 @@ from cekit.builder import Builder
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-from cekit.image import Image
 from cekit.log import setup_logging
 from cekit.test.collector import TestCollector
 from cekit.test.runner import TestRunner
@@ -23,14 +22,14 @@ config = Config()
 
 
 @click.group(context_settings=dict(max_content_width=100))
-@click.option('--descriptor', metavar="<descriptor>", help="Path to image descriptor file. [default: image.yaml]", default="image.yaml")
+@click.option('--descriptor', metavar="<descriptor>", help="Path to image descriptor file.", default="image.yaml", show_default=True)
 @click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
-@click.option('--work-dir', help="Location of the working directory. [default: ~/.cekit]", default="~/.cekit")
-@click.option('--config', help="Path to configuration file. [default: ~/.cekit/config]", default="~/.cekit/config")
+@click.option('--work-dir', help="Location of the working directory.", default="~/.cekit", show_default=True)
+@click.option('--config', help="Path to configuration file.", default="~/.cekit/config", show_default=True)
 @click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
-@click.option('--target', metavar="PATH", help="Path to directory where files should be generated [default: target]", default="target")
+@click.option('--target', metavar="PATH", help="Path to directory where files should be generated", default="target", show_default=True)
 # TODO: Remove this option
-@click.option('--package-manager', help="Package manager to use. [default: yum]", type=click.Choice(['yum', 'microdnf']), default="yum")
+@click.option('--package-manager', help="Package manager to use.", type=click.Choice(['yum', 'microdnf']), default="yum", show_default=True)
 @click.version_option(message="%(version)s", version=version)
 def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
     """
@@ -59,11 +58,11 @@ def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
 
 
 @cli.group(short_help="Build container image")
-@click.option('--dry-run', help="Do not execute the build, just generate required files", is_flag=True)
-@click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format", multiple=True)
-@click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format", multiple=True)
+@click.option('--dry-run', help="Do not execute the build, just generate required files.", is_flag=True)
+@click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
+@click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
 # TODO: Is this ok?
-@click.option('--add-help', 'addhelp', help="Include generated help files in the image", type=click.BOOL)
+@click.option('--add-help', 'addhelp', help="Include generated help files in the image.", type=click.BOOL)
 def build(dry_run, overrides, addhelp):
     """
     DESCRIPTION
@@ -80,8 +79,7 @@ def build(dry_run, overrides, addhelp):
 
     OVERRIDES
 
-        You can specify overrides to modify the container image build. You
-        can read more about overrides in the documentation: https://docs.cekit.io/en/latest/overrides.html.
+        You can specify overrides to modify the container image build. You can read more about overrides in the documentation: https://docs.cekit.io/en/latest/overrides.html.
 
         Overrides can be specified inline (--overrides) or as a path to file (--overrides-file).
 
@@ -98,9 +96,9 @@ def build(dry_run, overrides, addhelp):
 
 
 @build.command(name="docker", short_help="Build using Docker engine")
-@click.option('--pull', help="Always try to fetch latest base image", is_flag=True)
-@click.option('--no-squash', help="Do not squash the image after build is done", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be specified multiple times", multiple=True)
+@click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be specified multiple times.", multiple=True)
 def build_docker(pull, no_squash, tags):
     """
     DESCRIPTION
@@ -113,8 +111,8 @@ def build_docker(pull, no_squash, tags):
 
 
 @build.command(name="buildah", short_help="Build using Buildah engine")
-@click.option('--pull', help="Always try to fetch latest base image", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be used specified times", multiple=True)
+@click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be used specified times.", multiple=True)
 def build_buildah(pull, tags):
     """
     DESCRIPTION
@@ -127,14 +125,14 @@ def build_buildah(pull, tags):
 
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
-@click.option('--release', help="Execute a release build", is_flag=True)
+@click.option('--release', help="Execute a release build.", is_flag=True)
 # TODO: Ensure this still makes sense
-@click.option('--tech-preview', help="Execute a tech preview build", is_flag=True)
-@click.option('--user', metavar="USER", help="User used to kick the build as")
-@click.option('--nowait', help="Do not wait for the task to finish", is_flag=True)
-@click.option('--stage', help="Use stage environment", is_flag=True)
-@click.option('--target', metavar="TARGET", help="Override the default target")
-@click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message")
+@click.option('--tech-preview', help="Execute a tech preview build.", is_flag=True)
+@click.option('--user', metavar="USER", help="User used to kick the build as.")
+@click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
+@click.option('--stage', help="Use stage environmen.", is_flag=True)
+@click.option('--target', metavar="TARGET", help="Override the default target.")
+@click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
 def build_osbs(release, tech_preview, user, nowait, stage, target, commit_message):
     """
     DESCRIPTION
@@ -147,9 +145,9 @@ def build_osbs(release, tech_preview, user, nowait, stage, target, commit_messag
 
 
 @cli.command(short_help="Execute container image tests")
-@click.option('--steps-url', help="Behave steps library [default: https://github.com/cekit/behave-test-steps.git]", default='https://github.com/cekit/behave-test-steps.git')
-@click.option('--wip', help="Run test scenarios tagged with @wip only", is_flag=True)
-@click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times", multiple=True)
+@click.option('--steps-url', help="Behave steps library.", default='https://github.com/cekit/behave-test-steps.git', show_default=True)
+@click.option('--wip', help="Run test scenarios tagged with @wip only.", is_flag=True)
+@click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times.", multiple=True)
 @click.argument('image')
 def test(steps_url, wip, names, image):
     """

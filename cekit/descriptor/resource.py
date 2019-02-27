@@ -98,8 +98,9 @@ class Resource(Descriptor):
             logger.debug("Local resource '%s' exists and is valid" % self.name)
             return target
 
-        if self.cache.is_cached(self):
-            cached_resource = self.cache.get(self)
+        cached_resource = self.cache.cached(self)
+
+        if cached_resource:
             shutil.copy(cached_resource['cached_path'],
                         target)
             logger.info("Using cached artifact '%s'." % self.name)
@@ -130,7 +131,7 @@ class Resource(Descriptor):
 
         if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and \
                 not self.__verify(target):
-            raise CekitError('Artifact verification failed!')
+            raise CekitError('Artifact checksum verification failed!')
 
         return target
 
@@ -147,7 +148,7 @@ class Resource(Descriptor):
             logger.info("Target is directory, cannot verify checksum.")
             return True
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
-            if algorithm in self:
+            if algorithm in self and self[algorithm]:
                 if not check_sum(target, algorithm, self[algorithm], self['name']):
                     return False
         return True

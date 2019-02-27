@@ -1,17 +1,18 @@
 import click
 import logging
+import os
 import sys
 import traceback
 
 from cekit.tools import Map
 from cekit.config import Config
+from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 from cekit.cache.artifact import ArtifactCache
 from cekit.descriptor import Resource
 from cekit.version import version
 
-# FIXME we shoudl try to move this to json
 setup_logging()
 logger = logging.getLogger('cekit')
 config = Config()
@@ -19,94 +20,102 @@ config = Config()
 
 @click.group(context_settings=dict(max_content_width=100))
 @click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
-@click.option('--config', help="Path to configuration file. [default: ~/.cekit/config]", default="~/.cekit/config")
-@click.option('--work-dir', help="Location of the working directory. [default: ~/.cekit]", default="~/.cekit")
+@click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
+@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default="~/.cekit", show_default=True)
 @click.version_option(message="%(version)s", version=version)
-def cli(verbose, config, work_dir):
+def cli(config, verbose, work_dir):
     pass
 
 
 @cli.command(name="ls", short_help="List cached artifacts")
 def ls():
-    CacheCli(Map(click.get_current_context().parent.params)).ls()
+    CacheCli.prepare().ls()
 
 
 @cli.command(name="add", short_help="Add artifact to cache")
-@click.option('--location', help="URL or path pointing to the artifact", required=True)
-# TODO Add checksums
-def add(location):
-    CacheCli(Map(click.get_current_context().parent.params)).add(location)
+@click.argument('location', metavar="LOCATION")
+@click.option('--md5', metavar="CHECKSUM", help="The md5 checksum of the artifact.")
+@click.option('--sha1', metavar="CHECKSUM", help="The sha1 checksum of the artifact.")
+@click.option('--sha256', metavar="CHECKSUM", help="The sha256 checksum of the artifact.")
+def add(location, md5, sha1, sha256):
+    if not (md5 or sha1 or sha256):
+        raise click.UsageError("At least one checksum must be provided")
+
+    CacheCli.prepare().add(location, md5, sha1, sha256)
 
 
 @cli.command(name="rm", short_help="Remove artifact from cache")
-@click.option('--uuid', help="UUID of the artifact", required=True)
+@click.argument('uuid', metavar="UUID")
 def rm(uuid):
-    CacheCli(Map(click.get_current_context().parent.params)).rm(uuid)
+    CacheCli.prepare().rm(uuid)
 
 
 class CacheCli():
+    @staticmethod
+    def prepare():
+        """ Returns an initialized object of CacheCli """
+        return CacheCli(Map(click.get_current_context().parent.params))
+
     def __init__(self, args):
-        self.args = args
-        print(self.args)
 
-        config.configure(self.args.config, {'work_dir': self.args.work_dir})
-
-        if self.args.verbose:
+        # TODO: logging is used only when adding the artifact, we need to find out if it would be possible to do it better
+        if args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)
 
-    def add(self, location):
+        config.configure(args.config, {'work_dir': args.work_dir})
+
+    def add(self, location, md5, sha1, sha256):
         artifact_cache = ArtifactCache()
 
         resource = {}
         resource['url'] = location
+        resource['md5'] = md5
+        resource['sha1'] = sha1
+        resource['sha256'] = sha256
 
-        for alg in SUPPORTED_HASH_ALGORITHMS:
-            val = getattr(self.args, alg)
-            if val:
-                resource[alg] = val
         artifact = Resource(resource)
 
-        if artifact_cache.is_cached(artifact):
-            print('Artifact is already cached!')
+        cached = artifact_cache.cached(artifact)
+
+        if cached:
+            click.echo("Artifact {} is already cached!".format(location))
             sys.exit(0)
 
         try:
             artifact_id = artifact_cache.add(artifact)
-            if self.args.verbose:
-                print(artifact_id)
+            click.echo("Artifact {} cached with UUID '{}'".format(location, artifact_id))
         except Exception as ex:
-            if self.args.verbose:
-                traceback.print_exc()
-            else:
-                print(ex)
+            click.secho("Cannot cache artifact {}: {}".format(location, str(ex)), fg='red')
             sys.exit(1)
 
     def ls(self):
         artifact_cache = ArtifactCache()
         artifacts = artifact_cache.list()
         if artifacts:
-            print("Cached artifacts:")
             for artifact_filename, artifact in artifacts.items():
-                print("\n%s:" % artifact_filename.split('.')[0])
+                click.echo("\n{}:".format(click.style(
+                    artifact_filename.split('.')[0], fg='green', bold=True)))
                 for alg in SUPPORTED_HASH_ALGORITHMS:
-                    if alg in artifact:
-                        print("  %s: %s" % (alg, artifact[alg]))
+                    if alg in artifact and artifact[alg]:
+                        click.echo("  {}: {}".format(click.style(alg, bold=True), artifact[alg]))
+
                 if artifact['names']:
-                    print("  names:")
+                    click.echo("  {}:".format(click.style("names", bold=True)))
                     for name in artifact['names']:
-                        print("    %s" % name)
+                        click.echo("    - %s" % name)
         else:
-            print('No artifacts cached!')
+            click.echo('No artifacts cached!')
 
     def rm(self, uuid):
+        artifact_cache = ArtifactCache()
+
         try:
-            artifact_cache = ArtifactCache()
             artifact_cache.delete(uuid)
-            print("Artifact removed")
+            click.echo("Artifact with UUID '{}' removed".format(uuid))
         except Exception:
-            print("Artifact doesn't exists")
+            click.secho("Artifact with UUID '{}' doesn't exists in the cache".format(uuid), fg='yellow')
             sys.exit(1)
 
 

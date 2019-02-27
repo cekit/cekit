@@ -42,10 +42,10 @@ class ArtifactCache():
 
     def add(self, artifact):
         if not set(SUPPORTED_HASH_ALGORITHMS).intersection(artifact):
-            raise ValueError('Cannot cache Artifact without checksum')
+            raise ValueError('Cannot cache artifact without checksum')
 
-        if self.is_cached(artifact):
-            raise CekitError('Artifact is already cached')
+        if self.cached(artifact):
+            raise CekitError('Artifact is already cached!')
 
         artifact_id = str(uuid.uuid4())
 
@@ -83,9 +83,8 @@ class ArtifactCache():
 
         raise CekitError('Artifact is not cached.')
 
-    def is_cached(self, artifact):
+    def cached(self, artifact):
         try:
-            self.get(artifact)
-            return True
+            return self.get(artifact)
         except CekitError:
             return False
