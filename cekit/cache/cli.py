@@ -70,16 +70,16 @@ class CacheCli():
         artifact_cache = ArtifactCache()
 
         resource = {}
-        resource['url'] = str(location)
+        resource['url'] = location
 
         if md5:
-            resource['md5'] = str(md5)
+            resource['md5'] = md5
 
         if sha1:
-            resource['sha1'] = str(sha1)
+            resource['sha1'] = sha1
 
         if sha256:
-            resource['sha256'] = str(sha256)
+            resource['sha256'] = sha256
 
         artifact = Resource(resource)
 
