@@ -105,11 +105,18 @@ def test_args_not_valid_command(mocker):
     assert result.exit_code == 2
 
 
-@pytest.mark.parametrize('engine', ['osbs', 'docker', 'buildah'])
-def test_args_build_engine(mocker, engine):
-    run = mocker.patch('cekit.cli.Cekit.run')
-    result = CliRunner().invoke(cli, ['build', engine], catch_exceptions=False)
-    run.assert_called_once()
+@pytest.mark.parametrize('engine,params', [
+    ('osbs', {'config': '~/.cekit/config', 'user': None, 'package_manager': 'yum', 'target': None, 'overrides': (), 'dry_run': False, 'descriptor': 'image.yaml', 'release': False,
+              'work_dir': '~/.cekit', 'commit_message': None, 'tech_preview': False, 'redhat': False, 'addhelp': None, 'stage': False, 'nowait': False, 'verbose': False}),
+    ('docker', {'descriptor': 'image.yaml', 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'addhelp': None, 'dry_run': False,
+                'package_manager': 'yum', 'target': 'target', 'overrides': (), 'tags': (), 'pull': False, 'verbose': False, 'no_squash': False}),
+    ('buildah', {'descriptor': 'image.yaml', 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'addhelp': None,
+                 'package_manager': 'yum', 'target': 'target', 'overrides': (), 'tags': (), 'pull': False, 'verbose': False, 'dry_run': False}),
+])
+def test_args_build_engine(mocker, engine, params):
+    cekit = mocker.patch('cekit.cli.Cekit')
+    CliRunner().invoke(cli, ['build', engine], catch_exceptions=False)
+    cekit.assert_called_once_with(['build', engine], params)
 
 
 def test_args_invalid_build_engine(mocker):
