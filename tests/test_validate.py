@@ -318,15 +318,16 @@ def test_image_test_with_multiple_overrides(tmpdir, mocker):
     with open(feature_files, 'w') as fd:
         fd.write(feature_label_test_overriden)
 
-    run_cekit(image_dir, ['-v',
-                          'build',
-                          '--overrides-file',
-                          'overrides.yaml',
-                          '--overrides-file',
-                          'overrides2.yaml',
-                          '--overrides',
-                          "{'labels': [{'name': 'foo', 'value': 'overriden'}]}",
-                          'docker'])
+    result = run_cekit(image_dir, ['-v',
+                                   'build',
+                                   '--overrides-file',
+                                   'overrides.yaml',
+                                   '--overrides-file',
+                                   'overrides2.yaml',
+                                   '--overrides',
+                                   "{'labels': [{'name': 'foo', 'value': 'overriden'}]}",
+                                   'docker'])
+
 
     effective_image = {}
     with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
@@ -895,7 +896,7 @@ def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
                                     'docker'])
 
     if sys.version_info.major == 2:
-        message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup" in caplog.text
+        message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup"
     else:
         message = "Unable to contact docker daemon. Is it correctly setup"
 
@@ -932,6 +933,8 @@ def run_cekit(cwd,
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
         if message:
             assert message in result.output
+
+        return result
 
 
 def run_cekit_exception(cwd,

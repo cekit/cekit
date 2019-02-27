@@ -11,7 +11,8 @@ config = Config()
 
 
 class ArtifactCache():
-    """ Represents Artifact cache for cekit. All cached resource are saved into cache subdirectory
+    """
+    Represents Artifact cache for cekit. All cached resource are saved into cache subdirectory
     of a Cekit 'work_dir'. All files are stored by random generated uuid with an yaml file
     indexing it.
     """
@@ -54,7 +55,7 @@ class ArtifactCache():
             artifact.guarded_copy(artifact_file)
 
         cache_entry = {'names': [artifact['name']],
-                       'cached_path': artifact_file}
+                       'cached_path': str(artifact_file)}
 
         for alg in SUPPORTED_HASH_ALGORITHMS:
             if alg in artifact:
