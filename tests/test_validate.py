@@ -260,7 +260,6 @@ def test_image_generate_with_multiple_overrides(tmpdir, mocker):
     assert {'name': 'foo', 'value': 'baz'} in effective_image['labels']
 
 
-# TODO: Fix tests
 def test_image_test_with_override(tmpdir, mocker):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -293,7 +292,12 @@ def test_image_test_with_override(tmpdir, mocker):
     assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
 
 
-# TODO: Fix tests
+    run_cekit(image_dir,
+            ['-v',
+            'test',
+            'test/image:1.0'])
+
+
 def test_image_test_with_multiple_overrides(tmpdir, mocker):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -318,16 +322,15 @@ def test_image_test_with_multiple_overrides(tmpdir, mocker):
     with open(feature_files, 'w') as fd:
         fd.write(feature_label_test_overriden)
 
-    result = run_cekit(image_dir, ['-v',
-                                   'build',
-                                   '--overrides-file',
-                                   'overrides.yaml',
-                                   '--overrides-file',
-                                   'overrides2.yaml',
-                                   '--overrides',
-                                   "{'labels': [{'name': 'foo', 'value': 'overriden'}]}",
-                                   'docker'])
-
+    run_cekit(image_dir, ['-v',
+                          'build',
+                          '--overrides-file',
+                          'overrides.yaml',
+                          '--overrides-file',
+                          'overrides2.yaml',
+                          '--overrides',
+                          "{'labels': [{'name': 'foo', 'value': 'overriden'}]}",
+                          'docker'])
 
     effective_image = {}
     with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
@@ -335,8 +338,12 @@ def test_image_test_with_multiple_overrides(tmpdir, mocker):
 
     assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
 
+    run_cekit(image_dir,
+              ['-v',
+               'test',
+               'test/image:1.0'])
 
-# TODO: Fix tests
+
 def test_image_test_with_override_on_cmd(tmpdir, mocker):
     overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
 
@@ -359,7 +366,6 @@ def test_image_test_with_override_on_cmd(tmpdir, mocker):
                '--overrides', overrides_descriptor,
                'docker'])
 
-    # XXX !!!
     run_cekit(image_dir,
               ['-v',
                'test',
