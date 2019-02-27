@@ -35,7 +35,9 @@ def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
     """
     ABOUT
 
-        CEKit -- container image creation tool
+        CEKit -- Container Evolution Kit
+
+        CEKit helps building container images from image definition files with strong focus on modularity and code reuse.
 
     LINKS
 
@@ -61,7 +63,7 @@ def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
 @click.option('--dry-run', help="Do not execute the build, just generate required files.", is_flag=True)
 @click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
 @click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
-# TODO: Is this ok?
+# TODO: https://github.com/cekit/cekit/issues/377
 @click.option('--add-help', 'addhelp', help="Include generated help files in the image.", type=click.BOOL)
 def build(dry_run, overrides, addhelp):
     """
@@ -71,11 +73,11 @@ def build(dry_run, overrides, addhelp):
 
     BUILDERS
 
-        We currently support: Docker, OSBS and Buildah.
+        Currently supported builders: Docker, OSBS and Buildah.
 
             $ cekit build BUILDER
 
-        See commands cor the proper invocation.
+        Run 'cekit build BUILDER --help' for more information about particular builder.
 
     OVERRIDES
 
@@ -90,7 +92,6 @@ def build(dry_run, overrides, addhelp):
             $ cekit build --overrides '{"from": "custom/image:1.0"}' --overrides '{"from": "custom/image:2.0"}'
 
         Will change the 'from' key in the descriptor to 'custom/image:2.0'.
-
     """
     pass
 
@@ -98,7 +99,7 @@ def build(dry_run, overrides, addhelp):
 @build.command(name="docker", short_help="Build using Docker engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be specified multiple times.", multiple=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 def build_docker(pull, no_squash, tags):
     """
     DESCRIPTION
@@ -106,13 +107,15 @@ def build_docker(pull, no_squash, tags):
         Executes container image build locally using Docker builder.
 
         https://docs.docker.com/
+
+        By default after image is built, it is squashed using the https://github.com/goldmann/docker-squash tool. You can disable it by specifying the '--no-squash' parameter.
     """
     run()
 
 
 @build.command(name="buildah", short_help="Build using Buildah engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Tag the image after build, can be used specified times.", multiple=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 def build_buildah(pull, tags):
     """
     DESCRIPTION
@@ -131,15 +134,29 @@ def build_buildah(pull, tags):
 @click.option('--user', metavar="USER", help="User used to kick the build as.")
 @click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
 @click.option('--stage', help="Use stage environmen.", is_flag=True)
-@click.option('--target', metavar="TARGET", help="Override the default target.")
+@click.option('--koji-target', metavar="TARGET", help="Override the default Koji target.")
 @click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
-def build_osbs(release, tech_preview, user, nowait, stage, target, commit_message):
+def build_osbs(release, tech_preview, user, nowait, stage, koji_target, commit_message):
     """
     DESCRIPTION
 
         Executes container image build using OSBS builder.
 
         https://osbs.readthedocs.io
+
+    EXAMPLES
+
+        Execute scratch build in OSBS
+
+            $ cekit build osbs
+
+        Execute regular (release) build in OSBS
+
+            $ cekit build osbs --release
+
+        Execute regular (release) build in OSBS with a custom commit message in dist-git
+
+            $ cekit build osbs --release --commit-message "Release 1.0"
     """
     run()
 
@@ -196,15 +213,14 @@ def run():
     params = {}
 
     for context in contexts:
+        current_length = len(params)
+
         commands.append(context.command.name)
         params.update(context.params)
 
-    # Remove the default 'cli' command
-    # Conditional here to make tests work better
-    if 'cli' in commands:
-        commands.remove('cli')
-
-    # return Map({'commands': commands, 'params': Map(params)})
+        if len(context.params) + current_length != len(params):
+            raise CekitError(
+                "Internal CEKit error: Passed arguments overwrite previous values, please report it together with the command executed!")
 
     Cekit(commands, Map(params)).run()
 
