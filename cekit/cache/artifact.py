@@ -35,7 +35,7 @@ class ArtifactCache():
         index_file = os.path.join(self._cache_dir, artifact_id + '.yaml')
         tmp_cache_file = index_file + str(os.getpid())
         with open(tmp_cache_file, 'w') as file_:
-            yaml.dump(cache_entry, file_)
+            yaml.safe_dump(cache_entry, file_)
             os.rename(tmp_cache_file, index_file)
 
     def list(self):
@@ -55,7 +55,7 @@ class ArtifactCache():
             artifact.guarded_copy(artifact_file)
 
         cache_entry = {'names': [artifact['name']],
-                       'cached_path': str(artifact_file)}
+                       'cached_path': artifact_file}
 
         for alg in SUPPORTED_HASH_ALGORITHMS:
             if alg in artifact:
