@@ -291,11 +291,10 @@ def test_image_test_with_override(tmpdir, mocker):
 
     assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
 
-
     run_cekit(image_dir,
-            ['-v',
-            'test',
-            'test/image:1.0'])
+              ['-v',
+               'test',
+               'test/image:1.0'])
 
 
 def test_image_test_with_multiple_overrides(tmpdir, mocker):
