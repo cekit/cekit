@@ -58,8 +58,8 @@ class Descriptor(collections.MutableMapping):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(path, 'w') as outfile:
-            yaml.Dumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
-            yaml.dump(self._descriptor, outfile, default_flow_style=False)
+            yaml.SafeDumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
+            yaml.dump(self._descriptor, outfile, default_flow_style=False, Dumper=yaml.SafeDumper)
 
     def label(self, key):
         for l in self._descriptor['labels']:

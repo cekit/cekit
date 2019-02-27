@@ -52,7 +52,7 @@ class Generator(object):
             if not modules.get('repositories'):
                 modules['repositories'] = [{'path': local_mod_path, 'name': 'modules'}]
 
-        self.image = Image(descriptor, os.path.dirname(os.path.abspath(str(descriptor_path))))
+        self.image = Image(descriptor, os.path.dirname(os.path.abspath(descriptor_path)))
         self._overrides = []
         self.target = target
         self._params = params
