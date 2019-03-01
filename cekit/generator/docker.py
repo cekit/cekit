@@ -4,12 +4,9 @@ import platform
 import subprocess
 import yaml
 
-from cekit.cache.artifact import ArtifactCache
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-from cekit.descriptor.resource import _PlainResource
-from cekit.tools import get_brew_url
 
 
 logger = logging.getLogger('cekit')
