@@ -96,14 +96,14 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
         yaml.dump(overrides_descriptor, fd, default_flow_style=False)
 
-    run_cekit(image_dir, ['-v',
-                          '--config',
-                          'config',
-                          'build',
-                          '--dry-run',
-                          '--overrides-file',
-                          'overrides.yaml',
-                          'docker'])
+    return run_cekit(image_dir, ['-v',
+                                 '--config',
+                                 'config',
+                                 'build',
+                                 '--dry-run',
+                                 '--overrides-file',
+                                 'overrides.yaml',
+                                 'docker'])
 
 
 def test_content_sets_file_container_file(tmpdir, mocker, caplog):
@@ -419,8 +419,8 @@ def check_dockerfile(image_dir, match):
 def check_dockerfile_text(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         dockerfile = fd.read()
-        print(match)
-        print(dockerfile)
+        print("MATCH:\n{}".format(match))
+        print("DOCKERFILE:\n{}".format(dockerfile))
         if match in dockerfile:
             return True
     return False
@@ -436,27 +436,6 @@ def check_dockerfile_uniq(image_dir, match):
                 else:
                     found = True
     return found
-
-
-def test_local_module_injection(tmpdir, mocker):
-    image_dir = str(tmpdir.mkdir('source'))
-
-    local_desc = image_descriptor.copy()
-    local_desc['modules'] = {'install': [{'name': 'foo'}]}
-
-    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
-        yaml.dump(local_desc, fd, default_flow_style=False)
-
-    shutil.copytree(os.path.join(os.path.dirname(__file__),
-                                 'modules', 'repo_1'),
-                    os.path.join(image_dir, 'modules'))
-    run_cekit(image_dir)
-    assert os.path.exists(os.path.join(image_dir,
-                                       'target',
-                                       'image',
-                                       'modules',
-                                       'foo',
-                                       'original'))
 
 
 def test_local_module_not_injected(tmpdir, mocker):

@@ -5,10 +5,14 @@ import subprocess
 import pytest
 import yaml
 
+from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
 from cekit.generator.base import Generator
 from cekit.version import version as cekit_version
+from cekit.tools import Chdir
+
+from click.testing import CliRunner
 
 basic_config = {'release': 1,
                 'version': 1,
@@ -89,56 +93,57 @@ odcs_fake_resp = b"""Result:
 def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
 
     target = str(tmpdir.mkdir('target'))
-    params = {'redhat': True}
-
-    generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
-    generator.init()
-    generator.generate()
-
+    generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
     regex_dockerfile(target, exp_regex)
 
 
-@pytest.mark.parametrize('name, desc_part, exp_regex', [
-    ('test_without_family',
-     {}, r'JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'),
-    ('test_with_family',
-        {'name': 'testimage/test'}, r'JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"')],
-    ids=print_test_name)
-def test_dockerfile_rendering_tech_preview(tmpdir, name, desc_part, exp_regex):
+@pytest.mark.parametrize('desc_part, exp_regex',
+                         [
+                             (
+                                 {'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}},
+                                 r'JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'
+                             ),
+                             (
+                                 {'name': 'testimage/test',
+                                     'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}},
+                                 r'JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"'
+                             )
+                         ],
+                         ids=print_test_name)
+def test_dockerfile_rendering_tech_preview(tmpdir, mocker, desc_part, exp_regex):
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     target = str(tmpdir.mkdir('target'))
-    params = {'redhat': True, 'tech_preview': True}
-    generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
-    generator.init()
-    generator.generate()
+
+    generate(target, ['--redhat', 'build', '--dry-run', 'osbs', '--tech-preview'], desc_part)
     regex_dockerfile(target, exp_regex)
 
 
 def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
-    config.cfg['common']['redhat'] = True
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'content_sets': {
         'x86_64': 'foo'},
-        'install': ['a']}}
+        'install': ['a']},
+        'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generator = prepare_generator(target, desc_part, 'image')
-    generator.init()
-    generator.generate()
+    generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
     regex_dockerfile(target, 'repos/content_sets_odcs.repo')
 
 
 def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'rpm': 'foo-repo.rpm'}],
-                              'install': ['a']}}
+                              'install': ['a']},
+                 'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generator = prepare_generator(target, desc_part, 'image')
-    generator.init()
-    generator.generate()
+    generate(target, ['build', '--dry-run', 'osbs'], desc_part)
+
     regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm')
 
 
@@ -149,11 +154,8 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'rpm': 'foo-repo.rpm'}],
                               'install': ['a', 'b']}}
-    params = {'package_manager': 'microdnf'}
 
-    generator = prepare_generator(target, desc_part, 'image', 'docker', [], params)
-    generator.init()
-    generator.generate()
+    generate(target, ['--package-manager', 'microdnf', 'build', '--dry-run', 'docker'], desc_part)
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
@@ -162,18 +164,19 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     config.cfg['common'] = {'redhat': True}
 
     target = str(tmpdir.mkdir('target'))
     os.makedirs(os.path.join(target, 'image'))
     desc_part = {'packages': {'content_sets': {
         'x86_64': 'foo'},
-        'install': ['a']}}
+        'install': ['a']},
+        'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.init()
-    generator.prepare_repositories()
-    with open(os.path.join(target, 'image', 'content_sets.yml'), 'r') as _file:
+    generate(target, ['build', '--dry-run', 'osbs'], desc_part)
+
+    with open(os.path.join(target, 'target', 'image', 'content_sets.yml'), 'r') as _file:
         content_sets = yaml.safe_load(_file)
         assert 'x86_64' in content_sets
         assert 'foo' in content_sets['x86_64']
@@ -183,6 +186,7 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
 def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     config.cfg['common'] = {'redhat': False}
 
     target = str(tmpdir.mkdir('target'))
@@ -191,11 +195,11 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
                                                     'pulp': 'rhel-7-server-rpms'
                                                 }},
                                                ],
-                              'install': ['a']}}
+                              'install': ['a']},
+                 'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.init()
-    generator.prepare_repositories()
+    generate(target, ['build', '--dry-run', 'osbs'], desc_part)
+
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
 
 
@@ -203,81 +207,78 @@ def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
     config.cfg['common']['redhat'] = True
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'id': 'foo'},
                                                ],
-                              'install': ['a']}}
+                              'install': ['a']},
+                 'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.init()
-    generator.prepare_repositories()
+    generate(target, ['build', '--dry-run', 'osbs'], desc_part)
+
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
 
 
 def test_dockerfile_osbs_url_only(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
                                                 'url': {
                                                     'repository': 'foo'
                                                 }},
                                                ],
-                              'install': ['a']}}
+                              'install': ['a']},
+                 'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.init()
-    generator.prepare_repositories()
+    image = generate(target, ['build', '--dry-run', 'osbs'], desc_part)
+
     assert not os.path.exists(os.path.join(target, 'image', 'content_sets.yml'))
-    assert 'foo' in [x['url']['repository'] for x in generator.image['packages']['set_url']]
+    assert 'foo' in [x['url']['repository'] for x in image['packages']['set_url']]
 
 
 def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
-    desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'rpm': 'foo-repo.rpm'}],
-                              'install': ['a']}}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs')
-    generator.init()
-    generator.generate()
+    generate(target, ['build', '--dry-run', 'docker'],
+             descriptor={'packages': {'repositories': [{'name': 'foo',
+                                                        'rpm': 'foo-repo.rpm'}],
+                                      'install': ['a']},
+                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+                         })
+
     regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm')
 
 
-def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
-    mocker.patch.object(Repository, 'fetch')
+def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     target = str(tmpdir.mkdir('target'))
-    desc_part = {'packages': {'repositories': [{'name': 'foo',
-                                                'rpm': 'foo-repo.rpm'}],
-                              'install': ['a']}}
-    params = {'package_manager': 'microdnf'}
 
-    generator = prepare_generator(target, desc_part, 'image', 'osbs', [], params)
-    generator.init()
-    generator.generate()
+    generate(target, ['--package-manager', 'microdnf', 'build', '--dry-run', 'docker'],
+             descriptor={'packages': {'repositories': [{'name': 'foo',
+                                                        'rpm': 'foo-repo.rpm'}],
+                                      'install': ['a']},
+                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+                         })
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a')
     regex_dockerfile(target, 'rpm -q a')
 
 
 # https://github.com/cekit/cekit/issues/406
-def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir, mocker):
+def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir('target'))
-    generator = prepare_generator(target, {})
-    generator.init()
-    generator.generate()
+    generate(target, ['build', '--dry-run', 'docker'])
     regex_dockerfile(target, '^((?!COPY modules /tmp/scripts/))')
 
 
 # https://github.com/cekit/cekit/issues/406
-def test_dockerfile_copy_modules_if_modules_defined(tmpdir, mocker):
+def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     target = str(tmpdir.mkdir('target'))
-    config.cfg['common']['work_dir'] = os.path.dirname(target)
-    module_dir = os.path.join(os.path.dirname(target), 'modules', 'foo')
+    module_dir = os.path.join(target, 'modules', 'foo')
     module_yaml_path = os.path.join(module_dir, 'module.yaml')
 
     os.makedirs(module_dir)
@@ -285,33 +286,36 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, mocker):
     with open(module_yaml_path, 'w') as outfile:
         yaml.dump({'name': 'foo'}, outfile, default_flow_style=False)
 
-    generator = prepare_generator(
-        target, {'modules': {'repositories': [{'name': 'modules',
-                                               'path': 'modules'}],
-                             'install': [{'name': 'foo'}]}})
-    generator.init()
-    generator.generate()
+    generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'docker'],
+             descriptor={'modules': {'repositories': [{'name': 'modules',
+                                                       'path': 'modules'}],
+                                     'install': [{'name': 'foo'}]}})
+
     regex_dockerfile(target, 'COPY modules /tmp/scripts/')
 
 
-def prepare_generator(target, desc_part, desc_type="image", engine="docker", overrides=[], params={}):
-    # create basic descriptor
-
+def generate(image_dir, command, descriptor=None):
     desc = basic_config.copy()
-    desc.update(desc_part)
 
-    tmp_image_file = os.path.join(os.path.dirname(target), 'image.yaml')
+    if descriptor:
+        desc.update(descriptor)
+
+    tmp_image_file = os.path.join(image_dir, 'image.yaml')
+
     with open(tmp_image_file, 'w') as outfile:
         yaml.dump(desc, outfile, default_flow_style=False)
 
-    generator = Generator(tmp_image_file, target, engine, overrides, params)
-    generator._content_set_f = os.path.join(target, 'image', 'content_sets.yml')
-    generator._container_f = os.path.join(target, 'image', 'container.yaml')
-    return generator
+    with Chdir(image_dir):
+        result = CliRunner().invoke(cli, command, catch_exceptions=False)
+
+        assert result.exit_code == 0
+
+        with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as desc:
+            return yaml.safe_load(desc)
 
 
-def regex_dockerfile(target, exp_regex):
-    with open(os.path.join(target, 'image', 'Dockerfile'), "r") as fd:
+def regex_dockerfile(image_dir, exp_regex):
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), "r") as fd:
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)
         assert regex.search(dockerfile_content)

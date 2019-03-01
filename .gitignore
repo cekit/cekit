@@ -18,3 +18,4 @@ docs/_build
 *.egg-info
 .vscode
 Pipfile.lock
+venv

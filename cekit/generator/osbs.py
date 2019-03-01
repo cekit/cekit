@@ -12,9 +12,13 @@ config = Config()
 
 
 class OSBSGenerator(Generator):
-    def __init__(self, descriptor_path, target, builder, overrides, params):
+    def __init__(self, descriptor_path, target, overrides):
         self._wipe = True
-        super(OSBSGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
+        super(OSBSGenerator, self).__init__(descriptor_path, target, overrides)
+
+    def init(self):
+        super(OSBSGenerator, self).init()
+
         self._prepare_container_yaml()
 
     def _prepare_content_sets(self, content_sets):
@@ -67,7 +71,8 @@ class OSBSGenerator(Generator):
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
                     logger.debug("Artifact added to fetch-artifacts-url.yaml")
                 except:
-                    logger.warning("Plain artifact %s could not be found in Brew, trying to handle it using lookaside cache" % artifact['name'])
+                    logger.warning(
+                        "Plain artifact %s could not be found in Brew, trying to handle it using lookaside cache" % artifact['name'])
                     artifact.copy(target_dir)
                     # TODO: This is ugly, rewrite this!
                     artifact['lookaside'] = True

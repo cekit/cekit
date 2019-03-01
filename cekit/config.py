@@ -22,8 +22,10 @@ class Config(object):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
         if cmdline_args.get('work_dir'):
             cls.cfg['common']['work_dir'] = cmdline_args.get('work_dir')
+        # TODO: Remove it from here: https://github.com/cekit/cekit/issues/400
         if cmdline_args.get('package_manager'):
             cls.cfg['common']['package_manager'] = cmdline_args.get('package_manager')
+        # TODO: https://github.com/cekit/cekit/issues/377
         if isinstance(cmdline_args.get('addhelp'), bool):
             cls.cfg['doc']['addhelp'] = cmdline_args.get('addhelp')
 
@@ -62,6 +64,7 @@ class Config(object):
         value = cls.cfg
         for arg in args:
             if arg not in value and arg != args[-1]:
-                raise KeyError("'%s' section doesnt exists in Cekit configuration!" % '/'.join(args[:-1]))
+                raise KeyError("'%s' section doesnt exists in Cekit configuration!" %
+                               '/'.join(args[:-1]))
             value = value.get(arg)
         return value

@@ -27,40 +27,31 @@ config = Config()
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
-    def __init__(self, build_engine, target, params=None):
-        if not params:
-            params = {}
-        self._commit_msg = params.get('commit_msg')
-        self._user = params.get('user')
-        self._nowait = params.get('nowait', False)
-        self._release = params.get('release', False)
-        self._target = params.get('target')
+    def __init__(self, common_params, params):
+        super(OSBSBuilder, self).__init__('osbs', common_params, params)
+
         self._rhpkg_set_url_repos = []
 
-        self._stage = params.get('stage', False)
-
-        if params.get('redhat'):
-            if params.get('stage'):
-                self._fedpkg = 'rhpkg-stage'
-                self._koji = 'brew-stage'
+        if config.get('common', 'redhat'):
+            if self.params.get('stage'):
+                self._fedpkg = '/usr/bin/rhpkg-stage'
+                self._koji = '/usr/bin/brew-stage'
                 self._koji_url = 'https://brewweb.stage.engineering.redhat.com/brew'
             else:
-                self._fedpkg = 'rhpkg'
-                self._koji = 'brew'
+                self._fedpkg = '/usr/bin/rhpkg'
+                self._koji = '/usr/bin/brew'
                 self._koji_url = 'https://brewweb.engineering.redhat.com/brew'
         else:
-            self._fedpkg = 'fedpkg'
-            self._koji = 'koji'
+            self._fedpkg = '/usr/bin/fedpkg'
+            self._koji = '/usr/bin/koji'
             self._koji_url = 'https://koji.fedoraproject.org/koji'
-
-        super(OSBSBuilder, self).__init__(build_engine, target, params={})
 
     @staticmethod
     def dependencies():
         deps = {}
 
-        if config.cfg['common'].get('redhat'):
-            if config.cfg['common'].get('stage'):
+        if config.get('common', 'redhat'):
+            if config.get('common', 'stage'):
                 fedpkg = 'rhpkg-stage'
                 koji = 'brewkoji-stage'
                 koji_executable = 'brew-stage'
@@ -85,18 +76,25 @@ class OSBSBuilder(Builder):
 
         return deps
 
-    def prepare(self, descriptor):
+    def prepare(self):
         """Prepares dist-git repository for OSBS build."""
 
-        repository_key = descriptor.get('osbs', {}).get('repository', {})
+        super(OSBSBuilder, self).prepare()
+
+        self.prepare_dist_git()
+
+    def prepare_dist_git(self):
+        repository_key = self.generator.image.get('osbs', {}).get('repository', {})
+
+        # repository_key = descriptor.get('osbs', {}).get('repository', {})
         repository = repository_key.get('name')
         branch = repository_key.get('branch')
 
         if not (repository and branch):
             raise CekitError(
-                "OSBS builder needs repostiory and branch provided!")
+                "OSBS builder needs repository and branch provided, see http://docs.cekit.io/en/latest/descriptor/image.html#osbs for more information")
 
-        if self._stage:
+        if self.params.stage:
             osbs_dir = 'osbs-stage'
         else:
             osbs_dir = 'osbs'
@@ -112,20 +110,20 @@ class OSBSBuilder(Builder):
                                 repository,
                                 branch)
 
-        self.dist_git.prepare(self._stage, self._user)
+        self.dist_git.prepare(self.params.stage, self.params.user)
         self.dist_git.clean()
 
         # First get all artifacts that are not plain artifacts
         self.artifacts = [a.target_file_name()
-                          for a in descriptor.all_artifacts if not isinstance(a, _PlainResource)]
+                          for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource)]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
         self.artifacts += [a.target_file_name()
-                           for a in descriptor.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
+                           for a in self.generator.image.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
-        if 'packages' in descriptor and 'set_url' in descriptor['packages']:
+        if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository']
-                                         for x in descriptor['packages']['set_url']]
+                                         for x in self.generator.image['packages']['set_url']]
 
         self.update_osbs_image_source()
 
@@ -196,7 +194,7 @@ class OSBSBuilder(Builder):
         # Get information about the task
         try:
             json_info = subprocess.check_output(
-                ["brew", "call", "--json-output", "getTaskInfo", task_id]).strip().decode("utf8")
+                [self._koji, "call", "--json-output", "getTaskInfo", task_id]).strip().decode("utf8")
         except subprocess.CalledProcessError as ex:
             raise CekitError("Could not check the task {} result".format(task_id), ex)
 
@@ -222,8 +220,8 @@ class OSBSBuilder(Builder):
         if not self.artifacts:
             return
         cmd = [self._fedpkg]
-        if self._user:
-            cmd += ['--user', self._user]
+        if self.params.user:
+            cmd += ['--user', self.params.user]
         cmd += ["new-sources"] + self.artifacts
 
         logger.debug("Executing '%s'" % cmd)
@@ -239,8 +237,8 @@ class OSBSBuilder(Builder):
     def build(self):
         cmd = [self._koji]
 
-        if self._user:
-            cmd += ['--user', self._user]
+        if self.params.user:
+            cmd += ['--user', self.params.user]
 
         cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
@@ -249,7 +247,7 @@ class OSBSBuilder(Builder):
             self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
-                self.dist_git.commit(self._commit_msg)
+                self.dist_git.commit(self.params.commit_message)
                 self.dist_git.push()
             else:
                 logger.info("No changes made to the code, committing skipped")
@@ -264,35 +262,37 @@ class OSBSBuilder(Builder):
             # Construct the url again, with a hash and removed username and password, if any
             src = "git://{}{}#{}".format(url.hostname, url.path, commit)
 
-            if not self._target:
-                self._target = "{}-containers-candidate".format(self.dist_git.branch)
+            target = "{}-containers-candidate".format(self.dist_git.branch)
+
+            if self.params.koji_target:
+                target = self.params.koji_target
 
             scratch = True
 
-            if self._release:
+            if self.params.release:
                 scratch = False
 
             kwargs = "{{'src': '{}', 'target': '{}', 'opts': {{'scratch': {}, 'git_branch': '{}', 'yum_repourls': {}}}}}".format(
-                src, self._target, scratch, self.dist_git.branch, self._rhpkg_set_url_repos)
+                src, target, scratch, self.dist_git.branch, self._rhpkg_set_url_repos)
 
             cmd.append(kwargs)
 
             logger.info("About to execute '%s'." % ' '.join(cmd))
 
             if tools.decision("Do you want to build the image in OSBS?"):
-                build_type = "release" if self._release else "scratch"
+                build_type = "scratch" if scratch else "release"
                 logger.info("Executing %s container build in OSBS..." % build_type)
 
                 try:
                     task_id = subprocess.check_output(cmd).strip().decode("utf8")
 
                 except subprocess.CalledProcessError as ex:
-                    raise CekitError("Building conainer image in OSBS failed", ex)
+                    raise CekitError("Building container image in OSBS failed", ex)
 
                 logger.info("Task {} was submitted, you can watch the progress here: {}/taskinfo?taskID={}".format(
                     task_id, self._koji_url, task_id))
 
-                if self._nowait:
+                if self.params.nowait:
                     return
 
                 self._wait_for_osbs_task(task_id)

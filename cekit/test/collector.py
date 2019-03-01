@@ -70,7 +70,7 @@ class TestCollector(object):
         # copy tests from image repo
         self._copy_tests(self.descriptor_dir, '', 'image')
         logger.debug("Collected tests from image")
-        logger.info("Tests collected!")
+        logger.info("Collecting finished!")
 
         return self.collected
 

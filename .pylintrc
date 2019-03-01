@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+disable=logging-format-interpolation,logging-not-lazy,useless-object-inheritance
+
+[FORMAT]
+ignore-long-lines=(^\s*(# )?<?https?://\S+>?$)|(^@click\.)
+max-line-length=132

@@ -18,16 +18,15 @@ config = Config()
 
 class DockerGenerator(Generator):
 
-    def __init__(self, descriptor_path, target, builder, overrides, params):
-        self._params = params
-        super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
+    def __init__(self, descriptor_path, target, overrides):
+        super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
 
     @staticmethod
     def dependencies():
         deps = {}
 
-        if config.cfg['common']['redhat']:
+        if config.get('common', 'redhat'):
             deps['odcs-client'] = {
                 'package': 'odcs-client',
                 'executable': 'odcs'
@@ -41,7 +40,7 @@ class DockerGenerator(Generator):
         return deps
 
     def _prepare_content_sets(self, content_sets):
-        if not config.cfg['common']['redhat']:
+        if not config.get('common', 'redhat'):
             return False
 
         arch = platform.machine()
@@ -54,7 +53,7 @@ class DockerGenerator(Generator):
             # idealy this will be API for ODCS, but there is no python3 package for ODCS
             cmd = ['odcs']
 
-            if self._params.get('redhat', False):
+            if config.get('common', 'redhat'):
                 cmd.append('--redhat')
             cmd.extend(['create', 'pulp', repos])
 
