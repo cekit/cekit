@@ -240,12 +240,7 @@ def prepare_params(ctx):
 
 def run_command(ctx, clazz):
     common_params, params = prepare_params(ctx)
-
-    cekit = Cekit(common_params)
-    # Prepare the command object
-    command = clazz(common_params, params)
-    # And run it
-    cekit.run(command)
+    Cekit(common_params).run(clazz, params)
 
 
 def run_test(ctx, tester):
@@ -323,12 +318,14 @@ class Cekit(object):  # pylint: disable=useless-object-inheritance
                 LOGGER.debug("Removing dirty directory: '{}'".format(directory))
                 shutil.rmtree(directory)
 
-    def run(self, command):
+    def run(self, clazz, params):
         """ Main application entry """
 
         self.init()
         self.configure()
         self.cleanup()
+
+        command = clazz(self.params, params)
 
         try:
             command.execute()

@@ -234,7 +234,7 @@ class OSBSBuilder(Builder):
 
         logger.info("Update finished.")
 
-    def build(self):
+    def run(self):
         cmd = [self._koji]
 
         if self.params.user:
