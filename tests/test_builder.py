@@ -179,7 +179,7 @@ def test_osbs_builder_run_brew_stage(mocker):
     builder = create_builder_object(mocker, 'osbs', params)
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
-    builder.build()
+    builder.run()
 
     check_output.assert_has_calls([
         call(['git', 'remote', 'get-url', 'origin']),
@@ -199,7 +199,7 @@ def test_osbs_builder_run_brew(mocker):
     builder = create_builder_object(mocker, 'osbs', {})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
-    builder.build()
+    builder.run()
 
     check_output.assert_has_calls([
         call(['git', 'remote', 'get-url', 'origin']),
@@ -217,7 +217,7 @@ def test_osbs_builder_run_koji(mocker):
     builder = create_builder_object(mocker, 'osbs', {}, {'redhat': False, 'target': 'something'})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
-    builder.build()
+    builder.run()
 
     check_output.assert_has_calls([
         call(['git', 'remote', 'get-url', 'origin']),
@@ -237,7 +237,7 @@ def test_osbs_builder_run_brew_nowait(mocker):
     builder = create_builder_object(mocker, 'osbs', params)
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
-    builder.build()
+    builder.run()
 
     builder._wait_for_osbs_task.assert_not_called()
 
@@ -251,7 +251,7 @@ def test_osbs_builder_run_brew_user(mocker):
     builder = create_builder_object(mocker, 'osbs', params)
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
-    builder.build()
+    builder.run()
 
     check_output.assert_called_with(['/usr/bin/brew', '--user', 'Foo', 'call', '--python', 'buildContainer', '--kwargs',
                                      "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
@@ -266,7 +266,7 @@ def test_osbs_builder_run_brew_target(mocker):
     builder = create_builder_object(mocker, 'osbs', params)
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
-    builder.build()
+    builder.run()
 
     check_output.assert_called_with(['/usr/bin/brew', 'call', '--python', 'buildContainer', '--kwargs',
                                      "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'Foo', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])

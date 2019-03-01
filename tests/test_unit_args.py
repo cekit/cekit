@@ -1,11 +1,20 @@
-import os
+import importlib
 import pytest
-import sys
-
-from cekit.cli import Cekit, cli
-from cekit.tools import Map
 
 from click.testing import CliRunner
+
+from cekit.cli import cli
+
+
+
+
+def get_class_by_name(clazz):
+    module_name, class_name = clazz.rsplit('.', 1)
+
+    module = importlib.import_module(module_name)
+    cls = getattr(module, class_name)
+
+    return cls
 
 
 @pytest.mark.parametrize('args,clazz,common_params,params', [
@@ -156,16 +165,15 @@ def test_args_command(mocker, args, clazz, common_params, params):
             'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'package_manager': 'yum', 'addhelp': None
         }
 
-    command = mocker.patch(clazz)
-    # Return string for easier identification
-    command.return_value = clazz
-    cekit = mocker.patch('cekit.cli.Cekit')
+    cekit_class = mocker.patch('cekit.cli.Cekit')
     cekit_object = mocker.Mock()
-    cekit.return_value = cekit_object
-    CliRunner().invoke(cli,  args, catch_exceptions=False)
-    command.assert_called_once_with(common_params, params)
-    cekit.assert_called_once_with(common_params)
-    cekit_object.run.assert_called_once_with(clazz)
+    cekit_class.return_value = cekit_object
+    CliRunner().invoke(cli, args, catch_exceptions=False)
+
+    cls = get_class_by_name(clazz)
+
+    cekit_class.assert_called_once_with(common_params)
+    cekit_object.run.assert_called_once_with(cls, params)
 
 
 def test_args_not_valid_command(mocker):
