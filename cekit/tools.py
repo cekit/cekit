@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import sys
 import subprocess
 import yaml
@@ -19,17 +18,6 @@ class Map(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
-
-
-def cleanup(target):
-    """ Prepates target/image directory to be regenerated."""
-    dirs_to_clean = [os.path.join(target, 'image', 'modules'),
-                     os.path.join(target, 'image', 'repos'),
-                     os.path.join(target, 'repo')]
-    for d in dirs_to_clean:
-        if os.path.exists(d):
-            logger.debug("Removing dirty directory: '%s'" % d)
-            shutil.rmtree(d)
 
 
 def load_descriptor(descriptor):

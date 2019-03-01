@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
 
-import click
 import logging
 import os
+import shutil
 import sys
 
-from cekit.builder import Builder
+import click
+
+from cekit.builder import Command
 from cekit.config import Config
 from cekit.errors import CekitError
-from cekit.generator.base import Generator
 from cekit.log import setup_logging
-from cekit.test.collector import TestCollector
-from cekit.test.runner import TestRunner
-from cekit.tools import DependencyHandler, Map, cleanup
+from cekit.tools import Map
 from cekit.version import version
 
 # FIXME we should try to move this to json
 setup_logging()
-logger = logging.getLogger('cekit')
-config = Config()
+LOGGER = logging.getLogger('cekit')
+CONFIG = Config()
 
 
 @click.group(context_settings=dict(max_content_width=100))
@@ -31,7 +30,7 @@ config = Config()
 # TODO: Remove this option
 @click.option('--package-manager', help="Package manager to use.", type=click.Choice(['yum', 'microdnf']), default="yum", show_default=True)
 @click.version_option(message="%(version)s", version=version)
-def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
+def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):  # pylint: disable=unused-argument,too-many-arguments
     """
     ABOUT
 
@@ -56,7 +55,6 @@ def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
 
             $ cekit test example/app:1.0
     """
-    pass
 
 
 @cli.group(short_help="Build container image")
@@ -65,7 +63,7 @@ def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):
 @click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
 # TODO: https://github.com/cekit/cekit/issues/377
 @click.option('--add-help', 'addhelp', help="Include generated help files in the image.", type=click.BOOL)
-def build(dry_run, overrides, addhelp):
+def build(dry_run, overrides, addhelp):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -93,14 +91,14 @@ def build(dry_run, overrides, addhelp):
 
         Will change the 'from' key in the descriptor to 'custom/image:2.0'.
     """
-    pass
 
 
 @build.command(name="docker", short_help="Build using Docker engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
-def build_docker(pull, no_squash, tags):
+@click.pass_context
+def build_docker(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -110,13 +108,14 @@ def build_docker(pull, no_squash, tags):
 
         By default after image is built, it is squashed using the https://github.com/goldmann/docker-squash tool. You can disable it by specifying the '--no-squash' parameter.
     """
-    run()
+    run_build(ctx, 'docker')
 
 
 @build.command(name="buildah", short_help="Build using Buildah engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
-def build_buildah(pull, tags):
+@click.pass_context
+def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -124,7 +123,7 @@ def build_buildah(pull, tags):
 
         https://buildah.io/
     """
-    run()
+    run_build(ctx, 'buildah')
 
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
@@ -136,7 +135,8 @@ def build_buildah(pull, tags):
 @click.option('--stage', help="Use stage environmen.", is_flag=True)
 @click.option('--koji-target', metavar="TARGET", help="Override the default Koji target.")
 @click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
-def build_osbs(release, tech_preview, user, nowait, stage, koji_target, commit_message):
+@click.pass_context
+def build_osbs(ctx, release, tech_preview, user, nowait, stage, koji_target, commit_message):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -158,19 +158,37 @@ def build_osbs(release, tech_preview, user, nowait, stage, koji_target, commit_m
 
             $ cekit build osbs --release --commit-message "Release 1.0"
     """
-    run()
+    run_build(ctx, 'osbs')
 
 
-@cli.command(short_help="Execute container image tests")
-@click.option('--steps-url', help="Behave steps library.", default='https://github.com/cekit/behave-test-steps.git', show_default=True)
-@click.option('--wip', help="Run test scenarios tagged with @wip only.", is_flag=True)
-@click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times.", multiple=True)
-@click.argument('image')
-def test(steps_url, wip, names, image):
+@cli.group(short_help="Execute container image tests")
+@click.option('--image', help="Image to run tests against.")
+def test(image):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
-        Execute container image tests locally using Docker
+        Executes container image tests using selected framework.
+
+    TEST FRAMEWORKS
+
+        We currently support only Behave.
+
+            $ cekit test behave
+
+        Run 'cekit build behave --help' for more information about this particular tester.
+    """
+
+
+@test.command(name="behave", short_help="Run Behave tests")
+@click.option('--steps-url', help="Behave steps library.", default='https://github.com/cekit/behave-test-steps.git', show_default=True)
+@click.option('--wip', help="Run test scenarios tagged with @wip only.", is_flag=True)
+@click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times.", multiple=True)
+@click.pass_context
+def test_behave(ctx, steps_url, wip, names,):
+    """
+    DESCRIPTION
+
+        Execute Behave container image tests locally using Docker
 
         NOTE: Image to test must be available in the Docker daemon. It won't be pulled automatically!
 
@@ -178,190 +196,152 @@ def test(steps_url, wip, names, image):
 
         Execute tests for the example/app:1.0 image
 
-            $ cekit test example/app:1.0
+            $ cekit test --image example/app:1.0 behave
 
         Execute tests that are currently developed and marked with @wip
 
-            $ cekit test --wip example/app:1.0
+            $ cekit test --image example/app:1.0 behave --wip
 
         Execute specific scenario
 
-            $ cekit test --name 'Check that product labels are correctly set' example/app:1.0
+            $ cekit test --image example/app:1.0 behave --name 'Check that product labels are correctly set'
     """
 
     if wip and names:
         raise click.UsageError("Parameters --name and --wip cannot be used together")
 
-    run()
+    run_test(ctx, 'behave')
 
 
-def _cli_context_hierarchy(ctx, hierarchy=None):
-    if hierarchy is None:
-        hierarchy = []
+def top_context(ctx):
+    if ctx.parent:
+        return top_context(ctx.parent)
+
+    return ctx
+
+
+def prepare_params(ctx):
+    main_context = top_context(ctx)
+    common_params = Map(main_context.params)
+
+    params = Map({})
 
     if ctx.parent:
-        _cli_context_hierarchy(ctx.parent, hierarchy)
+        params.update(ctx.parent.params)
 
-    hierarchy.append(ctx)
+    params.update(ctx.params)
 
-    return hierarchy
+    # TODO: https://github.com/cekit/cekit/issues/377
+    # TODO: Remove this ugly hack!
+    if 'addhelp' in params:
+        common_params['addhelp'] = params['addhelp']
 
-
-def run():
-    contexts = _cli_context_hierarchy(click.get_current_context())
-    commands = []
-    params = {}
-
-    for context in contexts:
-        current_length = len(params)
-
-        commands.append(context.command.name)
-        params.update(context.params)
-
-        if len(context.params) + current_length != len(params):
-            raise CekitError(
-                "Internal CEKit error: Passed arguments overwrite previous values, please report it together with the command executed!")
-
-    Cekit(commands, Map(params)).run()
+    return (common_params, params)
 
 
-class Cekit(object):
+def run_command(ctx, clazz):
+    common_params, params = prepare_params(ctx)
+
+    cekit = Cekit(common_params)
+    # Prepare the command object
+    command = clazz(common_params, params)
+    # And run it
+    cekit.run(command)
+
+
+def run_test(ctx, tester):
+    if tester == 'behave':
+        from cekit.test.behave import BehaveTester as tester_impl
+        LOGGER.info("Using Behave tester to test the image")
+    else:
+        raise CekitError("Tester engine {} is not supported".format(tester))
+
+    run_command(ctx, tester_impl)
+
+
+def run_build(ctx, builder):
+    if builder == 'docker':
+        # import is delayed until here to prevent circular import error
+        from cekit.builders.docker_builder import DockerBuilder as builder_impl
+        LOGGER.info("Using Docker builder to build the image")
+    elif builder == 'osbs':
+        # import is delayed until here to prevent circular import error
+        from cekit.builders.osbs import OSBSBuilder as builder_impl
+        LOGGER.info("Using OSBS builder to build the image")
+    elif builder == 'buildah':
+        from cekit.builders.buildah import BuildahBuilder as builder_impl
+        LOGGER.info("Using Buildah builder to build the image")
+    else:
+        raise CekitError("Builder engine {} is not supported".format(builder))
+
+    run_command(ctx, builder_impl)
+
+
+class Cekit(object):  # pylint: disable=useless-object-inheritance
     """ Main application """
 
-    def __init__(self, commands, args):
-        self.cli_commands = commands
-        self.cli_args = args
+    def __init__(self, params):
+        self.params = params
 
-    def _configure(self, args):
-
-        config.configure(args.config, {'redhat': args.redhat,
-                                       'work_dir': args.work_dir,
-                                       'addhelp': args.addhelp,
-                                       'package_manager': args.package_manager})
-
-    def run(self):
-        if self.cli_args.verbose:
-            logger.setLevel(logging.DEBUG)
+    def init(self):
+        """ Initialize logging """
+        if self.params.verbose:
+            LOGGER.setLevel(logging.DEBUG)
         else:
-            logger.setLevel(logging.INFO)
+            LOGGER.setLevel(logging.INFO)
 
-        logger.debug("Running version %s", version)
+        LOGGER.debug("Running version {}".format(version))
 
         if 'dev' in version or 'rc' in version:
-            logger.warning("You are running unreleased development version of CEKit, "
+            LOGGER.warning("You are running unreleased development version of CEKit, "
                            "use it only at your own risk!")
 
-        # Initialize dependency handler
-        dependency_handler = DependencyHandler()
+    def configure(self):
+        """
+        Prepare CEKit configuration based on config file
+        and provided common parameters via CLI
+        """
+        LOGGER.debug("Configuring CEKit...")
 
-        logger.debug("Checking CEKit core dependencies...")
-        dependency_handler.handle_core_dependencies()
+        CONFIG.configure(self.params.config,
+                         {
+                             'redhat': self.params.redhat,
+                             'work_dir': self.params.work_dir,
+                             # TODO: https://github.com/cekit/cekit/issues/377
+                             'addhelp': self.params.addhelp,
+                             # TODO: Remove it from here: https://github.com/cekit/cekit/issues/400
+                             'package_manager': self.params.package_manager
+                         })
 
-        self._configure(self.cli_args)
+    def cleanup(self):
+        """ Prepates target/image directory to be regenerated."""
+        directories_to_clean = [os.path.join(self.params.target, 'image', 'modules'),
+                                os.path.join(self.params.target, 'image', 'repos'),
+                                os.path.join(self.params.target, 'repo')]
 
-        # Cleanup the target directory
-        cleanup(self.cli_args.target)
+        for directory in directories_to_clean:
+            if os.path.exists(directory):
+                LOGGER.debug("Removing dirty directory: '{}'".format(directory))
+                shutil.rmtree(directory)
 
-        params = {
-            'redhat':  config.get('common', 'redhat'),
-            # TODO: https://github.com/cekit/cekit/issues/377
-            'addhelp': config.get('doc', 'addhelp'),
-            'help_template': config.get('doc', 'help_template'),
-            # TODO: Remove it from here: https://github.com/cekit/cekit/issues/400
-            'package_manager': config.get('common', 'package_manager'),
-            'tech_preview': self.cli_args.build_tech_preview
-        }
+    def run(self, command):
+        """ Main application entry """
+
+        self.init()
+        self.configure()
+        self.cleanup()
 
         try:
-            # we run generate for build command too
-            if 'build' in self.cli_commands:
-                # TODO: When executing tests, we should not initialize generator at all
-                # If the 'build' command is specified,
-                # then the builder type is the last argument
-                self.generator = Generator(self.cli_args.descriptor,
-                                           self.cli_args.target,
-                                           self.cli_commands[-1],
-                                           self.cli_args.overrides,
-                                           params)
-
-                # Handle dependencies for selected generator, if any
-                logger.debug("Checking CEKit generate dependencies...")
-                dependency_handler.handle(self.generator)
-
-                self.generator.init()
-                self.generator.generate()
-
-                # If --dry-run is specified, do not execute the build
-                if self.cli_args.dry_run:
-                    logger.info("The --dry-run parameter was specified, build will not be executed")
-                    logger.info("Finished!")
-                    sys.exit(0)
-                    return
-
-                # If tags are not specified on command line we take them from image descriptor
-                if not self.cli_args.tags:
-                    self.cli_args.tags = self.generator.get_tags()
-
-                params = {'user': self.cli_args.build_osbs_user,
-                          'nowait': self.cli_args.build_osbs_nowait,
-                          'stage': self.cli_args.build_osbs_stage,
-                          'release': self.cli_args.build_osbs_release,
-                          'no_squash': self.cli_args.build_docker_no_squash,
-                          'tags': self.cli_args.tags,
-                          'pull': self.cli_args.build_pull,
-                          'redhat': config.get('common', 'redhat'),
-                          'target': self.cli_args.build_osbs_target,
-                          'commit_msg': self.cli_args.build_osbs_commit_msg,
-                          'base': self.generator.image.base
-                          }
-
-                builder = Builder(self.cli_commands[-1],
-                                  self.cli_args.target,
-                                  params)
-
-                # Handle dependencies for selected builder, if any
-                logger.debug("Checking CEKit build dependencies...")
-                dependency_handler.handle(builder)
-
-                builder.prepare(self.generator.image)
-                builder.build()
-
-            if 'test' in self.cli_commands:
-
-                # XXX: fix this
-                test_tags = []
-                #test_tags = [self.generator.get_tags()[0]]
-                # if wip is specified set tags to @wip
-                if self.cli_args.wip:
-                    test_tags = ['@wip']
-
-                # at first we collect tests
-                tc = TestCollector(os.path.dirname(self.cli_args.descriptor),
-                                   self.cli_args.target)
-
-                # we run the test only if we collect any
-                # TODO investigate if we can improve handling different schema versions
-                # self.generator.image.get('schema_version')
-                if tc.collect('1', self.cli_args.steps_url):
-
-                    # Handle test dependencies, if any
-                    logger.debug("Checking CEKit test dependencies...")
-                    dependency_handler.handle(tc)
-                    runner = TestRunner(self.cli_args.target)
-                    runner.run(self.cli_args.image, test_tags,
-                               test_names=self.cli_args.names)
-                else:
-                    logger.warning("No test collected, test can't be run.")
-
-            logger.info("Finished!")
+            command.execute()
+            LOGGER.info("Finished!")
             sys.exit(0)
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             pass
-        except CekitError as e:
-            if self.cli_args.verbose:
-                logger.exception(e)
+        except CekitError as ex:
+            if self.params.verbose:
+                LOGGER.exception(ex)
             else:
-                logger.error(e.message)
+                LOGGER.error(ex.message)
             sys.exit(1)
 
 

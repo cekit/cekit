@@ -11,10 +11,10 @@ logger = logging.getLogger('cekit')
 class BuildahBuilder(Builder):
     """This class representes buildah builder in build-using-dockerfile mode."""
 
-    def __init__(self, build_engine, target, params={}):
-        self._tags = params.get('tags')
-        self._pull = params.get('pull', False)  # --pull-always
-        super(BuildahBuilder, self).__init__(build_engine, target, params)
+    def __init__(self, common_params, params):
+        #self._tags = params.get('tags')
+        # self._pull = params.get('pull', False)  # --pull-always
+        super(BuildahBuilder, self).__init__('buildah', common_params, params)
 
     @staticmethod
     def dependencies():
@@ -27,12 +27,12 @@ class BuildahBuilder(Builder):
 
         return deps
 
-    def build(self):
+    def run(self):
         """Build container image using buildah."""
-        tags = self._tags
+        tags = self.params.tags
         cmd = ["sudo", "buildah", "build-using-dockerfile"]
 
-        if self._pull:
+        if self.params.pull:
             cmd.append('--pull-always')
 
         # Custom tags for the container image

@@ -44,14 +44,8 @@ ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
-    def __init__(self, build_engine, target, params=None):
-        if not params:
-            params = {}
-        self._tags = params.get('tags', [])
-        self._pull = params.get('pull', False)
-        self._base = params.get('base')
-        self._no_squash = params.get('no_squash', False)
-        super(DockerBuilder, self).__init__(build_engine, target, params)
+    def __init__(self, common_params, params):
+        super(DockerBuilder, self).__init__('docker', common_params, params)
 
         # Default Docker daemon connection timeout 10 minutes
         # It needs to be high enough to allow Docker daemon to export the
@@ -87,20 +81,16 @@ class DockerBuilder(Builder):
         return deps
 
     def _build_with_docker(self, docker_client):
-        # Custom tags for the container image
-        logger.debug("Building image with tags: '%s'" % "', '".join(self._tags))
-
-        args = {}
-        args['path'] = os.path.join(self.target, 'image')
-        args['tag'] = self._tags[0]
-        args['pull'] = self._pull
-        args['rm'] = True
+        docker_args = {}
+        docker_args['path'] = os.path.join(self.target, 'image')
+        docker_args['pull'] = self.params.pull
+        docker_args['rm'] = True
 
         build_log = [""]
         docker_layer_ids = []
 
         try:
-            out = docker_client.build(**args)
+            out = docker_client.build(**docker_args)
             for line in out:
                 if b'stream' in line:
                     line = yaml.safe_load(line)['stream']
@@ -152,7 +142,7 @@ class DockerBuilder(Builder):
             if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
                     not os.path.exists(os.path.join(self.target, 'image', 'repos')):
                 msg = "Image build failed with a yum error and you don't " \
-                      "have any yum repository configured, please check " \
+                      "have any yum repository qured, please check " \
                       "your image/module descriptor for proper repository " \
                       " definitions."
             raise CekitError(msg, ex)
@@ -160,30 +150,43 @@ class DockerBuilder(Builder):
         return docker_layer_ids[-1]
 
     def _squash(self, docker_client, image_id):
-        logger.info("Squashing image %s..." % (image_id))
-        squash = Squash(docker=docker_client, log=logger, from_layer=self._base, image=image_id,
-                        tag=self._tags[0],
-                        cleanup=True)
-        squash.run()
+        logger.info("Squashing image %s..." % image_id)
 
-    def _tag(self, docker_client):
-        for tag in self._tags[1:]:
+        squash = Squash(docker=docker_client,
+                        log=logger,
+                        from_layer=self.generator.image['from'],
+                        image=image_id,
+                        cleanup=True)
+        return squash.run()
+
+    def _tag(self, docker_client, image_id, tags):
+        for tag in tags[1:]:
             if ':' in tag:
                 img_repo, img_tag = tag.split(":")
-                docker_client.tag(self._tags[0], img_repo, tag=img_tag)
+                docker_client.tag(image_id, img_repo, tag=img_tag)
             else:
-                docker_client.tag(self._tags[0], tag)
+                docker_client.tag(image_id, tag)
 
-    def build(self):
-        docker_client = APIClientClass(version="1.22", timeout=self.timeout)
+    def run(self):
+        tags = self.params.tags
+
+        if not tags:
+            tags = self.generator.get_tags()
 
         logger.info("Building container image using Docker...")
+        logger.debug("Building image with tags: '%s'" % "', '".join(tags))
 
+        docker_client = APIClientClass(version="1.22", timeout=self.timeout)
+
+        # Build image
         image_id = self._build_with_docker(docker_client)
 
-        # Squash only if --build-docker-no-squash is NOT defined
-        if not self._no_squash:
-            self._squash(docker_client, image_id)
+        # Squash only if --no-squash is NOT defined
+        if not self.params.no_squash:
+            image_id = self._squash(docker_client, image_id)
+
+        # Tag the image
+        self._tag(docker_client, image_id, tags)
 
         logger.info("Image built and available under following tags: %s" %
-                    ", ".join(self._tags))
+                    ", ".join(tags))

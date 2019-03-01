@@ -8,12 +8,14 @@ import socket
 from jinja2 import Environment, FileSystemLoader
 
 from cekit import tools
+from cekit.config import Config
 from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.version import version as cekit_version
 from cekit.template_helper import TemplateHelper
 
-logger = logging.getLogger('cekit')
+LOGGER = logging.getLogger('cekit')
+CONFIG = Config()
 
 
 class Generator(object):
@@ -28,89 +30,54 @@ class Generator(object):
       params - dictionary of builder specific parameterss
     """
 
-    def __new__(cls, descriptor_path, target, builder, overrides, params):
-        if cls is Generator:
-            if 'docker' == builder or 'buildah' == builder:
-                from cekit.generator.docker import DockerGenerator as GeneratorImpl
-                logger.info('Generating files for %s engine.' % builder)
-            elif 'osbs' == builder:
-                from cekit.generator.osbs import OSBSGenerator as GeneratorImpl
-                logger.info('Generating files for OSBS engine.')
-            else:
-                raise CekitError("Unsupported generator type: '%s'" % builder)
-        return super(Generator, cls).__new__(GeneratorImpl)
-
-    def __init__(self, descriptor_path, target, builder, overrides, params):
-        self._type = builder
-        descriptor = tools.load_descriptor(descriptor_path)
-
-        # if there is a local modules directory and no modules are defined
-        # we will inject it for a backward compatibility
-        local_mod_path = os.path.join(os.path.abspath(os.path.dirname(descriptor_path)), 'modules')
-        if os.path.exists(local_mod_path) and 'modules' in descriptor:
-            modules = descriptor.get('modules')
-            if not modules.get('repositories'):
-                modules['repositories'] = [{'path': local_mod_path, 'name': 'modules'}]
-
-        self.image = Image(descriptor, os.path.dirname(os.path.abspath(descriptor_path)))
+    def __init__(self, descriptor_path, target, overrides):
+        self._descriptor_path = descriptor_path
         self._overrides = []
         self.target = target
-        self._params = params
         self._fetch_repos = False
         self._module_registry = ModuleRegistry()
 
         if overrides:
             for override in overrides:
                 # TODO: If the overrides is provided as text, why do we try to get path to it?
-                logger.debug("Loading override '%s'" % (override))
+                LOGGER.debug("Loading override '%s'" % (override))
                 self._overrides.append(Overrides(tools.load_descriptor(
                     override), os.path.dirname(os.path.abspath(override))))
 
-        # These should always come last
-        if self._params.get('tech_preview', False):
-            # Modify the image name, after all other overrides have been processed
-            self._overrides.append(self.get_tech_preview_overrides())
-        if self._params.get('redhat', False):
-            # Add the redhat specific stuff after everything else
-            self._overrides.append(self.get_redhat_overrides())
-
-        logger.info("Initializing image descriptor...")
+        LOGGER.info("Initializing image descriptor...")
 
     def init(self):
         """
-        Initializes the generator.
+        Initializes the image object.
         """
-        self.process_image()
-        self.image.process_defaults()
-        self.copy_modules()
 
-    def generate(self):
-        self.prepare_repositories()
-        self.image.remove_none_keys()
-        self.image.write(os.path.join(self.target, 'image.yaml'))
-        self.prepare_artifacts()
-        self.render_dockerfile()
+        # Read the main image descriptor and create an Image object from it
+        descriptor = tools.load_descriptor(self._descriptor_path)
+        self.image = Image(descriptor, os.path.dirname(os.path.abspath(self._descriptor_path)))
 
-    def process_image(self):
-        """
-        Updates the image descriptor based on all overrides and included modules:
-            1. Applies overrides to the image descriptor
-            2. Loads modules from defined module repositories
-            3. Flattens module dependency hierarchy
-            4. Incorporates global image settings specified by modules into image descriptor
-        The resulting image descriptor can be used in an 'offline' build mode.
-        """
         # apply overrides to the image definition
-        self.apply_image_overrides()
+        self.image.apply_image_overrides(self._overrides)
         # add build labels
         self.add_build_labels()
         # load the definitions of the modules
         self.build_module_registry()
         # process included modules
         self.apply_module_overrides()
+        self.image.process_defaults()
 
-    def apply_image_overrides(self):
-        self.image.apply_image_overrides(self._overrides)
+    def generate(self, builder):
+        self.copy_modules()
+        self.prepare_repositories(builder)
+        self.image.remove_none_keys()
+        self.image.write(os.path.join(self.target, 'image.yaml'))
+        self.prepare_artifacts()
+        self.render_dockerfile()
+
+    def add_tech_preview_overrides(self):
+        self._overrides.append(self.get_tech_preview_overrides())
+
+    def add_redhat_overrides(self):
+        self._overrides.append(self.get_redhat_overrides())
 
     def add_build_labels(self):
         image_labels = self.image.labels
@@ -141,7 +108,7 @@ class Generator(object):
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
         for repo in self.image.modules.repositories:
-            logger.debug("Downloading module repository: '%s'" % (repo.name))
+            LOGGER.debug("Downloading module repository: '%s'" % (repo.name))
             repo.copy(base_dir)
             self.load_repository(os.path.join(base_dir, repo.target_file_name()))
 
@@ -155,7 +122,7 @@ class Generator(object):
                 module = Module(tools.load_descriptor(module_descriptor_path),
                                 modules_dir,
                                 os.path.dirname(module_descriptor_path))
-                logger.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
+                LOGGER.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
                 self._module_registry.add_module(module)
 
     def get_tags(self):
@@ -172,13 +139,13 @@ class Generator(object):
         target = os.path.join(self.target, 'image', 'modules')
         for module in self.image.modules.install:
             module = self._module_registry.get_module(module.name, module.version)
-            logger.debug("Copying module '%s' required by '%s'."
+            LOGGER.debug("Copying module '%s' required by '%s'."
                          % (module.name, self.image.name))
 
             dest = os.path.join(target, module.name)
 
             if not os.path.exists(dest):
-                logger.debug("Copying module '%s' to: '%s'" % (module.name, dest))
+                LOGGER.debug("Copying module '%s' to: '%s'" % (module.name, dest))
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
@@ -211,13 +178,13 @@ class Generator(object):
 
     def get_tech_preview_overrides(self):
         class TechPreviewOverrides(Overrides):
-            def __init__(self, image):
+            def __init__(self, generator):
                 super(TechPreviewOverrides, self).__init__({}, None)
-                self._image = image
+                self._generator = generator
 
             @property
             def name(self):
-                new_name = self._image.name
+                new_name = self._generator.image.name
                 if '/' in new_name:
                     family, new_name = new_name.split('/')
                     new_name = "%s-tech-preview/%s" % (family, new_name)
@@ -225,7 +192,7 @@ class Generator(object):
                     new_name = "%s-tech-preview" % new_name
                 return new_name
 
-        return TechPreviewOverrides(self.image)
+        return TechPreviewOverrides(self)
 
     def get_redhat_overrides(self):
         class RedHatOverrides(Overrides):
@@ -261,9 +228,9 @@ class Generator(object):
 
     def render_dockerfile(self):
         """Renders Dockerfile to $target/image/Dockerfile"""
-        logger.info("Rendering Dockerfile...")
+        LOGGER.info("Rendering Dockerfile...")
 
-        self.image['pkg_manager'] = self._params.get('package_manager', 'yum')
+        self.image['pkg_manager'] = CONFIG.get('common', 'package_manager')
 
         template_file = os.path.join(os.path.dirname(__file__),
                                      '..',
@@ -273,7 +240,7 @@ class Generator(object):
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
         env.globals['image'] = self.image
-        env.globals['addhelp'] = self._params.get('addhelp')
+        env.globals['addhelp'] = CONFIG.get('doc', 'addhelp')
 
         template = env.get_template(os.path.basename(template_file))
 
@@ -286,12 +253,12 @@ class Generator(object):
         with open(dockerfile, 'wb') as f:
             f.write(template.render(
                 self.image).encode('utf-8'))
-        logger.debug("Dockerfile rendered")
+        LOGGER.debug("Dockerfile rendered")
 
         if self.image.get('help', {}).get('template', ""):
             help_template_path = self.image['help']['template']
-        elif self._params.get('help_template'):
-            help_template_path = self._params['help_template']
+        elif CONFIG.get('doc', 'help_template'):
+            help_template_path = CONFIG.get('doc', 'help_template')
         else:
             help_template_path = os.path.join(os.path.dirname(__file__),
                                               '..',
@@ -308,15 +275,15 @@ class Generator(object):
         with open(helpfile, 'wb') as f:
             f.write(help_template.render(
                 self.image).encode('utf-8'))
-        logger.debug("help.md rendered")
+        LOGGER.debug("help.md rendered")
 
-    def prepare_repositories(self):
+    def prepare_repositories(self, builder):
         """ Prepare repositories for build time injection. """
         if 'packages' not in self.image:
             return
 
         if self.image.get('packages').get('content_sets'):
-            logger.warning(
+            LOGGER.warning(
                 'The image has ContentSets repositories specified, all other repositories are removed!')
             self.image['packages']['repositories'] = []
         repos = self.image.get('packages').get('repositories', [])
@@ -350,12 +317,11 @@ class Generator(object):
 
         Returns True if repository file is prepared and should be injected"""
 
-        logger.debug("Loading configuration for repository: '%s' from '%s'."
-                     % (repo['name'],
-                        'repositories-%s' % self._type))
+        LOGGER.debug(
+            "Loading configuration for repository: '{}' from 'repositories'.".format(repo['name']))
 
         if 'id' in repo:
-            logger.warning("Repository '%s' is defined as plain. It must be available "
+            LOGGER.warning("Repository '%s' is defined as plain. It must be available "
                            "inside the image as Cekit will not inject it."
                            % repo['name'])
             return False
@@ -392,7 +358,7 @@ class ModuleRegistry(object):
         if version == None:
             default = versions.get('default')
             if len(versions) > 2:  # we always add the first seen as 'default'
-                logger.warning("Module version not specified for %s, using %s version." %
+                LOGGER.warning("Module version not specified for %s, using %s version." %
                                (name, default.version))
             return default
         return versions.get(version, None)

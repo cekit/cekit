@@ -30,8 +30,8 @@ template_teststr = "This string does not occur in the default help.md template."
 def check_dockerfile_text(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         dockerfile = fd.read()
-        print(match)
-        print(dockerfile)
+        print("MATCH:\n{}".format(match))
+        print("DOCKERFILE:\n{}".format(dockerfile))
         if match in dockerfile:
             return True
     return False

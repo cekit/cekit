@@ -224,7 +224,7 @@ def test_dependency_handler_init_on_unknown_env_with_os_release_file(mocker, cap
 
 
 def test_dependency_handler_init_on_known_env(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     with mocked_dependency_handler(mocker):
         pass
@@ -233,7 +233,7 @@ def test_dependency_handler_init_on_known_env(mocker, caplog):
 
 
 def test_dependency_handler_init_on_unknown_env_without_os_release_file(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     with mocker.mock_module.patch('cekit.tools.os.path.exists') as exists_mock:
         exists_mock.return_value = False
@@ -249,7 +249,7 @@ def test_dependency_handler_handle_dependencies_doesnt_fail_without_deps():
 
 
 def test_dependency_handler_handle_dependencies_with_library_only(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     deps = {}
 
@@ -267,7 +267,7 @@ def test_dependency_handler_handle_dependencies_with_library_only(mocker, caplog
 
 
 def test_dependency_handler_handle_dependencies_with_executable_only(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     deps = {}
 
@@ -289,7 +289,7 @@ def test_dependency_handler_handle_dependencies_with_executable_only(mocker, cap
 
 
 def test_dependency_handler_handle_dependencies_with_executable_only_failed(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     deps = {
         'xyz': {
@@ -304,7 +304,7 @@ def test_dependency_handler_handle_dependencies_with_executable_only_failed(mock
 
 
 def test_dependency_handler_handle_dependencies_with_executable_and_package_on_known_platform(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     deps = {}
 
@@ -326,7 +326,7 @@ def test_dependency_handler_handle_dependencies_with_executable_and_package_on_k
 
 
 def test_dependency_handler_handle_dependencies_with_platform_specific_package(mocker, caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     deps = {}
 
@@ -347,12 +347,14 @@ def test_dependency_handler_handle_dependencies_with_platform_specific_package(m
         handler._check_for_executable.assert_called_once_with(
             'xyz', 'xyz-aaa', 'python-fedora-xyz-aaa')
 
+    print(caplog.text)
+
     assert "Checking if 'xyz' dependency is provided..." in caplog.text
     assert "All dependencies provided!" in caplog.text
 
 
 def test_dependency_handler_check_for_executable_with_executable_only(mocker, caplog, monkeypatch):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="cekit")
 
     with mocked_dependency_handler(mocker) as handler:
         monkeypatch.setenv('PATH', '/abc:/def')
