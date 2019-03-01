@@ -7,7 +7,6 @@ import sys
 
 import click
 
-from cekit.builder import Command
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.log import setup_logging
@@ -175,7 +174,7 @@ def test(image):  # pylint: disable=unused-argument
 
             $ cekit test behave
 
-        Run 'cekit build behave --help' for more information about this particular tester.
+        Run 'cekit test behave --help' for more information about this particular tester.
     """
 
 
@@ -184,7 +183,7 @@ def test(image):  # pylint: disable=unused-argument
 @click.option('--wip', help="Run test scenarios tagged with @wip only.", is_flag=True)
 @click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times.", multiple=True)
 @click.pass_context
-def test_behave(ctx, steps_url, wip, names,):
+def test_behave(ctx, steps_url, wip, names):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
