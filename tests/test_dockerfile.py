@@ -170,6 +170,7 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     config.cfg['common'] = {'redhat': True}
 
     target = str(tmpdir.mkdir('target'))
