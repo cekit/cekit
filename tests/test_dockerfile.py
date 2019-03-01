@@ -90,8 +90,8 @@ odcs_fake_resp = b"""Result:
      {},
      r'.*io.cekit.version="%s".*' % cekit_version)],
     ids=print_test_name)
-def test_dockerfile_rendering(tmpdir, name, desc_part, exp_regex):
-
+def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies')
     target = str(tmpdir.mkdir('target'))
     generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
     regex_dockerfile(target, exp_regex)
@@ -122,6 +122,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
+    mocker.patch('cekit.generator.docker.DockerGenerator.dependencies')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'content_sets': {
         'x86_64': 'foo'},
