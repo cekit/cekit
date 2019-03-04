@@ -1,14 +1,15 @@
 import logging
 import os
 import re
-import yaml
 import sys
 import traceback
+import yaml
+
 
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
-logger = logging.getLogger('cekit')
+LOGGER = logging.getLogger('cekit')
 
 # Ignore any failure on non-core modules, we will catch it later
 # and suggest a solution
@@ -34,7 +35,7 @@ except ImportError:
 
 try:
     # Docker Python library, the new one
-    from docker.client import Client as APIClientClass
+    from docker.client import Client as APIClientClass  # pylint: disable=ungrouped-imports
 except ImportError:
     pass
 
@@ -51,12 +52,12 @@ class DockerBuilder(Builder):
         # It needs to be high enough to allow Docker daemon to export the
         # image for squashing.
         try:
-            self.timeout = int(os.getenv('DOCKER_TIMEOUT', 600))
+            self.timeout = int(os.getenv('DOCKER_TIMEOUT', '600'))
         except ValueError:
             raise CekitError("Provided timeout value: %s cannot be parsed as integer, exiting." %
                              os.getenv('DOCKER_TIMEOUT'))
 
-        if not self.timeout > 0:
+        if self.timeout <= 0:
             raise CekitError(
                 "Provided timeout value needs to be greater than zero, currently: %s, exiting." % self.timeout)
 
@@ -104,7 +105,7 @@ class DockerBuilder(Builder):
                     # this prevents poluting cekit log with dowloading/extracting msgs
                     log_msg = ANSI_ESCAPE.sub('', line).strip()
                     for msg in log_msg.split('\n'):
-                        logger.info('Docker: %s' % msg)
+                        LOGGER.info('Docker: %s' % msg)
                     build_log.append(line)
 
                     if '---> Running in ' in line:
@@ -115,7 +116,7 @@ class DockerBuilder(Builder):
                         docker_layer_ids.append(line.split(' ')[-1].strip())
         except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
-            logger.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
+            LOGGER.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
 
             if 'PermissionError' in exception_chain:
                 message = "Unable to contact docker daemon. Is it correctly setup?\n" \
@@ -137,12 +138,12 @@ class DockerBuilder(Builder):
         except Exception as ex:
             msg = "Image build failed, see logs above."
             if len(docker_layer_ids) >= 2:
-                logger.error("You can look inside the failed image by running "
+                LOGGER.error("You can look inside the failed image by running "
                              "'docker run --rm -ti %s bash'" % docker_layer_ids[-2])
             if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
                     not os.path.exists(os.path.join(self.target, 'image', 'repos')):
                 msg = "Image build failed with a yum error and you don't " \
-                      "have any yum repository qured, please check " \
+                      "have any yum repository defined, please check " \
                       "your image/module descriptor for proper repository " \
                       " definitions."
             raise CekitError(msg, ex)
@@ -150,10 +151,10 @@ class DockerBuilder(Builder):
         return docker_layer_ids[-1]
 
     def _squash(self, docker_client, image_id):
-        logger.info("Squashing image %s..." % image_id)
+        LOGGER.info("Squashing image %s..." % image_id)
 
         squash = Squash(docker=docker_client,
-                        log=logger,
+                        log=LOGGER,
                         from_layer=self.generator.image['from'],
                         image=image_id,
                         cleanup=True)
@@ -173,8 +174,8 @@ class DockerBuilder(Builder):
         if not tags:
             tags = self.generator.get_tags()
 
-        logger.info("Building container image using Docker...")
-        logger.debug("Building image with tags: '%s'" % "', '".join(tags))
+        LOGGER.info("Building container image using Docker...")
+        LOGGER.debug("Building image with tags: '%s'" % "', '".join(tags))
 
         docker_client = APIClientClass(version="1.22", timeout=self.timeout)
 
@@ -188,5 +189,5 @@ class DockerBuilder(Builder):
         # Tag the image
         self._tag(docker_client, image_id, tags)
 
-        logger.info("Image built and available under following tags: %s" %
+        LOGGER.info("Image built and available under following tags: %s" %
                     ", ".join(tags))
