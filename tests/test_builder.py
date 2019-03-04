@@ -525,12 +525,12 @@ def test_buildah_builder_run(mocker):
     builder = create_builder_object(mocker, 'buildah', params)
     builder.run()
 
-    check_call.assert_called_once_with(['sudo',
-                                        'buildah',
-                                        'build-using-dockerfile',
-                                        '-t', 'foo',
-                                        '-t', 'bar',
-                                        'something/image'])
+    check_call.assert_called_once_with([
+        '/usr/bin/buildah',
+        'build-using-dockerfile',
+        '-t', 'foo',
+        '-t', 'bar',
+        'something/image'])
 
 
 def test_buildah_builder_run_pull(mocker):
@@ -539,10 +539,10 @@ def test_buildah_builder_run_pull(mocker):
     builder = create_builder_object(mocker, 'buildah', params)
     builder.run()
 
-    check_call.assert_called_once_with(['sudo',
-                                        'buildah',
-                                        'build-using-dockerfile',
-                                        '--pull-always',
-                                        '-t', 'foo',
-                                        '-t', 'bar',
-                                        'something/image'])
+    check_call.assert_called_once_with([
+        '/usr/bin/buildah',
+        'build-using-dockerfile',
+        '--pull-always',
+        '-t', 'foo',
+        '-t', 'bar',
+        'something/image'])

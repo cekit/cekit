@@ -5,15 +5,13 @@ import os
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
-logger = logging.getLogger('cekit')
+LOGGER = logging.getLogger('cekit')
 
 
 class BuildahBuilder(Builder):
-    """This class representes buildah builder in build-using-dockerfile mode."""
+    """This class represents buildah builder in build-using-dockerfile mode."""
 
     def __init__(self, common_params, params):
-        #self._tags = params.get('tags')
-        # self._pull = params.get('pull', False)  # --pull-always
         super(BuildahBuilder, self).__init__('buildah', common_params, params)
 
     @staticmethod
@@ -30,28 +28,28 @@ class BuildahBuilder(Builder):
     def run(self):
         """Build container image using buildah."""
         tags = self.params.tags
-        cmd = ["sudo", "buildah", "build-using-dockerfile"]
+        cmd = ["/usr/bin/buildah", "build-using-dockerfile"]
 
         if self.params.pull:
             cmd.append('--pull-always')
 
         # Custom tags for the container image
-        logger.debug("Building image with tags: '%s'" %
+        LOGGER.debug("Building image with tags: '%s'" %
                      "', '".join(tags))
 
         for tag in tags:
             cmd.extend(["-t", tag])
 
-        logger.info("Building container image...")
+        LOGGER.info("Building container image...")
 
         cmd.append(os.path.join(self.target, 'image'))
 
-        logger.debug("Running Buildah build: '%s'" % " ".join(cmd))
+        LOGGER.debug("Running Buildah build: '%s'" % " ".join(cmd))
 
         try:
             subprocess.check_call(cmd)
 
-            logger.info("Image built and available under following tags: %s"
+            LOGGER.info("Image built and available under following tags: %s"
                         % ", ".join(tags))
         except:
             raise CekitError("Image build failed, see logs above.")
