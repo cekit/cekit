@@ -408,12 +408,14 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
 def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     os.makedirs(os.path.join(str(tmpdir), 'image'))
 
+    mocker.patch('cekit.descriptor.resource.Resource.copy')
     copy_mock = mocker.patch('cekit.builders.osbs.shutil.copy')
 
     dist_git_class = mocker.patch('cekit.builders.osbs.DistGit')
     dist_git_class.return_value = DistGitMock()
 
     config.cfg['common'] = {'redhat': True, 'work_dir': str(tmpdir)}
+    config.cfg['doc'] = {'addhelp': False}
 
     image_descriptor = {
         'schema_version': 1,
@@ -432,17 +434,12 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
         ]
     }
 
-    image = Image(image_descriptor, os.path.dirname(os.path.abspath(str(tmpdir))))
+    builder = create_builder_object(
+        mocker, 'osbs', {}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
 
-    # TODO Rewrite this
-    # This is only to mark that the plain artifact was not available in koji
-    # So we need to add it to lookaside cache. This does not hurt non-plain artifacts, so we
-    # can add it for all artifacts
-    image.artifacts[0]['lookaside'] = True
+    with mocker.patch('cekit.tools.get_brew_url', side_effect=subprocess.CalledProcessError(1, 'command')):
+        builder.prepare()
 
-    builder = create_osbs_build_object(mocker, 'osbs')
-    builder.target = str(tmpdir)
-    builder.prepare(image)
     dist_git_class.assert_called_once_with(os.path.join(
         str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch')
 
