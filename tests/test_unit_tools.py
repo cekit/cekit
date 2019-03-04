@@ -139,7 +139,7 @@ def test_merge_run_cmd():
     assert override['user'] == 'foo'
 
 
-def brew_call(*args, **kwargs):
+def brew_call_ok(*args, **kwargs):
     if 'listArchives' in args[0]:
         return """
         [
@@ -155,17 +155,51 @@ def brew_call(*args, **kwargs):
         return """
         {
           "package_name": "package_name",
-          "release": "release"
+          "release": "release",
+          "state": 1
+        }
+        """
+    return ""
+
+
+def brew_call_removed(*args, **kwargs):
+    if 'listArchives' in args[0]:
+        return """
+        [
+          {
+            "build_id": "build_id",
+            "filename": "filename",
+            "group_id": "group_id",
+            "artifact_id": "artifact_id",
+            "version": "version",
+          }
+        ]"""
+    if 'getBuild' in args[0]:
+        return """
+        {
+          "package_name": "package_name",
+          "release": "release",
+          "state": 2
         }
         """
     return ""
 
 
 def test_get_brew_url(mocker):
-    mocker.patch('subprocess.check_output', side_effect=brew_call)
+    mocker.patch('subprocess.check_output', side_effect=brew_call_ok)
     url = tools.get_brew_url('aa')
     assert url == "http://download.devel.redhat.com/brewroot/packages/package_name/" + \
         "version/release/maven/group_id/artifact_id/version/filename"
+
+
+def test_get_brew_url_when_build_was_removed(mocker):
+    mocker.patch('subprocess.check_output', side_effect=brew_call_removed)
+
+    with pytest.raises(CekitError) as excinfo:
+        tools.get_brew_url('aa')
+
+    assert 'Artifact with checksum aa was found in Koji metadata but the build is in incorrect state (DELETED) making the artifact not available for downloading anymore' in str(
+        excinfo.value)
 
 
 @contextmanager
