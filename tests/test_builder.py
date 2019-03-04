@@ -1,9 +1,16 @@
 import glob
 import os
 import subprocess
+import pytest
 import yaml
 
 from cekit.builder import Builder
+from cekit.config import Config
+from cekit.descriptor import Image
+from cekit.errors import CekitError
+
+config = Config()
+config.cfg['common'] = {'redhat': True}
 
 
 def test_osbs_builder_defaults(mocker):
@@ -113,6 +120,16 @@ class DistGitMock(object):
     def stage_modified(self):
         pass
 
+    @staticmethod
+    def repo_info(path):
+        pass
+
+    def prepare(self, stage, user=None):
+        pass
+
+    def clean(self):
+        pass
+
 
 def create_osbs_build_object(mocker, builder_type, params):
     mocker.patch.object(subprocess, 'check_output')
@@ -180,6 +197,98 @@ def test_osbs_builder_run_rhpkg_target(mocker):
     builder.build()
 
     check_call.assert_called_once_with(['rhpkg', 'container-build', '--target', 'Foo', '--scratch'])
+
+
+@pytest.mark.parametrize('artifact,src,target', [
+    (
+        {
+            'path': 'some-path.jar',
+            'md5': 'aaabbb'
+        },
+        'image/some-path.jar',
+        'osbs/repo/some-path.jar'
+    ),
+    (
+        {
+            'name': 'some-name',
+            'path': 'some-path.jar',
+            'md5': 'aaabbb'
+        },
+        'image/some-name',
+        'osbs/repo/some-name'
+    ),
+    (
+        {
+            'target': 'some-target.jar',
+            'path': 'some-path.jar',
+            'md5': 'aaabbb'
+        },
+        'image/some-target.jar',
+        'osbs/repo/some-target.jar'
+    ),
+    (
+        {
+            'name': 'some-name',
+            'md5': 'aaabbb'
+        },
+        'image/some-name',
+        'osbs/repo/some-name'
+    ),
+    (
+        {
+            'name': 'some-name',
+            'target': 'some-target.jar',
+            'md5': 'aaabbb'
+        },
+        'image/some-target.jar',
+        'osbs/repo/some-target.jar'
+    )
+])
+def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
+    os.makedirs(os.path.join(str(tmpdir), 'image'))
+
+    copy_mock = mocker.patch('cekit.builders.osbs.shutil.copy')
+
+    dist_git_class = mocker.patch('cekit.builders.osbs.DistGit')
+    dist_git_class.return_value = DistGitMock()
+
+    config.cfg['common'] = {'redhat': True, 'work_dir': str(tmpdir)}
+
+    image_descriptor = {
+        'schema_version': 1,
+        'from': 'centos:latest',
+        'name': 'test/image',
+        'version': '1.0',
+        'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
+        'osbs': {
+            'repository': {
+                'name': 'repo',
+                'branch': 'branch'
+            }
+        },
+        'artifacts': [
+            artifact
+        ]
+    }
+
+    image = Image(image_descriptor, os.path.dirname(os.path.abspath(str(tmpdir))))
+
+    # TODO Rewrite this
+    # This is only to mark that the plain artifact was not available in koji
+    # So we need to add it to lookaside cache. This does not hurt non-plain artifacts, so we
+    # can add it for all artifacts
+    image.get('artifacts')[0]['lookaside'] = True
+
+    builder = create_osbs_build_object(mocker, 'osbs', {})
+    builder.target = str(tmpdir)
+    builder.prepare(image)
+    dist_git_class.assert_called_once_with(os.path.join(
+        str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch')
+
+    calls = [mocker.call('Dockerfile', os.path.join(str(tmpdir), 'osbs/repo/Dockerfile')),
+             mocker.call(os.path.join(str(tmpdir), src), os.path.join(str(tmpdir), target))]
+
+    copy_mock.assert_has_calls(calls)
 
 
 def test_docker_builder_defaults():
