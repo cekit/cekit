@@ -76,6 +76,20 @@ def get_brew_url(md5):
         get_build_cmd = ['brew', 'call', '--json-output', 'getBuild', 'buildInfo=%s' % build_id]
         logger.debug("Executing '%s'" % " ".join(get_build_cmd))
         build = yaml.safe_load(subprocess.check_output(get_build_cmd))
+
+        build_states = ['BUILDING', 'COMPLETE', 'DELETED', 'FAILED', 'CANCELED']
+
+        # State 1 means: COMPLETE which is the only success state. Other states are:
+        #
+        # 'BUILDING': 0
+        # 'COMPLETE': 1
+        # 'DELETED': 2
+        # 'FAILED': 3
+        # 'CANCELED': 4
+        if build['state'] != 1:
+            raise CekitError(
+                "Artifact with checksum {} was found in Koji metadata but the build is in incorrect state ({}) making the artifact not available for downloading anymore".format(md5, build_states[build['state']]))
+
         package = build['package_name']
         release = build['release']
 
