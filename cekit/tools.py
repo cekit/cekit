@@ -11,7 +11,7 @@ try:
 except NameError:
     basestring = str
 
-logger = logging.getLogger('cekit')
+LOGGER = logging.getLogger('cekit')
 
 
 class Map(dict):
@@ -37,7 +37,7 @@ def load_descriptor(descriptor):
         raise CekitError('Cannot load descriptor', ex)
 
     if isinstance(data, basestring):
-        logger.debug("Reading descriptor from '{}' file...".format(descriptor))
+        LOGGER.debug("Reading descriptor from '{}' file...".format(descriptor))
 
         if os.path.exists(descriptor):
             with open(descriptor, 'r') as fh:
@@ -46,7 +46,7 @@ def load_descriptor(descriptor):
         raise CekitError(
             "Descriptor could not be found on the '{}' path, please check your arguments!".format(descriptor))
 
-    logger.debug("Reading descriptor directly...")
+    LOGGER.debug("Reading descriptor directly...")
 
     return data
 
@@ -65,10 +65,10 @@ def decision(question):
 
 def get_brew_url(md5):
     try:
-        logger.debug("Getting brew details for an artifact with '%s' md5 sum" % md5)
+        LOGGER.debug("Getting brew details for an artifact with '%s' md5 sum" % md5)
         list_archives_cmd = ['brew', 'call', '--json-output', 'listArchives',
                              'checksum=%s' % md5, 'type=maven']
-        logger.debug("Executing '%s'." % " ".join(list_archives_cmd))
+        LOGGER.debug("Executing '%s'." % " ".join(list_archives_cmd))
         archive_yaml = yaml.safe_load(subprocess.check_output(list_archives_cmd))
 
         if not archive_yaml:
@@ -82,7 +82,7 @@ def get_brew_url(md5):
         version = archive['version']
 
         get_build_cmd = ['brew', 'call', '--json-output', 'getBuild', 'buildInfo=%s' % build_id]
-        logger.debug("Executing '%s'" % " ".join(get_build_cmd))
+        LOGGER.debug("Executing '%s'" % " ".join(get_build_cmd))
         build = yaml.safe_load(subprocess.check_output(get_build_cmd))
 
         build_states = ['BUILDING', 'COMPLETE', 'DELETED', 'FAILED', 'CANCELED']
@@ -106,7 +106,7 @@ def get_brew_url(md5):
             group_id.replace('.', '/') + '/' + \
             artifact_id.replace('.', '/') + '/' + version + '/' + filename
     except subprocess.CalledProcessError as ex:
-        logger.error("Can't fetch artifacts details from brew: '%s'." %
+        LOGGER.error("Can't fetch artifacts details from brew: '%s'." %
                      ex.output)
         raise ex
     return url
@@ -164,18 +164,18 @@ class DependencyHandler(object):
                 self.os_release[key] = self.os_release[key].strip('"')
 
         if not self.os_release or 'ID' not in self.os_release or 'NAME' not in self.os_release or 'VERSION' not in self.os_release:
-            logger.warning(
+            LOGGER.warning(
                 "You are running Cekit on an unknown platform. External dependencies suggestions may not work!")
             return
 
         self.platform = self.os_release['ID']
 
         if self.os_release['ID'] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
-            logger.warning(
+            LOGGER.warning(
                 "You are running Cekit on an untested platform: {} {}. External dependencies suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
             return
 
-        logger.info("You are running on known platform: {} {}".format(
+        LOGGER.info("You are running on known platform: {} {}".format(
             self.os_release['NAME'], self.os_release['VERSION']))
 
     def _handle_dependencies(self, dependencies):
@@ -203,7 +203,7 @@ class DependencyHandler(object):
         """
 
         if not dependencies:
-            logger.debug("No dependencies found, skipping...")
+            LOGGER.debug("No dependencies found, skipping...")
             return
 
         for dependency in dependencies.keys():
@@ -218,11 +218,11 @@ class DependencyHandler(object):
                 library = current_dependency[self.platform].get('library', library)
                 executable = current_dependency[self.platform].get('executable', executable)
 
-            logger.debug("Checking if '{}' dependency is provided...".format(dependency))
+            LOGGER.debug("Checking if '{}' dependency is provided...".format(dependency))
 
             if library:
-                if self._check_for_library(dependency, library):
-                    logger.debug("Required Cekit library '{}' was found as a '{}' module!".format(
+                if self._check_for_library(library):
+                    LOGGER.debug("Required Cekit library '{}' was found as a '{}' module!".format(
                         dependency, library))
                     continue
                 else:
@@ -241,10 +241,10 @@ class DependencyHandler(object):
                 else:
                     self._check_for_executable(dependency, executable)
 
-        logger.debug("All dependencies provided!")
+        LOGGER.debug("All dependencies provided!")
 
     # pylint: disable=R0201
-    def _check_for_library(self, dependency, library):
+    def _check_for_library(self, library):
         library_found = False
 
         if sys.version_info[0] < 3:
@@ -261,7 +261,7 @@ class DependencyHandler(object):
 
         return library_found
 
-    # pylint: disable=R0201
+    # pylint: disable=no-self-use
     def _check_for_executable(self, dependency, executable, package=None):
         path = os.environ.get("PATH", os.defpath)
         path = path.split(os.pathsep)
@@ -270,7 +270,7 @@ class DependencyHandler(object):
             file_path = os.path.join(os.path.normcase(directory), executable)
 
             if os.path.exists(file_path) and os.access(file_path, os.F_OK | os.X_OK) and not os.path.isdir(file_path):
-                logger.debug("Cekit dependency '{}' provided via the '{}' executable.".format(
+                LOGGER.debug("Cekit dependency '{}' provided via the '{}' executable.".format(
                     dependency, file_path))
                 return
 
