@@ -1,3 +1,4 @@
+import click
 import logging
 import os
 import sys
@@ -15,6 +16,10 @@ LOGGER = logging.getLogger('cekit')
 
 
 class Map(dict):
+    """
+    Class to enable access via properties to dictionaries.
+    """
+
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
@@ -53,14 +58,7 @@ def load_descriptor(descriptor):
 
 def decision(question):
     """Asks user for a question returning True/False answed"""
-    if sys.version_info[0] < 3:
-        if raw_input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
-            return True
-    else:
-        if input("\n%s [Y/n] " % question) in ["", "y", "Y"]:
-            return True
-
-    return False
+    return click.confirm(question, show_default=True)
 
 
 def get_brew_url(md5):
