@@ -143,7 +143,7 @@ class DockerBuilder(Builder):
             if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
                     not os.path.exists(os.path.join(self.target, 'image', 'repos')):
                 msg = "Image build failed with a yum error and you don't " \
-                      "have any yum repository defined, please check " \
+                      "have any yum repository configured, please check " \
                       "your image/module descriptor for proper repository " \
                       " definitions."
             raise CekitError(msg, ex)
