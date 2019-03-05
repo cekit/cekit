@@ -115,6 +115,7 @@ class Chdir(object):
 
     def __init__(self, newPath):
         self.newPath = os.path.expanduser(newPath)
+        self.savedPath = None
 
     def __enter__(self):
         self.savedPath = os.getcwd()
@@ -261,13 +262,19 @@ class DependencyHandler(object):
 
     # pylint: disable=no-self-use
     def _check_for_executable(self, dependency, executable, package=None):
+        if os.path.isabs(executable):
+            if self._is_program(executable):
+                return True
+            else:
+                return False
+
         path = os.environ.get("PATH", os.defpath)
         path = path.split(os.pathsep)
 
         for directory in path:
             file_path = os.path.join(os.path.normcase(directory), executable)
 
-            if os.path.exists(file_path) and os.access(file_path, os.F_OK | os.X_OK) and not os.path.isdir(file_path):
+            if self._is_program(file_path):
                 LOGGER.debug("Cekit dependency '{}' provided via the '{}' executable.".format(
                     dependency, file_path))
                 return
@@ -279,6 +286,12 @@ class DependencyHandler(object):
             msg += " To satisfy this requrement you can install the '{}' package.".format(package)
 
         raise CekitError(msg)
+
+    def _is_program(self, path):
+        if os.path.exists(path) and os.access(path, os.F_OK | os.X_OK) and not os.path.isdir(path):
+            return True
+
+        return False
 
     def handle_core_dependencies(self):
         self._handle_dependencies(
