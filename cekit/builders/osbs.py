@@ -20,8 +20,8 @@ from cekit.descriptor.resource import _PlainResource
 from cekit.errors import CekitError
 from cekit.tools import Chdir
 
-logger = logging.getLogger('cekit')
-config = Config()
+LOGGER = logging.getLogger('cekit')
+CONFIG = Config()
 
 
 class OSBSBuilder(Builder):
@@ -31,8 +31,11 @@ class OSBSBuilder(Builder):
         super(OSBSBuilder, self).__init__('osbs', common_params, params)
 
         self._rhpkg_set_url_repos = []
+        self.dist_git = None
+        self.dist_git_dir = None
+        self.artifacts = []
 
-        if config.get('common', 'redhat'):
+        if CONFIG.get('common', 'redhat'):
             if self.params.get('stage'):
                 self._fedpkg = '/usr/bin/rhpkg-stage'
                 self._koji = '/usr/bin/brew-stage'
@@ -50,19 +53,19 @@ class OSBSBuilder(Builder):
     def dependencies():
         deps = {}
 
-        if config.get('common', 'redhat'):
-            if config.get('common', 'stage'):
+        if CONFIG.get('common', 'redhat'):
+            if CONFIG.get('common', 'stage'):
                 fedpkg = 'rhpkg-stage'
                 koji = 'brewkoji-stage'
-                koji_executable = 'brew-stage'
+                koji_executable = '/usr/bin/brew-stage'
             else:
                 fedpkg = 'rhpkg'
                 koji = 'brewkoji'
-                koji_executable = 'brew'
+                koji_executable = '/usr/bin/brew'
         else:
             fedpkg = 'fedpkg'
             koji = 'koji'
-            koji_executable = 'koji'
+            koji_executable = '/usr/bin/koji'
 
         deps[fedpkg] = {
             'package': fedpkg,
@@ -86,7 +89,6 @@ class OSBSBuilder(Builder):
     def prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
 
-        # repository_key = descriptor.get('osbs', {}).get('repository', {})
         repository = repository_key.get('name')
         branch = repository_key.get('branch')
 
@@ -99,7 +101,7 @@ class OSBSBuilder(Builder):
         else:
             osbs_dir = 'osbs'
 
-        self.dist_git_dir = os.path.join(os.path.expanduser(config.get('common', 'work_dir')),
+        self.dist_git_dir = os.path.join(os.path.expanduser(CONFIG.get('common', 'work_dir')),
                                          osbs_dir,
                                          repository)
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
@@ -179,7 +181,7 @@ class OSBSBuilder(Builder):
     def _wait_for_osbs_task(self, task_id, current_time=0, timeout=7200):
         """ Default timeout is 2hrs """
 
-        logger.debug("Checking if task {} is finished...".format(task_id))
+        LOGGER.debug("Checking if task {} is finished...".format(task_id))
 
         # Time between subsequent querying the API
         sleep_time = 20
@@ -216,7 +218,7 @@ class OSBSBuilder(Builder):
             "Task {} did not finish successfully, please check the task logs!".format(task_id))
 
     def update_lookaside_cache(self):
-        logger.info("Updating lookaside cache...")
+        LOGGER.info("Updating lookaside cache...")
         if not self.artifacts:
             return
         cmd = [self._fedpkg]
@@ -224,15 +226,15 @@ class OSBSBuilder(Builder):
             cmd += ['--user', self.params.user]
         cmd += ["new-sources"] + self.artifacts
 
-        logger.debug("Executing '%s'" % cmd)
+        LOGGER.debug("Executing '%s'" % cmd)
         with Chdir(self.dist_git_dir):
             try:
                 subprocess.check_output(cmd, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as ex:
-                logger.error("Cannot run '%s', ouput: '%s'" % (cmd, ex.output))
+                LOGGER.error("Cannot run '%s', ouput: '%s'" % (cmd, ex.output))
                 raise CekitError("Cannot update sources.")
 
-        logger.info("Update finished.")
+        LOGGER.info("Update finished.")
 
     def run(self):
         cmd = [self._koji]
@@ -250,7 +252,7 @@ class OSBSBuilder(Builder):
                 self.dist_git.commit(self.params.commit_message)
                 self.dist_git.push()
             else:
-                logger.info("No changes made to the code, committing skipped")
+                LOGGER.info("No changes made to the code, committing skipped")
 
             # Get the url of the repository
             url = subprocess.check_output(
@@ -277,11 +279,11 @@ class OSBSBuilder(Builder):
 
             cmd.append(kwargs)
 
-            logger.info("About to execute '%s'." % ' '.join(cmd))
+            LOGGER.info("About to execute '%s'." % ' '.join(cmd))
 
             if tools.decision("Do you want to build the image in OSBS?"):
                 build_type = "scratch" if scratch else "release"
-                logger.info("Executing %s container build in OSBS..." % build_type)
+                LOGGER.info("Executing %s container build in OSBS..." % build_type)
 
                 try:
                     task_id = subprocess.check_output(cmd).strip().decode("utf8")
@@ -289,15 +291,15 @@ class OSBSBuilder(Builder):
                 except subprocess.CalledProcessError as ex:
                     raise CekitError("Building container image in OSBS failed", ex)
 
-                logger.info("Task {} was submitted, you can watch the progress here: {}/taskinfo?taskID={}".format(
-                    task_id, self._koji_url, task_id))
+                LOGGER.info("Task {0} was submitted, you can watch the progress here: {1}/taskinfo?taskID={0}".format(
+                    task_id, self._koji_url))
 
                 if self.params.nowait:
                     return
 
                 self._wait_for_osbs_task(task_id)
 
-                logger.info("Image was built successfully in OSBS!")
+                LOGGER.info("Image was built successfully in OSBS!")
 
 
 class DistGit(object):
@@ -341,15 +343,15 @@ class DistGit(object):
     def prepare(self, stage, user=None):
         if os.path.exists(self.output):
             with Chdir(self.output):
-                logger.info("Pulling latest changes in repo %s..." % self.repo)
+                LOGGER.info("Pulling latest changes in repo %s..." % self.repo)
                 subprocess.check_output(["git", "fetch"])
                 subprocess.check_output(
                     ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
                 subprocess.check_output(
                     ["git", "reset", "--hard", "origin/%s" % self.branch])
-            logger.debug("Changes pulled")
+            LOGGER.debug("Changes pulled")
         else:
-            logger.info("Cloning %s git repository (%s branch)..." %
+            LOGGER.info("Cloning %s git repository (%s branch)..." %
                         (self.repo, self.branch))
 
             if stage:
@@ -360,9 +362,9 @@ class DistGit(object):
             if user:
                 cmd += ['--user', user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
-            logger.debug("Cloning: '%s'" % ' '.join(cmd))
+            LOGGER.debug("Cloning: '%s'" % ' '.join(cmd))
             subprocess.check_output(cmd)
-            logger.debug("Repository %s cloned" % self.repo)
+            LOGGER.debug("Repository %s cloned" % self.repo)
 
     def clean(self):
         """ Removes old generated scripts, repos and modules directories """
@@ -370,7 +372,7 @@ class DistGit(object):
             git_files = subprocess.check_output(
                 ["git", "ls-files", "."]).strip().decode("utf8").splitlines()
             for d in ["repos", "modules"]:
-                logger.info("Removing old '%s' directory" % d)
+                LOGGER.info("Removing old '%s' directory" % d)
                 shutil.rmtree(d, ignore_errors=True)
 
                 if d in git_files:
@@ -401,20 +403,20 @@ class DistGit(object):
                 commit_msg += ", commit %s" % self.source_repo_commit
 
         # Commit the change
-        logger.info("Commiting with message: '%s'" % commit_msg)
+        LOGGER.info("Commiting with message: '%s'" % commit_msg)
         subprocess.check_output(["git", "commit", "-q", "-m", commit_msg])
 
         untracked = subprocess.check_output(
             ["git", "ls-files", "--others", "--exclude-standard"]).decode("utf8")
 
         if untracked:
-            logger.warning("There are following untracked files: %s. Please review your commit."
+            LOGGER.warning("There are following untracked files: %s. Please review your commit."
                            % ", ".join(untracked.splitlines()))
 
         diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode("utf8")
 
         if diffs:
-            logger.warning("There are uncommited changes in following files: '%s'. "
+            LOGGER.warning("There are uncommited changes in following files: '%s'. "
                            "Please review your commit."
                            % ", ".join(diffs.splitlines()))
 
@@ -423,7 +425,7 @@ class DistGit(object):
             subprocess.call(["git", "show"])
 
         if not (self.noninteractive or tools.decision("Are you ok with the changes?")):
-            logger.info("Executing bash in the repo directory. "
+            LOGGER.info("Executing bash in the repo directory. "
                         "After fixing the issues, exit the shell and Cekit will continue.")
             subprocess.call(["bash"], env={"PS1": "cekit $ ",
                                            "TERM": os.getenv("TERM", "xterm"),
@@ -432,11 +434,11 @@ class DistGit(object):
     def push(self):
         if self.noninteractive or tools.decision("Do you want to push the commit?"):
             print("")
-            logger.info("Pushing change to the upstream repository...")
+            LOGGER.info("Pushing change to the upstream repository...")
             cmd = ["git", "push", "-q", "origin", self.branch]
-            logger.debug("Running command '%s'" % ' '.join(cmd))
+            LOGGER.debug("Running command '%s'" % ' '.join(cmd))
             subprocess.check_output(cmd)
-            logger.info("Change pushed.")
+            LOGGER.info("Change pushed.")
         else:
-            logger.info("Changes are not pushed, exiting")
+            LOGGER.info("Changes are not pushed, exiting")
             sys.exit(0)

@@ -450,11 +450,9 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
 
 def test_docker_builder_defaults():
-    params = {'tags': ['foo', 'bar']}
-    builder = Builder('docker', 'tmp', params)
+    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
 
-    assert builder._tags == ['foo', 'bar']
-    assert builder._no_squash == False
+    assert builder.params.tags == ['foo', 'bar']
 
 
 def test_docker_squashing_enabled(mocker):
@@ -462,6 +460,7 @@ def test_docker_squashing_enabled(mocker):
 
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash == None
+    assert builder.params.tags == ['foo', 'bar']
 
     docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
     docker_client = docker_client_class.return_value
