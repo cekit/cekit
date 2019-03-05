@@ -408,6 +408,7 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
 def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     os.makedirs(os.path.join(str(tmpdir), 'image'))
 
+    mocker.patch('cekit.tools.DependencyHandler.handle')
     mocker.patch('cekit.descriptor.resource.Resource.copy')
     copy_mock = mocker.patch('cekit.builders.osbs.shutil.copy')
 

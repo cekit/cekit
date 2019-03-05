@@ -1,13 +1,13 @@
 import glob
-import yaml
 import os
 import uuid
+import yaml
 
 from cekit.config import Config
 from cekit.errors import CekitError
-from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum, get_sum
+from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 
-config = Config()
+CONFIG = Config()
 
 
 class ArtifactCache():
@@ -19,7 +19,7 @@ class ArtifactCache():
 
     def __init__(self):
         self._cache_dir = os.path.expanduser(
-            os.path.join(config.get('common', 'work_dir'), 'cache'))
+            os.path.join(CONFIG.get('common', 'work_dir'), 'cache'))
         if not os.path.exists(self._cache_dir):
             os.makedirs(self._cache_dir)
 
@@ -64,11 +64,11 @@ class ArtifactCache():
         self._update_cache(cache_entry, artifact_id)
         return artifact_id
 
-    def delete(self, uuid):
+    def delete(self, artifact_uuid):
         # check if artifact exists
         self._get_cache()
-        os.remove(os.path.join(self._cache_dir, uuid))
-        os.remove(os.path.join(self._cache_dir, uuid + '.yaml'))
+        os.remove(os.path.join(self._cache_dir, artifact_uuid))
+        os.remove(os.path.join(self._cache_dir, artifact_uuid + '.yaml'))
 
     def get(self, artifact):
         for alg in SUPPORTED_HASH_ALGORITHMS:
