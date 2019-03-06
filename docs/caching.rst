@@ -4,7 +4,7 @@
 Artifact Caching
 ================
 
-Cekit is automatically caching all artifacts used to build the image. This means that if your image descriptor contains following artifact:
+CEKit is automatically caching all artifacts used to build the image. This means that if your image descriptor contains following artifact:
 
 .. code:: yaml
 
@@ -18,20 +18,20 @@ It will be automatically cached into ``~/.cekit/cache/`` directory during image 
 
 .. note::
 
-   Artifacts in cache are discovered by a hash value. So even if you define same artifact by different name it will be discovered in cache and copied into your image. This also means that Cekit is using cache only for artifacts which define at least one hash.
+   Artifacts in cache are discovered by a hash value. So even if you define same artifact by different name it will be discovered in cache and copied into your image. This also means that CEKit is using cache only for artifacts which define at least one hash.
 
 
 
 Managing Cache
 --------------
 
-Cekit contains command line tool called ``cekit-cache`` which is used to manage its cache.
+CEKit contains command line tool called ``cekit-cache`` which is used to manage its cache.
 
 **Options affecting cekit-cache:**
 
 * ``--verbose`` -- setups verbose output
-* ``--work-dir`` -- sets Cekit works directory where cache directory is located. See :ref:`Configuration section for work_dir<workdir_config>`
-* ``--version`` -- prints Cekit version
+* ``--work-dir`` -- sets CEKit works directory where cache directory is located. See :ref:`Configuration section for work_dir<workdir_config>`
+* ``--version`` -- prints CEKit version
 
 .. note::
 
@@ -42,8 +42,8 @@ Cekit contains command line tool called ``cekit-cache`` which is used to manage 
 
 Caching an artifact manually
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Cekit supports caching an artifact manually. This is very use full if you need to introduce non-public
-artifact to a Cekit. To cache an artifact you need to specify path to the artifact on filesystem or its URL and one of the supported hashes (md5, sha256, sha512).
+CEKit supports caching an artifact manually. This is very use full if you need to introduce non-public
+artifact to a CEKit. To cache an artifact you need to specify path to the artifact on filesystem or its URL and one of the supported hashes (md5, sha256, sha512).
 
 *Example*: Specifying an artifact via path:
 
@@ -68,7 +68,7 @@ artifact to a Cekit. To cache an artifact you need to specify path to the artifa
 
 Listing cached artifacts
 ^^^^^^^^^^^^^^^^^^^^^^^^
-To list all artifact known to a Cekit cache you need to run following command:
+To list all artifact known to a CEKit cache you need to run following command:
 
 .. code:: bash
 	  

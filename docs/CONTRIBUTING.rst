@@ -39,7 +39,7 @@ documentation will be regenerated and immediately available in your browser.
 Guidelines
 -----------
 
-Below you can find a list of conventions used to write Cekit documentation.
+Below you can find a list of conventions used to write CEKit documentation.
 
 Headers
 ^^^^^^^
@@ -57,3 +57,6 @@ to be a certain level, we use following guidelines:
 
     h3 header
     ^^^^^^^^^
+
+    h4 header
+    *********

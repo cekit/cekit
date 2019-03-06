@@ -4,7 +4,7 @@
 Repository management
 ======================
 
-One of the hardest challenges we faced with Cekit is how to manage and define package repositories
+One of the hardest challenges we faced with CEKit is how to manage and define package repositories
 correctly. Our current solution works in following scenarios:
 
 1) Building CentOS or Fedora based images
@@ -32,7 +32,7 @@ You should use :ref:`Plain<repo_plain>` repository definition for every reposito
             - name: SCL
               id: rhel-server-rhscl-7-rpms
 
-If you have repository defined this way, Cekit will not try to inject it and will expect the repository to be already available inside your container image. If it's not provided by the image (for example repository definition already available in ``/etc/yum.repos.d/`` directory) or the host (for example on via `subscribed RHEL host <https://access.redhat.com/solutions/1443553>`_) you need to override this repository. To override a repository definition you need to specify a repository with same ``name``. By overriding Plain repository type, you are actually saying that you have an external mechanism to inject the repository inside the image. This can be any supported :ref:`repository type<repo>`.
+If you have repository defined this way, CEKit will not try to inject it and will expect the repository to be already available inside your container image. If it's not provided by the image (for example repository definition already available in ``/etc/yum.repos.d/`` directory) or the host (for example on via `subscribed RHEL host <https://access.redhat.com/solutions/1443553>`_) you need to override this repository. To override a repository definition you need to specify a repository with same ``name``. By overriding Plain repository type, you are actually saying that you have an external mechanism to inject the repository inside the image. This can be any supported :ref:`repository type<repo>`.
 
 .. note::
    You can view Plain repository type as an abstract classes and ODCS, RPM and URL repositories as an actual implementation.

@@ -4,7 +4,7 @@ Artifacts
 It's common for images to require external artifacts like jar files, installers, etc.
 In most cases you will want to add files into the image and use them during  image build process.
 
-Artifacts section is meant exactly for this. *Cekit will automatically
+Artifacts section is meant exactly for this. *CEKit will automatically
 fetch any artifacts* specified in this section and check their consistency by computing checksum of
 the downloaded file and comparing it with the desired value. Currently supported algorithms are: md5, sha1 and sha256. If no algorithm is provided, artifact will  be fetched **every** time.
 
@@ -18,7 +18,7 @@ the base name of the file/URL.
 
 .. note:: 
 
-   For artifacts that are not publicly available Cekit provides a way to
+   For artifacts that are not publicly available CEKit provides a way to
    add a description detailing a location from which the artifact can be obtained.
 
    .. code:: yaml
@@ -28,7 +28,7 @@ the base name of the file/URL.
           md5: 9a5d37631919a111ddf42ceda1a9f0b5
           description: "Red Hat JBoss EAP 6.4.0 distribution available on Customer Portal: https://access.redhat.com/jbossnetwork/restricted/softwareDetail.html?softwareId=37393&product=appplatform&version=6.4&downloadType=distributions"
 
-   If Cekit is not able to download an artifact and this artifact has a ``description`` defined -- the build
+   If CEKit is not able to download an artifact and this artifact has a ``description`` defined -- the build
    will fail but a message with the description will be printed together with information on where to place
    the manually downloaded artifact.
 
@@ -56,7 +56,7 @@ This approach relies on :ref:`artifacts_caching` to provide the artifact in cach
 URL
 ^^^
 
-This way of defining repository ask Cekit to download and artifact from a specified URL.
+This way of defining repository ask CEKit to download and artifact from a specified URL.
 
 
 .. code:: yaml

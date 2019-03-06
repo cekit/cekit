@@ -1,7 +1,7 @@
 Developing modules locally
 ==========================
 
-Cekit enables you to use a work in progress modules to build the image by exploiting its overrides system. As an example, imagine we have very simple image which is using one module from a cct_module repository like this:
+CEKit enables you to use a work in progress modules to build the image by exploiting its overrides system. As an example, imagine we have very simple image which is using one module from a cct_module repository like this:
 
 .. code:: yaml
 

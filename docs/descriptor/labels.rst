@@ -5,7 +5,7 @@ Labels
 
     Learn more about `standard labels in container images <https://github.com/projectatomic/ContainerApplicationGenericLabels>`_.
 
-Every image can include labels. Cekit makes it easy to do so with the ``labels`` section.
+Every image can include labels. CEKit makes it easy to do so with the ``labels`` section.
 
 .. code:: yaml
 
