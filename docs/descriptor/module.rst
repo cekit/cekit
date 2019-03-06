@@ -1,7 +1,7 @@
 Module descriptor
 =================
 
-Module descriptor contains all information Cekit needs to introduce a feature to an image. Modules are used as libraries or shared building blocks across images.
+Module descriptor contains all information CEKit needs to introduce a feature to an image. Modules are used as libraries or shared building blocks across images.
 
 It is very important to make a module self-containg which means that executing
 scripts defined in the module's definition file should always end up in a state

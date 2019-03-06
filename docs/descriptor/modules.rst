@@ -9,7 +9,7 @@ Module repositories
 
 Module repositories specify location of modules that are to be incorporated
 into the image. These repositories may be ``git`` repositories or directories
-on the local file system (``path``). Cekit will scan the repositories for
+on the local file system (``path``). CEKit will scan the repositories for
 ``module.xml`` files, which are used to encapsulate image details that may be
 incorporated into multiple images.
 

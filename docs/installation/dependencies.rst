@@ -1,7 +1,7 @@
 Dependencies
 ============
 
-By default when you install Cekit, **only required core dependencies are installed**.
+By default when you install CEKit, **only required core dependencies are installed**.
 This means that in order to use some generators or builders you may need to install
 additional software.
 
@@ -13,12 +13,12 @@ If a required dependency (for particular run) is not satisfied, user will be let
 about the fact. In case of known platforms (like Fedora or RHEL) we even provide the
 package names to install (if available).
 
-Below you can see a summary of Cekit dependencies and when these are required.
+Below you can see a summary of CEKit dependencies and when these are required.
 
 Core dependencies
 ----------------------------------
 
-Following Python libraries are required to run Cekit:
+Following Python libraries are required to run CEKit:
 
 * PyYAML
 * Jinja2
@@ -27,7 +27,7 @@ Following Python libraries are required to run Cekit:
 
 Additionally, we require Git to be present since we use it in many places.
 
-For more information, please consult the ``Pipfile`` file available in the Cekit repository.
+For more information, please consult the ``Pipfile`` file available in the CEKit repository.
 
 Generate phase dependencies
 ----------------------------------
@@ -60,8 +60,8 @@ Build phase dependencies
 Test phase dependencies
 ----------------------------------
 
-For more information about testing, please take a :doc:`look here </test>`.
+For more information about testing, please take a :doc:`look here </testing/index>`.
 
-Test dependencies can vary. Cekit uses a plugable way of defining Behave steps. The default
+Test dependencies can vary. CEKit uses a plugable way of defining Behave steps. The default
 test steps are located in https://github.com/cekit/behave-test-steps repository. You can find there
 more information about the current dependencies.

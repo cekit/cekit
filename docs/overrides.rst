@@ -1,9 +1,9 @@
 Overrides
 =========
 
-During an image life cycle there can be a need to do a slightly tweaked builds - using different base images, injecting newer libraries etc. We want to support such scenarios without a need of duplicating whole image sources. To achieve this Cekit supports overrides mechanism for its image descriptor. You can override almost anything in image descriptor. The overrides are based on overrides descriptor - a YAML object containing overrides for the image descriptor.
+During an image life cycle there can be a need to do a slightly tweaked builds - using different base images, injecting newer libraries etc. We want to support such scenarios without a need of duplicating whole image sources. To achieve this CEKit supports overrides mechanism for its image descriptor. You can override almost anything in image descriptor. The overrides are based on overrides descriptor - a YAML object containing overrides for the image descriptor.
 
-To use an override descriptor you need to pass ``--overrides-file`` argument to a Cekit. You can also pass JSON/YAML object representing changes directly via ``--overrides`` command line argument.
+To use an override descriptor you need to pass ``--overrides-file`` argument to a CEKit. You can also pass JSON/YAML object representing changes directly via ``--overrides`` command line argument.
 
 **Example**: To use overrides.yaml file located in current working directory run:
 
@@ -32,12 +32,12 @@ You can even specify multiple overrides. Overrides are resolved that last specif
 How overrides works
 -------------------
 
-Cekit is using `YAML <http://yaml.org/>`_ format for its descriptors. Overrides in cekit works on `YAML node <http://www.yaml.org/spec/1.2/spec.html#id2764044>`_ level.
+CEKit is using `YAML <http://yaml.org/>`_ format for its descriptors. Overrides in cekit works on `YAML node <http://www.yaml.org/spec/1.2/spec.html#id2764044>`_ level.
 
 
 Scalar nodes
 ^^^^^^^^^^^^
-Scalar nodes are easy to override, if Cekit finds any scalar node in an overrides descriptor it updates its value in image descriptor with the overridden one.
+Scalar nodes are easy to override, if CEKit finds any scalar node in an overrides descriptor it updates its value in image descriptor with the overridden one.
 
 **Example**: Overriding scalar node:
 
@@ -68,7 +68,7 @@ Scalar nodes are easy to override, if Cekit finds any scalar node in an override
 
 Sequence nodes
 ^^^^^^^^^^^^^^
-Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so Cekit is just replacing the whole sequence.
+Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so CEKit is just replacing the whole sequence.
 
 **Example**: Overriding plain array node:
 
@@ -109,7 +109,7 @@ Sequence nodes are little bit tricky, if they're representing plain arrays, we c
 
 Mapping nodes
 ^^^^^^^^^^^^^
-Mappings are merged via *name* key. If Cekit is overriding an mapping or array of mappings it tries to find a **name** key in mapping and use and identification of mapping. If two **name** keys matches, all keys of the mapping are updated.
+Mappings are merged via *name* key. If CEKit is overriding an mapping or array of mappings it tries to find a **name** key in mapping and use and identification of mapping. If two **name** keys matches, all keys of the mapping are updated.
 
 **Example**: Updating mapping node:
 

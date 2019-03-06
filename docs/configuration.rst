@@ -1,14 +1,14 @@
 Configuration file
 ==================
 
-Cekit can be configured using a configuration file. We use the
+CEKit can be configured using a configuration file. We use the
 properties file format.
 
-Cekit will look for this file at the path ``~/.cekit/config``. Its location
+CEKit will look for this file at the path ``~/.cekit/config``. Its location
 can be changed via command line ``--config`` option.
 
 **Example**
-Running Cekit with different config file:
+Running CEKit with different config file:
 
 .. code:: sh
 
@@ -27,7 +27,7 @@ Below you can find description of available sections together with options descr
 ``work_dir``
 ^^^^^^^^^^^^
 
-Contains location of Cekit working directory, which is used to store some persistent data like
+Contains location of CEKit working directory, which is used to store some persistent data like
 dist_git repositories and artifact cache.
 
 .. code:: yaml
@@ -94,7 +94,7 @@ The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss
 
 ``redhat``
 ^^^^^^^^^^
-This option changes Cekit default options to comply with Red Hat internal infrastructure and policies.
+This option changes CEKit default options to comply with Red Hat internal infrastructure and policies.
 
 **Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
 
@@ -105,7 +105,7 @@ This option changes Cekit default options to comply with Red Hat internal infras
 
 .. note::
 
-   If you are using Cekit within Red Hat infrastructure you should have valid Kerberos ticket.
+   If you are using CEKit within Red Hat infrastructure you should have valid Kerberos ticket.
 
 ``doc``
 -------
@@ -114,7 +114,7 @@ This section collects together configuration options relating to documentation.
 
 ``addhelp``
 ^^^^^^^^^^^^^
-This option instructs Cekit to install the generated `help.md` file into the generate image
+This option instructs CEKit to install the generated `help.md` file into the generate image
 sources. The file is inserted at the root path (`/`). The default value is False.
 
 **Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:

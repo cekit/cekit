@@ -1,7 +1,7 @@
 Building images
 ================
 
-Cekit supports following builder engines:
+CEKit supports following builder engines:
 
 * Docker -- builds the container image using the Docker daemon, this is the default option
 * OSBS -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`_
@@ -22,7 +22,7 @@ You can execute container image build by running:
 * ``--redhat`` -- build image using Red Hat defaults. See :ref:`Configuration section for Red Hat specific options<redhat_env>` for additional details.
 * ``--add-help`` -- add generated ``help.md`` file to the image
 * ``--no-add-help`` -- don't add generated ``help.md`` file to the image
-* ``--work-dir`` -- sets Cekit works directory where dist_git repositories are cloned into See :ref:`Configuration section for work_dir<workdir_config>`
+* ``--work-dir`` -- sets CEKit works directory where dist_git repositories are cloned into See :ref:`Configuration section for work_dir<workdir_config>`
 * ``--package-manager`` -- allows selecting between different package managers such as ``yum`` or ``microdnf``. Defaults to ``yum```
 * ``--build-engine`` -- a builder engine to use ``osbs``, ``buildah`` or ``docker``, deafult is ``docker``
 * ``--build-pull`` -- ask a builder engine to check and fetch latest base image

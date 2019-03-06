@@ -1,6 +1,6 @@
 Image descriptor
 ===================
-Image descriptor contains all information Cekit needs to build and test a container image.
+Image descriptor contains all information CEKit needs to build and test a container image.
 
 .. contents::
 

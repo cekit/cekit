@@ -3,7 +3,7 @@ Upgrading
 
 .. note::
 
-    If you are running on Fedora / CentOS / RHEL you should be using RPM and our `COPR repository for Cekit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_. We assume, that you have this repository enabled on your system.
+    If you are running on Fedora / CentOS / RHEL you should be using RPM and our `COPR repository for CEKit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_. We assume, that you have this repository enabled on your system.
 
 Fedora
 --------------------

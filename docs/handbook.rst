@@ -1,16 +1,16 @@
 Operation Guide
 ==================
-This chapter will guide you through all the Cekit basic usage. After reading you should have Cekit installed
+This chapter will guide you through all the CEKit basic usage. After reading you should have CEKit installed
 and be familiar with building and testing images with it.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
-    installation
+    installation/index
     build
     caching
     overrides
-    test
+    testing/index
     local_development
     repository_management
     image_help_pages
