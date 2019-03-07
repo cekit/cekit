@@ -12,12 +12,6 @@ base_to_install:
   - source-to-image
 
 python_to_install:
-#  - python3-argh # cekit (sphinx)
-#  - python3-livereload # cekit (sphinx)
-#  - python3-pathtools # cekit (sphinx)
-  # sphinx-autorebuild currently pins port-for at 0.3.1 but F29 has 0.4.6 (https://github.com/GaretJax/sphinx-autobuild/pull/72)
-  # - python3-port-for # cekit
-
   - python3-behave
   - python3-colorlog
   - python3-docker
@@ -33,4 +27,3 @@ python_to_install:
   - python3-sphinx-autobuild
   - python3-tox
   - python3-virtualenv
-  - python3-watchdog
