@@ -60,7 +60,7 @@ class Builder(Command):
         self.run()
 
     def prepare(self):
-        if self.build_engine == 'docker' or self.build_engine == 'buildah':
+        if self.build_engine == 'docker' or self.build_engine == 'buildah' or self.build_engine == "podman":
             from cekit.generator.docker import DockerGenerator as generator_impl
             LOGGER.info('Generating files for {} engine'.format(self.build_engine))
         elif self.build_engine == 'osbs':

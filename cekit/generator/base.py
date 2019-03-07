@@ -11,8 +11,8 @@ from cekit import tools
 from cekit.config import Config
 from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
-from cekit.version import version as cekit_version
 from cekit.template_helper import TemplateHelper
+from cekit.version import version as cekit_version
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()

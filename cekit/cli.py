@@ -70,7 +70,7 @@ def build(dry_run, overrides, addhelp):  # pylint: disable=unused-argument
 
     BUILDERS
 
-        Currently supported builders: Docker, OSBS and Buildah.
+        Currently supported builders: Docker, OSBS, Podman and Buildah.
 
             $ cekit build BUILDER
 
@@ -121,6 +121,21 @@ def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
         Executes container image build locally using Buildah builder.
 
         https://buildah.io/
+    """
+    run_build(ctx, 'buildah')
+
+
+@build.command(name="podman", short_help="Build using Podman engine")
+@click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
+@click.pass_context
+def build_podman(ctx, pull, tags):
+    """
+    DESCRIPTION
+
+        Executes container image build locally using Podman builder.
+
+        https://podman.io/
     """
     run_build(ctx, 'buildah')
 
@@ -308,7 +323,7 @@ class Cekit(object):  # pylint: disable=useless-object-inheritance
                          })
 
     def cleanup(self):
-        """ Prepates target/image directory to be regenerated."""
+        """ Prepares target/image directory to be regenerated."""
         directories_to_clean = [os.path.join(self.params.target, 'image', 'modules'),
                                 os.path.join(self.params.target, 'image', 'repos'),
                                 os.path.join(self.params.target, 'repo')]

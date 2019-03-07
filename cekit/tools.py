@@ -283,7 +283,7 @@ class DependencyHandler(object):
             dependency, executable)
 
         if package:
-            msg += " To satisfy this requrement you can install the '{}' package.".format(package)
+            msg += " To satisfy this requirement you can install the '{}' package.".format(package)
 
         raise CekitError(msg)
 
@@ -318,6 +318,6 @@ class DependencyHandler(object):
 
             # Check if we have a method
             if callable(dependencies):
-                # Execute that method to get list of dependecies and try to handle them
+                # Execute that method to get list of dependencies and try to handle them
                 self._handle_dependencies(o.dependencies())
                 return

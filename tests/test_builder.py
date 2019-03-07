@@ -1,13 +1,14 @@
-from cekit.tools import Map
-from cekit.errors import CekitError
-from cekit.descriptor import Image
 import glob
 import logging
 import os
-import pytest
 import subprocess
 import time
+
+import pytest
 import yaml
+
+from cekit.errors import CekitError
+from cekit.tools import Map
 
 try:
     from unittest.mock import call
@@ -15,7 +16,6 @@ except ImportError:
     from mock import call
 
 from cekit.builders.docker_builder import DockerBuilder
-from cekit.builder import Builder
 from cekit.config import Config
 
 
@@ -156,6 +156,8 @@ def create_builder_object(mocker, builder, params, common_params={'target': 'som
         from cekit.builders.docker_builder import DockerBuilder as BuilderImpl
     elif 'osbs' == builder:
         from cekit.builders.osbs import OSBSBuilder as BuilderImpl
+    elif 'podman' == builder:
+        from cekit.builders.podman import PodmanBuilder as BuilderImpl
     elif 'buildah' == builder:
         from cekit.builders.buildah import BuildahBuilder as BuilderImpl
     else:
@@ -543,3 +545,30 @@ def test_buildah_builder_run_pull(mocker):
         '-t', 'foo',
         '-t', 'bar',
         'something/image'])
+
+
+def test_podman_builder_run(mocker):
+    params = {'tags': ['foo', 'bar']}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'podman', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/podman',
+                                        'build',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'something/image'])
+
+
+def test_podman_builder_run_pull(mocker):
+    params = {'tags': ['foo', 'bar'], 'pull': True}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'podman', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/podman',
+                                        'build',
+                                        '--pull-always',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'something/image'])
