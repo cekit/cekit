@@ -1,15 +1,14 @@
 import os
 import re
 import pytest
-import sys
+
+from click.testing import CliRunner
 
 from cekit.cache.cli import cli
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 
-from click.testing import CliRunner
 
-
-def test_cekit_cache_ls(mocker, tmpdir):
+def test_cekit_cache_ls(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
 
     result = run_cekit_cache(['-v',
@@ -20,7 +19,7 @@ def test_cekit_cache_ls(mocker, tmpdir):
     assert 'No artifacts cached!' in result.output
 
 
-def test_cekit_cache_rm_non_existing(mocker, tmpdir):
+def test_cekit_cache_rm_non_existing(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
     run_cekit_cache(['-v',
                      '--work-dir',
@@ -29,7 +28,7 @@ def test_cekit_cache_rm_non_existing(mocker, tmpdir):
                      '12345'], 1)
 
 
-def test_cekit_cache_add_artifact(mocker, tmpdir):
+def test_cekit_cache_add_artifact(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
 
     artifact = os.path.join(work_dir, 'artifact')
@@ -46,7 +45,7 @@ def test_cekit_cache_add_artifact(mocker, tmpdir):
     assert "cached with UUID" in result.output
 
 
-def test_cekit_cache_add_artifact_existing(mocker, tmpdir):
+def test_cekit_cache_add_artifact_existing(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
 
     artifact = os.path.join(work_dir, 'artifact')
@@ -66,7 +65,7 @@ def test_cekit_cache_add_artifact_existing(mocker, tmpdir):
     assert 'is already cached!' in result.output
 
 
-def test_cekit_cache_delete_artifact(mocker, tmpdir):
+def test_cekit_cache_delete_artifact(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
     artifact = os.path.join(work_dir, 'artifact')
     open(artifact, 'a').close()
@@ -88,7 +87,7 @@ def test_cekit_cache_delete_artifact(mocker, tmpdir):
                      artifact_uuid])
 
 
-def test_cekit_cache_delete_not_existing_artifact(mocker, tmpdir):
+def test_cekit_cache_delete_not_existing_artifact(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
 
     result = run_cekit_cache(['-v',
@@ -99,7 +98,7 @@ def test_cekit_cache_delete_not_existing_artifact(mocker, tmpdir):
     assert "Artifact with UUID 'foo' doesn't exists in the cache" in result.output
 
 
-def test_cekit_cannot_add_artifact_without_checksum(mocker, tmpdir):
+def test_cekit_cannot_add_artifact_without_checksum(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))
     artifact = os.path.join(work_dir, 'artifact')
     open(artifact, 'a').close()
@@ -113,7 +112,7 @@ def test_cekit_cannot_add_artifact_without_checksum(mocker, tmpdir):
 
 
 @pytest.mark.parametrize('algorithm', SUPPORTED_HASH_ALGORITHMS)
-def test_cekit_supported_algorithms(mocker, tmpdir, algorithm):
+def test_cekit_supported_algorithms(tmpdir, algorithm):
     """
     This is a bit counter intuitive, but we try to cache an artifact
     with all known supported hash algorithms. In case when the algorithm
@@ -125,20 +124,93 @@ def test_cekit_supported_algorithms(mocker, tmpdir, algorithm):
     artifact = os.path.join(work_dir, 'artifact')
     open(artifact, 'a').close()
 
-    result = run_cekit_cache(['-v',
-                              '--work-dir',
-                              work_dir,
-                              'add',
-                              artifact,
-                              "--{}".format(algorithm),
-                              'WRONG!'], 1)
+    result = run_cekit_cache(
+        [
+            '-v',
+            '--work-dir',
+            work_dir,
+            'add',
+            artifact,
+            "--{}".format(algorithm),
+            'WRONG!'
+        ],
+        1)
 
     assert "Cannot cache artifact {}: Artifact checksum verification failed!".format(
         artifact) in result.output
 
 
-def run_cekit_cache(args, rc=0):
-    result = CliRunner().invoke(cli, args, catch_exceptions=False)
-    assert result.exit_code == rc
+def test_cekit_cache_clear(mocker, tmpdir):
+    work_dir = str(tmpdir.mkdir('work_dir'))
+    mock_rmtree = mocker.patch('shutil.rmtree')
+
+    result = run_cekit_cache(
+        [
+            '-v',
+            '--work-dir',
+            work_dir,
+            'clear'],
+        0,
+        'y\n')
+
+    mock_rmtree.assert_called_once_with(os.path.join(work_dir, 'cache'))
+    assert "Artifact cache cleared!" in result.output
+
+
+def test_cekit_cache_clear_no_confirm(mocker, tmpdir):
+    work_dir = str(tmpdir.mkdir('work_dir'))
+    mock_rmtree = mocker.patch('shutil.rmtree')
+
+    result = run_cekit_cache(
+        [
+            '-v',
+            '--work-dir',
+            work_dir,
+            'clear'],
+        0,
+        'n\n')
+
+    mock_rmtree.assert_not_called()
+    assert "Artifact cache cleared!" not in result.output
+
+
+def test_cekit_cache_clear_no_confirm_by_default(mocker, tmpdir):
+    work_dir = str(tmpdir.mkdir('work_dir'))
+    mock_rmtree = mocker.patch('shutil.rmtree')
+
+    result = run_cekit_cache(
+        [
+            '-v',
+            '--work-dir',
+            work_dir,
+            'clear'],
+        0,
+        '\n')
+
+    mock_rmtree.assert_not_called()
+    assert "Artifact cache cleared!" not in result.output
+
+
+def test_cekit_cache_clear_with_error(mocker, tmpdir):
+    work_dir = str(tmpdir.mkdir('work_dir'))
+
+    mocker.patch('shutil.rmtree', side_effect=Exception)
+
+    result = run_cekit_cache(
+        [
+            '-v',
+            '--work-dir',
+            work_dir,
+            'clear'],
+        1,
+        'y\n')
+
+    assert "An error occured while removing the artifact cache directory '{}'".format(
+        os.path.join(work_dir, 'cache')) in result.output
+
+
+def run_cekit_cache(args, return_code=0, i=None):
+    result = CliRunner().invoke(cli, args, input=i, catch_exceptions=False)
+    assert result.exit_code == return_code
 
     return result
