@@ -3,7 +3,7 @@
 Contributing to the project
 ===========================
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to develop Cekit. Please consult your package manager for the correct package name. Currently within Fedora 29 all the required packages are available as RPMs. A sample set of Ansible scripts that provide **all** pre-requistites for development are available `here <https://github.com/cekit/cekit/tree/develop/ansible>`_.
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to develop CEkit. Please consult your package manager for the correct package name. Currently within Fedora 29 all the required packages are available as RPMs. A sample set of Ansible scripts that provide all pre-requistites for development are available `here <https://github.com/cekit/cekit/tree/develop/support/ansible>`_.
 
 - If you are running inside the Red Hat infrastructure then ``rhpkg`` must be installed as well.
 
@@ -18,14 +18,14 @@ To create custom Python virtual environment please run following commands on you
     # Install as development version
     pip install -e <cekit directory>
 
-    # Now you are able to run Cekit
+    # Now you are able to run CEkit
     cekit --help
 
 It is possible to ask virtualenv to inherit pre-installed system packages thereby reducing the virtualenv to a delta between what is installed and what is required. This is achived by using the flag ``--system-site-packages`` (See `here <https://virtualenv.pypa.io/en/latest/userguide/#the-system-site-packages-option>`_ for further information).
 
 .. note::
 
-   Every time you want to use Cekit you must activate Cekit Python virtual environment by executing ``source ~/cekit/bin/activate``
+   Every time you want to use CEkit you must activate CEkit Python virtual environment by executing ``source ~/cekit/bin/activate``
 
    For those using ZSH a useful addition is `Zsh-Autoswitch-VirtualEnv <https://github.com/MichaelAquilina/zsh-autoswitch-virtualenv>`_ the use of which avoids the labour of manually creating the virtualenv and activating it each time ; simply run ``mkvenv --system-site-packages`` initially and then it is handled automatically then on.
 

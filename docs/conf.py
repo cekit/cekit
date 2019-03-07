@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import guzzle_sphinx_theme
-from cekit import version as cekit_version
 import os
 import sys
 
 sys.path.insert(0, os.path.abspath('..'))
+
+from cekit import version as cekit_version
 
 
 def setup(app):

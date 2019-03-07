@@ -15,3 +15,4 @@ and be familiar with building and testing images with it.
     repository_management
     image_help_pages
     redhat
+    CONTRIBUTING

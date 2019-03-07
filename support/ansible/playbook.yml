@@ -19,3 +19,9 @@
     package:
       name: "{{ python_to_install }}"
       state: present
+
+  - name: Install guzzle theme
+    pip:
+      chdir: ../../docs
+      executable: pip3
+      requirements: requirements.txt
