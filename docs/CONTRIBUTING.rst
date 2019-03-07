@@ -3,10 +3,9 @@
 Contributing to the project
 ===========================
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to develop Cekit. Please consult your package manager for the correct package name. Currently within Fedora 29 almost all the required packages are available as RPMs. A sample set of Ansible scripts that provide **all** pre-requistites for development are available `here <https://github.com/cekit/cekit/tree/develop/ansible>`_.
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to develop Cekit. Please consult your package manager for the correct package name. Currently within Fedora 29 all the required packages are available as RPMs. A sample set of Ansible scripts that provide **all** pre-requistites for development are available `here <https://github.com/cekit/cekit/tree/develop/ansible>`_.
 
 - If you are running inside the Red Hat infrastructure then ``rhpkg`` must be installed as well.
-- Currently ``port_for==0.3.1`` must still be installed manually.
 
 To create custom Python virtual environment please run following commands on your system:
 
