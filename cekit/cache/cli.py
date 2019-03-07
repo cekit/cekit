@@ -22,7 +22,7 @@ CONFIG = Config()
 @click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
 @click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default="~/.cekit", show_default=True)
 @click.version_option(message="%(version)s", version=version)
-def cli(config, verbose, work_dir):
+def cli(config, verbose, work_dir):  # pylint: disable=unused-argument
     pass
 
 
@@ -36,7 +36,7 @@ def ls():
 @click.option('--md5', metavar="CHECKSUM", help="The md5 checksum of the artifact.")
 @click.option('--sha1', metavar="CHECKSUM", help="The sha1 checksum of the artifact.")
 @click.option('--sha256', metavar="CHECKSUM", help="The sha256 checksum of the artifact.")
-def add(location, md5, sha1, sha256):
+def add(location, md5, sha1, sha256):  # pylint: disable=unused-argument
     if not (md5 or sha1 or sha256):
         raise click.UsageError("At least one checksum must be provided")
 
@@ -96,7 +96,7 @@ class CacheCli():
         try:
             artifact_id = artifact_cache.add(artifact)
             click.echo("Artifact {} cached with UUID '{}'".format(location, artifact_id))
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             click.secho("Cannot cache artifact {}: {}".format(location, str(ex)), fg='red')
             sys.exit(1)
 
@@ -124,7 +124,7 @@ class CacheCli():
         try:
             artifact_cache.delete(uuid)
             click.echo("Artifact with UUID '{}' removed".format(uuid))
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             click.secho("Artifact with UUID '{}' doesn't exists in the cache".format(uuid), fg='yellow')
             sys.exit(1)
 
@@ -142,7 +142,7 @@ class CacheCli():
         try:
             shutil.rmtree(artifact_cache.cache_dir)
             click.echo("Artifact cache cleared!")
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             click.secho("An error occured while removing the artifact cache directory '{}'".format(
                 artifact_cache.cache_dir), fg='red')
             sys.exit(1)
