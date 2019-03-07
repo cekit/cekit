@@ -19,21 +19,21 @@ class ArtifactCache():
     """
 
     def __init__(self):
-        self._cache_dir = os.path.expanduser(
+        self.cache_dir = os.path.expanduser(
             os.path.join(CONFIG.get('common', 'work_dir'), 'cache'))
-        if not os.path.exists(self._cache_dir):
-            os.makedirs(self._cache_dir)
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
 
     def _get_cache(self):
         cache = {}
-        for index_file in glob.glob(os.path.join(self._cache_dir, '*.yaml')):
+        for index_file in glob.glob(os.path.join(self.cache_dir, '*.yaml')):
             with open(index_file, 'r') as file_:
                 cache[os.path.basename(index_file)] = yaml.safe_load(file_)
 
         return cache
 
     def _update_cache(self, cache_entry, artifact_id):
-        index_file = os.path.join(self._cache_dir, artifact_id + '.yaml')
+        index_file = os.path.join(self.cache_dir, artifact_id + '.yaml')
         tmp_cache_file = index_file + str(os.getpid())
         with open(tmp_cache_file, 'w') as file_:
             yaml.safe_dump(cache_entry, file_)
@@ -51,7 +51,7 @@ class ArtifactCache():
 
         artifact_id = str(uuid.uuid4())
 
-        artifact_file = os.path.expanduser(os.path.join(self._cache_dir, artifact_id))
+        artifact_file = os.path.expanduser(os.path.join(self.cache_dir, artifact_id))
         if not os.path.exists(artifact_file):
             artifact.guarded_copy(artifact_file)
 
@@ -68,8 +68,8 @@ class ArtifactCache():
     def delete(self, artifact_uuid):
         # check if artifact exists
         self._get_cache()
-        os.remove(os.path.join(self._cache_dir, artifact_uuid))
-        os.remove(os.path.join(self._cache_dir, artifact_uuid + '.yaml'))
+        os.remove(os.path.join(self.cache_dir, artifact_uuid))
+        os.remove(os.path.join(self.cache_dir, artifact_uuid + '.yaml'))
 
     def get(self, artifact):
         for alg in SUPPORTED_HASH_ALGORITHMS:

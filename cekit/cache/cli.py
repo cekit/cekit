@@ -1,4 +1,5 @@
 import logging
+import shutil
 import sys
 
 import click
@@ -12,8 +13,8 @@ from cekit.tools import Map
 from cekit.version import version
 
 setup_logging()
-logger = logging.getLogger('cekit')
-config = Config()
+LOGGER = logging.getLogger('cekit')
+CONFIG = Config()
 
 
 @click.group(context_settings=dict(max_content_width=100))
@@ -48,6 +49,11 @@ def rm(uuid):
     CacheCli.prepare().rm(uuid)
 
 
+@cli.command(name="clear", short_help="Remove all artifacts from the cache")
+def clear():
+    CacheCli.prepare().clear()
+
+
 class CacheCli():
     @staticmethod
     def prepare():
@@ -58,11 +64,11 @@ class CacheCli():
 
         # TODO: logging is used only when adding the artifact, we need to find out if it would be possible to do it better
         if args.verbose:
-            logger.setLevel(logging.DEBUG)
+            LOGGER.setLevel(logging.DEBUG)
         else:
-            logger.setLevel(logging.INFO)
+            LOGGER.setLevel(logging.INFO)
 
-        config.configure(args.config, {'work_dir': args.work_dir})
+        CONFIG.configure(args.config, {'work_dir': args.work_dir})
 
     def add(self, location, md5, sha1, sha256):
         artifact_cache = ArtifactCache()
@@ -120,6 +126,25 @@ class CacheCli():
             click.echo("Artifact with UUID '{}' removed".format(uuid))
         except Exception:
             click.secho("Artifact with UUID '{}' doesn't exists in the cache".format(uuid), fg='yellow')
+            sys.exit(1)
+
+    def clear(self):
+        """
+        Removes the artifact cache directory with all artifacts.
+
+        Use with caution!
+        """
+        artifact_cache = ArtifactCache()
+
+        if not click.confirm("Are you sure to remove all artifacts from cache?", show_default=True):
+            return
+
+        try:
+            shutil.rmtree(artifact_cache.cache_dir)
+            click.echo("Artifact cache cleared!")
+        except Exception:
+            click.secho("An error occured while removing the artifact cache directory '{}'".format(
+                artifact_cache.cache_dir), fg='red')
             sys.exit(1)
 
 
