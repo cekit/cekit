@@ -60,8 +60,12 @@ rather than the image itself. In our experience we see that this is the most com
     CEKit makes it possible to colocate tests with image source as well as module source. Please
     take a look at the :ref:`Test file locations` section for more information where these should be placed.
 
-Placing feature files together with modules makes it easy to share the feature as well a tests
-related to this particular feature too!
+Placing feature files together with modules makes it easy to share the feature as well as tests.
+Such tests could be run by multiple different images which use this particular module.
+
+.. warning::
+    There is a limitation in sharing module tests, please refer to the https://github.com/cekit/cekit/issues/421
+    issue fore more information.
 
 Steps
 ^^^^^^^^^^^^^^^
@@ -79,7 +83,7 @@ Default steps
 **************
 
 CEKit comes with a list of build-in steps that are available for use in
-tests. See the `steps repository <https://github.com/cekit/behave-test-steps>`_.
+features. These steps are available in the `steps repository <https://github.com/cekit/behave-test-steps>`_.
 
 .. hint::
     We encourage you to add or extend these steps instead of maintaining your own
@@ -212,14 +216,18 @@ CEKit derives two feature tag names from the name of the image being tested:
 1. The image name itself (``name`` key in image descriptor), and
 2. Everything before the first ``/`` in the image name, also known as *image family*.
 
-    **Example**: If you are testing the ``jboss-eap-7/eap7`` image,
-    tests will be invoked with tags ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
+..
+
+    Example
+        If you test the ``jboss-eap-7/eap7`` image,
+        tests will be invoked with tags ``@jboss-eap-7`` and ``@jboss-eap-7/eap7``.
 
 If ``--tag`` is specified, then the argument is used in place of the image
 name for the process above.
 
-    **Example** If you provided ``--tag foo/bar``, then the tags used would be
-    ``@foo`` and ``@foo/bar``.
+    Example
+        If you use ``--tag foo/bar`` parameter, then the tags used would be
+        ``@foo`` and ``@foo/bar``.
 
 Special tags
 ^^^^^^^^^^^^^^^^^^

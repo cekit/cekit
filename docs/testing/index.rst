@@ -14,8 +14,6 @@ even!) as a whole which is similar to integration testing.
 
 Currently we support following test frameworks:
 
-.. .. include:: behave.rst
-
 .. toctree::
     :titlesonly:
     
