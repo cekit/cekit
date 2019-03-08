@@ -1,3 +1,4 @@
+import logging
 import pytest
 import os
 import yaml
@@ -213,7 +214,6 @@ def test_path_local_non_existing_resource_with_cacher_use(mocker):
     config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
     mocker.patch('os.path.exists', return_value=False)
     mocker.patch('os.makedirs')
-    shutil_mock = mocker.patch('shutil.copy')
 
     res = Resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')
@@ -223,8 +223,34 @@ def test_path_local_non_existing_resource_with_cacher_use(mocker):
 
     res.guarded_copy('target')
 
-    #shutil_mock.assert_called_with('/foo/bar', 'target')
     download_file_mock.assert_called_with('/foo/bar', 'target')
+
+
+def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('os.makedirs')
+    os_remove_mock = mocker.patch('os.remove')
+
+    urlopen_class_mock = mocker.patch('cekit.descriptor.resource.urlopen')
+    urlopen_mock = urlopen_class_mock.return_value
+    urlopen_mock.getcode.return_value = 200
+    urlopen_mock.read.side_effect = Exception
+
+    res = Resource({'url': 'http://server.org/dummy',
+                    'sha256': 'justamocksum'})
+
+    targetfile = os.path.join(str(tmpdir), 'targetfile')
+
+    with pytest.raises(CekitError) as excinfo:
+        res.guarded_copy(targetfile)
+
+    assert "Error copying resource: 'dummy'. See logs for more info" in str(excinfo.value)
+    assert "Removing incompletely downloaded '{}' file".format(targetfile) in caplog.text
+
+    urlopen_class_mock.assert_called_with('http://server.org/dummy', context=mocker.ANY)
+    os_remove_mock.assert_called_with(targetfile)
 
 
 def test_overide_resource_remove_chksum():
