@@ -8,6 +8,7 @@ from cekit.errors import CekitError
 
 config = Config()
 
+
 def setup_function(function):
     config.cfg['common'] = {'work_dir': '/tmp'}
 
@@ -190,6 +191,40 @@ def test_path_resource_relative():
     res = Resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')
     assert res.path == '/foo/bar'
+
+
+def test_path_local_existing_resource_no_cacher_use(mocker):
+    config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
+    mocker.patch('os.path.exists', return_value=True)
+    shutil_mock = mocker.patch('shutil.copy')
+
+    res = Resource({'name': 'foo',
+                    'path': 'bar'}, directory='/foo')
+
+    mocker.spy(res, '_download_file')
+
+    res.guarded_copy('target')
+
+    shutil_mock.assert_called_with('/foo/bar', 'target')
+    res._download_file.assert_not_called()
+
+
+def test_path_local_non_existing_resource_with_cacher_use(mocker):
+    config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('os.makedirs')
+    shutil_mock = mocker.patch('shutil.copy')
+
+    res = Resource({'name': 'foo',
+                    'path': 'bar'}, directory='/foo')
+
+    mocker.spy(res, '_download_file')
+    download_file_mock = mocker.patch.object(res, '_download_file')
+
+    res.guarded_copy('target')
+
+    #shutil_mock.assert_called_with('/foo/bar', 'target')
+    download_file_mock.assert_called_with('/foo/bar', 'target')
 
 
 def test_overide_resource_remove_chksum():
