@@ -220,7 +220,7 @@ def test_dependency_handler_init_on_unknown_env_with_os_release_file(mocker, cap
     with mocked_dependency_handler(mocker, ""):
         pass
 
-    assert "You are running Cekit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
+    assert "You are running CEKit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
 
 
 def test_dependency_handler_init_on_known_env(mocker, caplog):
@@ -239,7 +239,7 @@ def test_dependency_handler_init_on_unknown_env_without_os_release_file(mocker, 
         exists_mock.return_value = False
         tools.DependencyHandler()
 
-    assert "You are running Cekit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
+    assert "You are running CEKit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
     assert "You are running on known platform" not in caplog.text
 
 
@@ -262,7 +262,7 @@ def test_dependency_handler_handle_dependencies_with_library_only(mocker, caplog
         handler._handle_dependencies(deps)
 
     assert "Checking if 'python-docker' dependency is provided..." in caplog.text
-    assert "Required Cekit library 'python-docker' was found as a 'docker' module!" in caplog.text
+    assert "Required CEKit library 'python-docker' was found as a 'docker' module!" in caplog.text
     assert "All dependencies provided!" in caplog.text
 
 
@@ -297,7 +297,7 @@ def test_dependency_handler_handle_dependencies_with_executable_only_failed(mock
         }
     }
     with mocked_dependency_handler(mocker) as handler:
-        with pytest.raises(CekitError, match="Cekit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable."):
+        with pytest.raises(CekitError, match="CEKit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable."):
             handler._handle_dependencies(deps)
 
     assert "Checking if 'xyz' dependency is provided..." in caplog.text
@@ -363,14 +363,14 @@ def test_dependency_handler_check_for_executable_with_executable_only(mocker, ca
         mocker.patch('os.path.isdir').return_value = False
         handler._check_for_executable('xyz', 'xyz-aaa')
 
-    assert "Cekit dependency 'xyz' provided via the '/def/xyz-aaa' executable." in caplog.text
+    assert "CEKit dependency 'xyz' provided via the '/def/xyz-aaa' executable." in caplog.text
 
 
 def test_dependency_handler_check_for_executable_with_executable_fail(mocker, monkeypatch):
     with mocked_dependency_handler(mocker) as handler:
         monkeypatch.setenv('PATH', '/abc')
         mocker.patch('os.path.exists').return_value = False
-        with pytest.raises(CekitError, match=r"^Cekit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable.$"):
+        with pytest.raises(CekitError, match=r"^CEKit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable.$"):
             handler._check_for_executable('xyz', 'xyz-aaa')
 
 
@@ -379,5 +379,5 @@ def test_dependency_handler_check_for_executable_with_executable_fail_with_packa
         monkeypatch.setenv('PATH', '/abc')
         mocker.patch('os.path.exists').return_value = False
 
-        with pytest.raises(CekitError, match=r"^Cekit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable. To satisfy this requrement you can install the 'package-xyz' package.$"):
+        with pytest.raises(CekitError, match=r"^CEKit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable. To satisfy this requirement you can install the 'package-xyz' package.$"):
             handler._check_for_executable('xyz', 'xyz-aaa', 'package-xyz')

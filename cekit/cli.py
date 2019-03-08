@@ -137,7 +137,7 @@ def build_podman(ctx, pull, tags):
 
         https://podman.io/
     """
-    run_build(ctx, 'buildah')
+    run_build(ctx, 'podman')
 
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
@@ -277,6 +277,9 @@ def run_build(ctx, builder):
         # import is delayed until here to prevent circular import error
         from cekit.builders.osbs import OSBSBuilder as builder_impl
         LOGGER.info("Using OSBS builder to build the image")
+    elif builder == 'podman':
+        from cekit.builders.podman import PodmanBuilder as builder_impl
+        LOGGER.info("Using Podman builder to build the image")
     elif builder == 'buildah':
         from cekit.builders.buildah import BuildahBuilder as builder_impl
         LOGGER.info("Using Buildah builder to build the image")

@@ -132,11 +132,11 @@ class DependencyHandler(object):
     requirements.
     """
 
-    # List of operating system families on which Cekit is known to work.
+    # List of operating system families on which CEKit is known to work.
     # It may work on other operating systems too, but it was not tested.
     KNOWN_OPERATING_SYSTEMS = ['fedora', 'centos', 'rhel']
 
-    # Set of core Cekit external dependencies.
+    # Set of core CEKit external dependencies.
     # Format is defined below, in the handle_dependencies() method
     EXTERNAL_CORE_DEPENDENCIES = {
         'git': {
@@ -164,14 +164,14 @@ class DependencyHandler(object):
 
         if not self.os_release or 'ID' not in self.os_release or 'NAME' not in self.os_release or 'VERSION' not in self.os_release:
             LOGGER.warning(
-                "You are running Cekit on an unknown platform. External dependencies suggestions may not work!")
+                "You are running CEKit on an unknown platform. External dependencies suggestions may not work!")
             return
 
         self.platform = self.os_release['ID']
 
         if self.os_release['ID'] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
             LOGGER.warning(
-                "You are running Cekit on an untested platform: {} {}. External dependencies suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
+                "You are running CEKit on an untested platform: {} {}. External dependencies suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
             return
 
         LOGGER.info("You are running on known platform: {} {}".format(
@@ -197,7 +197,7 @@ class DependencyHandler(object):
             }
         }
 
-        If the platform on which Cekit is currently running is available, it takes precedence before
+        If the platform on which CEKit is currently running is available, it takes precedence before
         defaults.
         """
 
@@ -221,11 +221,11 @@ class DependencyHandler(object):
 
             if library:
                 if self._check_for_library(library):
-                    LOGGER.debug("Required Cekit library '{}' was found as a '{}' module!".format(
+                    LOGGER.debug("Required CEKit library '{}' was found as a '{}' module!".format(
                         dependency, library))
                     continue
                 else:
-                    msg = "Required Cekit library '{}' was not found; required module '{}' could not be found.".format(
+                    msg = "Required CEKit library '{}' was not found; required module '{}' could not be found.".format(
                         dependency, library)
 
                     # Library was not found, check if we have a hint
@@ -275,11 +275,11 @@ class DependencyHandler(object):
             file_path = os.path.join(os.path.normcase(directory), executable)
 
             if self._is_program(file_path):
-                LOGGER.debug("Cekit dependency '{}' provided via the '{}' executable.".format(
+                LOGGER.debug("CEKit dependency '{}' provided via the '{}' executable.".format(
                     dependency, file_path))
                 return
 
-        msg = "Cekit dependency: '{}' was not found, please provide the '{}' executable.".format(
+        msg = "CEKit dependency: '{}' was not found, please provide the '{}' executable.".format(
             dependency, executable)
 
         if package:
