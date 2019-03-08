@@ -121,7 +121,7 @@ class Resource(Descriptor):
             self._copy_impl(target)
         except Exception as ex:
             logger.warning("Cekit is not able to fetch resource '%s' automatically. "
-                        "Please use cekit-cache command to add this artifact manually." % self.name)
+                           "Please use cekit-cache command to add this artifact manually." % self.name)
 
             if self.description:
                 logger.info(self.description)
@@ -200,12 +200,22 @@ class Resource(Descriptor):
 
             if res.getcode() != 200:
                 raise CekitError("Could not download file from %s" % url)
-            with open(destination, 'wb') as f:
-                while True:
-                    chunk = res.read(1024)
-                    if not chunk:
-                        break
-                    f.write(chunk)
+
+            try:
+                with open(destination, 'wb') as f:
+                    while True:
+                        chunk = res.read(1024)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+            except Exception:
+                try:
+                    logger.debug("Removing incompletely downloaded '{}' file".format(destination))
+                    os.remove(destination)
+                except OSError:
+                    logger.warning("An error occurred while removing file '{}'".format(destination))
+
+                raise
         else:
             raise CekitError("Unsupported URL scheme: %s" % (url))
 
