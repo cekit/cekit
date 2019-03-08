@@ -1,4 +1,4 @@
-Cekit
+CEkit
 =====
 
 .. image:: docs/_static/logo-wide.png
@@ -8,7 +8,7 @@ About
 
 Container image creation tool.
 
-Cekit helps to build container images from image definition files with strong
+CEkit helps to build container images from image definition files with strong
 focus on modularity and code reuse.
 
 Features
@@ -21,4 +21,3 @@ Documentation
 -------------
 
 `Documentation is available here <http://cekit.readthedocs.io/>`_.
-
