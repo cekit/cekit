@@ -205,7 +205,7 @@ def test_cekit_cache_clear_with_error(mocker, tmpdir):
         1,
         'y\n')
 
-    assert "An error occured while removing the artifact cache directory '{}'".format(
+    assert "An error occurred while removing the artifact cache directory '{}'".format(
         os.path.join(work_dir, 'cache')) in result.output
 
 

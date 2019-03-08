@@ -143,7 +143,7 @@ class CacheCli():
             shutil.rmtree(artifact_cache.cache_dir)
             click.echo("Artifact cache cleared!")
         except Exception:  # pylint: disable=broad-except
-            click.secho("An error occured while removing the artifact cache directory '{}'".format(
+            click.secho("An error occurred while removing the artifact cache directory '{}'".format(
                 artifact_cache.cache_dir), fg='red')
             sys.exit(1)
 
