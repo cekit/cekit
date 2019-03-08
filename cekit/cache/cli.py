@@ -1,16 +1,14 @@
-import click
 import logging
-import os
 import sys
-import traceback
 
-from cekit.tools import Map
-from cekit.config import Config
-from cekit.errors import CekitError
-from cekit.log import setup_logging
-from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
+import click
+
 from cekit.cache.artifact import ArtifactCache
+from cekit.config import Config
+from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 from cekit.descriptor import Resource
+from cekit.log import setup_logging
+from cekit.tools import Map
 from cekit.version import version
 
 setup_logging()

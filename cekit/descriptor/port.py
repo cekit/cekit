@@ -1,4 +1,5 @@
 import yaml
+
 from cekit.descriptor.base import Descriptor
 
 port_schemas = [yaml.safe_load("""

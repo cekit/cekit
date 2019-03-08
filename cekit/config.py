@@ -1,4 +1,5 @@
 import os
+
 import yaml
 
 try:
@@ -36,9 +37,9 @@ class Config(object):
         params:
         config_path - path to a cekit config file (expanding user)
         """
-        cp = configparser.ConfigParser()
-        cp.read(os.path.expanduser(config_path))
-        cls.cfg = cp._sections
+        config_parser = configparser.ConfigParser()
+        config_parser.read(os.path.expanduser(config_path))
+        cls.cfg = config_parser._sections
         cls.cfg['common'] = cls.cfg.get('common', {})
         cls.cfg['common']['work_dir'] = cls.cfg.get('common').get('work_dir', '~/.cekit')
         cls.cfg['common']['redhat'] = yaml.safe_load(

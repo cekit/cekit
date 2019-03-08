@@ -1,9 +1,7 @@
 import yaml
 
 import cekit
-
 from cekit.descriptor import Descriptor
-
 
 execute_schemas = [yaml.safe_load("""
         map:

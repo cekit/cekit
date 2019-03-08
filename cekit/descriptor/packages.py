@@ -1,10 +1,11 @@
-import os
 import logging
+import os
+
 import yaml
 
 from cekit.config import Config
-from cekit.errors import CekitError
 from cekit.descriptor import Descriptor, Resource
+from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
 config = Config()

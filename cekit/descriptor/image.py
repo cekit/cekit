@@ -1,15 +1,13 @@
 import copy
-import os
+from collections import OrderedDict
+
 import yaml
 
 import cekit
-
 from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
     Packages, Osbs, Volume, Resource
 from cekit.descriptor.base import logger, _merge_descriptors
 from cekit.errors import CekitError
-from cekit.version import version as cekit_version
-from collections import OrderedDict
 
 _image_schema = yaml.safe_load("""
 map:
@@ -65,7 +63,7 @@ class Image(Descriptor):
         self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
 
         # make sure image declarations override any module definitions
-        self._image_overrides = { 'artifacts': Image._to_dict(self.artifacts), 'modules': Image._to_dict(self.modules.install) }
+        self._image_overrides = {'artifacts': Image._to_dict(self.artifacts), 'modules': Image._to_dict(self.modules.install)}
         self._all_artifacts = Image._to_dict(self.artifacts)
 
     def process_defaults(self):

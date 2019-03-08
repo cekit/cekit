@@ -2,7 +2,6 @@ import yaml
 
 from cekit.descriptor.base import Descriptor
 
-
 label_schemas = [yaml.safe_load("""
 map:
   name: {type: str, required: True}

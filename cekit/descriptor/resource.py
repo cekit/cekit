@@ -1,8 +1,9 @@
 import logging
 import os
 import shutil
-import subprocess
 import ssl
+import subprocess
+
 import yaml
 
 try:

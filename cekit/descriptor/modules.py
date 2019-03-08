@@ -2,7 +2,6 @@ import yaml
 
 from cekit.descriptor import Descriptor, Resource
 
-
 modules_schema = [yaml.safe_load("""
 map:
   repositories:

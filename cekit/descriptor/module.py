@@ -1,5 +1,3 @@
-import cekit
-
 from cekit.descriptor import Image, Execute
 from cekit.descriptor.image import get_image_schema
 
