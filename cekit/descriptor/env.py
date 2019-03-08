@@ -2,7 +2,6 @@ import yaml
 
 from cekit.descriptor import Descriptor
 
-
 env_schema = [yaml.safe_load("""
 map:
   name: {type: str, required: True}

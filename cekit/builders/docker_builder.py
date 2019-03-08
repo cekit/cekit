@@ -3,8 +3,8 @@ import os
 import re
 import sys
 import traceback
-import yaml
 
+import yaml
 
 from cekit.builder import Builder
 from cekit.errors import CekitError

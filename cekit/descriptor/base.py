@@ -1,12 +1,11 @@
-import cekit
 import collections
 import logging
 import os
-import yaml
 
+import yaml
+from pykwalify.core import Core
 
 from cekit.errors import CekitError
-from pykwalify.core import Core
 
 logger = logging.getLogger('cekit')
 

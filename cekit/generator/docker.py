@@ -2,12 +2,12 @@ import logging
 import os
 import platform
 import subprocess
+
 import yaml
 
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-
 
 logger = logging.getLogger('cekit')
 config = Config()

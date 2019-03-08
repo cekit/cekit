@@ -1,11 +1,12 @@
 import logging
-import yaml
 import os
 
-from cekit.tools import get_brew_url
+import yaml
+
 from cekit.config import Config
-from cekit.generator.base import Generator
 from cekit.descriptor.resource import _PlainResource
+from cekit.generator.base import Generator
+from cekit.tools import get_brew_url
 
 logger = logging.getLogger('cekit')
 config = Config()

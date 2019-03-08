@@ -1,8 +1,9 @@
-import click
 import logging
 import os
-import sys
 import subprocess
+import sys
+
+import click
 import yaml
 
 from cekit.errors import CekitError
@@ -94,7 +95,8 @@ def get_brew_url(md5):
         # 'CANCELED': 4
         if build['state'] != 1:
             raise CekitError(
-                "Artifact with checksum {} was found in Koji metadata but the build is in incorrect state ({}) making the artifact not available for downloading anymore".format(md5, build_states[build['state']]))
+                "Artifact with checksum {} was found in Koji metadata but the build is in incorrect state ({}) making "
+                "the artifact not available for downloading anymore".format(md5, build_states[build['state']]))
 
         package = build['package_name']
         release = build['release']
@@ -113,8 +115,8 @@ def get_brew_url(md5):
 class Chdir(object):
     """ Context manager for changing the current working directory """
 
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
+    def __init__(self, new_path):
+        self.newPath = os.path.expanduser(new_path)
         self.savedPath = None
 
     def __enter__(self):
@@ -171,7 +173,8 @@ class DependencyHandler(object):
 
         if self.os_release['ID'] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
             LOGGER.warning(
-                "You are running CEKit on an untested platform: {} {}. External dependencies suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
+                "You are running CEKit on an untested platform: {} {}. External dependencies "
+                "suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
             return
 
         LOGGER.info("You are running on known platform: {} {}".format(

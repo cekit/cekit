@@ -1,6 +1,6 @@
 import logging
-import subprocess
 import os
+import subprocess
 
 from cekit.builder import Builder
 from cekit.errors import CekitError

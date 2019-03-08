@@ -129,7 +129,7 @@ def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 @click.pass_context
-def build_podman(ctx, pull, tags):
+def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 

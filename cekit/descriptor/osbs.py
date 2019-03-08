@@ -1,5 +1,6 @@
-import yaml
 import os
+
+import yaml
 
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError

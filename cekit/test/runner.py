@@ -1,10 +1,10 @@
-import os
 import getpass
 import logging
+import os
 import subprocess
 
-from cekit.tools import Chdir
 from cekit.errors import CekitError
+from cekit.tools import Chdir
 
 logger = logging.getLogger('cekit')
 

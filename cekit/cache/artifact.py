@@ -1,11 +1,12 @@
 import glob
 import os
 import uuid
+
 import yaml
 
 from cekit.config import Config
-from cekit.errors import CekitError
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
+from cekit.errors import CekitError
 
 CONFIG = Config()
 
