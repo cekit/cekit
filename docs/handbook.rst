@@ -7,6 +7,7 @@ and be familiar with building and testing images with it.
     :maxdepth: 3
 
     installation/index
+    global
     build
     caching
     overrides
