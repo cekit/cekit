@@ -207,7 +207,7 @@ def test_path_local_existing_resource_no_cacher_use(mocker):
     res.guarded_copy('target')
 
     shutil_mock.assert_called_with('/foo/bar', 'target')
-    res._download_file.assert_not_called()
+    assert res._download_file.call_count == 0
 
 
 def test_path_local_non_existing_resource_with_cacher_use(mocker):
