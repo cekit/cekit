@@ -10,14 +10,14 @@ from cekit.errors import CekitError
 from cekit import tools
 
 
-class TestDescriptor(Descriptor):
+class MockedDescriptor(Descriptor):
     def __init__(self, descriptor):
         self.schemas = [yaml.safe_load("""type: any""")]
-        super(TestDescriptor, self).__init__(descriptor)
+        super(MockedDescriptor, self).__init__(descriptor)
 
         for key, val in descriptor.items():
             if isinstance(val, dict):
-                self._descriptor[key] = TestDescriptor(val)
+                self._descriptor[key] = MockedDescriptor(val)
 
 
 def test_merging_description_image():
@@ -51,15 +51,15 @@ def test_merging_description_override():
 
 
 def test_merging_plain_descriptors():
-    desc1 = TestDescriptor({'name': 'foo',
+    desc1 = MockedDescriptor({'name': 'foo',
                             'a': 1,
                             'b': 2})
 
-    desc2 = TestDescriptor({'name': 'foo',
+    desc2 = MockedDescriptor({'name': 'foo',
                             'b': 5,
                             'c': 3})
 
-    expected = TestDescriptor({'name': 'foo',
+    expected = MockedDescriptor({'name': 'foo',
                                'a': 1,
                                'b': 2,
                                'c': 3})
@@ -68,17 +68,17 @@ def test_merging_plain_descriptors():
 
 
 def test_merging_emdedded_descriptors():
-    desc1 = TestDescriptor({'name': 'a',
+    desc1 = MockedDescriptor({'name': 'a',
                             'a': 1,
                             'b': {'name': 'b',
                                   'b1': 10,
                                   'b2': 20}})
-    desc2 = TestDescriptor({'b': {'name': 'b',
+    desc2 = MockedDescriptor({'b': {'name': 'b',
                                   'b2': 50,
                                   'b3': 30},
                             'c': {'name': 'c'}})
 
-    expected = TestDescriptor({'name': 'a',
+    expected = MockedDescriptor({'name': 'a',
                                'a': 1,
                                'b': {'name': 'b',
                                      'b1': 10,
@@ -104,19 +104,19 @@ def test_merging_plain_list_of_list():
 
 
 def test_merging_list_of_descriptors():
-    desc1 = [TestDescriptor({'name': 1,
+    desc1 = [MockedDescriptor({'name': 1,
                              'a': 1,
                              'b': 2})]
 
-    desc2 = [TestDescriptor({'name': 2,
+    desc2 = [MockedDescriptor({'name': 2,
                              'a': 123}),
-             TestDescriptor({'name': 1,
+             MockedDescriptor({'name': 1,
                              'b': 3,
                              'c': 3})]
 
-    expected = [TestDescriptor({'name': 2,
+    expected = [MockedDescriptor({'name': 2,
                                 'a': 123}),
-                TestDescriptor({'name': 1,
+                MockedDescriptor({'name': 1,
                                 'a': 1,
                                 'b': 2,
                                 'c': 3})]
