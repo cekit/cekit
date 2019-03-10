@@ -44,6 +44,19 @@ def test_cekit_cache_add_artifact(tmpdir):
 
     assert "cached with UUID" in result.output
 
+    # Artifact added to cache should have all supported checksums computed
+    result = run_cekit_cache(['-v',
+                              '--work-dir',
+                              work_dir,
+                              'ls'])
+
+    for alg in SUPPORTED_HASH_ALGORITHMS:
+        assert alg in result.output
+
+    assert "sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" in result.output
+    assert "sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709" in result.output
+    assert "md5: d41d8cd98f00b204e9800998ecf8427e" in result.output
+
 
 def test_cekit_cache_add_artifact_existing(tmpdir):
     work_dir = str(tmpdir.mkdir('work_dir'))

@@ -5,7 +5,7 @@ import uuid
 import yaml
 
 from cekit.config import Config
-from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
+from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, get_sum
 from cekit.errors import CekitError
 
 CONFIG = Config()
@@ -58,9 +58,9 @@ class ArtifactCache():
         cache_entry = {'names': [artifact['name']],
                        'cached_path': artifact_file}
 
+        # We should populate the cache entry with checksums for all supported algorithms
         for alg in SUPPORTED_HASH_ALGORITHMS:
-            if alg in artifact:
-                cache_entry.update({alg: artifact[alg]})
+            cache_entry.update({alg: get_sum(artifact_file, alg)})
 
         self._update_cache(cache_entry, artifact_id)
         return artifact_id
