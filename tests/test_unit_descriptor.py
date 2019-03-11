@@ -67,18 +67,22 @@ def test_osbs():
     assert osbs['repository']['branch'] == 'bar'
 
 
-def test_packages(mocker):
-    mocker.patch.object(Repository, '_get_repo_url', return_value='foo')
+def test_packages():
     pkg = Packages(yaml.safe_load("""
-      repositories:
-          - repo-foo
-          - repo-bar
       install:
           - pkg-foo"""), "a/path/image.yaml")
 
-    assert Repository('repo-foo') in pkg['repositories']
-    assert Repository('repo-bar') in pkg['repositories']
     assert 'pkg-foo' in pkg['install']
+
+
+def test_packages_invalid_old_repository_definition():
+    with pytest.raises(CekitError, match=r"Cannot validate schema: Repository"):
+        Packages(yaml.safe_load("""
+        repositories:
+            - repo-foo
+            - repo-bar
+        install:
+            - pkg-foo"""), "a/path/image.yaml")
 
 
 def test_image():
