@@ -1,83 +1,57 @@
-#compdef cekit
+_cekit_completion() {
+    local -a completions
+    local -a completions_with_descriptions
+    local -a response
+    response=("${(@f)$( env COMP_WORDS="${words[*]}" \
+                        COMP_CWORD=$((CURRENT-1)) \
+                        _CEKIT_COMPLETE="complete_zsh" \
+                        cekit )}")
 
-(( $+functions[_cekit_commands] )) ||
-_cekit_commands () {
-  local -a cekit_commands
-
-  cekit_commands=(
-    'generate:Generate source'
-    'build:Build container image'
-    'test:Test container image'
-  )
-
-  integer ret=1
-
-  _describe -t cekit-commands 'cekit command' cekit_commands && ret=0
-
-  return ret
-}
-
-_cekit() {
-  integer ret=1
-
-  local curcontext=$curcontext state line
-  declare -A opt_args
-
-  _arguments -C -S \
-    "--help[show help message and exit]" \
-    "--verbose[verbose output]" \
-    "--version[show version and exit]" \
-    "--config[path for cekit config file (~/.cekit/config is default)]:config:_files" \
-    "--redhat[Set default options for Red Hat internal infrastructure]" \
-    "--work-dir[Location of cekit working directory, it's used to store dist-git repos]:workdir:_files -/" \
-    "--package-manager[Package  manager to use for installing dependencies. default: 'yum']:package_manager:" \
-    "*--tag[tag used to build/test the image, can be used multiple times]:tags:" \
-    "*--overrides[a YAML object to override image descriptor, can be used multiple times]:overrides:" \
-    "*--overrides-file[path to a file containing overrides, can be used multiple times]:overrides-files:_files" \
-    "--target[path to directory where to generate sources, default: 'target' directory in current working directory]:target:_files -/" \
-    "--descriptor[path to image descriptor file, default: image.yaml]:descriptor:_files -g \*.\(yml\|yaml\)" \
-    '(-): :->command' \
-    '(-)*:: :->option-or-argument' && return
-
-  case $state in
-    (command)
-      _cekit_commands && ret=0
-      ;;
-    (option-or-argument)
-      local cmd=$words[1]
-      curcontext=${curcontext%:*:*}:cekit_$cmd:
-
-      if (( $+functions[_cekit_$cmd] )); then
-        _call_function ret _cekit_$cmd
-      elif zstyle -T :completion:$curcontext: use-fallback; then
-        _files && ret=0
+    for key descr in ${(kv)response}; do
+      if [[ "$descr" == "_" ]]; then
+          completions+=("$key")
       else
-        _message 'unknown sub-command'
+          completions_with_descriptions+=("$key":"$descr")
       fi
-  esac
+    done
 
-  return ret
+    if [ -n "$completions_with_descriptions" ]; then
+        _describe -V unsorted completions_with_descriptions -U -Q
+    fi
+
+    if [ -n "$completions" ]; then
+        compadd -U -V unsorted -Q -a completions
+    fi
+    compstate[insert]="automenu"
 }
 
-(( $+functions[_cekit_build] )) ||
-_cekit_build() {
-    _arguments \
-        "--build-engine[an engine used to build the image]" \
-        "--build-pull[Always fetch latest base image during build]" \
-        "--build-osbs-release[execute OSBS release build]" \
-        "--build-osbs-user[user for rphkg tool]" \
-        "--build-osbs-nowait[run rhpkg container build with --nowait option]" \
-        "--build-osbs-stage[use rhpkg-stage instead of rhpkg]" \
-        "--build-osbs-target[overrides the default rhpkg target]" \
-	"--build-osbs-commit-msg[commit message for dist-git]" \
-        "--build-tech-preview[perform tech preview build]"
+compdef _cekit_completion cekit;
+
+_cekit_cache_completion() {
+    local -a completions
+    local -a completions_with_descriptions
+    local -a response
+    response=("${(@f)$( env COMP_WORDS="${words[*]}" \
+                        COMP_CWORD=$((CURRENT-1)) \
+                        _CEKIT_CACHE_COMPLETE="complete_zsh" \
+                        cekit-cache )}")
+
+    for key descr in ${(kv)response}; do
+      if [[ "$descr" == "_" ]]; then
+          completions+=("$key")
+      else
+          completions_with_descriptions+=("$key":"$descr")
+      fi
+    done
+
+    if [ -n "$completions_with_descriptions" ]; then
+        _describe -V unsorted completions_with_descriptions -U -Q
+    fi
+
+    if [ -n "$completions" ]; then
+        compadd -U -V unsorted -Q -a completions
+    fi
+    compstate[insert]="automenu"
 }
 
-(( $+functions[_cekit_test] )) ||
-_cekit_test() {
-    _arguments \
-        "--test-wip[Run @wip tests only]" \
-        "--test-steps-url[contains url for cekit test steps]"
-}
-
-_cekit
+compdef _cekit_cache_completion cekit-cache;

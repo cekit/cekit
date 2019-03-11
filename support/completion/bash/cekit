@@ -1,90 +1,43 @@
-_cekit_global_options()
-{
-    local options
-    options+='--tags '
-    options+='--overrides '
-    options+='--overrides-file '
-    options+='--target '
-    options+='--descriptor '
-    options+='--work-dir '
-    echo "$options"
+_cekit_completion() {
+    local IFS=$'
+'
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _CEKIT_COMPLETE=complete $1 ) )
+    return 0
 }
 
-_cekit_build_options()
-{
-    local options
-    options+='--build-engine '
-    options+='--build-pull '
-    options+='--build-osbs-release '
-    options+='--build-osbs-user '
-    options+='--build-osbs-nowait '
-    options+='--build-osbs-stage '
-    options+='--build-osbs-target '
-    options+='--build-osbs-commit-msg '
-    options+='--build-tech-preview '
-    echo "$options"
-}
-
-
-_cekit_test_options()
-{
-    local options
-    options+='--test-wip '
-    options+='--test-steps-url '
-    echo "$options"
-}
-
-_cekit_complete()
-{
-    # save the current world
-    local cur="${COMP_WORDS[COMP_CWORD]}"
-    local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    # process all valid options here
-
-    if [[ '--config' == $prev ]]; then
-        _filedir
-        return
-
-    elif [[ '--descriptor --overrides-file' =~ .*$prev.* ]]; then
-        _filedir yaml
-        return
-
-    elif [[ '--target' == $prev ]]; then
-        _filedir -d
-        return
-
-    elif [[ '--work-dir' == $prev ]]; then
-        _filedir -d
-        return
-
-    elif [[ 'build generate' =~ .*$prev.* ]]; then
-        local options
-        options+=$(_cekit_global_options)
-        options+=$(_cekit_build_options)
-        COMPREPLY=( $( compgen -W "$options" -- $cur ) )
-        return
-
-    elif [[ 'test' == $prev ]]; then
-        local options
-        options+=$(_cekit_global_options)
-        options+=$(_cekit_test_options)
-        COMPREPLY=( $( compgen -W "$options" -- $cur ) )
-        return
-
-    elif [[ "$cur" == -* ]]; then
-        local options
-        options+=$(_cekit_global_options)
-        options+='--help '
-        options+='--verbose '
-        options+='--version '
-        options+='--config '
-        options+='--redhat '
-        options+='--package-manager '
-        COMPREPLY=( $( compgen -W "$options" -- $cur ) )
-        return
+_cekit_completionetup() {
+    local COMPLETION_OPTIONS=""
+    local BASH_VERSION_ARR=(${BASH_VERSION//./ })
+    # Only BASH version 4.4 and later have the nosort option.
+    if [ ${BASH_VERSION_ARR[0]} -gt 4 ] || ([ ${BASH_VERSION_ARR[0]} -eq 4 ] && [ ${BASH_VERSION_ARR[1]} -ge 4 ]); then
+        COMPLETION_OPTIONS="-o nosort"
     fi
 
-    COMPREPLY=( $(compgen -W "generate build test" -- $cur))
+    complete $COMPLETION_OPTIONS -F _cekit_completion cekit
 }
 
-complete -F _cekit_complete cekit
+_cekit_completionetup;
+
+_cekit_cache_completion() {
+    local IFS=$'
+'
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _CEKIT_CACHE_COMPLETE=complete $1 ) )
+    return 0
+}
+
+_cekit_cache_completionetup() {
+    local COMPLETION_OPTIONS=""
+    local BASH_VERSION_ARR=(${BASH_VERSION//./ })
+    # Only BASH version 4.4 and later have the nosort option.
+    if [ ${BASH_VERSION_ARR[0]} -gt 4 ] || ([ ${BASH_VERSION_ARR[0]} -eq 4 ] && [ ${BASH_VERSION_ARR[1]} -ge 4 ]); then
+        COMPLETION_OPTIONS="-o nosort"
+    fi
+
+    complete $COMPLETION_OPTIONS -F _cekit_cache_completion cekit-cache
+}
+
+_cekit_cache_completionetup;
