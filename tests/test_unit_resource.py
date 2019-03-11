@@ -70,6 +70,7 @@ def test_fetching_with_ssl_verify(mocker):
     mock_urlopen = get_mock_urlopen(mocker)
 
     res = Resource({'name': 'file', 'url': 'https:///dummy'})
+
     try:
         res.copy()
     except:
@@ -88,6 +89,7 @@ def test_fetching_disable_ssl_verify(mocker):
     get_mock_ssl(mocker, ctx)
 
     res = Resource({'name': 'file', 'url': 'https:///dummy'})
+
     try:
         res.copy()
     except:
@@ -153,7 +155,9 @@ def test_fetching_file_exists_no_hash_fetched_again(mocker):
 
     with open('file', 'w') as f:  # noqa: F841
         pass
+
     res = Resource({'name': 'file', 'url': 'http:///dummy'})
+
     with pytest.raises(CekitError):
         # url is not valid so we get error, but we are not interested
         # in it. We just need to check that we attempted to downlad.
@@ -251,6 +255,63 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
 
     urlopen_class_mock.assert_called_with('http://server.org/dummy', context=mocker.ANY)
     os_remove_mock.assert_called_with(targetfile)
+
+
+def test_copy_plain_resource_with_cacher(mocker, tmpdir):
+    config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
+    config.cfg['common']['work_dir'] = str(tmpdir)
+
+    urlopen_class_mock = mocker.patch('cekit.descriptor.resource.urlopen')
+    mock_urlopen = urlopen_class_mock.return_value
+    mock_urlopen.getcode.return_value = 200
+    mock_urlopen.read.side_effect = [b"one", b"two", None]
+
+    ctx = get_ctx(mocker)
+    get_mock_ssl(mocker, ctx)
+
+    with open('file', 'w') as f:  # noqa: F841
+        pass
+
+    res = Resource({'name': 'foo',
+                    'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
+
+    substitute_cache_url_mock = mocker.patch.object(
+        res, '_Resource__substitute_cache_url', return_value='http://cache/abc')
+
+    res.copy(str(tmpdir))
+
+    substitute_cache_url_mock.assert_called_once_with(None)
+    urlopen_class_mock.assert_called_with('http://cache/abc', context=ctx)
+
+
+def test_copy_plain_resource_from_brew(mocker, tmpdir):
+    config.cfg['common']['work_dir'] = str(tmpdir)
+    config.cfg['common']['redhat'] = True
+
+    urlopen_class_mock = mocker.patch('cekit.descriptor.resource.urlopen')
+    mock_urlopen = urlopen_class_mock.return_value
+    mock_urlopen.getcode.return_value = 200
+    mock_urlopen.read.side_effect = [b"one", b"two", None]
+
+    ctx = get_ctx(mocker)
+    get_mock_ssl(mocker, ctx)
+
+    with open('file', 'w') as f:  # noqa: F841
+        pass
+
+    res = Resource({'name': 'foo',
+                    'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
+
+    mocker.spy(res, '_Resource__substitute_cache_url')
+
+    mock_get_brew_url = mocker.patch(
+        'cekit.descriptor.resource.get_brew_url', return_value='http://cache/abc')
+
+    res.copy(str(tmpdir))
+
+    mock_get_brew_url.assert_called_once_with('5b9164ad6f496d9dee12ec7634ce253f')
+    res._Resource__substitute_cache_url.call_count == 0
+    urlopen_class_mock.assert_called_with('http://cache/abc', context=ctx)
 
 
 def test_overide_resource_remove_chksum():

@@ -156,16 +156,19 @@ class Resource(Descriptor):
 
     def __substitute_cache_url(self, url):
         cache = config.get('common', 'cache_url')
+
         if not cache:
             return url
 
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in self:
-                logger.debug("Using %s to fetch artifacts from cacher."
-                             % algorithm)
-                return (cache.replace('#filename#', self.name)
-                        .replace('#algorithm#', algorithm)
-                        .replace('#hash#', self[algorithm]))
+                logger.debug("Using {} checksum to fetch artifacts from cacher".format(algorithm))
+
+                url = cache.replace('#filename#', self.name).replace(
+                    '#algorithm#', algorithm).replace('#hash#', self[algorithm])
+
+                logger.debug("Using cache url '{}'".format(url))
+
         return url
 
     def _download_file(self, url, destination, use_cache=True):
@@ -312,26 +315,30 @@ class _PlainResource(Resource):
         self.target = self.target_file_name()
 
     def _copy_impl(self, target):
-
+        # First of all try to download the file using cacher if specified
         if config.get('common', 'cache_url'):
-            logger.debug("Trying to download artifact %s from remote cache" % self.name)
-            # If cacher URL is set, use it
             try:
-                self._download_file(self.url, target)
+                self._download_file(None, target)
                 return target
-            except:
-                logger.warning("Could not download artifact %s from the remote cache" % self.name)
+            except Exception as e:
+                logger.debug(str(e))
+                logger.warning("Could not download '{}' artifact using cacher".format(self.name))
 
         md5 = self.get('md5')
 
+        # Next option is to download it from Brew directly but only if the md5 checkum
+        # is provided and we are running with the --redhat switch
         if md5 and config.get('common', 'redhat'):
-            logger.debug("Trying to download artifact %s from Brew directly" % self.name)
+            logger.debug("Trying to download artifact '{}' from Brew directly".format(self.name))
 
             try:
-                self.url = get_brew_url(md5)
-                self._download_file(self.url, target, use_cache=False)
+                # Generate the URL
+                url = get_brew_url(md5)
+                # Use the URL to download the file
+                self._download_file(url, target, use_cache=False)
                 return target
-            except:
-                logger.warning("Could not download artifact %s from Brew" % self.name)
+            except Exception as e:
+                logger.debug(str(e))
+                logger.warning("Could not download artifact '{}' from Brew".format(self.name))
 
-        raise CekitError("Artifact %s could not be found" % self.name)
+        raise CekitError("Artifact {} could not be found".format(self.name))
