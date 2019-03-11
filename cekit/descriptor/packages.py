@@ -46,6 +46,7 @@ class Packages(Descriptor):
     Args:
       descriptor - yaml containing Packages section
     """
+
     def __init__(self, descriptor, descriptor_path):
         self.schemas = packages_schema
         self.descriptor_path = descriptor_path
@@ -95,6 +96,7 @@ class Packages(Descriptor):
         self._descriptor['content_sets_file'] = value
         self._descriptor.pop('content_sets', None)
 
+
 class Repository(Descriptor):
     """Object representing package repository
 
@@ -103,13 +105,8 @@ class Repository(Descriptor):
     """
 
     def __init__(self, descriptor):
-        # we test parameter is not dict as there is no easy way how to test
-        # if something is string both in py2 and py3
-        if not isinstance(descriptor, dict):
-            descriptor = self._create_repo_object(descriptor)
-
-        if 'filename' not in descriptor:
-            descriptor['filename'] = '%s.repo' % descriptor['name'].replace(' ', '_')
+        self.schemas = [repository_schema]
+        super(Repository, self).__init__(descriptor)
 
         if not (('url' in descriptor) ^
                 ('odcs' in descriptor) ^
@@ -119,12 +116,11 @@ class Repository(Descriptor):
                              "['id', 'odcs', 'rpm', 'url']"
                              % descriptor['name'])
 
+        if 'filename' not in descriptor:
+            descriptor['filename'] = '%s.repo' % descriptor['name'].replace(' ', '_')
+
         if 'url' not in descriptor:
             descriptor['url'] = {}
-
-
-        self.schemas = [repository_schema]
-        super(Repository, self).__init__(descriptor)
 
         # we dont want to merge any of theese
         self.skip_merging = ['rpm',
@@ -134,46 +130,11 @@ class Repository(Descriptor):
         if 'present' not in self._descriptor:
             self._descriptor['present'] = True
 
-    def _create_repo_object(self, repository):
-        logger.warning("The way of defining repository '%s' is deprecated. Convert "
-                       "it to an URL based repository object. Consult Cekit docs, "
-                       "for more details." % repository)
-        descriptor = {}
-        descriptor['name'] = repository
-        descriptor['url'] = {}
-        descriptor['url']['repository'] = self._get_repo_url(descriptor)
-        return descriptor
-
-    def _get_repo_url(self, descriptor):
-        """Retruns repository url from Cekit config files repositories section"""
-        configured_repositories = config.get('repositories')
-
-        # We need to remove the custom "__name__" element before we can show
-        # which repository keys are defined in the configuration
-        configured_repository_names = configured_repositories.keys()
-
-        if '__name__' in configured_repository_names:
-            configured_repository_names.remove('__name__')
-
-        if descriptor['name'] not in configured_repositories:
-            if len(configured_repository_names):
-                logger.warning("Package repository '%s' used in descriptor is not "
-                                 "available in Cekit configuration file. "
-                                 "Available repositories: %s"
-                                 % (descriptor['name'], ' '.join(configured_repository_names)))
-            else:
-                logger.warning("Package repository '%s' used in descriptor is not "
-                                 "available in Cekit configuration file. "
-                                 % descriptor['name'])
-            return None
-
-        return configured_repositories[descriptor['name']]
-
     def fetch(self, target_dir):
         if not self._descriptor['url']['repository']:
             raise CekitError("Repository not defined for '%s'." % (self.name))
         if not os.path.exists(target_dir):
-                os.makedirs(target_dir)
+            os.makedirs(target_dir)
         Resource({'url': self._descriptor['url']['repository']}) \
             .copy(os.path.join(target_dir, self._descriptor['filename']))
 
