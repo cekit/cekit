@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  test:
     parallelism: 4
     machine:
       image: circleci/classic:201808-01
@@ -28,3 +28,32 @@ jobs:
           if [[ "${CIRCLE_NODE_INDEX}" == 3 ]]; then
              make test-py37
           fi
+
+  docs-build:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: Install docs dependencies
+          command: |
+            cd docs
+            mkdir -p ./venv
+            virtualenv ./venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: Generate documentation
+          command: |
+            cd docs
+            . venv/bin/activate
+            make html
+      - store_artifacts:
+          path: docs/_build
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test
+      - docs-build
