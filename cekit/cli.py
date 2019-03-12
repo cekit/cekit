@@ -26,10 +26,8 @@ CONFIG = Config()
 @click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
 @click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
 @click.option('--target', metavar="PATH", help="Path to directory where files should be generated", default="target", show_default=True)
-# TODO: Remove this option
-@click.option('--package-manager', help="Package manager to use.", type=click.Choice(['yum', 'microdnf']), default="yum", show_default=True)
 @click.version_option(message="%(version)s", version=version)
-def cli(descriptor, verbose, work_dir, config, redhat, target, package_manager):  # pylint: disable=unused-argument,too-many-arguments
+def cli(descriptor, verbose, work_dir, config, redhat, target):  # pylint: disable=unused-argument,too-many-arguments
     """
     ABOUT
 
@@ -321,8 +319,6 @@ class Cekit(object):  # pylint: disable=useless-object-inheritance
                              'work_dir': self.params.work_dir,
                              # TODO: https://github.com/cekit/cekit/issues/377
                              'addhelp': self.params.addhelp,
-                             # TODO: Remove it from here: https://github.com/cekit/cekit/issues/400
-                             'package_manager': self.params.package_manager
                          })
 
     def cleanup(self):

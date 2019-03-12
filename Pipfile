@@ -13,6 +13,8 @@ pytest-mock = "*"
 docker = "*"
 docker-squash = "*"
 click = "*"
+pylint = "<2.0.0"
+autopep8 = "*"
 
 [packages]
 pykwalify = ">=1.6.0"

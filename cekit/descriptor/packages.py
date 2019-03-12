@@ -19,7 +19,8 @@ map:
       - {type: any}
   install:
     seq:
-      - {type: any}""")]
+      - {type: any}
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf'], default: 'yum'}""")]
 
 
 repository_schema = yaml.safe_load("""

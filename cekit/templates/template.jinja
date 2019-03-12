@@ -1,5 +1,5 @@
 {% macro repo_create(pkg_manager, repositories) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
         {% for repo in repositories %}
 repos/{{ repo.filename }} \
         {% endfor %}
@@ -7,28 +7,28 @@ repos/{{ repo.filename }} \
     {% endif %}
 {%- endmacro %}
 {% macro repo_remove(pkg_manager, repositories) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
     {% endif %}
 {%- endmacro %}
 {% macro repo_install(pkg_manager, rpm) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {{ rpm }}
     {% endif %}
 {%- endmacro %}
 {% macro pkg_install(pkg_manager, packages) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
     && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
 {%- endmacro %}
 {% macro repo_make_cache(pkg_manager) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} makecache
     {% endif %}
 {%- endmacro %}
 {% macro repo_clear_cache(pkg_manager) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum
     {% endif %}
 {%- endmacro %}
@@ -38,7 +38,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 
 # Install required RPMs and ensure that the packages were installed
 USER root
-RUN {{ pkg_install(pkg_manager, module.packages.install) }}
+RUN {{ pkg_install(packages.manager, module.packages.install) }}
 {% endif %}
 {% if helper.envs(module.envs)|length > 0 %}
 
@@ -106,19 +106,19 @@ USER root
 {% if packages.repositories_injected %}
 
 # Add custom repo files
-COPY {{ repo_create(pkg_manager, packages.repositories_injected) }}
+COPY {{ repo_create(packages.manager, packages.repositories_injected) }}
 {% endif %}
 {% if packages.repositories %}
 {% for repo in packages.repositories %}
 {% if repo.present and repo.rpm %}
 
-RUN {{ repo_install(pkg_manager, repo.rpm) }}
+RUN {{ repo_install(packages.manager, repo.rpm) }}
 {% endif %}
 {% endfor %}
 {% endif %}
 
 {% if helper.packages_to_install(image) %}
-RUN {{ repo_make_cache(pkg_manager) }}
+RUN {{ repo_make_cache(packages.manager) }}
 {% endif %}
 
 {% if image.modules.install|length > 0 %}
@@ -146,12 +146,12 @@ RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
 
 {% if helper.packages_to_install(image) %}
 # Clear package manager metadata
-RUN {{ repo_clear_cache(pkg_manager) }}
+RUN {{ repo_clear_cache(packages.manager) }}
 {% endif %}
 
 {% if packages.repositories_injected %}
 # Remove custom repo files
-RUN {{ repo_remove(pkg_manager, packages.repositories_injected) }}
+RUN {{ repo_remove(packages.manager, packages.repositories_injected) }}
 {% endif %}
 
 # Run user

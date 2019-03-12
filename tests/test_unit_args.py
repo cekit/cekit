@@ -23,7 +23,7 @@ def get_class_by_name(clazz):
         ['--redhat', 'build', 'docker'],
         'cekit.builders.docker_builder.DockerBuilder',
         {
-            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': True, 'target': 'target', 'package_manager': 'yum', 'addhelp': None
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': True, 'target': 'target', 'addhelp': None
         },
         {
             'dry_run': False, 'overrides': (), 'addhelp': None, 'pull': False, 'no_squash': False, 'tags': ()
@@ -34,7 +34,7 @@ def get_class_by_name(clazz):
         ['--target', 'custom-target', 'build', 'docker'],
         'cekit.builders.docker_builder.DockerBuilder',
         {
-            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'custom-target', 'package_manager': 'yum', 'addhelp': None
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'custom-target', 'addhelp': None
         },
         {
             'dry_run': False, 'overrides': (), 'addhelp': None, 'pull': False, 'no_squash': False, 'tags': ()
@@ -45,7 +45,7 @@ def get_class_by_name(clazz):
         ['--work-dir', 'custom-workdir', 'build', 'docker'],
         'cekit.builders.docker_builder.DockerBuilder',
         {
-            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': 'custom-workdir', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'package_manager': 'yum', 'addhelp': None
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': 'custom-workdir', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'addhelp': None
         },
         {
             'dry_run': False, 'overrides': (), 'addhelp': None, 'pull': False, 'no_squash': False, 'tags': ()
@@ -56,7 +56,7 @@ def get_class_by_name(clazz):
         ['--config', 'custom-config', 'build', 'docker'],
         'cekit.builders.docker_builder.DockerBuilder',
         {
-            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': 'custom-config', 'redhat': False, 'target': 'target', 'package_manager': 'yum', 'addhelp': None
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': 'custom-config', 'redhat': False, 'target': 'target', 'addhelp': None
         },
         {
             'dry_run': False, 'overrides': (), 'addhelp': None, 'pull': False, 'no_squash': False, 'tags': ()
@@ -120,7 +120,7 @@ def get_class_by_name(clazz):
         ['test', '--image', 'image:1.0', 'behave'],
         'cekit.test.behave.BehaveTester',
         {
-            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'package_manager': 'yum'
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target'
         },
         {
             'image': 'image:1.0', 'steps_url': 'https://github.com/cekit/behave-test-steps.git', 'wip': False, 'names': ()
@@ -162,7 +162,7 @@ def test_args_command(mocker, args, clazz, common_params, params):
     if not common_params:
         common_params = {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit',
-            'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'package_manager': 'yum', 'addhelp': None
+            'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'addhelp': None
         }
 
     cekit_class = mocker.patch('cekit.cli.Cekit')
@@ -176,7 +176,7 @@ def test_args_command(mocker, args, clazz, common_params, params):
     cekit_object.run.assert_called_once_with(cls, params)
 
 
-def test_args_not_valid_command(mocker):
+def test_args_not_valid_command():
     result = CliRunner().invoke(cli, ['explode'], catch_exceptions=False)
 
     assert isinstance(result.exception, SystemExit)
