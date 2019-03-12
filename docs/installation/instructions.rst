@@ -3,48 +3,53 @@ Installation instructions
 
 .. contents::
 
-We provide RPM packages for Fedora, CentOS, RHEL distribution.
-CEKit installation on other platforms is still possible via ``pip``
+We provide RPM packages for Fedora, CentOS/RHEL distribution.
+CEKit installation on other platforms is still possible via ``pip``.
 
-On RHEL derivatives we strongly suggest installing CEKit using the YUM/DNF package
-manager. We provide a `COPR repository for CEKit <https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/>`_
-which contains everything needed to install CEKit.
+RPM packages are distributed via regular repositories in case of Fedora
+and the EPEL repository for CentOS/RHEL.
+
+.. warning::
+    Currently packaged version is a snapshot release of the upcoming CEKit 3.0.
+
+.. tip::
+    You can see latest submitted package updates `submitted in Bodhi <https://bodhi.fedoraproject.org/updates/?packages=cekit>`_.
 
 .. warning::
 
-   Make sure you read the :doc:`dependencies chapter</installation/dependencies>` of this documentation which contains important
+   Make sure you read the :doc:`dependencies </installation/dependencies>` chapter which contains important
    information about how CEKit dependencies are handled!
 
 Fedora
 -------------------
 
-Supported versions: 27+.
+.. note::
+    Supported versions: 29+.
 
-For Fedora we provide a custom Copr repository.  To `enable the "cekit" repository <https://docs.pagure.org/copr.copr/how_to_enable_repo.html>`_ and install CEKit on your system, please run:
+CEKit is available from regular Fedora repositories.
 
 .. code-block:: bash
 
-    dnf install dnf-plugins-core
-    dnf copr enable @cekit/cekit
-    dnf install python3-cekit
+    dnf install cekit
 
 CentOS / RHEL
 -------------------
 
-Supported versions: 7.x
+.. note::
+    Supported versions: 7.x
 
-For RHEL / CentOS we provide custom Copr repository. To enable the repository and install
-CEKit on your system please run:
+CEKit is available from the `EPEL repository <https://fedoraproject.org/wiki/EPEL>`_.
 
 .. code-block:: bash
 
-    curl https://copr.fedorainfracloud.org/coprs/g/cekit/cekit/repo/epel-7/group_cekit-cekit-epel-7.repo -o /etc/yum.repos.d/cekit-epel-7.repo
-    yum install python2-cekit
+    yum install epel-release
+    yum install cekit
 
 Other systems
 -------------------
 
-We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install CEKit. Please consult your package manager for the correct package name.
+We strongly advise to use `Virtualenv <https://virtualenv.pypa.io/en/stable/>`_ to install CEKit.
+Please consult your package manager for the correct package name.
 
 To create custom Python virtual environment please run following commands on your system:
 
@@ -63,7 +68,8 @@ To create custom Python virtual environment please run following commands on you
 
 .. note::
 
-   Every time you want to use CEKit you must activate CEKit Python virtual environment by executing ``source ~/cekit/bin/activate``
+   Every time you want to use CEKit you must activate CEKit Python virtual environment by
+   executing ``source ~/cekit/bin/activate``
 
 If you don't want to (or cannot) use Virtualenv, the best idea is to install CEKit in the user's home with the
 ``--user`` prefix:
@@ -72,12 +78,6 @@ If you don't want to (or cannot) use Virtualenv, the best idea is to install CEK
 
     pip install -U cekit --user
 
-.. .. include:: dependencies.rst
-
-.. .. include:: upgrade.rst
-
-.. .. toctree::
-..     :titlesonly:
-    
-..     dependencies
-..     upgrade
+.. note::
+    In this case you may need to add ``~/.local/bin/`` directory to your ``$PATH`` environment variable to
+    be able to run the ``cekit`` command.
