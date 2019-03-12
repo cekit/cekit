@@ -8,9 +8,9 @@ import yaml
 from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
-from cekit.generator.base import Generator
 from cekit.version import version as cekit_version
 from cekit.tools import Chdir
+from cekit.template_helper import TemplateHelper
 
 from click.testing import CliRunner
 
@@ -156,11 +156,12 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
-    desc_part = {'packages': {'repositories': [{'name': 'foo',
+    desc_part = {'packages': {'manager': 'microdnf',
+                              'repositories': [{'name': 'foo',
                                                 'rpm': 'foo-repo.rpm'}],
                               'install': ['a', 'b']}}
 
-    generate(target, ['--package-manager', 'microdnf', 'build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['build', '--dry-run', 'docker'], desc_part)
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
@@ -263,17 +264,71 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
     regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm')
 
 
+# https://github.com/cekit/cekit/issues/400
+def test_unsupported_package_manager(tmpdir, caplog):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+             descriptor={'packages': {'manager': 'something',
+                                      'repositories': [{'name': 'foo',
+                                                        'rpm': 'foo-repo.rpm'}],
+                                      'install': ['a']},
+                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+                         },
+             exit_code=1)
+
+    assert "Cannot validate schema: Packages" in caplog.text
+    assert "Enum 'something' does not exist. Path: '/manager'.: Path: '/'" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/400
+def test_default_package_manager(tmpdir):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+             descriptor={'packages': {
+                 'repositories': [{'name': 'foo',
+                                   'rpm': 'foo-repo.rpm'}],
+                 'install': ['a']},
+        'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+    })
+
+    regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN yum --setopt=tsflags=nodocs install -y a')
+    regex_dockerfile(target, 'rpm -q a')
+
+
+# https://github.com/cekit/cekit/issues/400
 def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['--package-manager', 'microdnf', 'build', '--dry-run', 'docker'],
-             descriptor={'packages': {'repositories': [{'name': 'foo',
+    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+             descriptor={'packages': {'manager': 'microdnf',
+                                      'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a')
+    regex_dockerfile(target, 'rpm -q a')
+
+
+# https://github.com/cekit/cekit/issues/400
+@pytest.mark.parametrize('manager', TemplateHelper.SUPPORTED_PACKAGE_MANAGERS)
+def test_supported_package_managers(tmpdir, manager):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+             descriptor={'packages': {'manager': manager,
+                                      'repositories': [{'name': 'foo',
+                                                        'rpm': 'foo-repo.rpm'}],
+                                      'install': ['a']},
+                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+                         })
+    regex_dockerfile(
+        target, "RUN {} --setopt=tsflags=nodocs install -y foo-repo.rpm".format(manager))
+    regex_dockerfile(target, "RUN {} --setopt=tsflags=nodocs install -y a".format(manager))
     regex_dockerfile(target, 'rpm -q a')
 
 
@@ -303,7 +358,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     regex_dockerfile(target, 'COPY modules /tmp/scripts/')
 
 
-def generate(image_dir, command, descriptor=None):
+def generate(image_dir, command, descriptor=None, exit_code=0):
     desc = basic_config.copy()
 
     if descriptor:
@@ -317,7 +372,10 @@ def generate(image_dir, command, descriptor=None):
     with Chdir(image_dir):
         result = CliRunner().invoke(cli, command, catch_exceptions=False)
 
-        assert result.exit_code == 0
+        assert result.exit_code == exit_code
+
+        if exit_code != 0:
+            return
 
         with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as desc:
             return yaml.safe_load(desc)

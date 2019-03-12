@@ -230,8 +230,6 @@ class Generator(object):
         """Renders Dockerfile to $target/image/Dockerfile"""
         LOGGER.info("Rendering Dockerfile...")
 
-        self.image['pkg_manager'] = CONFIG.get('common', 'package_manager')
-
         template_file = os.path.join(os.path.dirname(__file__),
                                      '..',
                                      'templates',
