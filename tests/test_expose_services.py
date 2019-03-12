@@ -1,4 +1,3 @@
-# test the generation of io.openshift.expose-services label
 # -*- encoding: utf-8 -*-
 
 import os

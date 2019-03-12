@@ -15,6 +15,8 @@ config = Config()
 
 class DockerGenerator(Generator):
 
+    ODCS_HIDDEN_REPOS_FLAG = 'include_unpublished_pulp_repos'
+
     def __init__(self, descriptor_path, target, overrides):
         super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
@@ -37,12 +39,16 @@ class DockerGenerator(Generator):
         return deps
 
     def _prepare_content_sets(self, content_sets):
+        if not content_sets:
+            return False
+
         if not config.get('common', 'redhat'):
             return False
 
         arch = platform.machine()
+
         if arch not in content_sets:
-            raise CekitError("There are no contet_sets defined for platform '%s'!")
+            raise CekitError("There are no contet_sets defined for platform '{}'!".format(arch))
 
         repos = ' '.join(content_sets[arch])
 
@@ -52,7 +58,16 @@ class DockerGenerator(Generator):
 
             if config.get('common', 'redhat'):
                 cmd.append('--redhat')
-            cmd.extend(['create', 'pulp', repos])
+
+            cmd.append('create')
+
+            compose = self.image.get('osbs', {}).get(
+                'configuration', {}).get('container', {}).get('compose', {})
+
+            if compose.get(DockerGenerator.ODCS_HIDDEN_REPOS_FLAG, False):
+                cmd.extend(['--flag', DockerGenerator.ODCS_HIDDEN_REPOS_FLAG])
+
+            cmd.extend(['pulp', repos])
 
             logger.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
 
