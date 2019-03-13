@@ -127,7 +127,7 @@ def test_content_sets_file_container_file(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
@@ -148,7 +148,7 @@ def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
@@ -164,7 +164,7 @@ def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
@@ -184,7 +184,7 @@ def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via 'odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 

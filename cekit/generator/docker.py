@@ -28,12 +28,12 @@ class DockerGenerator(Generator):
         if config.get('common', 'redhat'):
             deps['odcs-client'] = {
                 'package': 'odcs-client',
-                'executable': 'odcs'
+                'executable': '/usr/bin/odcs'
             }
 
             deps['brew'] = {
                 'package': 'brewkoji',
-                'executable': 'brew'
+                'executable': '/usr/bin/brew'
             }
 
         return deps
@@ -54,7 +54,7 @@ class DockerGenerator(Generator):
 
         try:
             # idealy this will be API for ODCS, but there is no python3 package for ODCS
-            cmd = ['odcs']
+            cmd = ['/usr/bin/odcs']
 
             if config.get('common', 'redhat'):
                 cmd.append('--redhat')
