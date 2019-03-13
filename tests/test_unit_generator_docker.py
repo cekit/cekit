@@ -116,7 +116,7 @@ def test_prepare_content_sets_should_request_odcs(tmpdir, mocker):
             assert generator._prepare_content_sets(
                 {'current_platform': ['ca1', 'cs2']}) == "http://hidden/Temporary/odcs-2019.repo"
 
-    mock_odcs.assert_called_once_with(['odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
+    mock_odcs.assert_called_once_with(['/usr/bin/odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
 
 
 def test_prepare_content_sets_should_request_odcs_with_hidden_repos_flag(tmpdir, mocker):
@@ -134,7 +134,7 @@ def test_prepare_content_sets_should_request_odcs_with_hidden_repos_flag(tmpdir,
                 {'current_platform': ['ca1', 'cs2']}) == "http://hidden/Temporary/odcs-2019.repo"
 
     mock_odcs.assert_called_once_with(
-        ['odcs', '--redhat', 'create', '--flag', 'include_unpublished_pulp_repos', 'pulp', 'ca1 cs2'])
+        ['/usr/bin/odcs', '--redhat', 'create', '--flag', 'include_unpublished_pulp_repos', 'pulp', 'ca1 cs2'])
 
 
 def test_prepare_content_sets_should_handle_incorrect_state(tmpdir, mocker):
@@ -152,7 +152,7 @@ def test_prepare_content_sets_should_handle_incorrect_state(tmpdir, mocker):
                 generator._prepare_content_sets({'current_platform': ['ca1', 'cs2']})
 
     mock_odcs.assert_called_once_with(
-        ['odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
+        ['/usr/bin/odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
 
 
 def test_prepare_content_sets_should_handle_no_odcs_command(tmpdir, mocker):
@@ -170,4 +170,4 @@ def test_prepare_content_sets_should_handle_no_odcs_command(tmpdir, mocker):
                 generator._prepare_content_sets({'current_platform': ['ca1', 'cs2']})
 
     mock_odcs.assert_called_once_with(
-        ['odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
+        ['/usr/bin/odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])

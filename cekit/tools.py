@@ -65,7 +65,7 @@ def decision(question):
 def get_brew_url(md5):
     try:
         LOGGER.debug("Getting brew details for an artifact with '%s' md5 sum" % md5)
-        list_archives_cmd = ['brew', 'call', '--json-output', 'listArchives',
+        list_archives_cmd = ['/usr/bin/brew', 'call', '--json-output', 'listArchives',
                              'checksum=%s' % md5, 'type=maven']
         LOGGER.debug("Executing '%s'." % " ".join(list_archives_cmd))
         archive_yaml = yaml.safe_load(subprocess.check_output(list_archives_cmd))
