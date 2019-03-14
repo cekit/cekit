@@ -30,6 +30,9 @@ class BuildahBuilder(Builder):
         tags = self.params.tags
         cmd = ["/usr/bin/buildah", "build-using-dockerfile"]
 
+        if not tags:
+            tags = self.generator.get_tags()
+
         if self.params.pull:
             cmd.append('--pull-always')
 
