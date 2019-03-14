@@ -30,6 +30,9 @@ class PodmanBuilder(Builder):
         tags = self.params.tags
         cmd = ["/usr/bin/podman", "build"]
 
+        if not tags:
+            tags = self.generator.get_tags()
+
         if self.params.pull:
             cmd.append('--pull-always')
 
