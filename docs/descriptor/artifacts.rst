@@ -21,7 +21,7 @@ the base name of the file/URL.
    For artifacts that are not publicly available CEKit provides a way to
    add a description detailing a location from which the artifact can be obtained.
 
-   .. code:: yaml
+   .. code-block:: yaml
 
       artifacts:
         - path: jboss-eap-6.4.0.zip
@@ -34,8 +34,8 @@ the base name of the file/URL.
 
 
 
-Plain
-^^^^^
+Plain artifacts
+^^^^^^^^^^^^^^^^^^^^
 
 This is the easiest way of defining an artifact. You are just specifying its name and **md5** checksum.
 This approach relies on :ref:`artifacts_caching` to provide the artifact in cache. This section should be used to show that a particular artifact is needed for the image but its not publicly available.
@@ -53,13 +53,13 @@ This approach relies on :ref:`artifacts_caching` to provide the artifact in cach
    Hat switch.
 
           
-URL
-^^^
+URL artifacts
+^^^^^^^^^^^^^^^^^^
 
 This way of defining repository ask CEKit to download and artifact from a specified URL.
 
 
-.. code:: yaml
+.. code-block:: yaml
 
     artifacts:
         - name: jolokia-1.3.6-bin.tar.gz
@@ -69,13 +69,13 @@ This way of defining repository ask CEKit to download and artifact from a specif
 
 
 
-Path
-^^^^
+Path artifacts
+^^^^^^^^^^^^^^^^^^^
 
 This way of defining artifact is mostly used in development overrides and enables you to inject
 an artifact from a local filesystem.
 
-.. code:: yaml
+.. code-block:: yaml
 
     artifacts:
         - name: jolokia-1.3.6-bin.tar.gz

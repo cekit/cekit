@@ -12,7 +12,7 @@ which contains everything needed to install CEKit.
 
 .. warning::
 
-   Make sure you read the `dependencies`_ section of this documentation which contains important
+   Make sure you read the :doc:`dependencies chapter</installation/dependencies>` of this documentation which contains important
    information about how CEKit dependencies are handled!
 
 Fedora

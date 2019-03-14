@@ -31,7 +31,7 @@ This key is holding OSBS ``container.yaml`` file ( `OSBS docs <https://osbs.read
 
 
 Embedded
-""""""""
+*********
 In this case whole ``container.yaml`` file is embedded in an image descriptor.
 
 .. code:: yaml
@@ -43,7 +43,7 @@ In this case whole ``container.yaml`` file is embedded in an image descriptor.
                   pulp_repos: true
 
 Linked
-""""""
+*********
 
 In this case ``container.yaml`` file is read from a file located next to the image descriptor.
 

@@ -20,8 +20,8 @@ To achieve such behavior in Red Hat Middleware Container Images we created follo
 Defining repositories in container images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You should use :ref:`Plain<repo_plain>` repository definition for every repository as this will work easily on Red Hat subscribed host and will assume everyone can rebuild are RHEL based images.
-
+You should use :doc:`Plain repository definition</descriptor/image>` for every repository as this will work
+easily on Red Hat subscribed host and will assume everyone can rebuild are RHEL based images.
 
 *Example:* Define Software Collections repository
 
@@ -32,7 +32,13 @@ You should use :ref:`Plain<repo_plain>` repository definition for every reposito
             - name: SCL
               id: rhel-server-rhscl-7-rpms
 
-If you have repository defined this way, CEKit will not try to inject it and will expect the repository to be already available inside your container image. If it's not provided by the image (for example repository definition already available in ``/etc/yum.repos.d/`` directory) or the host (for example on via `subscribed RHEL host <https://access.redhat.com/solutions/1443553>`_) you need to override this repository. To override a repository definition you need to specify a repository with same ``name``. By overriding Plain repository type, you are actually saying that you have an external mechanism to inject the repository inside the image. This can be any supported :ref:`repository type<repo>`.
+If you have repository defined this way, CEKit will not try to inject it and will expect the repository
+to be already available inside your container image. If it's not provided by the image (for example
+repository definition already available in ``/etc/yum.repos.d/`` directory) or the host (for example on
+via `subscribed RHEL host <https://access.redhat.com/solutions/1443553>`_) you need to override this
+repository. To override a repository definition you need to specify a repository with same ``name``.
+By overriding Plain repository type, you are actually saying that you have an external mechanism to
+inject the repository inside the image. This can be any supported :doc:`repository type</descriptor/image>`.
 
 .. note::
    You can view Plain repository type as an abstract classes and ODCS, RPM and URL repositories as an actual implementation.

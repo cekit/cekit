@@ -13,7 +13,7 @@ pytest-mock = "*"
 docker = "*"
 docker-squash = "*"
 click = "*"
-pylint = "<2.0.0"
+pylint = "*"
 autopep8 = "*"
 
 [packages]

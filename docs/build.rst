@@ -4,9 +4,9 @@ Building images
 CEKit supports following builder engines:
 
 * Docker -- builds the container image using the Docker daemon, this is the default option
-* OSBS -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`_
-* Buildah -- builds the container image using `Buildah <https://buildah.io/>`_
-* Podman -- builds the container image using `Podman <https://podman.io/>`_
+* OSBS -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
+* Buildah -- builds the container image using `Buildah <https://buildah.io/>`__
+* Podman -- builds the container image using `Podman <https://podman.io/>`__
 
 Executing builds
 -----------------
@@ -17,7 +17,7 @@ You can execute container image build by running:
 
 	  $ cekit build
 
-**Global options
+Global options
 
 **Options affecting builder:**
 
