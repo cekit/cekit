@@ -260,7 +260,7 @@ def run_command(ctx, clazz):
 
 def run_test(ctx, tester):
     if tester == 'behave':
-        from cekit.test.behave import BehaveTester as tester_impl
+        from cekit.test.behave_tester import BehaveTester as tester_impl
         LOGGER.info("Using Behave tester to test the image")
     else:
         raise CekitError("Tester engine {} is not supported".format(tester))
@@ -289,7 +289,7 @@ def run_build(ctx, builder):
     run_command(ctx, builder_impl)
 
 
-class Cekit(object):  # pylint: disable=useless-object-inheritance
+class Cekit(object):
     """ Main application """
 
     def __init__(self, params):

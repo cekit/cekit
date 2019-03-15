@@ -7,7 +7,7 @@ import sys
 logger = logging.getLogger('cekit')
 
 
-class TestCollector(object):
+class BehaveTestCollector(object):
     def __init__(self, descriptor_dir, target_dir):
         self.collected = False
         self.descriptor_dir = os.path.abspath(descriptor_dir)

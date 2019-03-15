@@ -118,7 +118,7 @@ def get_class_by_name(clazz):
     ),
     (
         ['test', '--image', 'image:1.0', 'behave'],
-        'cekit.test.behave.BehaveTester',
+        'cekit.test.behave_tester.BehaveTester',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target', 'package_manager': 'yum'
         },
