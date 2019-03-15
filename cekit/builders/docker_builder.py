@@ -161,7 +161,7 @@ class DockerBuilder(Builder):
         return squash.run()
 
     def _tag(self, docker_client, image_id, tags):
-        for tag in tags[1:]:
+        for tag in tags:
             if ':' in tag:
                 img_repo, img_tag = tag.split(":")
                 docker_client.tag(image_id, img_repo, tag=img_tag)
