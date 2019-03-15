@@ -3,15 +3,15 @@ import os
 
 from cekit.builder import Command
 from cekit.generator.base import Generator
-from cekit.test.collector import TestCollector
-from cekit.test.runner import TestRunner
+from cekit.test.collector import BehaveTestCollector
+from cekit.test.behave_runner import BehaveTestRunner
 
 LOGGER = logging.getLogger('cekit')
 
 
 class BehaveTester(Command):
     """
-    Tested implementation for the Behave framework
+    Tester implementation for the Behave framework
     """
 
     def __init__(self, common_params, params):
@@ -21,8 +21,9 @@ class BehaveTester(Command):
         self.params = params
         self.collected = False
 
-        self.test_collector = TestCollector(os.path.dirname(self.common_params.descriptor),
+        self.test_collector = BehaveTestCollector(os.path.dirname(self.common_params.descriptor),
                                             self.common_params.target)
+        self.test_runner = BehaveTestRunner(self.common_params.target)
 
         self.generator = None
 
@@ -43,8 +44,10 @@ class BehaveTester(Command):
 
         if self.collected:
             # Handle test dependencies, if any
-            LOGGER.debug("Checking CEKit test dependencies...")
+            LOGGER.debug("Checking CEKit test collector dependencies...")
             self.dependency_handler.handle(self.test_collector)
+            LOGGER.debug("Checking CEKit test runner dependencies...")
+            self.dependency_handler.handle(self.test_runner)
 
     def run(self):
         if not self.collected:
@@ -57,6 +60,10 @@ class BehaveTester(Command):
         if self.params.wip:
             test_tags = ['@wip']
 
-        runner = TestRunner(self.common_params.target)
-        runner.run(self.params.image, test_tags,
-                   test_names=self.params.names)
+        image = self.params.image
+
+        if not image:
+            image = self.generator.get_tags()[0]
+
+        self.test_runner.run(image, test_tags,
+                             test_names=self.params.names)

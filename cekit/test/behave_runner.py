@@ -1,27 +1,34 @@
 import getpass
 import logging
 import os
-import subprocess
 
 from cekit.errors import CekitError
 from cekit.tools import Chdir
 
+try:
+    from behave.__main__ import main as behave_main
+except ImportError:
+    pass
+
 logger = logging.getLogger('cekit')
 
 
-class TestRunner(object):
+class BehaveTestRunner(object):
     def __init__(self, target):
-        """Check if behave and docker is installed properly"""
         self.target = os.path.abspath(target)
-        try:
-            # check that we have behave installed
-            from behave.__main__ import main as behave_main
-        except subprocess.CalledProcessError as ex:
-            raise CekitError("Test Runner needs 'behave' installed, '%s'" %
-                             ex.output)
-        except Exception as ex:
-            raise CekitError(
-                "Test Runner needs behave installed!", ex)
+
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        deps['python-behave'] = {
+            'library': 'behave',
+            'package': 'python2-behave',
+            'fedora': {
+                'package': 'python3-behave'}
+        }
+
+        return deps
 
     def run(self, image, run_tags, test_names):
         """Run test suite"""
@@ -57,8 +64,6 @@ class TestRunner(object):
                 args.append("~ci ")
 
         try:
-            from behave.__main__ import main as behave_main
-
             with Chdir(os.path.join(self.target, 'test')):
                 logger.debug("behave args: {}".format(args))
                 if behave_main(args) != 0:
