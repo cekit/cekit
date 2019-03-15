@@ -460,6 +460,27 @@ def test_docker_builder_defaults():
     assert builder.params.tags == ['foo', 'bar']
 
 
+def test_docker_build_default_tags(mocker):
+    builder = DockerBuilder(Map({'target': 'something'}), Map())
+
+    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    docker_client = docker_client_class.return_value
+    mock_generator = mocker.patch.object(builder, 'generator')
+    mock_generator.get_tags.return_value = ["image/test:1.0", "image/test:latest"]
+    mocker.patch.object(builder, '_build_with_docker')
+    mocker.patch.object(builder, '_squash', return_value="112321312imageID")
+
+    builder._build_with_docker.return_value = "1654234sdf56"
+
+    builder.run()
+
+    builder._build_with_docker.assert_called_once_with(docker_client)
+
+    tag_calls = [mocker.call('112321312imageID', 'image/test', tag='1.0'),
+                 mocker.call('112321312imageID', 'image/test', tag='latest')]
+    docker_client.tag.assert_has_calls(tag_calls)
+
+
 def test_docker_squashing_enabled(mocker):
     builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
 
