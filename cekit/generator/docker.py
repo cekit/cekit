@@ -48,12 +48,12 @@ class DockerGenerator(Generator):
         arch = platform.machine()
 
         if arch not in content_sets:
-            raise CekitError("There are no contet_sets defined for platform '{}'!".format(arch))
+            raise CekitError("There are no content_sets defined for platform '{}'!".format(arch))
 
         repos = ' '.join(content_sets[arch])
 
         try:
-            # idealy this will be API for ODCS, but there is no python3 package for ODCS
+            # ideally this will be API for ODCS, but there is no python3 package for ODCS
             cmd = ['/usr/bin/odcs']
 
             if config.get('common', 'redhat'):

@@ -7,7 +7,9 @@ import time
 import pytest
 import yaml
 
+from cekit.descriptor import Image
 from cekit.errors import CekitError
+from cekit.generator.docker import DockerGenerator
 from cekit.tools import Map
 
 try:
@@ -571,4 +573,56 @@ def test_podman_builder_run_pull(mocker):
                                         '--pull-always',
                                         '-t', 'foo',
                                         '-t', 'bar',
+                                        'something/image'])
+
+
+def test_podman_builder_run_with_generator(mocker):
+    params = Map({'tags': []})
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'podman', params)
+    builder.generator = DockerGenerator("", "", {})
+    builder.generator.image = Image(yaml.safe_load("""
+    name: foo
+    version: 1.9
+    labels:
+      - name: test
+        value: val1
+      - name: label2
+        value: val2
+    envs:
+      - name: env1
+        value: env1val
+    """), 'foo')
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/podman',
+                                        'build',
+                                        '-t', 'foo:1.9',
+                                        '-t', 'foo:latest',
+                                        'something/image'])
+
+
+def test_buildah_builder_run_with_generator(mocker):
+    params = Map({'tags': []})
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'buildah', params)
+    builder.generator = DockerGenerator("", "", {})
+    builder.generator.image = Image(yaml.safe_load("""
+    name: foo
+    version: 1.9
+    labels:
+      - name: test
+        value: val1
+      - name: label2
+        value: val2
+    envs:
+      - name: env1
+        value: env1val
+    """), 'foo')
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/buildah',
+                                        'build-using-dockerfile',
+                                        '-t', 'foo:1.9',
+                                        '-t', 'foo:latest',
                                         'something/image'])

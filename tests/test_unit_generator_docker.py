@@ -98,7 +98,7 @@ def test_prepare_content_sets_should_fail_when_cs_are_note_defined_for_current_p
 
     with docker_generator(tmpdir) as generator:
         with cekit_config(redhat=True):
-            with pytest.raises(CekitError, match="There are no contet_sets defined for platform 'current_platform'!"):
+            with pytest.raises(CekitError, match="There are no content_sets defined for platform 'current_platform'!"):
                 assert generator._prepare_content_sets(
                     {'invalid_platform': ['ca1', 'cs2']}) is False
 

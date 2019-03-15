@@ -107,7 +107,7 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
 
 
 def test_content_sets_file_container_file(tmpdir, mocker, caplog):
-    # Do not try to validate dependencies while running tests, these are not neccessary
+    # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
@@ -132,7 +132,7 @@ def test_content_sets_file_container_file(tmpdir, mocker, caplog):
 
 
 def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
-    # Do not try to validate dependencies while running tests, these are not neccessary
+    # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
@@ -153,7 +153,7 @@ def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
 
 
 def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
-    # Do not try to validate dependencies while running tests, these are not neccessary
+    # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
@@ -169,7 +169,7 @@ def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
 
 
 def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
-    # Do not try to validate dependencies while running tests, these are not neccessary
+    # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
     overrides_descriptor = {
         'schema_version': 1,
