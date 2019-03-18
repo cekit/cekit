@@ -150,31 +150,6 @@ class Generator(object):
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
 
-    def _generate_expose_services(self):
-        """Generate the label io.openshift.expose-services based on the port
-        definitions."""
-        ports = []
-        for p in self.image['ports']:
-            if p.get('expose', True):
-
-                r = "{}/{}".format(p['value'], p.get('protocol', 'tcp'))
-
-                if 'service' in p:
-                    r += ":{}".format(p['service'])
-                    ports.append(r)
-                else:
-                    # attempt to supply a service name by looking up the socket number
-                    try:
-                        service = socket.getservbyport(p['value'], p.get('protocol', 'tcp'))
-                        r += ":{}".format(service)
-                        ports.append(r)
-
-                    except OSError:  # py3
-                        pass
-                    except socket.error:  # py2
-                        pass
-
-        return ",".join(ports)
 
     def get_tech_preview_overrides(self):
         class TechPreviewOverrides(Overrides):
@@ -215,13 +190,6 @@ class Generator(object):
                     Label({'name': 'name', 'value': '%s' % self._generator.image['name']}),
                     Label({'name': 'version', 'value': '%s' % self._generator.image['version']})
                 ]
-
-                # do not override this label if it's already set
-                if self._generator.image.get('ports', []) and \
-                        'io.openshift.expose-services' not in [k['name'] for k in self._generator.image['labels']]:
-                    labels.append(Label({'name': 'io.openshift.expose-services',
-                                         'value': self._generator._generate_expose_services()}))
-
                 return labels
 
         return RedHatOverrides(self)
