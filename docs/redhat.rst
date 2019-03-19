@@ -43,14 +43,27 @@ injected into the image you are building and you can successfully build an image
 Artifacts
 ---------
 
-In Red Hat environment we are using Brew to build our packages and artifacts. CEKit provides an integration layer with Brew and enables to use artifact directly from Brew. To enable this set :ref:`redhat configuration option<redhat_config>` to True and define artifact **only** by specifying its ``md5`` checksum.
+In Red Hat environment we are using Brew to build our packages and artifacts.
+CEKit provides an integration layer with Brew and enables to use artifact
+directly from Brew. To enable this set :ref:`redhat configuration option<redhat_config>`
+to ``True`` (or use ``--redhat`` switch) and define plain artifacts which have ``md5`` checksum.
 
+.. warning::
+    Using different checksum thn ``md5`` will not work!
 
-*Example:* Following artifact will be fetched directly from brew for Docker build and uses `Brew/OSBS inegration <https://osbs.readthedocs.io/en/latest/users.html#fetch-artifacts-url-yaml>`_ for OSBS build.
+CEKit will fetch artifacts automatically from Brew, adding them to local cache.
 
-.. code:: yaml
+Depending on the selected builders, different preparations
+will be performed to make it ready for the build process:
 
-    artifacts:
-      - md5: d31c6b1525e6d2d24062ef26a9f639a8
-        name: jolokia-jvm-1.5.0.redhat-1-agent.jar
+* for Docker/Buildah/Podman builder it will be available directly,
+* for OSBS builder it uses the `Brew/OSBS integration <https://osbs.readthedocs.io/en/latest/users.html#fetch-artifacts-url-yaml>`_.
 
+Example
+    .. code-block:: yaml
+
+        artifacts:
+            - name: jolokia-jvm-1.5.0.redhat-1-agent.jar
+              md5: d31c6b1525e6d2d24062ef26a9f639a8
+
+    This is everything required to fetch the artifact.
