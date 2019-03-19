@@ -58,9 +58,7 @@ def cli(descriptor, verbose, work_dir, config, redhat, target):  # pylint: disab
 @click.option('--dry-run', help="Do not execute the build, just generate required files.", is_flag=True)
 @click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
 @click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
-# TODO: https://github.com/cekit/cekit/issues/377
-@click.option('--add-help', 'addhelp', help="Include generated help files in the image.", type=click.BOOL)
-def build(dry_run, overrides, addhelp):  # pylint: disable=unused-argument
+def build(dry_run, overrides):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -243,11 +241,6 @@ def prepare_params(ctx):
 
     params.update(ctx.params)
 
-    # TODO: https://github.com/cekit/cekit/issues/377
-    # TODO: Remove this ugly hack!
-    if 'addhelp' in params:
-        common_params['addhelp'] = params['addhelp']
-
     return (common_params, params)
 
 
@@ -316,9 +309,7 @@ class Cekit(object):
         CONFIG.configure(self.params.config,
                          {
                              'redhat': self.params.redhat,
-                             'work_dir': self.params.work_dir,
-                             # TODO: https://github.com/cekit/cekit/issues/377
-                             'addhelp': self.params.addhelp,
+                             'work_dir': self.params.work_dir
                          })
 
     def cleanup(self):

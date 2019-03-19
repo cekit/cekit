@@ -29,6 +29,7 @@ map:
   volumes: {type: any}
   help:
     map:
+      add: {type: bool}
       template: {type: text}""")
 
 
@@ -63,7 +64,8 @@ class Image(Descriptor):
         self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
 
         # make sure image declarations override any module definitions
-        self._image_overrides = {'artifacts': Image._to_dict(self.artifacts), 'modules': Image._to_dict(self.modules.install)}
+        self._image_overrides = {'artifacts': Image._to_dict(
+            self.artifacts), 'modules': Image._to_dict(self.modules.install)}
         self._all_artifacts = Image._to_dict(self.artifacts)
 
     def process_defaults(self):
@@ -229,9 +231,10 @@ class Image(Descriptor):
             self.packages._descriptor['repositories'] = list(package_repositories.values())
 
             if override.packages.content_sets:
-                self.packages.content_sets = _merge_descriptors(override.packages.content_sets, self.packages.content_sets)
+                self.packages.content_sets = _merge_descriptors(
+                    override.packages.content_sets, self.packages.content_sets)
             elif override.packages.content_sets_file:
-                self.packages.content_sets_file =  override.packages.content_sets_file
+                self.packages.content_sets_file = override.packages.content_sets_file
 
             if override.osbs != None:
                 self.osbs = override.osbs.merge(self.osbs)
@@ -314,7 +317,7 @@ class Image(Descriptor):
             if override:
                 if override.version != to_install.version:
                     logger.debug("Module '%s:%s' being overridden with '%s:%s'."
-                                % (to_install.name, to_install.version, override.name, override.version))
+                                 % (to_install.name, to_install.version, override.name, override.version))
                 # apply module override
                 to_install = override
 
@@ -323,12 +326,14 @@ class Image(Descriptor):
             if existing:
                 # check for a version conflict
                 if existing.version != to_install.version:
-                    logger.warning("Module version inconsistency for %s: %s requested, but %s will be used." % (to_install.name, to_install.version, existing.version))
+                    logger.warning("Module version inconsistency for %s: %s requested, but %s will be used." % (
+                        to_install.name, to_install.version, existing.version))
                 continue
 
             module = module_registry.get_module(to_install.name, to_install.version)
             if not module:
-                raise CekitError("Could not locate module %s version %s.  Please verify that it is included in one of the specified module repositories." % (to_install.name, to_install.version))
+                raise CekitError("Could not locate module %s version %s.  Please verify that it is included in one of the specified module repositories." % (
+                    to_install.name, to_install.version))
 
             # collect artifacts and apply overrides
             module_artifacts = Image._to_dict(module.artifacts)
