@@ -27,7 +27,7 @@ class Generator(object):
       target - path to target directory
       builder - builder type
       overrides - path to overrides file (can be None)
-      params - dictionary of builder specific parameterss
+      params - dictionary of builder specific parameters
     """
 
     def __init__(self, descriptor_path, target, overrides):
@@ -36,6 +36,7 @@ class Generator(object):
         self.target = target
         self._fetch_repos = False
         self._module_registry = ModuleRegistry()
+        self.image = None
 
         if overrides:
             for override in overrides:
@@ -72,6 +73,7 @@ class Generator(object):
         self.image.write(os.path.join(self.target, 'image.yaml'))
         self.prepare_artifacts()
         self.render_dockerfile()
+        self.render_help()
 
     def add_tech_preview_overrides(self):
         self._overrides.append(self.get_tech_preview_overrides())
@@ -238,7 +240,6 @@ class Generator(object):
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
         env.globals['image'] = self.image
-        env.globals['addhelp'] = CONFIG.get('doc', 'addhelp')
 
         template = env.get_template(os.path.basename(template_file))
 
@@ -253,26 +254,46 @@ class Generator(object):
                 self.image).encode('utf-8'))
         LOGGER.debug("Dockerfile rendered")
 
+    def render_help(self):
+        """
+        If requested, renders image help page based on the image descriptor.
+        It is generated to the $target/image/help.md file and added later
+        to the root of the image (/).
+        """
+
+        if not self.image.get('help', {}).get('add', False):
+            return
+
+        LOGGER.info("Rendering help.md page...")
+
+        # Set default help template
+        help_template_path = os.path.join(os.path.dirname(__file__),
+                                          '..',
+                                          'templates',
+                                          'help.jinja')
+
+        # If custom template is requested, use it
         if self.image.get('help', {}).get('template', ""):
             help_template_path = self.image['help']['template']
-        elif CONFIG.get('doc', 'help_template'):
-            help_template_path = CONFIG.get('doc', 'help_template')
-        else:
-            help_template_path = os.path.join(os.path.dirname(__file__),
-                                              '..',
-                                              'templates',
-                                              'help.jinja')
+
+            # If the path provided is absolute, use it
+            # If it's a relative path, make it relative to the image descriptor
+            if not os.path.isabs(help_template_path):
+                help_template_path = os.path.join(os.path.dirname(
+                    self._descriptor_path), help_template_path)
 
         help_dirname, help_basename = os.path.split(help_template_path)
+
         loader = FileSystemLoader(help_dirname)
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
         help_template = env.get_template(help_basename)
 
         helpfile = os.path.join(self.target, 'image', 'help.md')
+
         with open(helpfile, 'wb') as f:
-            f.write(help_template.render(
-                self.image).encode('utf-8'))
+            f.write(help_template.render(self.image).encode('utf-8'))
+
         LOGGER.debug("help.md rendered")
 
     def prepare_repositories(self, builder):
