@@ -18,7 +18,8 @@ CONFIG = Config()
 
 
 class Generator(object):
-    """This class process Image descriptor(self.image) and uses it to generate
+    """
+    This class process Image descriptor(self.image) and uses it to generate
     target directory by fetching all dependencies and artifacts
 
     Args:

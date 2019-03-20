@@ -34,6 +34,7 @@ jobs:
       image: circleci/classic:201808-01
     steps:
       - checkout
+      - run: sudo apt install -y graphviz
       - run:
           name: Install docs dependencies
           command: |
