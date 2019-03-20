@@ -24,7 +24,8 @@ class Module(Image):
         self.skip_merging = ['description',
                              'version',
                              'name',
-                             'release']
+                             'release',
+                             'help']
 
         self._prepare()
         self.name = self._descriptor['name']

@@ -1,117 +1,344 @@
 Building images
 ================
 
+.. contents::
+    :backlinks: none
+
+This chapter explains the build process as well as describes available options.
+
+Build process explained
+------------------------
+
+In this section we will go through the build process. You will learn what stages
+there are and what is done in every stage.
+
+High-level overview
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Let's start with a high-level diagram of CEKit.
+
+.. graphviz::
+    :align: center
+    :alt: CEKit simple build process diagram
+
+    digraph build_proces_high_level {
+        rankdir="LR";
+        graph [fontsize="11", fontname="Open Sans", compound="true"];
+        node [shape="box", fontname="Open Sans", fontsize="11"];
+
+        descriptor [label="Image descriptor"];
+        image [label="Image"];
+
+        subgraph cluster_0 {
+            style="dashed";
+            node [style="filled"];
+            label = "CEKit";
+            penwidth = "2";
+            color="dimgrey";
+
+            generate [label="Generate"];
+            build [label="Build"];
+        }
+
+        descriptor -> generate [lhead=cluster_0];
+        generate -> build;
+        build -> image [ltail=cluster_0];
+
+    }
+
+Main input to CEKit is the :doc:`image descriptor</descriptor/image>`. It defines the image.
+This should be the definitive description of the image; what it is, what goes in and where and
+what should be run on boot.
+
+Preparation of the image CEKit divides into two phases:
+
+#. Generation phase
+    Responsible for preparing everything required to build the image using selected builder.
+#. Build phase
+    Actual build execution with selected builder.
+
+Result of these two phases is the image.
+
+Let's discuss it in details.
+
+Build process in details
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As :ref:`mentioned above <build:High-level overview>` the CEKit build process is divided into two phases:
+
+#. Generation phase
+#. Build phase
+
+In this section we will go through these phases in detail to see what's happening in each. Below you
+can find diagram that shows what is done from beginning to the end when you execute CEKit.
+
+.. graphviz::
+    :align: center
+    :alt: CEKit build process diagram
+    :name: build-process-diagram
+
+     digraph build_process {
+        graph [fontsize="11", fontname="Open Sans", compound="true"];
+        node [shape="box", fontname="Open Sans", fontsize="10"];
+
+        subgraph cluster_out {
+            style="invis";
+            start [label="START", style="bold", shape="circle"];
+            end [label="END", style="bold", shape="circle"];
+
+            subgraph cluster_0 {
+                style="dashed";
+                node [style="filled"];
+                penwidth = "1";
+                color="dimgrey";
+
+                read [label="Read descriptor", href="#reading-image-descriptor"];
+                overrides [label="Apply overrides", href="#applying-overrides"];
+                modules [label="Prepare modules", href="#preparing-modules"];
+                artifacts [label="Handle artifacts", href="#handling-artifacts"];
+                generate [label="Generate files", href="#generating-required-files"];
+            }
+
+            subgraph cluster_1 {
+                style="dashed";
+                node [style="filled"];
+                penwidth = "1";
+                color="dimgrey";
+                build [label="Execute build", href="#build-execution"];
+            }
+        }
+
+        label_generate [label="Generate phase", shape="plaintext", fontsize="11"];
+        label_build [label="Build phase", shape="plaintext", fontsize="11"];
+
+        start -> read -> overrides -> modules -> artifacts -> generate -> build -> end;
+        overrides -> label_generate [style="invis"];
+        generate -> label_build [style="invis"];
+     }
+
+The build process is all about preparation of required content so that the selected
+builder could create an image out of it. Depending on the builder, this could mean different
+things. Some builders may require generating Dockerfiles, some may require generating additional
+files that instruct the builder itself how to build the image or from where to fetch artifacts.
+
+Reading image descriptor
+******************************
+
+In this phase the image descriptor is read and parsed. If the description is not in YAML format,
+it won't be read.
+
+Next step is to prepare an **object representation** of the descriptor. In CEKit internally we do not
+work on the dictionary read from the descriptor, but we operate on objects. Each section is converted individually
+to object and **validated according to the schema** for the section.
+
+This is an important step, because it ensures that the image descriptor uses correct schema.
+
+Applying overrides
+************************
+
+Applying :doc:`overrides</overrides>` is the next step. There can be many overrides specified. Some of them
+will be declared on CLI directly, some of them will be YAML files. We need to create an array of overrides
+because the **order in which overrides are specified matters**.
+
+Each override is converted into an object too, and yes, you guessed it -- it's validated at the same time.
+
+Last thing to do is to apply overrides on the image object we created before, in order.
+
+Preparing modules
+************************
+
+Next thing to do is to prepare :doc:`modules</descriptor/module>`. If there are any module repositories defined, we need to
+fetch them, and read. In most cases this will mean executing ``git clone`` command for each module repository,
+but sometimes it will be just about copying directories available locally.
+
+All module repositories are fetched into a temporary directory.
+
+For each module repository we read every module descriptor we can find. Each one
+is converted into an object and validated as well.
+
+Once everything is done, we have a module registry prepared, but this is not enough.
+
+Next step is to apply module overrides to the image object we have. Modules are
+actually overrides with the difference that modules encapsulate a defined functionality whereas
+overrides are just modifying things.
+
+To do this we iterate over all modules defined to install we try to find them in the module registry
+we built before. If there is no such module or the module version is different from what we request,
+the build will fail. If the requirement is satisfied the module is applied to the image object.
+
+The last step is to copy only required modules (module repository can contain many modules)
+from the temporary directory to the final target directory.
+
+Handling artifacts
+************************
+
+Each module and image descriptor itself can define :ref:`artifacts <descriptor/image:Artifacts>`.
+
+In this step CEKit is going to handle all defined artifacts for the image. For each defined
+artifact CEKit is going to fetch it. If there will be a problem while fetching the artifact,
+CEKit will fail with information why it happened.
+
+Each successfully fetched artifact is automatically added to :doc:`cache</caching>` so that
+subsequent build will be executed faster without the need to download the artifact again.
+
+Generating required files
+******************************
+
+When we have all external content handled and the image object is final we can generate required files.
+Generation is tightly coupled with the selected builder because different builders require different
+files to be generated.
+
+For example Docker builder requires Dockerfile to be generated, but the OSBS builder requires
+additional files besides the Dockerfile.
+
+For Dockerfiles we use a template which is populated which can access the image object properties.
+
+Build execution
+************************
+
+Final step is to execute the build using selected builder.
+
+Resulting image sometimes will be available on your localhost, sometimes in some remote
+registry. It all depends on the builder.
+
+Common ``build`` parameters
+----------------------------
+
+Below you can find description of the common parameters that can be added to every build
+command.
+
+``--dry-run``
+    Does not execute the actual build but let's CEKit prepare all required files to
+    be able to build the image. This is very handy when you want manually check generated
+    content.
+
+``--overrides``
+    Allows to specify overrides content as a JSON formatted string, directly
+    on the command line.
+
+    Example
+        .. code-block:: bash
+
+            $ cekit build --overrides '{"from": "fedora:29"}' docker
+
+    Read more about overrides in the :doc:`/overrides` chapter.
+
+    This parameter can be specified multiple times.
+
+``--overrides-file``
+    In case you need to override more things or you just want to save
+    the overrides in a file, you can use the ``--overrides-file`` providing the path
+    to a YAML-formatted file.
+
+    Example
+        .. code-block:: bash
+
+            $ cekit build --overrides-file development-overrides.yaml docker
+
+    Read more about overrides in the :doc:`/overrides` chapter.
+
+    This parameter can be specified multiple times.
+
+Supported builder engines
+--------------------------
+
 CEKit supports following builder engines:
 
-* Docker -- builds the container image using the Docker daemon, this is the default option
-* OSBS -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
-* Buildah -- builds the container image using `Buildah <https://buildah.io/>`__
-* Podman -- builds the container image using `Podman <https://podman.io/>`__
+* :ref:`Docker <build:Docker builder>` -- builds the container image using `Docker <https://docs.docker.com/>`__
+* :ref:`OSBS <build:OSBS builder>` -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
+* :ref:`Buildah <build:Buildah builder>` -- builds the container image using `Buildah <https://buildah.io/>`__
+* :ref:`Podman <build:Podman builder>` -- builds the container image using `Podman <https://podman.io/>`__
 
-Executing builds
------------------
+Docker builder
+^^^^^^^^^^^^^^^
 
-You can execute container image build by running:
+This builder uses Docker daemon as the build engine. Interaction with Docker daemon is done via Python binding.
 
-.. code:: bash
+Parameters
+    * ``--pull`` -- ask a builder engine to check and fetch latest base image
+    * ``--tag`` -- an image tag used to build image (can be specified multiple times)
+    * ``--no-squash`` -- do not squash the image after build is done.
 
-	  $ cekit build
+Example
+    Building Docker image
 
-Global options
+    .. code-block:: bash
 
-**Options affecting builder:**
-
-* ``--dry-run`` -- Do not execute the build, just generate required files.
-* ``--overrides`` -- Inline overrides in JSON format.
-* ``--overrides-file`` -- Path to overrides file in YAML format.
-* ``--add-help`` -- Include generated help files in the image.
-* ``--help`` -- Show this message and exit.
-
-**Sub-commands that are available are:**
-
-* ``buildah`` --  Build using Buildah engine
-* ``docker`` -- Build using Docker engine
-* ``osbs`` -- Build using OSBS engine
-* ``podman`` -- Build using Podman engine
-
-**Buildah and Podman options are:**
-
-* ``--pull`` -- ask a builder engine to check and fetch latest base image
-* ``--tag`` -- an image tag used to build image (can be specified multiple times)
-* ``--help`` -- Show this message and exit.
-
-**Docker options are:**
-
-* ``--pull`` -- ask a builder engine to check and fetch latest base image
-* ``--tag`` -- an image tag used to build image (can be specified multiple times)
-* ``--no-squash`` -- do not squash the image after build is done.
-* ``--help`` -- Show this message and exit.
-
-**OSBS options are:**
-
-* ``--release`` -- perform a OSBS release build
-* ``--tech-preview`` -- updates image descriptor ``name`` key to contain ``-tech-preview`` suffix in family part of the image name
-* ``---user`` -- alternative user passed to `rhpkg --user`
-* ``--nowait`` -- run `rhpkg container-build` with `--nowait` option specified
-* ``--stage`` -- use ``rhpkg-stage`` tool instead of ``rhpkg``
-* ``--koji-target`` -- overrides the default ``koji`` target
-* ``--commit-msg`` -- custom commit message for dist-git
-* ``--help`` -- Show this message and exit.
+        $ cekit build docker
 
 
-Docker build
-^^^^^^^^^^^^^^^^
-
-This is the default way to build an container image. The image is build utilizing Docker daemon via Python binding.
-
-**Example:** Building a docker image
-
-.. code:: bash
-
-	  $ cekit build
-
-
-OSBS build
+OSBS builder
 ^^^^^^^^^^^^^^^
 
 This build engine is using ``rhpkg`` or ``fedpkg`` tool to build the image using OSBS service. By default
-it performs scratch build. If you need a release build you need to specify ``--release`` parameter.
+it performs **scratch build**. If you need a proper build you need to specify ``--release`` parameter.
 
-**Example:** Performing scratch build
+Parameters
+    * ``--release`` -- perform an OSBS release build
+    * ``--tech-preview`` -- updates image descriptor ``name`` key to contain ``--tech-preview`` suffix in family part of the image name
+    * ``--user`` -- alternative user passed to build task
+    * ``--nowait`` -- do not wait for the task to finish
+    * ``--stage`` -- use stage environment
+    * ``--koji-target`` -- overrides the default ``koji`` target
+    * ``--commit-msg`` -- custom commit message for dist-git
 
-.. code:: bash
+Example
+    Performing scratch build
 
-	  $ cekit build osbs
+    .. code-block:: bash
 
+        $ cekit build osbs
 
-**Example:** Performing release build
+    Performing release build
 
-.. code:: bash
+    .. code-block:: bash
 
-	  $ cekit build osbs --release
+        $ cekit build osbs --release
 
+Buildah builder
+^^^^^^^^^^^^^^^
 
-Buildah build
-^^^^^^^^^^^^^
-
-This build engine is based on `Buildah <https://buildah.io>`_. Buildah still doesn't
-support non-privileged builds so you need to have **sudo** configured to run `buildah` as a root user on
-your desktop.
+This build engine is using `Buildah <https://buildah.io>`_.
 
 .. note::
-   If you need to use any non default registry, please update `/etc/containers/registry.conf` file.
+   If you need to use any non default registry, please update ``/etc/containers/registry.conf`` file.
 
+Parameters
+    * ``--pull`` -- ask a builder engine to check and fetch latest base image
+    * ``--tag`` -- an image tag used to build image (can be specified multiple times)
 
-**Example:** Building image using Buildah
+Example
+    Build image using Buildah
 
-.. code:: bash
+    .. code-block:: bash
 
-	  $ cekit build buildah
+        $ cekit build buildah
 
+    Build image using Buildah and tag it as ``example/image:1.0``
 
+    .. code-block:: bash
 
-Podman build
-^^^^^^^^^^^^^
+        $ cekit build buildah --tag example/image:1.0
 
-This build engine is based on `Podman <https://podman.io>`_. Podman will perform non-privileged builds so
+Podman builder
+^^^^^^^^^^^^^^^
+
+This build engine is using `Podman <https://podman.io>`_. Podman will perform non-privileged builds so
 no special configuration is required.
+
+Parameters
+    * ``--pull`` -- ask a builder engine to check and fetch latest base image
+    * ``--tag`` -- an image tag used to build image (can be specified multiple times)
+
+Example
+    Build image using Podman
+
+    .. code-block:: bash
+
+        $ cekit build podman
+
+    Build image using Podman
+
+    .. code-block:: bash
+
+        $ cekit build podman --pull
