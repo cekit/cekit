@@ -9,6 +9,43 @@ from cekit.descriptor import Descriptor, Image, Module, Overrides, Run
 from cekit.errors import CekitError
 from cekit import tools
 
+rhel_7_os_release = '''NAME="Red Hat Enterprise Linux Server"
+VERSION="7.7 (Maipo)"
+ID="rhel"
+ID_LIKE="fedora"
+VARIANT="Server"
+VARIANT_ID="server"
+# Some comment
+VERSION_ID="7.7"
+PRETTY_NAME="Red Hat Enterprise Linux Server 7.7 Beta (Maipo)"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:redhat:enterprise_linux:7.7:beta:server"
+HOME_URL="https://www.redhat.com/"
+BUG_REPORT_URL="https://bugzilla.redhat.com/"
+
+REDHAT_BUGZILLA_PRODUCT="Red Hat Enterprise Linux 7"
+REDHAT_BUGZILLA_PRODUCT_VERSION=7.7
+REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux"
+REDHAT_SUPPORT_PRODUCT_VERSION="7.7 Beta"'''
+
+rhel_8_os_release = '''NAME="Red Hat Enterprise Linux"
+   # Poor comment
+VERSION="8.0 (Ootpa)"
+ID="rhel"
+ID_LIKE="fedora"
+VERSION_ID="8.0"
+PLATFORM_ID="platform:el8"
+PRETTY_NAME="Red Hat Enterprise Linux 8.0 (Ootpa)"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:redhat:enterprise_linux:8.0:GA"
+HOME_URL="https://www.redhat.com/"
+BUG_REPORT_URL="https://bugzilla.redhat.com/"
+
+REDHAT_BUGZILLA_PRODUCT="Red Hat Enterprise Linux 8"
+REDHAT_BUGZILLA_PRODUCT_VERSION=8.0
+REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux"
+REDHAT_SUPPORT_PRODUCT_VERSION="8.0"'''
+
 
 class MockedDescriptor(Descriptor):
     def __init__(self, descriptor):
@@ -52,39 +89,39 @@ def test_merging_description_override():
 
 def test_merging_plain_descriptors():
     desc1 = MockedDescriptor({'name': 'foo',
-                            'a': 1,
-                            'b': 2})
+                              'a': 1,
+                              'b': 2})
 
     desc2 = MockedDescriptor({'name': 'foo',
-                            'b': 5,
-                            'c': 3})
+                              'b': 5,
+                              'c': 3})
 
     expected = MockedDescriptor({'name': 'foo',
-                               'a': 1,
-                               'b': 2,
-                               'c': 3})
+                                 'a': 1,
+                                 'b': 2,
+                                 'c': 3})
     assert expected == _merge_descriptors(desc1, desc2)
     assert expected.items() == _merge_descriptors(desc1, desc2).items()
 
 
 def test_merging_emdedded_descriptors():
     desc1 = MockedDescriptor({'name': 'a',
-                            'a': 1,
-                            'b': {'name': 'b',
-                                  'b1': 10,
-                                  'b2': 20}})
+                              'a': 1,
+                              'b': {'name': 'b',
+                                    'b1': 10,
+                                    'b2': 20}})
     desc2 = MockedDescriptor({'b': {'name': 'b',
-                                  'b2': 50,
-                                  'b3': 30},
-                            'c': {'name': 'c'}})
+                                    'b2': 50,
+                                    'b3': 30},
+                              'c': {'name': 'c'}})
 
     expected = MockedDescriptor({'name': 'a',
-                               'a': 1,
-                               'b': {'name': 'b',
-                                     'b1': 10,
-                                     'b2': 20,
-                                     'b3': 30},
-                               'c': {'name': 'c'}})
+                                 'a': 1,
+                                 'b': {'name': 'b',
+                                       'b1': 10,
+                                       'b2': 20,
+                                       'b3': 30},
+                                 'c': {'name': 'c'}})
 
     assert expected == _merge_descriptors(desc1, desc2)
 
@@ -105,21 +142,21 @@ def test_merging_plain_list_of_list():
 
 def test_merging_list_of_descriptors():
     desc1 = [MockedDescriptor({'name': 1,
-                             'a': 1,
-                             'b': 2})]
+                               'a': 1,
+                               'b': 2})]
 
     desc2 = [MockedDescriptor({'name': 2,
-                             'a': 123}),
+                               'a': 123}),
              MockedDescriptor({'name': 1,
-                             'b': 3,
-                             'c': 3})]
+                               'b': 3,
+                               'c': 3})]
 
     expected = [MockedDescriptor({'name': 2,
-                                'a': 123}),
+                                  'a': 123}),
                 MockedDescriptor({'name': 1,
-                                'a': 1,
-                                'b': 2,
-                                'c': 3})]
+                                  'a': 1,
+                                  'b': 2,
+                                  'c': 3})]
 
     assert expected == _merge_lists(desc1, desc2)
 
@@ -221,6 +258,26 @@ def test_dependency_handler_init_on_unknown_env_with_os_release_file(mocker, cap
         pass
 
     assert "You are running CEKit on an unknown platform. External dependencies suggestions may not work!" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/450
+def test_dependency_handler_on_rhel_7(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    with mocked_dependency_handler(mocker, rhel_7_os_release):
+        pass
+
+    assert "You are running on known platform: Red Hat Enterprise Linux Server 7.7 (Maipo)" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/450
+def test_dependency_handler_on_rhel_8(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    with mocked_dependency_handler(mocker, rhel_8_os_release):
+        pass
+
+    assert "You are running on known platform: Red Hat Enterprise Linux 8.0 (Ootpa)" in caplog.text
 
 
 def test_dependency_handler_init_on_known_env(mocker, caplog):
@@ -346,8 +403,6 @@ def test_dependency_handler_handle_dependencies_with_platform_specific_package(m
         # pylint: disable=E1101
         handler._check_for_executable.assert_called_once_with(
             'xyz', 'xyz-aaa', 'python-fedora-xyz-aaa')
-
-    print(caplog.text)
 
     assert "Checking if 'xyz' dependency is provided..." in caplog.text
     assert "All dependencies provided!" in caplog.text

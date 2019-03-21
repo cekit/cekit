@@ -158,7 +158,8 @@ class DependencyHandler(object):
             with open(os_release_path, 'r') as f:
                 content = f.readlines()
 
-            self.os_release = dict(l.strip().split('=') for l in content)
+            self.os_release = dict([l.strip().split('=')
+                                    for l in content if not l.isspace() and not l.strip().startswith('#')])
 
             # Remove the quote character, if it's there
             for key in self.os_release.keys():
