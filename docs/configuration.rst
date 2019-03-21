@@ -2,136 +2,126 @@ Configuration file
 ==================
 
 CEKit can be configured using a configuration file. We use the
-properties file format.
+`ini file format <https://en.wikipedia.org/wiki/INI_file>`__.
 
 CEKit will look for this file at the path ``~/.cekit/config``. Its location
 can be changed via command line ``--config`` option.
 
-**Example**
-Running CEKit with different config file:
+Example
+    Running CEKit with different config file:
 
-.. code:: sh
+    .. code-block:: bash
 
-    $ cekit --config ~/alternative_path build
+        $ cekit --config ~/alternative_path build
+
+.. contents::
+    :backlinks: none
 
 Below you can find description of available sections together with options described in detail.
 
-.. contents::
+Common section
+---------------
+
+The ``[common]`` section contains settings used across CEKit.
+
+Example
+    .. code-block:: ini
+
+        [common]
+        work_dir = /tmp
+        ssl_verify = False
+        cache_url = http://cache.host.com/fetch?#algorithm#=#hash#
+        redhat = True
+
+Working directory
+^^^^^^^^^^^^^^^^^^
+
+Key
+    ``work_dir``
+Description
+    Location of CEKit working directory, which is used to store some persistent data like
+    dist-git repositories and artifact cache.
+Default
+    ``~/.cekit``
+Example
+    .. code-block:: ini
+
+        [common]
+        work_dir=/tmp
 
 
-``common``
-------------
-
-.. _workdir_config:
-
-``work_dir``
-^^^^^^^^^^^^
-
-Contains location of CEKit working directory, which is used to store some persistent data like
-dist_git repositories and artifact cache.
-
-.. code:: yaml
-
-    [common]
-    work_dir=/tmp
-
-
-``ssl_verify``
-^^^^^^^^^^^^^^
-
-Controls verification of SSL certificates for example when downloading artifacts. Default: ``True``.
-
-.. code:: yaml
-
-    [common]
-    ssl_verify = False
-
-``cache_url``
-^^^^^^^^^^^^^
-
-Specifies a different location that could be used to fetch artifacts. Usually this is a URL to some cache service.
-By default it is not set.
-
-You can use following substitutions:
-
-* ``#filename#`` -- the file name from the url of the artifact
-* ``#algorithm#`` -- has algorithm specified for the selected artifact
-* ``#hash#`` -- value of the digest.
-
-**Example**
-
-Consider you have an image definition with artifacts section like this:
-
-.. code:: yaml
-
-    artifacts:
-        - url: "http://some.host.com/7.0.0/jboss-eap-7.0.0.zip"
-          md5: cd02482daa0398bf5500e1628d28179a
-
-If we set the ``cache_url`` parameter in following way:
-
-.. code::
-
-    [common]
-    cache_url = http://cache.host.com/fetch?#algorithm#=#hash#
-
-The JBoss EAP artifact will be fetched from: ``http://cache.host.com/fetch?md5=cd02482daa0398bf5500e1628d28179a``.
-
-And if we do it like this:
-
-.. code::
-
-    [common]
-    cache_url = http://cache.host.com/cache/#filename#
-
-The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss-eap-7.0.0.zip``.
-
-.. note::
-
-    In all cases digest will be computed from the downloaded file and compared with the expected value.
-
-.. _redhat_config:
-
-``redhat``
-^^^^^^^^^^
-This option changes CEKit default options to comply with Red Hat internal infrastructure and policies.
-
-**Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
-
-.. code::
-
-   [common]
-   redhat = true
-
-.. note::
-
-   If you are using CEKit within Red Hat infrastructure you should have valid Kerberos ticket.
-
-``doc``
--------
-
-This section collects together configuration options relating to documentation.
-
-``addhelp``
-^^^^^^^^^^^^^
-This option instructs CEKit to install the generated `help.md` file into the generate image
-sources. The file is inserted at the root path (`/`). The default value is False.
-
-**Example**: To enable this flag add following lines into your ``~/.cekit/config`` file:
-
-.. code::
-
-   [doc]
-   addhelp = true
-
-``help_template``
+SSL verification
 ^^^^^^^^^^^^^^^^^
 
-This option overrides the default Jinja template used in the generation of `help.md` files.
+Key
+    ``ssl_verify``
+Description
+    Controls verification of SSL certificates, for example when downloading artifacts.
+Default
+    ``True``
+Example
+    .. code-block:: ini
 
-**Example**:
+        [common]
+        ssl_verify = False
 
-.. code::
+Cache URL
+^^^^^^^^^^^^^^^^^
 
-   [doc]
-   help_template = /home/jon/something/my_help.md
+Key
+    ``cache_url``
+Description
+    Specifies a different location that could be used to fetch artifacts. Usually this is a URL to some cache service.
+
+    You can use following substitutions:
+
+    * ``#filename#`` -- the file name from the url of the artifact
+    * ``#algorithm#`` -- has algorithm specified for the selected artifact
+    * ``#hash#`` -- value of the digest.
+Default
+    Not set
+Example
+    Consider you have an image definition with artifacts section like this:
+
+    .. code-block:: yaml
+
+        artifacts:
+            - url: "http://some.host.com/7.0.0/jboss-eap-7.0.0.zip"
+              md5: cd02482daa0398bf5500e1628d28179a
+
+    If we set the ``cache_url`` parameter in following way:
+
+    .. code-block:: ini
+
+        [common]
+        cache_url = http://cache.host.com/fetch?#algorithm#=#hash#
+
+    The JBoss EAP artifact will be fetched from: ``http://cache.host.com/fetch?md5=cd02482daa0398bf5500e1628d28179a``.
+
+    And if we do it like this:
+
+    .. code-block:: ini
+
+        [common]
+        cache_url = http://cache.host.com/cache/#filename#
+
+    The JBoss EAP artifact will be fetched from: ``http://cache.host.com/cache/jboss-eap-7.0.0.zip``.
+
+Red Hat environment
+^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``redhat``
+Description
+    This option changes CEKit default options to comply with Red Hat internal infrastructure and policies.
+
+    .. tip::
+        Read more about :doc:`Red Hat environment </redhat>`. 
+Default
+    ``False``
+Example
+    .. code-block:: ini
+
+        [common]
+        redhat = True
+
