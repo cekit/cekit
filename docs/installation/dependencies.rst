@@ -7,13 +7,16 @@ additional software.
 
 Building container images for various platforms requires many dependencies to be present.
 We don't want to force installation of unnecessary utilities thus we decided to limit
-dependencies to the bare minimum.
+dependencies to the bare minimum (core dependencies).
 
 If a required dependency (for particular run) is not satisfied, user will be let know
 about the fact. In case of known platforms (like Fedora or RHEL) we even provide the
 package names to install (if available).
 
 Below you can see a summary of CEKit dependencies and when these are required.
+
+.. contents::
+    :backlinks: none
 
 Core dependencies
 ----------------------------------
@@ -24,38 +27,81 @@ Following Python libraries are required to run CEKit:
 * Jinja2
 * pykwalify
 * colorlog
+* click
 
-Additionally, we require Git to be present since we use it in many places.
+.. note::
+    For more information about versions, please consult the ``Pipfile`` file available in the `CEKit repository <https://github.com/cekit/cekit/>`__.
 
-For more information, please consult the ``Pipfile`` file available in the CEKit repository.
+Additionally, we require **Git** to be present since we use it in many places.
 
-Generate phase dependencies
+Builder specific dependencies
 ----------------------------------
 
-* ``odcs-client`` package
-    This is required when ``generate`` command and ``--build-engine buildah`` or ``--build-engine docker``
-    parameters are used. This package is available for Fedora and the CentOS family in the EPEL repository.
+This section describes builder-specific dependencies.
+
+Docker builder dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Docker
+    Required to build the image.
+`Docker Python bindings <https://github.com/docker/docker-py>`__
+    We use Python library to communicate with the Docker daemon instead of using the ``docker`` command directly.
+    Both, old (``docker-py``) and new (``docker``) library is supported.
+`Docker squash tool <https://github.com/goldmann/docker-squash>`__
+    After an image is built, all layers added by the image build process are squashed together with this tool.
+
+    .. note::
+        We are aware that Docker now supports the ``--squash`` parameter, but it's still an experimental
+        feature which requires reconfiguring the Docker daemon to make it available. By default it's
+        disabled. Instead relying on this, we use a proven tool that works in any case.
 
 
-Build phase dependencies
-----------------------------------
+.. _redhat_docker_builder_requirements:
 
-* Docker
-    This is required when ``build`` command and ``--build-engine docker`` parameter is used.
-    This is the default builder engine.
+.. important::
+    If run within the :doc:`Red Hat environment</redhat>` additional dependencies are required.
 
-* `Buildah <https://buildah.io/>`_
-    This is required when ``build`` command and ``--build-engine buildah`` parameter is used.
+    ``odcs`` command
+        This is required when ``generate`` command and ``--build-engine buildah`` or ``--build-engine docker``
+        parameters are used. This package is available for Fedora and the CentOS family in the EPEL repository.
+        For RHEL/Fedora OS'es this is satisfied by installing the ``odcs-client`` package.
+    ``brew`` command
+        Used to identify and fetch artifacts from Brew.
 
-* ``fedpkg`` package
-    This is required when ``build`` command and ``--build-engine osbs`` parameter is used.
+Buildah builder dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``rhpkg`` package
-    This is required when ``build`` command and ``--build-engine osbs``  and ``--redhat`` parameters are used.
+`Buildah <https://buildah.io/>`__
+    Required to build the image.
 
-* ``rhpkg-stage`` package
-    This is required when ``build`` command and ``--build-engine osbs``  and ``--redhat`` and ``--stage`` parameters are used.
+.. important::
+    If run within the :doc:`Red Hat environment</redhat>` additional dependencies are required. See the
+    :ref:`note in the Docker section above<redhat_docker_builder_requirements>` for more details.
 
+Podman builder dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `Podman <https://podman.io/>`__
+    Required to build the image.
+
+.. important::
+    If run within the :doc:`Red Hat environment</redhat>` additional dependencies are required. See the
+    :ref:`note in the Docker section above<redhat_docker_builder_requirements>` for more details.
+
+OSBS builder dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``koji`` command
+    The ``koji`` command is used to interact with the Koji API to execute the build.
+``fedpkg`` command
+    Used to clone and interact with dist-git repositories.
+
+.. important::
+    If run within the :doc:`Red Hat environment</redhat>` above dependencies are replaced with
+    Red Hat specific tools:
+
+    * ``koji`` is replaced by ``brew`` command (or ``brew-stage`` if run with the ``--stage`` parameter)
+    * ``fedpkg`` is replaced by ``rhpkg`` command (or ``rhpkg-stage`` if run with the ``--stage`` parameter)
 
 Test phase dependencies
 ----------------------------------

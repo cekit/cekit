@@ -3,7 +3,6 @@
 import logging
 import os
 import shutil
-import socket
 
 from jinja2 import Environment, FileSystemLoader
 
