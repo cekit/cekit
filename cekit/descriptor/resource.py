@@ -207,7 +207,7 @@ class Resource(Descriptor):
             try:
                 with open(destination, 'wb') as f:
                     while True:
-                        chunk = res.read(1024)
+                        chunk = res.read(1048576) # 1 MB
                         if not chunk:
                             break
                         f.write(chunk)
