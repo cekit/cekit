@@ -201,7 +201,7 @@ Final step is to execute the build using selected builder.
 Resulting image sometimes will be available on your localhost, sometimes in some remote
 registry. It all depends on the builder.
 
-Common ``build`` parameters
+Common build parameters
 ----------------------------
 
 Below you can find description of the common parameters that can be added to every build
