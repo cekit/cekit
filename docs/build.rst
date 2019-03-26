@@ -162,7 +162,7 @@ Next step is to apply module overrides to the image object we have. Modules are
 actually overrides with the difference that modules encapsulate a defined functionality whereas
 overrides are just modifying things.
 
-To do this we iterate over all modules defined to install we try to find them in the module registry
+To do this we iterate over all modules that are defined to install and we try to find them in the module registry
 we built before. If there is no such module or the module version is different from what we request,
 the build will fail. If the requirement is satisfied the module is applied to the image object.
 
