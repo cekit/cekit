@@ -1,4 +1,4 @@
-Developing your first image
+Getting started guide
 ============================
 
 In this chapter we will guide you how to create your first image.
