@@ -10,10 +10,7 @@ Image descriptor contains all information CEKit needs to build and test a contai
 .. include:: description.rst
 .. include:: from.rst
 .. include:: help.rst
-.. include:: envs.rst
-
-.. _labels:
-   
+.. include:: envs.rst 
 .. include:: labels.rst
 .. include:: artifacts.rst
 .. include:: packages.rst

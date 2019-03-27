@@ -4,7 +4,7 @@ CEKit
 .. figure:: _static/cover.png
     :width: 100%
     :target: `CEKit`_
-    :alt: Alternative text
+    :alt: CEKit logo
 
 About
 -----
@@ -16,8 +16,8 @@ CEKit helps to build container images from image definition files with strong fo
 Features
 --------
 
-* :doc:`Building container images </build>` from YAML image definitions using many build engines
-* :doc:`Integration/unit testing </testing/index>` of images
+* :doc:`Building container images </handbook/build>` from YAML image definitions using many build engines
+* :doc:`Integration/unit testing </handbook/testing/index>` of images
 
 Releases and changelog
 -----------------------
@@ -30,8 +30,11 @@ Documentation
 .. toctree::
     :maxdepth: 2
 
-    handbook
-    reference
+    getting-started/index
+    handbook/index
+    descriptor/index
+    contribution-guide/index
+    
 
 License
 ----------

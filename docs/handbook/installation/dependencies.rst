@@ -59,7 +59,7 @@ Docker
 .. _redhat_docker_builder_requirements:
 
 .. important::
-    If run within the :doc:`Red Hat environment</redhat>` additional dependencies are required.
+    If run within the :doc:`Red Hat environment</handbook/redhat>` additional dependencies are required.
 
     ``odcs`` command
         This is required when ``generate`` command and ``--build-engine buildah`` or ``--build-engine docker``
@@ -75,7 +75,7 @@ Buildah builder dependencies
     Required to build the image.
 
 .. important::
-    If run within the :doc:`Red Hat environment</redhat>` additional dependencies are required. See the
+    If run within the :doc:`Red Hat environment</handbook/redhat>` additional dependencies are required. See the
     :ref:`note in the Docker section above<redhat_docker_builder_requirements>` for more details.
 
 Podman builder dependencies
@@ -85,7 +85,7 @@ Podman builder dependencies
     Required to build the image.
 
 .. important::
-    If run within the :doc:`Red Hat environment</redhat>` additional dependencies are required. See the
+    If run within the :doc:`Red Hat environment</handbook/redhat>` additional dependencies are required. See the
     :ref:`note in the Docker section above<redhat_docker_builder_requirements>` for more details.
 
 OSBS builder dependencies
@@ -97,7 +97,7 @@ OSBS builder dependencies
     Used to clone and interact with dist-git repositories.
 
 .. important::
-    If run within the :doc:`Red Hat environment</redhat>` above dependencies are replaced with
+    If run within the :doc:`Red Hat environment</handbook/redhat>` above dependencies are replaced with
     Red Hat specific tools:
 
     * ``koji`` is replaced by ``brew`` command (or ``brew-stage`` if run with the ``--stage`` parameter)
@@ -106,7 +106,7 @@ OSBS builder dependencies
 Test phase dependencies
 ----------------------------------
 
-For more information about testing, please take a :doc:`look here </testing/index>`.
+For more information about testing, please take a :doc:`look here </handbook/testing/index>`.
 
 Test dependencies can vary. CEKit uses a plugable way of defining Behave steps. The default
 test steps are located in https://github.com/cekit/behave-test-steps repository. You can find there

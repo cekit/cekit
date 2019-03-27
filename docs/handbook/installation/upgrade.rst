@@ -4,7 +4,7 @@ Upgrading
 .. note::
 
     If you run on Fedora / CentOS / RHEL you should be using RPMs
-    from regular repositories. Please see :doc:`installation instructions </installation/instructions>`.
+    from regular repositories. Please see :doc:`installation instructions </handbook/installation/instructions>`.
 
 Upgrade from CEKit 2.x
 -----------------------
@@ -24,7 +24,7 @@ you need to uninstall any packages that came from it before upgrading.
 
         dnf list installed | grep @group_cekit-cekit | cut -f 1 -d ' ' | xargs sudo dnf remove {}\;
 
-Once all packages that came from the COPR repository you can follow the :doc:`installation instructions </installation/instructions>`.
+Once all packages that came from the COPR repository you can follow the :doc:`installation instructions </handbook/installation/instructions>`.
 
 Fedora
 --------------------

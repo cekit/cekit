@@ -10,7 +10,7 @@ fetch any artifacts specified in this section.
 If for some reason automatic fetching of artifacts is not an option for you,
 yoy should define artifacts as plain artifacts and use the ``cekit-cache``
 command to add the artifact to local cache, making it available for the build
-process automatically. See :doc:`/caching` chapter.
+process automatically. See :doc:`/handbook/caching` chapter.
 
 Artifact features
 ^^^^^^^^^^^^^^^^^^^^
@@ -30,7 +30,7 @@ Checksums
     development. We advice that you define checksum when your content becomes stable.
 
 Caching
-    All artifacts are automatically cached during an image build. To learn more about caching please take a look at :doc:`/caching` chapter.
+    All artifacts are automatically cached during an image build. To learn more about caching please take a look at :doc:`/handbook//caching` chapter.
 
 
 Common artifact keys
@@ -45,7 +45,7 @@ Common artifact keys
 
     Value of this key does not need to be a filename, because it's just an identifier used
     to refer the artifact. Using meaningful and unique identifiers is important in case when
-    you want to use :doc:`/overrides`. It will make it much easier to refer the artifact
+    you want to use :doc:`/handbook/overrides`. It will make it much easier to refer the artifact
     and thus override it.
 
 ``target``
@@ -119,7 +119,7 @@ This is an abstract way of defining artifacts. The only required keys are ``name
 This type of artifacts is used to define artifacts that are not available publicly and instead
 provided by some (internal) systems.
 
-This approach relies on :doc:`/caching` to provide the artifact.
+This approach relies on :doc:`/handbook//caching` to provide the artifact.
 
 .. code-block:: yaml 
 
@@ -130,7 +130,7 @@ This approach relies on :doc:`/caching` to provide the artifact.
 
 .. note::
 
-   See :doc:`/redhat` for description how plain artifacts are used in the
+   See :doc:`/handbook/redhat` for description how plain artifacts are used in the
    Red Hat environment.
 
           
@@ -153,7 +153,7 @@ artifact should be fetched from.
 Path artifacts
 ******************
 
-This way of defining artifacts is mostly used in development :doc:`overrides</overrides>` and enables you to inject
+This way of defining artifacts is mostly used in development :doc:`overrides </handbook/overrides>` and enables you to inject
 artifacts from a local filesystem.
 
 .. code-block:: yaml
