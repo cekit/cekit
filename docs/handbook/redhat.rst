@@ -3,7 +3,7 @@
 
 Red Hat Environment
 ===================
-If you are running CEKit in Red Hat internal infrastructure it behaves differently. This behavior is triggered by changing :ref:`redhat configuration option<configuration:Red Hat environment>` in CEKit configuration file.
+If you are running CEKit in Red Hat internal infrastructure it behaves differently. This behavior is triggered by changing :ref:`redhat configuration option<handbook/configuration:Red Hat environment>` in CEKit configuration file.
 
 
 Tools
@@ -37,7 +37,7 @@ Repositories
 
 In Red Hat we are using ODCS/OSBS integration to access repositories for building our container images. To make our life easier
 for local development CEKit is able to ask ODCS to create ``content_sets.yml`` based repositories even for local Docker builds.
-This means that if you set :ref:`redhat configuration option<configuration:Red Hat environment>` to True, your content_sets repositories will be
+This means that if you set :ref:`redhat configuration option<handbook/configuration:Red Hat environment>` to True, your content_sets repositories will be
 injected into the image you are building and you can successfully build an image on non-subscribed hosts.
 
 Artifacts
@@ -45,7 +45,7 @@ Artifacts
 
 In Red Hat environment we are using Brew to build our packages and artifacts.
 CEKit provides an integration layer with Brew and enables to use artifact
-directly from Brew. To enable this set :ref:`redhat configuration option <configuration:Red Hat environment>`
+directly from Brew. To enable this set :ref:`redhat configuration option <handbook/configuration:Red Hat environment>`
 to ``True`` (or use ``--redhat`` switch) and define plain artifacts which have ``md5`` checksum.
 
 .. warning::

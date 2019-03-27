@@ -64,7 +64,7 @@ Let's discuss it in details.
 Build process in details
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As :ref:`mentioned above <build:High-level overview>` the CEKit build process is divided into two phases:
+As :ref:`mentioned above <handbook/build:High-level overview>` the CEKit build process is divided into two phases:
 
 #. Generation phase
 #. Build phase
@@ -136,7 +136,7 @@ This is an important step, because it ensures that the image descriptor uses cor
 Applying overrides
 ************************
 
-Applying :doc:`overrides</overrides>` is the next step. There can be many overrides specified. Some of them
+Applying :doc:`overrides</handbook/overrides>` is the next step. There can be many overrides specified. Some of them
 will be declared on CLI directly, some of them will be YAML files. We need to create an array of overrides
 because the **order in which overrides are specified matters**.
 
@@ -178,7 +178,7 @@ In this step CEKit is going to handle all defined artifacts for the image. For e
 artifact CEKit is going to fetch it. If there will be a problem while fetching the artifact,
 CEKit will fail with information why it happened.
 
-Each successfully fetched artifact is automatically added to :doc:`cache</caching>` so that
+Each successfully fetched artifact is automatically added to :doc:`cache</handbook/caching>` so that
 subsequent build will be executed faster without the need to download the artifact again.
 
 Generating required files
@@ -221,7 +221,7 @@ command.
 
             $ cekit build --overrides '{"from": "fedora:29"}' docker
 
-    Read more about overrides in the :doc:`/overrides` chapter.
+    Read more about overrides in the :doc:`/handbook/overrides` chapter.
 
     This parameter can be specified multiple times.
 
@@ -235,7 +235,7 @@ command.
 
             $ cekit build --overrides-file development-overrides.yaml docker
 
-    Read more about overrides in the :doc:`/overrides` chapter.
+    Read more about overrides in the :doc:`/handbook/overrides` chapter.
 
     This parameter can be specified multiple times.
 
@@ -244,10 +244,10 @@ Supported builder engines
 
 CEKit supports following builder engines:
 
-* :ref:`Docker <build:Docker builder>` -- builds the container image using `Docker <https://docs.docker.com/>`__
-* :ref:`OSBS <build:OSBS builder>` -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
-* :ref:`Buildah <build:Buildah builder>` -- builds the container image using `Buildah <https://buildah.io/>`__
-* :ref:`Podman <build:Podman builder>` -- builds the container image using `Podman <https://podman.io/>`__
+* :ref:`Docker <handbook/build:Docker builder>` -- builds the container image using `Docker <https://docs.docker.com/>`__
+* :ref:`OSBS <handbook/build:OSBS builder>` -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
+* :ref:`Buildah <handbook/build:Buildah builder>` -- builds the container image using `Buildah <https://buildah.io/>`__
+* :ref:`Podman <handbook/build:Podman builder>` -- builds the container image using `Podman <https://podman.io/>`__
 
 Docker builder
 ^^^^^^^^^^^^^^^

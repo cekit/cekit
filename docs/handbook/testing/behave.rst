@@ -58,7 +58,7 @@ rather than the image itself. In our experience we see that this is the most com
 
 .. note::
     CEKit makes it possible to colocate tests with image source as well as module source. Please
-    take a look at the :ref:`testing/behave:Test file locations` section for more information where these should be placed.
+    take a look at the :ref:`handbook/testing/behave:Test file locations` section for more information where these should be placed.
 
 Placing feature files together with modules makes it easy to share the feature as well as tests.
 Such tests could be run by multiple different images which use this particular module.
@@ -77,7 +77,7 @@ We suggest to read this, if it does not answer all your questions, `let us know 
 
 .. note::
     For information how you can write your own steps, please take a look at the
-    :ref:`testing/behave:Writing custom steps` paragraph.
+    :ref:`handbook/testing/behave:Writing custom steps` paragraph.
 
 Default steps
 **************
@@ -160,7 +160,7 @@ Skipping tests
 ***********************
 
 .. hint::
-    See :ref:`testing/behave:Special tags` paragraph.
+    See :ref:`handbook/testing/behave:Special tags` paragraph.
 
 If there is a particular test which needs to be temporally disabled, you can use ``@ignore``
 tag to disable it.

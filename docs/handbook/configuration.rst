@@ -1,5 +1,5 @@
-Configuration file
-==================
+CEKit configuration file
+=========================
 
 CEKit can be configured using a configuration file. We use the
 `ini file format <https://en.wikipedia.org/wiki/INI_file>`__.
@@ -116,7 +116,7 @@ Description
     This option changes CEKit default options to comply with Red Hat internal infrastructure and policies.
 
     .. tip::
-        Read more about :doc:`Red Hat environment </redhat>`. 
+        Read more about :doc:`Red Hat environment </handbook/redhat>`. 
 Default
     ``False``
 Example

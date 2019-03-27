@@ -2,6 +2,7 @@ Installation instructions
 =========================
 
 .. contents::
+    :backlinks: none
 
 We provide RPM packages for Fedora, CentOS/RHEL distribution.
 CEKit installation on other platforms is still possible via ``pip``.
@@ -17,7 +18,7 @@ and the EPEL repository for CentOS/RHEL.
 
 .. warning::
 
-   Make sure you read the :doc:`dependencies </installation/dependencies>` chapter which contains important
+   Make sure you read the :doc:`dependencies </handbook/installation/dependencies>` chapter which contains important
    information about how CEKit dependencies are handled!
 
 Fedora

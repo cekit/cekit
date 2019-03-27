@@ -4,8 +4,7 @@ Description
 Short summary of the image.
 
 Value of the ``description`` key is added to the image as two labels: ``description``
-and ``summary`` unless such labels are already defined in the image descriptor's
-:ref:`labels` section.
+and ``summary`` unless such labels are already defined in the `labels <#labels>`__ section.
 
 .. code:: yaml
 

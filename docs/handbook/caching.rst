@@ -62,7 +62,7 @@ located.
 .. warning::
 
    If you customize ``--work-dir`` -- make sure you use the same path for ``cekit`` and ``cekit-cache`` commands.
-   You can also set the path in the :ref:`configuration file <configuration:Working directory>`.
+   You can also set the path in the :ref:`configuration file <handbook/configuration:Working directory>`.
 
 Caching artifacts manually
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -121,7 +121,7 @@ it by executing following command:
 	  $ cekit-cache rm uuid
 
 .. note::
-   You can get uuid of any artifact by invoking ``cekit-cache ls`` command. Please consult :ref:`caching:Listing cached artifacts`.
+   You can get uuid of any artifact by invoking ``cekit-cache ls`` command. Please consult :ref:`handbook/caching:Listing cached artifacts`.
 
 
 Wiping cache
