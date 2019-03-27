@@ -1,182 +1,214 @@
 Overrides
 =========
 
-During an image life cycle there can be a need to do a slightly tweaked builds - using different base images, injecting newer libraries etc. We want to support such scenarios without a need of duplicating whole image sources. To achieve this CEKit supports overrides mechanism for its image descriptor. You can override almost anything in image descriptor. The overrides are based on overrides descriptor - a YAML object containing overrides for the image descriptor.
+.. contents::
+    :backlinks: none
 
-To use an override descriptor you need to pass ``--overrides-file`` argument to a CEKit. You can also pass JSON/YAML object representing changes directly via ``--overrides`` command line argument.
+During an image life cycle there can be a need to do a slightly tweaked builds --
+using different base images, injecting newer libraries etc. We want to support such
+scenarios without a need of duplicating whole image sources.
 
-**Example**: To use overrides.yaml file located in current working directory run:
+To achieve this CEKit **supports overrides mechanism** for its descriptors. You can override
+anything from the descriptor. The overrides are based on overrides descriptor --
+a YAML object containing overrides for the image descriptor.
 
-.. code:: bash
+To use an override descriptor you need to pass ``--overrides-file`` argument to
+CEKit. You can also pass JSON/YAML object representing changes directly via
+``--overrides`` command line argument.
 
-	  $ cekit build --overrides-file overrides.yaml
+Example
+    Use ``overrides.yaml`` file located in current working directory
+
+    .. code-block:: bash
+
+        $ cekit build --overrides-file overrides.yaml podman
 
 
-**Example**: To override a label via command line run:
+Example
+    Override a label via command line
 
-.. code:: bash
+    .. code-block:: bash
 
-	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'overridden'}]}"
+        $ cekit build --overrides '{"labels": [{"name": "foo", "value": "overridden"}]}' podman
 
-Overrides Chaining
+Overrides chaining
 ------------------
 
-You can even specify multiple overrides. Overrides are resolved that last specified is the most important one. This means that values from *last override specified overrides all values from former ones*.
+You can even specify multiple overrides. Overrides are resolved that last specified
+is the most important one. This means that values from **last override specified overrides all values from former ones**.
 
-**Example**: If you run following command, label `foo` will be set to `baz`.
+Example
+    If you run following command, label ``foo`` will be set to ``baz``.
 
-.. code:: bash
+    .. code-block:: bash
 
-	  $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'bar'}]} --overrides "{'labels': [{'name': 'foo', 'value': 'baz'}]}"
+	    $ cekit build --overrides "{'labels': [{'name': 'foo', 'value': 'bar'}]} --overrides "{'labels': [{'name': 'foo', 'value': 'baz'}]}" podman
 
 How overrides works
 -------------------
 
-CEKit is using `YAML <http://yaml.org/>`_ format for its descriptors. Overrides in cekit works on `YAML node <http://www.yaml.org/spec/1.2/spec.html#id2764044>`_ level.
+CEKit is using `YAML <http://yaml.org/>`__ format for its descriptors.
+Overrides in CEKit works on `YAML node <http://www.yaml.org/spec/1.2/spec.html#id2764044>`__ level.
 
 
 Scalar nodes
 ^^^^^^^^^^^^
-Scalar nodes are easy to override, if CEKit finds any scalar node in an overrides descriptor it updates its value in image descriptor with the overridden one.
+Scalar nodes are easy to override, if CEKit finds any scalar node in an overrides
+descriptor it updates its value in image descriptor with the overridden one.
 
-**Example**: Overriding scalar node:
+Example
+    Overriding scalar node
 
-*image descriptor*
+    .. code-block:: yaml
 
-.. code:: yaml
+        # Image descriptor
 
-	  schema_version: 1
-	  name: "dummy/example"
-	  version: "0.1"
-	  from: "busybox:latest"
+        schema_version: 1
+        name: "dummy/example"
+        version: "0.1"
+        from: "busybox:latest"
 
-*overrides descriptor*
+    .. code-block:: yaml
 
-.. code:: yaml
+        # Override descriptor
 
-	  schema_version: 1
-	  from: "fedora:latest"
+        schema_version: 1
+        from: "fedora:latest"
 
-*overridden image descriptor*
+    .. code-block:: yaml
 
-.. code:: yaml
+        # Resulting image descriptor
 
-	  schema_version: 1
-	  name: "dummy/example"
-	  version: "0.1"
-	  from: "fedora:latest"
+        schema_version: 1
+        name: "dummy/example"
+        version: "0.1"
+        from: "fedora:latest"
 
 Sequence nodes
 ^^^^^^^^^^^^^^
-Sequence nodes are little bit tricky, if they're representing plain arrays, we cannot easily override any value so CEKit is just replacing the whole sequence.
+Sequence nodes are a little bit tricky, if they're representing plain arrays,
+we cannot easily override any value so CEKit is just replacing the whole sequence.
 
-**Example**: Overriding plain array node:
+Example
+    Overriding plain array node.
 
-*image descriptor*
+    .. code-block:: yaml
 
-.. code:: yaml
+        # Image descriptor
 
-	  schema_version: 1
-	  name: "dummy/example"
-	  version: "0.1"
-	  from: "busybox:latest"
-	  run:
-	    cmd:
-	    - "echo"
-	    - "foo"
+        schema_version: 1
+        name: "dummy/example"
+        version: "0.1"
+        from: "busybox:latest"
+        run:
+            cmd:
+                - "echo"
+                - "foo"
 
-*overrides descriptor*
+    .. code-block:: yaml
 
-.. code:: yaml
+        # Override descriptor
 
-	  schema_version: 1
-	  run:
-	    cmd:
-	    - "bar"
+        schema_version: 1
+        run:
+            cmd:
+                - "bar"
 
-*overridden image descriptor*
+    .. code-block:: yaml
 
-.. code:: yaml
+        # Resulting image descriptor
 
-	  schema_version: 1
-	  name: "dummy/example"
-	  version: "0.1"
-	  from: "busybox:latest"
-	  run:
-	    cmd:
-  	    - "bar"
-
+        schema_version: 1
+        name: "dummy/example"
+        version: "0.1"
+        from: "busybox:latest"
+        run:
+            cmd:
+                - "bar"
 
 Mapping nodes
 ^^^^^^^^^^^^^
-Mappings are merged via *name* key. If CEKit is overriding an mapping or array of mappings it tries to find a **name** key in mapping and use and identification of mapping. If two **name** keys matches, all keys of the mapping are updated.
 
-**Example**: Updating mapping node:
+Mappings are merged via ``name`` key. If CEKit is overriding a mapping or array of mappings
+it tries to find a ``name`` key in mapping and use and identification of mapping.
+If two ``name`` keys matches, all keys of the mapping are updated.
 
-*image descriptor*
+Example
+    Updating mapping node.
 
-.. code:: yaml
+    .. code-block:: yaml
 
-	  schema_version: 1
-	  name: "dummy/example"
-	  version: "0.1"
-	  from: "busybox:latest"
-	  envs:
-	  - name: "FOO"
-	    value: "BAR"
+        # Image descriptor
 
-*overrides descriptor*
+        schema_version: 1
+        name: "dummy/example"
+        version: "0.1"
+        from: "busybox:latest"
+        envs:
+            - name: "FOO"
+              value: "BAR"
 
-.. code:: yaml
+    .. code-block:: yaml
 
-	  schema_version: 1
-	  envs:
-	  - name: "FOO"
-	    value: "new value"
+        # Override descriptor
 
-*overridden image descriptor*
+        schema_version: 1
+        envs:
+            - name: "FOO"
+              value: "new value"
 
-.. code:: yaml
+    .. code-block:: yaml
 
-	  schema_version: 1
-	  name: "dummy/example"
-	  version: "0.1"
-	  from: "busybox:latest"
-	  envs:
-	  - name: "FOO"
-	    value: "new value"
+        # Resulting image descriptor
+
+        schema_version: 1
+        name: "dummy/example"
+        version: "0.1"
+        from: "busybox:latest"
+        envs:
+            - name: "FOO"
+              value: "new value"
 
 
 Removing keys
 ---------------
 
-Overriding can result into a need of removing any key from a descriptor. You can achieve this by overriding a key with a YAML null value ``~``.
+Overriding can result into need of removing a key from a descriptor.
+You can achieve this by overriding a key with a `YAML null value <https://yaml.org/type/null.html>`__.
 
-**Example**: Remove value from a defined variable
+You can use either the ``null`` word or the tilde character: ``~`` to remove particular
+key.
 
-If you have a variable defined in a following way:
+Example
+    Remove value from a defined variable.
 
-.. code:: yaml
+    If you have a variable defined in a following way:
 
-	  envs:
-	    - name: foo
-	      value: bar
+    .. code-block:: yaml
 
-you can remove ``value`` key via following override:
+        envs:
+            - name: foo
+              value: bar
 
-.. code:: yaml
+    you can remove ``value`` key via following override:
 
-	  envs:
-	    - name: foo
-	      value: ~
+    .. code-block:: yaml
 
-It will result into following variable definition:
+        envs:
+            - name: foo
+              value: ~
 
+    It will result into following variable definition:
 
-.. code:: yaml
+    .. code-block:: yaml
 
-	  envs:
-	    - name: foo
+        envs:
+            - name: foo
 
+.. warning::
+    In some cases it will not be possible to remove the element and an error saying that
+    schema cannot be validated will be shown. If you run it again with verbose output enabled
+    (``--verbose``) you will see ``required.novalue`` messages.
 
+    Improvement to this behavior is tracked here: https://github.com/cekit/cekit/issues/460
 
