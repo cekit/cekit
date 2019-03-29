@@ -1,12 +1,13 @@
-Modules
-============
+Module guidelines
+===================
 
-Modules are the heart of CEKit. Modules make it possible
+Modules are the heart of CEKit. This is where we define what is going into the image, how it is
+configured. We are able to share modules across images.
+
+This chapter discusses guidelines around modules.
 
 .. todo::
-    Extend this
+    Work in progress
 
 .. toctree::
-    :titlesonly:
-    
-    local
+    :maxdepth: 2

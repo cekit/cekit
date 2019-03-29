@@ -7,4 +7,5 @@ This chapter focuses on best practices and guides related to developing images.
     :maxdepth: 2
     
     modules/index
+    local-development
     repositories
