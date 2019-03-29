@@ -3,7 +3,7 @@ CEKit
 
 .. figure:: _static/cover.png
     :width: 100%
-    :target: `CEKit`_
+    :target: `CEKit`__
     :alt: CEKit logo
 
 About
@@ -19,10 +19,15 @@ Features
 * :doc:`Building container images </handbook/building/index>` from YAML image definitions using many build engines
 * :doc:`Integration/unit testing </handbook/testing/index>` of images
 
+I'm new, where to start?
+---------------------------
+
+We suggest looking at the :doc:`getting started guide </getting-started/index>`. It's probably the best place to start.
+
 Releases and changelog
 -----------------------
 
-See the `releases page <https://github.com/cekit/cekit/releases>`_ for latest releases and changelogs.
+See the `releases page <https://github.com/cekit/cekit/releases>`__ for latest releases and changelogs.
 
 Documentation
 -------------
