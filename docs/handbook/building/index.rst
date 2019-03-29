@@ -64,7 +64,7 @@ Let's discuss it in details.
 Build process in details
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As :ref:`mentioned above <handbook/build:High-level overview>` the CEKit build process is divided into two phases:
+As :ref:`mentioned above <handbook/building/index:High-level overview>` the CEKit build process is divided into two phases:
 
 #. Generation phase
 #. Build phase
@@ -244,10 +244,10 @@ Supported builder engines
 
 CEKit supports following builder engines:
 
-* :ref:`Docker <handbook/build:Docker builder>` -- builds the container image using `Docker <https://docs.docker.com/>`__
-* :ref:`OSBS <handbook/build:OSBS builder>` -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
-* :ref:`Buildah <handbook/build:Buildah builder>` -- builds the container image using `Buildah <https://buildah.io/>`__
-* :ref:`Podman <handbook/build:Podman builder>` -- builds the container image using `Podman <https://podman.io/>`__
+* :ref:`Docker <handbook/building/index:Docker builder>` -- builds the container image using `Docker <https://docs.docker.com/>`__
+* :ref:`OSBS <handbook/building/index:OSBS builder>` -- builds the container image using `OSBS service <https://osbs.readthedocs.io>`__
+* :ref:`Buildah <handbook/building/index:Buildah builder>` -- builds the container image using `Buildah <https://buildah.io/>`__
+* :ref:`Podman <handbook/building/index:Podman builder>` -- builds the container image using `Podman <https://podman.io/>`__
 
 Docker builder
 ^^^^^^^^^^^^^^^

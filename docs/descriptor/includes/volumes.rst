@@ -1,9 +1,14 @@
 Volumes
 -------
 
+Key
+    ``volumes``
+Required
+    No
+
 In case you want to define volumes for your image, just use the ``volumes`` section!
 
-.. code:: yaml
+.. code-block:: yaml
 
     volumes:
         - name: "volume.eap"

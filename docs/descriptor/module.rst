@@ -1,7 +1,8 @@
 Module descriptor
 =================
 
-Module descriptor contains all information CEKit needs to introduce a feature to an image. Modules are used as libraries or shared building blocks across images.
+Module descriptor contains all information CEKit needs to introduce a feature to an image.
+Modules are used as libraries or shared building blocks across images.
 
 It is very important to make a module self-containg which means that executing
 scripts defined in the module's definition file should always end up in a state
@@ -12,30 +13,8 @@ Please keep that in mind that at the time when you are developing a module -- yo
 know how and when it'll be executed.
 
 .. contents::
+    :backlinks: none
 
-name
-----
-
-This key is **required**.
-
-Module name.
-
-.. code:: yaml
-
-    name: "python_flask_module"
-
-
-.. include:: version.rst
-.. include:: description.rst
-.. include:: from.rst
-.. include:: envs.rst
-.. include:: labels.rst
-.. include:: artifacts.rst
-.. include:: packages.rst
-.. include:: ports.rst
-.. include:: user.rst
-.. include:: volumes.rst	     
-.. include:: modules.rst
-.. include:: workdir.rst
-.. include:: run.rst
-.. include:: execs.rst
+.. include:: includes/module/name.rst
+.. include:: includes/module/execute.rst
+.. include:: common_keys.rst

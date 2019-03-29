@@ -1,6 +1,11 @@
 Ports
 -----
 
+Key
+    ``ports``
+Required
+    No
+
 This section is used to mark which ports should be exposed in the
 container. If we want to highlight a port used in the container, but not necessary expose
 it -- we should set the ``expose`` flag to ``false`` (``true`` by default).
@@ -11,7 +16,7 @@ TCP, UDP…) and ``service`` to describe what network service is running on top
 of the port (e.g. "http", "https"). You can provide a human-readable long form
 description of the port with the ``description`` key.
 
-.. code:: yaml
+.. code-block:: yaml
 
     ports:
         - value: 8443
@@ -19,4 +24,4 @@ description of the port with the ``description`` key.
         - value: 8778
           expose: false
           protocol: tcp
-          description: internal port for frob communication.
+          description: internal port for communication.
