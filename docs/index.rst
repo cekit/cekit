@@ -16,7 +16,7 @@ CEKit helps to build container images from image definition files with strong fo
 Features
 --------
 
-* :doc:`Building container images </handbook/build>` from YAML image definitions using many build engines
+* :doc:`Building container images </handbook/building/index>` from YAML image definitions using many build engines
 * :doc:`Integration/unit testing </handbook/testing/index>` of images
 
 Releases and changelog
@@ -32,6 +32,7 @@ Documentation
 
     getting-started/index
     handbook/index
+    guidelines/index
     descriptor/index
     contribution-guide/index
     

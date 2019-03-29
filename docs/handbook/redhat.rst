@@ -1,36 +1,34 @@
-
-.. _redhat_env:
-
-Red Hat Environment
+Red Hat environment
 ===================
-If you are running CEKit in Red Hat internal infrastructure it behaves differently. This behavior is triggered by changing :ref:`redhat configuration option<handbook/configuration:Red Hat environment>` in CEKit configuration file.
+
+If you are running CEKit in Red Hat internal infrastructure it behaves differently.
+This behavior is triggered by changing :ref:`redhat configuration option<handbook/configuration:Red Hat environment>`
+in CEKit configuration file.
 
 
 Tools
 -----
+
 CEKit integration with following tools is changed in following ways:
 
 * runs ``rhpkg`` instead of ``fedpkg``
 * runs ``odcs`` command with ``--redhat`` option set
-
 
 Environment Variables
 ---------------------
 
 Following variables are added into the image:
 
-* ``JBOSS_IMAGE_NAME`` - contains name of the image
-* ``JBOSS_IMAGE_VERSION`` - contains version of the image
+* ``JBOSS_IMAGE_NAME`` -- contains name of the image
+* ``JBOSS_IMAGE_VERSION`` -- contains version of the image
 
 Labels
 ------
 
 Following labels are added into the image:
 
-* ``name`` - contains name of the image
-* ``version`` - contains version of the image
-
-.. _redhat_repo:
+* ``name`` -- contains name of the image
+* ``version`` - -contains version of the image
 
 Repositories
 ------------

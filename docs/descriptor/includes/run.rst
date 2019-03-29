@@ -1,13 +1,18 @@
 Run
 ---
 
+Key
+    ``run``
+Required
+    No
+
 The ``run`` section encapsulates instructions related to launching main process
 in the container including: ``cmd``, ``entrypoint``, ``user`` and ``workdir``.
 All subsections are described later in this paragraph.
 
 Below you can find full example that uses every possible option.
 
-.. code:: yaml
+.. code-block:: yaml
 
     run:
         cmd:
@@ -22,9 +27,14 @@ Below you can find full example that uses every possible option.
 Cmd
 ^^^
 
+Key
+    ``cmd``
+Required
+    No
+
 Command that should be executed by the container at run time.
 
-.. code:: yaml
+.. code-block:: yaml
 
     run:
         cmd:
@@ -34,10 +44,31 @@ Command that should be executed by the container at run time.
 Entrypoint
 ^^^^^^^^^^
 
+Key
+    ``entrypoint``
+Required
+    No
+
 Entrypoint that should be executed by the container at run time.
 
-.. code:: yaml
+.. code-block:: yaml
 
     run:
         entrypoint:
             - "/opt/eap/bin/wrapper.sh"
+
+Working directory
+^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``workdir``
+Required
+    No
+
+
+Sets the current working directory of the entrypoint process in the container.
+
+.. code-block:: yaml
+
+    run:
+        workdir: "/home/jboss"

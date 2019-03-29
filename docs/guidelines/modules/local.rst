@@ -1,34 +1,45 @@
 Local development
 ==========================
 
-CEKit enables you to use a work in progress modules to build the image by exploiting its overrides system. As an example, imagine we have very simple image which is using one module from a cct_module repository like this:
 
-.. code:: yaml
+CEKit enables you to use a work in progress modules to build the image by exploiting
+its overrides system. As an example, imagine we have very simple image which is using
+one module from a remote Git repository, like this:
 
-  schema_version: 1
-  name: "dummy/example"
-  version: "0.1"
-  from: "jboss/openjdk18-rhel7:1.1"
-  modules:
-    repositories:
-      - git:
-        url: https://github.com/jboss-openshift/cct_module.git
-        ref: master
+.. code-block:: yaml
+
+    schema_version: 1
+
+    name: cekit/example-jdk8
+    version: 1.0
+    from: centos:7
+    description: "JDK 8 image"
+
+    modules:
+      repositories:
+        # Add a shared module repository located on GitHub. This repository
+        # can contain several modules.
+        - git:
+            url: https://github.com/cekit/example-common-module.git
+            ref: master
+
+    # Install selected modules (in order)
     install:
-      - name: s2i-common
+      - name: jdk8
+      - name: user
 
+Now imagine, we have found a bug in its ``jd8`` module. We will clone the module
+repository locally by executing:
 
-Now imagine,  we have found a bug in its s2i-common module. We will clone the module repository localy by executing:
+1. Clone ``cct_module`` to your workstation to ``~/repo/cct_module``
 
-1. Clone cct_module to your workstation to ``~/repo/cct_module``
+.. code-block:: bash
 
-.. code:: bash
+  $ git clone https://github.com/cekit/example-common-module.git ~/repos/example-common-module
 
-  $ git clone https://github.com/jboss-openshift/cct_module.git /home/user/repo/cct_module
+2. Then we will create ``override.yaml`` file next to the ``image.yaml``. Override.yaml should look like this:
 
-2. Then we will create override.yaml next to the image.yaml, override.yaml should look like:
-
-.. code:: yaml
+.. code-block:: yaml
 
   schema_version: 1
   modules:
@@ -44,7 +55,7 @@ Now imagine,  we have found a bug in its s2i-common module. We will clone the mo
 4. When your work is finished, commit and push your changes to a module repository and remove overrides.yaml
 
 Injecting local artifacts
-=========================
+----------------------------
 
 During module/image development there can be a need to use locally built artifact instead of a released one. The easiest way to inject
 such artifact is to use override mechanism.

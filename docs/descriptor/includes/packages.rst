@@ -1,5 +1,11 @@
 Packages
---------
+----------
+
+Key
+    ``packages``
+Required
+    No
+
 
 To install additional RPM packages you can use the ``packages``
 section where you specify package names and repositories to be used, as well
@@ -8,6 +14,10 @@ as the package manager that is used to manage packages in this image.
 .. code-block:: yaml
 
     packages:
+        repositories:
+            - name: extras
+                id: rhel7-extras-rpm
+        manager: dnf
         install:
             - mongodb24-mongo-java-driver
             - postgresql-jdbc
@@ -15,10 +25,30 @@ as the package manager that is used to manage packages in this image.
             - maven
             - hostname
 
-Packages are defined in the ``install`` subsection.
+Packages to install
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``install``
+Required
+    No
+
+Packages listed in the ``install`` section are marked to be installed in the container image.
+
+.. code-block:: yaml
+
+    packages:
+        install:
+            - mongodb24-mongo-java-driver
+            - postgresql-jdbc
 
 Package manager
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``manager``
+Required
+    No
 
 It is possible to define package manager used in the image
 used to install packages as part of the build process.
@@ -39,25 +69,44 @@ Currently available options are ``yum``, ``dnf``, and ``microdnf``.
             - git
 
 Package repositories
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``repositories``
+Required
+    No
 
 CEKit uses all repositories configured inside the image. You can also specify additional
 repositories using repositories subsection. CEKit currently supports following ways of defining
 additional repositories:
 
-* Plain
-* RPM
-* URL
-* ContentSets
+* `Plain repository <#plain-repository>`__
+* `RPM repository <#rpm-repository>`__
+* `URL repository <#url-repository>`__
+* `Content sets <#content-sets>`__
 
-.. note::
-   See :ref:`Repository management<repository_management>` to learn about best practices for repository
-   definitions.
+.. tip::
+    See :doc:`repository guidelines guide </guidelines/repositories>` to learn about best practices for repository
+    definitions.
+
+.. code-block:: yaml
+
+    packages:
+        repositories:
+            - name: scl
+              rpm: centos-release-scl
+            - name: extras
+              id: rhel7-extras-rpm
+              description: "Repository containing extras RHEL7 extras packages"
+
 
 Plain repository
-******************
+*******************
 
-This is the default option. With this approach you specify repository id and CEKit will not perform any action and expect the repository definition exists inside the image. This is useful as a hint which repository must be present for particular image to be buildable. The definition can be overridden by your preferred way of injecting repositories inside the image.
+With this approach you specify repository ``id`` and CEKit will not perform any action
+and expect the repository definition exists inside the image. This is useful as a hint which
+repository must be present for particular image to be buildable. The definition can be overridden
+by your preferred way of injecting repositories inside the image.
 
 .. code-block:: yaml
 
@@ -68,7 +117,7 @@ This is the default option. With this approach you specify repository id and CEK
               description: "Repository containing extras RHEL7 extras packages"
 
 RPM repository
-***************
+*******************
 
 This ways is using repository configuration files and related keys packaged as an RPM.
 
@@ -82,9 +131,18 @@ image you should define repository in a following way:
             - name: scl
               rpm: centos-release-scl
 
-URL repository
-****************
+.. tip::
+    The ``rpm`` key can also specify a URL to a RPM file:
 
+    .. code-block:: yaml
+
+        packages:
+            repositories:
+                - name: epel
+                  rpm: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+URL repository
+*******************
 
 This approach enables you to download a yum repository file and corresponding GPG key. To do it, define
 repositories section in a way of:
@@ -96,8 +154,6 @@ repositories section in a way of:
             - name: foo
               url:
                 repository: https://web.example/foo.repo
-                gpg: https://web.exmaple/foo.gpg
-
 
 Content sets
 **************************
@@ -111,7 +167,7 @@ we expect repository definitions to be available inside image. See
 content sets.
 
 .. note::
-   Behavior of Content sets repositories is changed when running in :ref:`Red Hat Environment<redhat_env>`.
+   Behavior of Content sets repositories is changed when running in :doc:`Red Hat Environment </handbook/redhat>`.
 
 There are two possibilities how to define Content sets type of repository:
 

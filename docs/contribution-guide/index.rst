@@ -14,6 +14,7 @@ Thank you for being part of the project!
 .. toctree::
     :titlesonly:
 
+    submitting-issues
     environment
     code-style
     submitting-changes
