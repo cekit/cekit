@@ -24,7 +24,7 @@ Local development
 
 Support for auto generating documentation is avialable for local development. Run the command below.
 
-.. code:: bash
+.. code-block:: bash
 
     make preview
 
@@ -43,7 +43,7 @@ Headers
 Because reStructredText does not enforce what characters are used to mark header
 to be a certain level, we use following guidelines:
 
-.. code::
+.. code-block:: rst
 
     h1 header
     =========
