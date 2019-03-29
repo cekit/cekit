@@ -46,7 +46,6 @@ Then we will create ``override.yaml`` file next to the ``image.yaml``. Override.
 
 .. code-block:: yaml
 
-  schema_version: 1
   modules:
     repositories:
       - path: "/home/user/repo/cct_module"
