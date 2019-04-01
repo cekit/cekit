@@ -1,10 +1,12 @@
 Getting started guide
 ============================
 
-In this chapter we will guide you how to create your first image.
+Welcome!
 
-.. todo::
-    Extend introduction
+It looks like you're new to CEKit. This guide will walk you through the steps required to create
+your first container image from scratch.
+
+If you need any help, just jump into the `#cekit IRC channel on Freenode <irc://freenode.net/#cekit>`__. We will assist you!
 
 .. toctree::
     :titlesonly:
