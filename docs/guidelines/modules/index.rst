@@ -11,3 +11,5 @@ This chapter discusses guidelines around modules.
 
 .. toctree::
     :maxdepth: 2
+
+    versioning

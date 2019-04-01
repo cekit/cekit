@@ -16,6 +16,8 @@ Docker builder
 
 This builder uses Docker daemon as the build engine. Interaction with Docker daemon is done via Python binding.
 
+Input format
+    Dockerfile
 Parameters
     * ``--pull`` -- ask a builder engine to check and fetch latest base image
     * ``--tag`` -- an image tag used to build image (can be specified multiple times)
@@ -35,6 +37,8 @@ OSBS builder
 This build engine is using ``rhpkg`` or ``fedpkg`` tool to build the image using OSBS service. By default
 it performs **scratch build**. If you need a proper build you need to specify ``--release`` parameter.
 
+Input format
+    Dockerfile
 Parameters
     * ``--release`` -- perform an OSBS release build
     * ``--tech-preview`` -- updates image descriptor ``name`` key to contain ``--tech-preview`` suffix in family part of the image name
@@ -65,6 +69,8 @@ This build engine is using `Buildah <https://buildah.io>`_.
 .. note::
    If you need to use any non default registry, please update ``/etc/containers/registry.conf`` file.
 
+Input format
+    Dockerfile
 Parameters
     * ``--pull`` -- ask a builder engine to check and fetch latest base image
     * ``--tag`` -- an image tag used to build image (can be specified multiple times)
@@ -88,6 +94,8 @@ Podman builder
 This build engine is using `Podman <https://podman.io>`_. Podman will perform non-privileged builds so
 no special configuration is required.
 
+Input format
+    Dockerfile
 Parameters
     * ``--pull`` -- ask a builder engine to check and fetch latest base image
     * ``--tag`` -- an image tag used to build image (can be specified multiple times)
