@@ -299,6 +299,22 @@ def test_default_package_manager(tmpdir):
 
 
 # https://github.com/cekit/cekit/issues/400
+def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(target, ['-v', 'build', '--overrides', '{"packages": {"install": ["b"]}}', '--dry-run', 'docker'],
+             descriptor={'packages': {'manager': 'microdnf',
+                                      'repositories': [{'name': 'foo',
+                                                        'rpm': 'foo-repo.rpm'}],
+                                      'install': ['a']},
+                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+                         })
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'rpm -q a')
+    regex_dockerfile(target, 'RUN microdnf clean all')
+
+# https://github.com/cekit/cekit/issues/400
 def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
@@ -329,6 +345,7 @@ def test_supported_package_managers(tmpdir, manager):
     regex_dockerfile(
         target, "RUN {} --setopt=tsflags=nodocs install -y foo-repo.rpm".format(manager))
     regex_dockerfile(target, "RUN {} --setopt=tsflags=nodocs install -y a".format(manager))
+    regex_dockerfile(target, "RUN {} makecache".format(manager))
     regex_dockerfile(target, 'rpm -q a')
 
 
