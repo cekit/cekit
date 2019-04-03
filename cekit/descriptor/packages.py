@@ -20,7 +20,7 @@ map:
   install:
     seq:
       - {type: any}
-  manager: {type: str, enum: ['yum', 'dnf', 'microdnf'], default: 'yum'}""")]
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf']}""")]
 
 
 repository_schema = yaml.safe_load("""
@@ -70,6 +70,10 @@ class Packages(Descriptor):
     def _prepare(self):
         self._descriptor['repositories'] = [Repository(x)
                                             for x in self._descriptor.get('repositories', [])]
+
+    @property
+    def manager(self):
+        return self.get('manager')
 
     @property
     def repositories(self):
