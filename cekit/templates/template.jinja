@@ -23,8 +23,8 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endif %}
 {%- endmacro %}
 {% macro repo_make_cache(pkg_manager) -%}
-    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-{{ pkg_manager }} makecache
+    {% if pkg_manager in ['yum', 'dnf'] %}
+RUN {{ pkg_manager }} makecache
     {% endif %}
 {%- endmacro %}
 {% macro repo_clear_cache(pkg_manager) -%}
@@ -118,7 +118,7 @@ RUN {{ repo_install(packages.manager, repo.rpm) }}
 {% endif %}
 
 {% if helper.packages_to_install(image) %}
-RUN {{ repo_make_cache(packages.manager) }}
+{{ repo_make_cache(packages.manager) }}
 {% endif %}
 
 {% if image.modules.install|length > 0 %}
