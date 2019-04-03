@@ -77,6 +77,10 @@ class Image(Descriptor):
         if 'user' not in self.run:
             self.run._descriptor['user'] = cekit.DEFAULT_USER
 
+        # Default package manager is yum
+        if not self.packages.manager:
+            self.packages._descriptor['manager'] = 'yum'
+
     @property
     def name(self):
         return self.get('name')
@@ -229,6 +233,9 @@ class Image(Descriptor):
                 else:
                     package_repositories[name] = repository
             self.packages._descriptor['repositories'] = list(package_repositories.values())
+
+            if override.packages.manager:
+                self.packages._descriptor['manager'] = override.packages.manager
 
             if override.packages.content_sets:
                 self.packages.content_sets = _merge_descriptors(

@@ -314,6 +314,24 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
     regex_dockerfile(target, 'rpm -q a')
     regex_dockerfile(target, 'RUN microdnf clean all')
 
+
+# https://github.com/cekit/cekit/issues/462
+def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(target, ['-v', 'build', '--overrides', '{"packages": {"manager": "dnf", "install": ["b"]}}', '--dry-run', 'docker'],
+             descriptor={'packages': {'manager': 'microdnf',
+                                      'repositories': [{'name': 'foo',
+                                                        'rpm': 'foo-repo.rpm'}],
+                                      'install': ['a']},
+                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
+                         })
+    regex_dockerfile(target, 'RUN dnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN dnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'rpm -q a')
+    regex_dockerfile(target, 'RUN dnf clean all')
+
+
 # https://github.com/cekit/cekit/issues/400
 def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     target = str(tmpdir.mkdir('target'))
@@ -368,6 +386,8 @@ def test_no_makecache_with_microdnf(tmpdir):
     regex_dockerfile(target, 'rpm -q a')
 
 # https://github.com/cekit/cekit/issues/406
+
+
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir('target'))
     generate(target, ['build', '--dry-run', 'docker'])
@@ -420,4 +440,4 @@ def regex_dockerfile(image_dir, exp_regex):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), "r") as fd:
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)
-        assert regex.search(dockerfile_content)
+        assert regex.search(dockerfile_content) is not None
