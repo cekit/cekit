@@ -321,7 +321,10 @@ class Cekit(object):
         for directory in directories_to_clean:
             if os.path.exists(directory):
                 LOGGER.debug("Removing dirty directory: '{}'".format(directory))
-                shutil.rmtree(directory)
+                try:
+                    shutil.rmtree(directory)
+                except PermissionError as ex:
+                    raise CekitError("Unable to clean directory '{}'".format(directory))
 
     def run(self, clazz, params):
         """ Main application entry """
