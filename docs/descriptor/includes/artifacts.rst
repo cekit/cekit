@@ -8,7 +8,7 @@ Artifacts section is meant exactly for this. CEKit will *automatically*
 fetch any artifacts specified in this section.
 
 If for some reason automatic fetching of artifacts is not an option for you,
-yoy should define artifacts as plain artifacts and use the ``cekit-cache``
+you should define artifacts as plain artifacts and use the ``cekit-cache``
 command to add the artifact to local cache, making it available for the build
 process automatically. See :doc:`/handbook/caching` chapter.
 
