@@ -3,18 +3,24 @@ Preparing image descriptor
 
 This section will guide you through a very simple example.
 
-1. Using a standard text editor create an ``image.yml`` file.
-2. As described in :doc:`Image Descriptor </descriptor/index>` several values are mandatory.
+1. Using a standard text editor create an empty ``image.yml`` file. It is recommended to use the ``image.yaml`` naming scheme.
+2. As described in :doc:`Image Descriptor </descriptor/index>` several values are mandatory. Add the following to the file:
 
-   * Add a ``name`` value e.g. ``my-example``.
-   * Add a ``version`` value e.g. ``1.0``.
-   * Add a ``from`` value e.g. ``centos:7``.
+.. code-block:: yaml
 
-* Next, while optional, it is recommended to add a suitable ``description`` tag such as ``My Example Tomcat Image``.
+   name: my-example
+   version: 1.0
+   from: centos:7
 
-While this configuration will build in cekit it isn't very interesting as it will simply create another image layered on top of CentOS 7.
+* Next, while optional, it is recommended to add a suitable ``description`` tag e.g.
 
-It is possible to directly add further content to the image at this point through a variety of methods. ``packages`` (See  :doc:`here </descriptor/includes/packages>`) can be used to add further RPMs ; for example:
+.. code-block:: yaml
+
+    description: My Example Tomcat Image
+
+While this configuration will build in CEKit it isn't very interesting as it will simply create another image layered on top of CentOS 7.
+
+It is possible to directly add further content to the image at this point through a variety of methods. ``packages`` (see  :doc:`here </descriptor/includes/packages>`) can be used to add further RPMs ; for example:
 
 .. code-block:: yaml
 
@@ -23,7 +29,7 @@ It is possible to directly add further content to the image at this point throug
         - postgresql-jdbc
 
 
-Now if this image is built ( ``cekit build podman`` ) then it is possible to access the image and see that postgresql-jdbc is now installed e.g.
+Now if this image is built (``cekit build podman``) then it is possible to access the image and see that ``postgresql-jdbc`` is now installed e.g.
 
 .. code-block:: sh
 

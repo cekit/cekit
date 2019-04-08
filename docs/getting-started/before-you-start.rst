@@ -8,4 +8,5 @@ This guide will work through the following example repositories:
 * https://github.com/cekit/example-image-tomcat/
 * https://github.com/cekit/example-common-module/
 
-Note that this guide will use the :doc:`podman </handbook/building/builder-engines:Podman builder>` build engine.
+While several different build engines to construct container images are supported, this guide will use
+the :doc:`podman </handbook/building/builder-engines>` engine.

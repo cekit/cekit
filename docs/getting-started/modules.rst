@@ -3,7 +3,7 @@ First modules
 
 As described in the :doc:`module reference </descriptor/module>` modules are used as libraries or shared building blocks across images.
 
-To add a module, the ``image.yaml`` file must be modified to add a modules section. This is responsible for defining module repositories and providing the list of modules to be installed in order.
+To add a module, the ``image.yaml`` file must be modified to add a modules section. This is responsible for defining module repositories and providing the list of modules to be installed in order. Modules may come from the local file system or from remote git based repositories e.g. on github.
 
 Edit the file to add the following
 
@@ -16,7 +16,7 @@ Edit the file to add the following
             url: https://github.com/cekit/example-common-module.git
             ref: master
 
-This section adds two different types of module repositories that can be incorporated into the image. One is a remote (the ``git`` link) and one is a local filesystem reference. In order to actually select components from the above repositories it is necessary to add an ``install`` section:
+This section adds two different types of module repositories that can be incorporated into the image. One is a remote (the ``git`` link) and one is a local filesystem reference. In this case, the example-common-module is an example of sharing a remote repository. In order to actually select components from the above repositories it is necessary to add an ``install`` section:
 
 .. code-block:: yaml
 
@@ -25,7 +25,7 @@ This section adds two different types of module repositories that can be incorpo
         - name: jdk8
         - name: user
 
-At this point the image will contain the modules from the remote repository. In order to add a local file system module following the below instructions.
+At this point the image will consume the modules from the remote repository. In order to add and populate a local file system module follow the below instructions.
 
 1. First, add the following module to the previous list:
 
