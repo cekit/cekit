@@ -1,7 +1,7 @@
 Building your image
 ====================
 
-Now that a fully assembled image definition file has been constructed it is time to try building it.
+Now that a fully assembled image definition file has been constructed it is time to try building it. As mentioned previously we will use ``podman`` to build this image; for other build engines see :doc:`here </handbook/building/builder-engines>`
 
 .. code-block:: sh
 
@@ -29,7 +29,7 @@ It is possible to use ``podman`` to list the new image e.g.
 
 .. code-block:: sh
 
- ❯ podman images
+ $ podman images
  REPOSITORY                  TAG      IMAGE ID       CREATED          SIZE
  localhost/my-example        latest   c55d3613c6a8   48 seconds ago   709 MB
  localhost/my-example        1.0      c55d3613c6a8   48 seconds ago   709 MB
