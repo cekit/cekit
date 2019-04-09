@@ -17,4 +17,13 @@ Note: if you want to interactively explore the new image use the following comma
 
  $ podman run -it --rm localhost/my-example:1.0 /bin/bash
 
-Note it is also possible to reference using the image id e.g. ``podman run -it --rm $(podman images -q | head -1) /bin/bash``.
+.. note::
+   It is also possible to reference using the image id e.g. ``podman run -it --rm $(podman images -q | head -1) /bin/bash``.
+
+Once an interactive shell has been started on the image it is possible to verify the JDK has been installed e.g.
+
+.. code-block:: sh
+
+   $ podman run -it --rm my-example:latest /bin/bash
+   [user@ff7b60ea4d7c ~]$ rpm -qa | grep openjdk-devel
+   java-1.8.0-openjdk-devel-1.8.0.201.b09-2.el7_6.x86_64

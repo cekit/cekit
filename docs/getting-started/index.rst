@@ -10,10 +10,11 @@ If you need any help, just jump into the `#cekit IRC channel on Freenode <irc://
 
 .. toctree::
     :titlesonly:
-    
+
     before-you-start
     image-descriptor
     modules
     build
     run
     test
+    summary

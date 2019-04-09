@@ -18,23 +18,15 @@ This section will guide you through a very simple example.
 
     description: My Example Tomcat Image
 
-While this configuration will build in CEKit it isn't very interesting as it will simply create another image layered on top of CentOS 7.
-
-It is possible to directly add further content to the image at this point through a variety of methods. ``packages`` (see  :doc:`here </descriptor/includes/packages>`) can be used to add further RPMs ; for example:
+While this configuration will build in CEKit it isn't very interesting as it will simply create another image layered on top of CentOS 7. The descriptor should now look like:
 
 .. code-block:: yaml
+   :caption: image.yaml
 
-   packages:
-      install:
-        - postgresql-jdbc
+    name: my-example
+    version: 1.0
+    from: centos:7
+    description: My Example Tomcat Image
 
 
-Now if this image is built (``cekit build podman``) then it is possible to access the image and see that ``postgresql-jdbc`` is now installed e.g.
-
-.. code-block:: sh
-
-   podman run -it --rm $(podman images -q | head -1) /bin/bash
-   [root@f845a92c2370 /]# rpm -q postgresql-jdbc
-   postgresql-jdbc-9.2.1002-6.el7_5.noarch
-
-However in general modules are used as the 'building blocks' to assemble the image - they can be used as individual libraries or shared blocks across multiple images. So, move onto to :doc:`modules </getting-started/modules>` to discover more about these.
+It is possible to directly add further content to the image at this point through a variety of methods. Labels, ports, packages etc can be used - see :doc:`here </descriptor/image>`. In general modules are used as the 'building blocks' to assemble the image - they can be used as individual libraries or shared blocks across multiple images. So, move onto to :doc:`modules </getting-started/modules>` to discover more about these.
