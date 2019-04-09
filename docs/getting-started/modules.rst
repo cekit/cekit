@@ -12,11 +12,36 @@ Edit the file to add the following
   modules:
     repositories:
         - path: modules
-        - git:
-            url: https://github.com/cekit/example-common-module.git
-            ref: master
 
-This section adds two different types of module repositories that can be incorporated into the image. One is a remote (the ``git`` link) and one is a local filesystem reference. In this case, the example-common-module is an example of sharing a remote repository. In order to actually select components from the above repositories it is necessary to add an ``install`` section:
+As per the below diagram a number of directories must be created next to ``image.yaml``.
+
+.. graphviz::
+    :align: center
+    :alt: CEKit simple build process diagram
+
+    digraph modules_diagram {
+        rankdir="LR";
+        graph [fontsize="11", fontname="Open Sans", compound="true", splines=ortho];
+        node [shape="box", fontname="Open Sans", fontsize="11"];
+
+        subgraph cluster_0 {
+            node [style="filled"];
+            penwidth = "2";
+            color="dimgrey";
+            rank=same;
+
+            modules [label="modules", group="m"];
+            jdk8 [label="jdk8"];
+            user [label="user"];
+            tomcat [label="tomcat", group="m"];
+        }
+        modules -> tomcat[lhead=cluster_0, arrowhead=none]
+        modules -> jdk8[lhead=cluster_0, arrowhead=none]
+        modules -> user[lhead=cluster_0, arrowhead=none]
+        descriptor [label="image.yaml"];
+    }
+
+Once the modules subdirectory and the respective module directories below that have been created they can be added to the image. In order to select a module component from a repository it is necessary to add an ``install`` section.
 
 .. code-block:: yaml
 
@@ -24,44 +49,108 @@ This section adds two different types of module repositories that can be incorpo
     install:
         - name: jdk8
         - name: user
-
-At this point the image will consume the modules from the remote repository. In order to add and populate a local file system module follow the below instructions.
-
-1. First, add the following module to the previous list:
-
-   .. code-block:: yaml
-
         - name: tomcat
 
-2. Create the directory tree ``modules/tomcat`` next to your yaml file.
+In order to add and populate the local file system modules follow the below instructions.
 
-3. Create the following two files inside the ``tomcat`` directory:
+.. note::
+   All module yaml files should be named ``module.yaml``
 
-   .. code-block:: sh
-      :caption: install.sh
+JDK8
+^^^^^^^^^
+* Create an empty ``module.yaml`` file within the ``jdk8`` directory.
+* Enter the following code:
 
-         #!/bin/sh
-         set -e
-         tar -C /home/user -xf /tmp/artifacts/tomcat.tar.gz
-         chown user:user -R /home/user
+.. code-block:: yaml
+   :caption: module.yaml
 
-   .. code-block:: yaml
-      :caption: module.yml
+   schema_version: 1
 
-         schema_version: 1
-         name: tomcat
-         version: 1.0
-         description: "Module used to install Tomcat 8"
-         # Defined artifacts that are used to build the image
-         artifacts:
-         - name: tomcat.tar.gz
-           url: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
-           md5: 080075877a66adf52b7f6d0013fa9730
-           execute:
-           - script: install.sh
-             run:
-             cmd:
-             - "/home/user/apache-tomcat-8.5.24/bin/catalina.sh"
-               - "run"
+   name: jdk8
+   version: 1.0
+   description: Module installing OpenJDK 8
 
-Move onto :doc:`module reference </descriptor/build>` to build this new image.
+   envs:
+      - name: "JAVA_HOME"
+        value: "/usr/lib/jvm/java-1.8.0-openjdk"
+
+   packages:
+      install:
+         - java-1.8.0-openjdk-devel
+
+* An :doc:`environment variable</descriptor/includes/envs>` has been defined that will be present in the container after running the image.
+* :doc:`packages</descriptor/includes/packages>` have been used to add the JDK RPM.
+
+
+User
+^^^^^^^^^
+* Create the ``module.yaml`` and ``create.sh`` files within the ``user`` directory.
+* Enter the following code:
+
+.. code-block:: yaml
+   :caption: module.yaml
+
+   schema_version: 1
+
+   name: user
+   version: 1.0
+   description: "Creates a regular user that could be used to run any service, gui/uid: 1000"
+
+   execute:
+     - script: create.sh
+
+   run:
+      user: 1000
+      workdir: "/home/user"
+
+
+.. code-block:: sh
+   :caption: create.sh
+
+   #!/bin/sh
+
+   set -e
+
+   groupadd -r user -g 1000 && useradd -u 1000 -r -g user -m -d /home/user -s /sbin/nologin -c "Regular user" user
+
+
+* An :doc:`execute</descriptor/includes/module/execute>` command is used to define what needs to be done to install this module in the image. It will be run at build time.
+* A :doc:`run</descriptor/includes/run>` command sets the working directory and user that is used to launch the main process.
+
+
+Tomcat
+^^^^^^^^^
+* Finally, create the following two files inside the ``tomcat`` directory:
+
+.. code-block:: sh
+   :caption: install.sh
+
+   #!/bin/sh
+   set -e
+   tar -C /home/user -xf /tmp/artifacts/tomcat.tar.gz
+   chown user:user -R /home/user
+
+.. code-block:: yaml
+   :caption: module.yml
+
+   name: tomcat
+   version: 1.0
+   description: "Module used to install Tomcat 8"
+   # Defined artifacts that are used to build the image
+   artifacts:
+     - name: tomcat.tar.gz
+        url: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
+        md5: 080075877a66adf52b7f6d0013fa9730
+   execute:
+     - script: install.sh
+
+   run:
+      cmd:
+        - "/home/user/apache-tomcat-8.5.24/bin/catalina.sh"
+        - "run"
+
+* The :doc:`artifact</descriptor/includes/artifacts>` command is used to retrieve external artifacts that need to be added to the image.
+
+
+
+Move onto the :doc:`build section </getting-started/build>` to build this new image.

@@ -5,7 +5,7 @@ Now that a fully assembled image definition file has been constructed it is time
 
 .. code-block:: sh
 
-   cekit build podman
+  $ cekit build podman
 
 This will output various logs (extra detail is possible via the verbose ``-v`` option).
 

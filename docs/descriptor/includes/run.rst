@@ -57,6 +57,22 @@ Entrypoint that should be executed by the container at run time.
         entrypoint:
             - "/opt/eap/bin/wrapper.sh"
 
+User
+^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``user``
+Required
+    No
+
+Specifies the user (can be username or uid) that should be used to launch the main
+process.
+
+.. code-block:: yaml
+
+    run:
+        user: "alice"
+
 Working directory
 ^^^^^^^^^^^^^^^^^^^^
 
