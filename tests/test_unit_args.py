@@ -123,7 +123,7 @@ def get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target'
         },
         {
-            'image': 'image:1.0', 'steps_url': 'https://github.com/cekit/behave-test-steps.git', 'wip': False, 'names': ()
+            'overrides': (), 'image': 'image:1.0', 'steps_url': 'https://github.com/cekit/behave-test-steps.git', 'wip': False, 'names': ()
         }
     ),
     (
