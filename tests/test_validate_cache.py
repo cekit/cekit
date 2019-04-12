@@ -120,9 +120,9 @@ def test_cekit_cannot_add_artifact_without_checksum(tmpdir):
     result = run_cekit_cache(['--work-dir',
                               work_dir,
                               'add',
-                              artifact], 1)
+                              artifact], 2)
 
-    assert "Cannot cache artifact without checksum" in result.output
+    assert "At least one checksum must be provided" in result.output
 
 
 @pytest.mark.parametrize('algorithm', SUPPORTED_HASH_ALGORITHMS)
