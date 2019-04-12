@@ -18,7 +18,7 @@ Artifact features
 Checksums
     All artifacts will be checked for consistency by computing checksum of
     the downloaded file and comparing it with the desired value. Currently supported algorithms
-    are: ``md5``, ``sha1`` and ``sha256``.
+    are: ``md5``, ``sha1``, ``sha256`` and ``sha512``.
 
     You can define multiple checksums for a single artifact. All specfied checksums will
     be validated.
@@ -79,7 +79,7 @@ Common artifact keys
 
         Target file name: ``jboss-eap-6.4.0.zip``.
 
-``md5``, ``sha1``, ``sha256``
+``md5``, ``sha1``, ``sha256``, ``sha512``
     Checksum algorithms. These keys can be provided to make sure the fetched artifact
     is valid.
 

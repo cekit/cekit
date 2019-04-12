@@ -32,7 +32,7 @@ Example
 Artifacts in cache are **discovered by the hash value**.
 
 While adding an artifact to the cache, CEKit is computing it's checksums for all currently supported algorithms (``md5``,
-``sha1``, ``sha256``). This makes it possible to refer the same artifact in descriptors using different algorithms.
+``sha1``, ``sha256``, ``sha512``). This makes it possible to refer the same artifact in descriptors using different algorithms.
 
 This also means that CEKit is using cache only for artifacts which define **at least one hash**.
 
@@ -69,7 +69,7 @@ Caching artifacts manually
 
 CEKit supports caching artifacts manually. This is very usefull if you need to introduce non-public
 artifact to a CEKit. To cache an artifact you need to specify path to the artifact on filesystem or its URL and
-**at least one** of the supported hashes (``md5``, ``sha1``, ``sha256``).
+**at least one** of the supported hashes (``md5``, ``sha1``, ``sha256``, ``sha512``).
 
 Examples
     Caching local artifact
@@ -97,18 +97,22 @@ After running the command you can see following output:
 
 .. code-block:: yaml
 
-    912c3cc4-7bd3-445d-9927-5063ba3b3bc1:
-        sha256: 04b95a87ee88e1cba7682884ea7f89d5ec097c0fa513e7aca1366d79fb3290a8
-        sha1: 9cbe5393b6837849edbc067fe1a1405ff0c43605
-        md5: f97f623e5b614a7b6d1eb5ff7158027b
-        names:
-            - hawkular-javaagent-1.0.1.Final-redhat-2-shaded.jar
-    7992df2a-be4e-43b5-a02f-18e429ed3ac6:
-        sha256: b2cd21075a4c2a3bc04d2595a1a81ad79d6a36774c28608e04cb73ef76da3458
-        sha1: 9e26ba61c5665aafc849073edeb769be555283cd
-        md5: 080075877a66adf52b7f6d0013fa9730
-        names:
-            - tomcat.tar.gz
+    eba0b8ce-9562-439f-8a56-b9703063a9a3:
+      sha512: 5f4184e0fe7e5c8ae67f5e6bc5deee881051cc712e9ff8aeddf3529724c00e402c94bb75561dd9517a372f06c1fcb78dc7ae65dcbd4c156b3ba4d8e267ec2936
+      sha256: c93c096c8d64062345b26b34c85127a6848cff95a4bb829333a06b83222a5cfa
+      sha1: 3c3231e51248cb76ec97214f6224563d074111c1
+      md5: c1a230474c21335c983f45e84dcf8fb9
+      names:
+        - spark-2.4.0-bin-hadoop2.7.tgz
+
+    dba5a813-3972-4dcf-92a4-87049357f7e0:
+      sha512: cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e
+      sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      names:
+        - artifact
+
 
 Removing cached artifact
 ^^^^^^^^^^^^^^^^^^^^^^^^

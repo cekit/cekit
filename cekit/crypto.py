@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger('cekit')
 
-SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
+SUPPORTED_HASH_ALGORITHMS = ['sha512', 'sha256', 'sha1', 'md5']
 
 
 def get_sum(target, algorithm):

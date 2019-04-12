@@ -36,11 +36,12 @@ def ls():
 @click.option('--md5', metavar="CHECKSUM", help="The md5 checksum of the artifact.")
 @click.option('--sha1', metavar="CHECKSUM", help="The sha1 checksum of the artifact.")
 @click.option('--sha256', metavar="CHECKSUM", help="The sha256 checksum of the artifact.")
-def add(location, md5, sha1, sha256):  # pylint: disable=unused-argument
-    if not (md5 or sha1 or sha256):
+@click.option('--sha512', metavar="CHECKSUM", help="The sha512 checksum of the artifact.")
+def add(location, md5, sha1, sha256, sha512):  # pylint: disable=unused-argument
+    if not (md5 or sha1 or sha256, sha512):
         raise click.UsageError("At least one checksum must be provided")
 
-    CacheCli.prepare().add(location, md5, sha1, sha256)
+    CacheCli.prepare().add(location, md5, sha1, sha256, sha512)
 
 
 @cli.command(name="rm", short_help="Remove artifact from cache")
@@ -70,7 +71,7 @@ class CacheCli():
 
         CONFIG.configure(args.config, {'work_dir': args.work_dir})
 
-    def add(self, location, md5, sha1, sha256):
+    def add(self, location, md5, sha1, sha256, sha512):
         artifact_cache = ArtifactCache()
 
         resource = {}
@@ -84,6 +85,9 @@ class CacheCli():
 
         if sha256:
             resource['sha256'] = sha256
+
+        if sha512:
+            resource['sha512'] = sha512
 
         artifact = Resource(resource)
 
