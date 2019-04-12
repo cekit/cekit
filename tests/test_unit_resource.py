@@ -325,6 +325,7 @@ def test_overide_resource_remove_chksum():
         md5: 'foo'
         sha1: 'foo'
         sha256: 'foo'
+        sha512: 'foo'
     """), 'foo')
     overrides = Overrides(yaml.safe_load("""
     artifacts:
@@ -338,3 +339,4 @@ def test_overide_resource_remove_chksum():
     assert 'md5' not in overrides['artifacts'][0]
     assert 'sha1' not in overrides['artifacts'][0]
     assert 'sha256' not in overrides['artifacts'][0]
+    assert 'sha512' not in overrides['artifacts'][0]
