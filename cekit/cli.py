@@ -173,7 +173,9 @@ def build_osbs(ctx, release, tech_preview, user, nowait, stage, koji_target, com
 
 @cli.group(short_help="Execute container image tests")
 @click.option('--image', help="Image to run tests against.")
-def test(image):  # pylint: disable=unused-argument
+@click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
+@click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
+def test(image, overrides):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -323,7 +325,7 @@ class Cekit(object):
                 LOGGER.debug("Removing dirty directory: '{}'".format(directory))
                 try:
                     shutil.rmtree(directory)
-                except PermissionError as ex:
+                except:
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
     def run(self, clazz, params):
