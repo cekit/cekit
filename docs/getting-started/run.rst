@@ -7,7 +7,7 @@ Now lets try running the image. As was shown in the preceeding example it is pos
 
  $ podman run -p 32597:8080 localhost/my-example:1.0
 
-When the image is built it is automatically tagged using the ``name`` key in the image descriptor combined with the ``version`` key. As the tomcat module that was specified earlier included a :doc:`run </descriptor/include/run>` command it will automatically start the Tomcat webserver.
+When the image is built it is automatically tagged using the ``name`` key in the image descriptor combined with the ``version`` key. As the tomcat module that was specified earlier included a :ref:`run <descriptor/image:Run>` command it will automatically start the Tomcat webserver.
 
 Using your browser go to http://localhost:32597 ; if successful then the image is running correctly.
 
