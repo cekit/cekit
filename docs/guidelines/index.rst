@@ -8,8 +8,8 @@ This chapter focuses on best practices and guides related to developing images.
 
     local-development
     repositories
-    custom-templates
 
+.. custom-templates
 .. modules/index
 
 
