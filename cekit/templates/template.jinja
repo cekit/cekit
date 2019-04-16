@@ -20,6 +20,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
     && rpm -q{% for package in packages %} {{ package }}{% endfor %}
+    && {{ repo_clear_cache(pkg_manager) }}
     {% endif %}
 {%- endmacro %}
 {% macro repo_make_cache(pkg_manager) -%}
