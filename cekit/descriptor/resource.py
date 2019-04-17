@@ -1,8 +1,9 @@
 import logging
 import os
 import shutil
-import subprocess
 import ssl
+import subprocess
+
 import yaml
 
 try:
@@ -50,11 +51,12 @@ class Resource(Descriptor):
           md5: {type: str}
           sha1: {type: str}
           sha256: {type: str}
+          sha512: {type: str}
           description: {type: str}
           target: {type: str}
         assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None or val['md5'] is not None\"""")]
         super(Resource, self).__init__(descriptor)
-        self.skip_merging = ['md5', 'sha1', 'sha256']
+        self.skip_merging = ['md5', 'sha1', 'sha256', 'sha512']
 
         # forwarded import to prevent circural imports
         from cekit.cache.artifact import ArtifactCache
@@ -98,8 +100,9 @@ class Resource(Descriptor):
             logger.debug("Local resource '%s' exists and is valid" % self.name)
             return target
 
-        if self.cache.is_cached(self):
-            cached_resource = self.cache.get(self)
+        cached_resource = self.cache.cached(self)
+
+        if cached_resource:
             shutil.copy(cached_resource['cached_path'],
                         target)
             logger.info("Using cached artifact '%s'." % self.name)
@@ -118,8 +121,8 @@ class Resource(Descriptor):
         try:
             self._copy_impl(target)
         except Exception as ex:
-            logger.warn("Cekit is not able to fetch resource '%s' automatically. "
-                        "Please use cekit-cache command to add this artifact manually." % self.name)
+            logger.warning("Cekit is not able to fetch resource '%s' automatically. "
+                           "Please use cekit-cache command to add this artifact manually." % self.name)
 
             if self.description:
                 logger.info(self.description)
@@ -130,7 +133,7 @@ class Resource(Descriptor):
 
         if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and \
                 not self.__verify(target):
-            raise CekitError('Artifact verification failed!')
+            raise CekitError('Artifact checksum verification failed!')
 
         return target
 
@@ -147,23 +150,26 @@ class Resource(Descriptor):
             logger.info("Target is directory, cannot verify checksum.")
             return True
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
-            if algorithm in self:
+            if algorithm in self and self[algorithm]:
                 if not check_sum(target, algorithm, self[algorithm], self['name']):
                     return False
         return True
 
     def __substitute_cache_url(self, url):
         cache = config.get('common', 'cache_url')
+
         if not cache:
             return url
 
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in self:
-                logger.debug("Using %s to fetch artifacts from cacher."
-                             % algorithm)
-                return (cache.replace('#filename#', self.name)
-                        .replace('#algorithm#', algorithm)
-                        .replace('#hash#', self[algorithm]))
+                logger.debug("Using {} checksum to fetch artifacts from cacher".format(algorithm))
+
+                url = cache.replace('#filename#', self.name).replace(
+                    '#algorithm#', algorithm).replace('#hash#', self[algorithm])
+
+                logger.debug("Using cache url '{}'".format(url))
+
         return url
 
     def _download_file(self, url, destination, use_cache=True):
@@ -198,12 +204,22 @@ class Resource(Descriptor):
 
             if res.getcode() != 200:
                 raise CekitError("Could not download file from %s" % url)
-            with open(destination, 'wb') as f:
-                while True:
-                    chunk = res.read(1024)
-                    if not chunk:
-                        break
-                    f.write(chunk)
+
+            try:
+                with open(destination, 'wb') as f:
+                    while True:
+                        chunk = res.read(1048576) # 1 MB
+                        if not chunk:
+                            break
+                        f.write(chunk)
+            except Exception:
+                try:
+                    logger.debug("Removing incompletely downloaded '{}' file".format(destination))
+                    os.remove(destination)
+                except OSError:
+                    logger.warning("An error occurred while removing file '{}'".format(destination))
+
+                raise
         else:
             raise CekitError("Unsupported URL scheme: %s" % (url))
 
@@ -300,26 +316,30 @@ class _PlainResource(Resource):
         self.target = self.target_file_name()
 
     def _copy_impl(self, target):
-
+        # First of all try to download the file using cacher if specified
         if config.get('common', 'cache_url'):
-            logger.debug("Trying to download artifact %s from remote cache" % self.name)
-            # If cacher URL is set, use it
             try:
-                self._download_file(self.url, target)
+                self._download_file(None, target)
                 return target
-            except:
-                logger.warning("Could not download artifact %s from the remote cache" % self.name)
+            except Exception as e:
+                logger.debug(str(e))
+                logger.warning("Could not download '{}' artifact using cacher".format(self.name))
 
         md5 = self.get('md5')
 
-        if md5:
-            logger.debug("Trying to download artifact %s from Brew directly" % self.name)
+        # Next option is to download it from Brew directly but only if the md5 checkum
+        # is provided and we are running with the --redhat switch
+        if md5 and config.get('common', 'redhat'):
+            logger.debug("Trying to download artifact '{}' from Brew directly".format(self.name))
 
             try:
-                self.url = get_brew_url(md5)
-                self._download_file(self.url, target, use_cache=False)
+                # Generate the URL
+                url = get_brew_url(md5)
+                # Use the URL to download the file
+                self._download_file(url, target, use_cache=False)
                 return target
-            except:
-                logger.warning("Could not download artifact %s from Brew" % self.name)
+            except Exception as e:
+                logger.debug(str(e))
+                logger.warning("Could not download artifact '{}' from Brew".format(self.name))
 
-        raise CekitError("Artifact %s could not be found" % self.name)
+        raise CekitError("Artifact {} could not be found".format(self.name))

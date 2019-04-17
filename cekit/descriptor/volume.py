@@ -1,8 +1,8 @@
 import os
+
 import yaml
 
 from cekit.descriptor import Descriptor
-
 
 volume_schema = [yaml.safe_load("""
 map:

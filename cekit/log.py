@@ -13,9 +13,9 @@ class SingleLevelFilter(logging.Filter):
 
     def filter(self, record):
         if self.reject:
-            return (record.levelno > self.passlevel)
+            return record.levelno > self.passlevel
         else:
-            return (record.levelno <= self.passlevel)
+            return record.levelno <= self.passlevel
 
 
 def setup_logging():
@@ -32,6 +32,8 @@ def setup_logging():
     handler_err.setFormatter(formatter)
 
     logger = logging.getLogger("cekit")
+    # Reset all handlers
+    logger.handlers = []
     logger.addHandler(handler_out)
     logger.addHandler(handler_err)
 

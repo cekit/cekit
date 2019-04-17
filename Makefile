@@ -7,6 +7,12 @@ test-py27: prepare
 test-py35: prepare
 	tox -e py35 -- tests
 
+test-py36: prepare
+	tox -e py36 -- tests
+
+test-py37: prepare
+	tox -e py37 -- tests
+
 test-unit: prepare
 	tox -- tests/test_unit*
 

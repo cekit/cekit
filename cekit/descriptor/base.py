@@ -1,12 +1,11 @@
-import cekit
 import collections
 import logging
 import os
-import yaml
 
+import yaml
+from pykwalify.core import Core
 
 from cekit.errors import CekitError
-from pykwalify.core import Core
 
 logger = logging.getLogger('cekit')
 
@@ -58,8 +57,8 @@ class Descriptor(collections.MutableMapping):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(path, 'w') as outfile:
-            yaml.Dumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
-            yaml.dump(self._descriptor, outfile, default_flow_style=False)
+            yaml.SafeDumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
+            yaml.dump(self._descriptor, outfile, default_flow_style=False, Dumper=yaml.SafeDumper)
 
     def label(self, key):
         for l in self._descriptor['labels']:
@@ -115,17 +114,7 @@ class Descriptor(collections.MutableMapping):
         return self._descriptor.get(k, default)
 
     def process_defaults(self):
-        """Prepares default values before rendering"""
-        if 'execute' in self._descriptor:
-            for execute in self._descriptor['execute']:
-                if 'user' not in execute:
-                    execute['user'] = cekit.DEFAULT_USER
-
-        if 'run' not in self._descriptor:
-            self._descriptor['run'] = {}
-
-        if 'user' not in self._descriptor['run']:
-            self._descriptor['run']['user'] = cekit.DEFAULT_USER
+        pass
 
     def remove_none_keys(self):
         if isinstance(self, Descriptor):
@@ -158,6 +147,8 @@ def _merge_descriptors(desc1, desc2):
 
     Return merged descriptor
     """
+    if desc2 == None:
+        return desc1
     for k2, v2 in desc2.items():
         if k2 in desc1.skip_merging:
             continue

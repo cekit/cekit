@@ -3,17 +3,19 @@ import logging
 
 logger = logging.getLogger('cekit')
 
-SUPPORTED_HASH_ALGORITHMS = ['sha256', 'sha1', 'md5']
+SUPPORTED_HASH_ALGORITHMS = ['sha512', 'sha256', 'sha1', 'md5']
 
 
 def get_sum(target, algorithm):
     hash_function = getattr(hashlib, algorithm)()
 
+    logger.debug("Computing {} checksum for '{}' file".format(algorithm, target))
+
     with open(target, "rb") as f:
         for chunk in iter(lambda: f.read(65536), b""):
             hash_function.update(chunk)
     return hash_function.hexdigest()
-    
+
 
 def check_sum(target, algorithm, expected, name=None):
     """ Check that file chksum is correct

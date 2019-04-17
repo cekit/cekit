@@ -1,5 +1,5 @@
 {% macro repo_create(pkg_manager, repositories) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
         {% for repo in repositories %}
 repos/{{ repo.filename }} \
         {% endfor %}
@@ -7,23 +7,81 @@ repos/{{ repo.filename }} \
     {% endif %}
 {%- endmacro %}
 {% macro repo_remove(pkg_manager, repositories) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
     {% endif %}
 {%- endmacro %}
 {% macro repo_install(pkg_manager, rpm) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
-{{ pkg_manager }} install -y {{ rpm }} \
-    && {{ pkg_manager }} clean all && rm -rf /var/cache/yum
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
+{{ pkg_manager }} --setopt=tsflags=nodocs install -y {{ rpm }}
     {% endif %}
 {%- endmacro %}
 {% macro pkg_install(pkg_manager, packages) -%}
-    {% if pkg_manager in ['microdnf', 'yum'] %}
-{{ pkg_manager }} install -y {%- for package in packages %} {{ package }}{% endfor %} \
-    && {{ pkg_manager }} clean all && rm -rf /var/cache/yum \
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
+{{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
     && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
 {%- endmacro %}
+{% macro repo_make_cache(pkg_manager) -%}
+    {% if pkg_manager in ['yum', 'dnf'] %}
+RUN {{ pkg_manager }} makecache
+    {% endif %}
+{%- endmacro %}
+{% macro repo_clear_cache(pkg_manager) -%}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
+{{ pkg_manager }} clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum
+    {% endif %}
+{%- endmacro %}
+{% macro process_module(module) %}
+# begin {{ module.name }}:{{ module.version }}
+{% if module.packages and module.packages.install %}
+
+# Install required RPMs and ensure that the packages were installed
+USER root
+RUN {{ pkg_install(packages.manager, module.packages.install) }}
+{% endif %}
+{% if helper.envs(module.envs)|length > 0 %}
+
+# Environment variables
+ENV \
+    {% for env in helper.envs(module.envs)|sort(attribute='name') %}
+    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
+
+    {% endfor %}
+{% endif %}
+{% if module.labels|length > 0 %}
+
+# Labels
+LABEL \
+      {% for label in module.labels|sort(attribute='name') %}
+      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
+
+      {% endfor %}
+{% endif %}
+{% if helper.ports(module.ports)|length > 0 %}
+
+# Exposed ports
+EXPOSE {%- for port in helper.ports(module.ports) %} {{ port }}{% endfor %}
+{% endif %}
+{%- if module.execute|length > 0 %}
+
+# Custom scripts
+{% for exec in module.execute %}
+USER {{ exec.user }}
+RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
+{% endfor %}
+{% endif %}
+{%- if module.volumes|length > 0 %}
+
+# Volumes
+{% for volume in module.volumes %}
+VOLUME ["{{ volume['path'] }}"]
+{% endfor %}
+{% endif %}
+
+# end {{ module.name }}:{{ module.version }}
+{%- endmacro %}
+
 # Copyright 2017 Red Hat
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,112 +103,75 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 FROM {{ from }}
 
 USER root
-
-{% if packages and packages.install %}
 {% if packages.repositories_injected %}
-# Add custom repo files
-COPY {{ repo_create(pkg_manager, packages.repositories_injected) }}
 
+# Add custom repo files
+COPY {{ repo_create(packages.manager, packages.repositories_injected) }}
 {% endif %}
 {% if packages.repositories %}
 {% for repo in packages.repositories %}
 {% if repo.present and repo.rpm %}
-RUN {{ repo_install(pkg_manager, repo.rpm) }}
 
+RUN {{ repo_install(packages.manager, repo.rpm) }}
 {% endif %}
 {% endfor %}
 {% endif %}
 
-# Install required RPMs and ensure that the packages were installed
-RUN {{ pkg_install(pkg_manager, packages.install) }}
-
-{% if packages.repositories_injected %}
-# Remove custom repo files
-RUN {{ repo_remove(pkg_manager, packages.repositories_injected) }}
-
+{% if helper.packages_to_install(image) %}
+{{ repo_make_cache(packages.manager) }}
 {% endif %}
 
+{% if image.modules.install|length > 0 %}
+# Add scripts used to configure the image
+COPY modules /tmp/scripts/
 {% endif %}
 
-{%- if artifacts %}
-# Add all artifacts to the /tmp/artifacts
-# directory
+{% if image.all_artifacts|length > 0 %}
+# Add all artifacts to the /tmp/artifacts directory
 COPY \
-{% for artifact in artifacts %}
+{% for artifact in image.all_artifacts %}
     {{ artifact['target'] }} \
     {% endfor %}
     /tmp/artifacts/
-
 {% endif %}
 
-{% if envs %}
-# Environment variables
-ENV \
-    {% for env in helper.envs(envs)|sort(attribute='name') %}
-    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
-
-    {% endfor %}
-{% endif %}
-
-{% if labels %}
-# Labels
-LABEL \
-      {% for label in labels|sort(attribute='name') %}
-      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
-
-      {% endfor %}
-{% endif %}
-
-{% if ports %}
-# Exposed ports
-EXPOSE {%- for port in helper.ports(ports) %} {{ port }}{% endfor %}
-
-{% endif %}
-
-{%- if execute %}
-# Add scripts used to configure the image
-COPY modules /tmp/scripts
-
-# Custom scripts
-{% for exec in execute %}
-USER {{ exec.user }}
-RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
-
+{% for to_install in image.modules.install %}
+{{ process_module(helper.module(to_install)) }}
 {% endfor %}
-{% endif %}
+{{ process_module(image) }}
 
-{%- if execute %}
 USER root
-RUN rm -rf /tmp/scripts
-{% endif %}
-{%- if artifacts %}
-USER root
-RUN rm -rf /tmp/artifacts
+RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
+RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+
+{% if helper.packages_to_install(image) %}
+# Clear package manager metadata
+RUN {{ repo_clear_cache(packages.manager) }}
 {% endif %}
 
-{%- if volumes %}
-{% for volume in volumes %}
-VOLUME ["{{ volume['path'] }}"]
-{% endfor %}
+{% if packages.repositories_injected %}
+# Remove custom repo files
+RUN {{ repo_remove(packages.manager, packages.repositories_injected) }}
 {% endif %}
 
+# Run user
 USER {{ run['user'] }}
+{% if 'workdir' in run %}
 
-{% if run %}
-{%- if 'workdir' in run %}
 # Specify the working directory
 WORKDIR {{ run['workdir'] }}
 {% endif %}
-
 {% if 'entrypoint' in run %}
+
+# Specify entrypoint
 ENTRYPOINT {{ helper.cmd(run['entrypoint']) }}
 {% endif %}
-
 {% if 'cmd' in run %}
+
+# Specify run cmd
 CMD {{ helper.cmd(run['cmd']) }}
 {% endif %}
-{% endif %}
+{% if image.help.add %}
 
-{% if addhelp %}
 ADD help.md /
 {% endif %}

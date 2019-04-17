@@ -1,4 +1,5 @@
 import os
+
 import yaml
 
 try:
@@ -22,10 +23,6 @@ class Config(object):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
         if cmdline_args.get('work_dir'):
             cls.cfg['common']['work_dir'] = cmdline_args.get('work_dir')
-        if cmdline_args.get('package_manager'):
-            cls.cfg['common']['package_manager'] = cmdline_args.get('package_manager')
-        if isinstance(cmdline_args.get('addhelp'), bool):
-            cls.cfg['doc']['addhelp'] = cmdline_args.get('addhelp')
 
     @classmethod
     def _load_cfg(cls, config_path):
@@ -34,19 +31,13 @@ class Config(object):
         params:
         config_path - path to a cekit config file (expanding user)
         """
-        cp = configparser.ConfigParser()
-        cp.read(os.path.expanduser(config_path))
-        cls.cfg = cp._sections
+        config_parser = configparser.ConfigParser()
+        config_parser.read(os.path.expanduser(config_path))
+        cls.cfg = config_parser._sections
         cls.cfg['common'] = cls.cfg.get('common', {})
         cls.cfg['common']['work_dir'] = cls.cfg.get('common').get('work_dir', '~/.cekit')
         cls.cfg['common']['redhat'] = yaml.safe_load(
             cls.cfg.get('common', {}).get('redhat', 'False'))
-        cls.cfg['common']['package_manager'] = yaml.safe_load(
-            cls.cfg.get('common', {}).get('package_manager', 'yum'))
-
-        cls.cfg['doc'] = cls.cfg.get('doc', {})
-        cls.cfg['doc']['addhelp'] = yaml.safe_load(
-            cls.cfg.get('doc').get('addhelp', 'False'))
         cls.cfg['repositories'] = cls.cfg.get('repositories', {})
 
     @classmethod
@@ -62,6 +53,7 @@ class Config(object):
         value = cls.cfg
         for arg in args:
             if arg not in value and arg != args[-1]:
-                raise KeyError("'%s' section doesnt exists in Cekit configuration!" % '/'.join(args[:-1]))
+                raise KeyError("'%s' section doesnt exists in Cekit configuration!" %
+                               '/'.join(args[:-1]))
             value = value.get(arg)
         return value

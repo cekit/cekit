@@ -1,0 +1,29 @@
+---
+
+base_to_install:
+  - brewkoji
+  - buildah
+  - docker
+  - fedpkg
+  - git
+  - make
+  - odcs-client
+  - podman
+  - source-to-image
+
+python_to_install:
+  - python3-behave
+  - python3-colorlog
+  - python3-docker
+  - python3-docker-squash
+  - python3-jinja2
+  - python3-lxml
+  - python3-mock
+  - python3-pykwalify
+  - python3-pytest
+  - python3-pytest-mock
+  - python3-pyyaml
+  - python3-sphinx
+  - python3-sphinx-autobuild
+  - python3-tox
+  - python3-virtualenv

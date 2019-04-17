@@ -2,7 +2,6 @@ import yaml
 
 from cekit.descriptor import Descriptor, Resource
 
-
 modules_schema = [yaml.safe_load("""
 map:
   repositories:
@@ -26,8 +25,33 @@ class Modules(Descriptor):
                                             for r in self._descriptor.get('repositories', [])]
         self._descriptor['install'] = [Install(x) for x in self._descriptor.get('install', [])]
 
+    @property
+    def repositories(self):
+        return self.get('repositories', [])
+
+    @property
+    def install(self):
+        return self.get('install', [])
+
+
 
 class Install(Descriptor):
     def __init__(self, descriptor):
         self.schemas = install_schema
         super(Install, self).__init__(descriptor)
+
+    @property
+    def name(self):
+        return self.get('name')
+
+    @name.setter
+    def name(self, value):
+        self._descriptor['name'] = value
+
+    @property
+    def version(self):
+        return self.get('version')
+
+    @version.setter
+    def version(self, value):
+        self._descriptor['version'] = value

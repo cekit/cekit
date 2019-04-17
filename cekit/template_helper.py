@@ -1,8 +1,34 @@
 import os
-import re
 
 
 class TemplateHelper(object):
+
+    SUPPORTED_PACKAGE_MANAGERS = ['yum', 'dnf', 'microdnf']
+
+    def __init__(self, module_registry):
+        self._module_registry = module_registry
+
+    def module(self, to_install):
+        return self._module_registry.get_module(to_install.name, to_install.version)
+
+    def packages_to_install(self, image):
+        """
+        Method that returns list of packages to be installed by any of
+        modules or directly in the image
+        """
+        all_modules = []
+        packages = []
+
+        if 'modules' in image and 'install' in image.modules:
+            all_modules += [self.module(m) for m in image.modules.install]
+
+        all_modules.append(image)
+
+        for module in all_modules:
+            if 'packages' in module and 'install' in module.packages:
+                packages += module.packages.install
+
+        return packages
 
     def filename(self, source):
         """Simple helper to return the file specified name"""

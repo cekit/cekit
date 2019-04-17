@@ -1,155 +1,192 @@
+import importlib
 import pytest
-import sys
 
-from cekit.cli import Cekit
+from click.testing import CliRunner
 
-
-@pytest.mark.parametrize('command', ['generate', 'build', 'test'])
-def test_args_command(mocker, command):
-    mocker.patch.object(sys, 'argv', ['cekit', command])
-
-    assert Cekit().parse().args.commands == [command]
+from cekit.cli import cli
 
 
-def test_args_not_valid_command(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit', 'explode'])
-
-    with pytest.raises(SystemExit):
-        Cekit().parse()
 
 
-def test_args_build_pull(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-pull'])
+def get_class_by_name(clazz):
+    module_name, class_name = clazz.rsplit('.', 1)
 
-    assert Cekit().parse().args.build_pull
+    module = importlib.import_module(module_name)
+    cls = getattr(module, class_name)
 
-
-@pytest.mark.parametrize('engine', ['osbs', 'docker', 'buildah'])
-def test_args_build_engine(mocker, engine):
-    mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-engine', engine])
-
-    assert Cekit().parse().args.build_engine == engine
+    return cls
 
 
-def test_args_osbs_stage(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-osbs-stage'])
+@pytest.mark.parametrize('args,clazz,common_params,params', [
+    # Check custom target
+    (
+        ['--redhat', 'build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        {
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': True, 'target': 'target'
+        },
+        {
+            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    # Check custom target
+    (
+        ['--target', 'custom-target', 'build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        {
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'custom-target'
+        },
+        {
+            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    # Check custom work dir
+    (
+        ['--work-dir', 'custom-workdir', 'build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        {
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': 'custom-workdir', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target'
+        },
+        {
+            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    # Check custom config file
+    (
+        ['--config', 'custom-config', 'build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        {
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': 'custom-config', 'redhat': False, 'target': 'target'
+        },
+        {
+            'dry_run': False, 'overrides': (),  'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    # Test default values for Docker builder
+    (
+        ['build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    # Test overrides
+    (
+        ['build', '--overrides', 'foo', '--overrides-file', 'bar', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': ('foo', 'bar'), 'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    # Test default values for OSBS builder
+    (
+        ['build', 'osbs'],
+        'cekit.builders.osbs.OSBSBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None
+        }
+    ),
+    # Test setting user for OSBS
+    (
+        ['build', 'osbs', '--user', 'SOMEUSER'],
+        'cekit.builders.osbs.OSBSBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': 'SOMEUSER', 'stage': False, 'koji_target': None, 'commit_message': None
+        }
+    ),
+    # Test setting stage environment for OSBS
+    (
+        ['build', 'osbs', '--stage'],
+        'cekit.builders.osbs.OSBSBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': None, 'stage': True, 'koji_target': None, 'commit_message': None
+        }
+    ),
+    # Test setting nowait for OSBS
+    (
+        ['build', 'osbs', '--nowait'],
+        'cekit.builders.osbs.OSBSBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'nowait': True, 'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None
+        }
+    ),
+    (
+        ['test', '--image', 'image:1.0', 'behave'],
+        'cekit.test.behave_tester.BehaveTester',
+        {
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target'
+        },
+        {
+            'overrides': (), 'image': 'image:1.0', 'steps_url': 'https://github.com/cekit/behave-test-steps.git', 'wip': False, 'names': ()
+        }
+    ),
+    (
+        ['build', 'docker', '--pull'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'pull': True, 'no_squash': False, 'tags': ()
+        }
+    ),
+    (
+        ['build', 'osbs'],
+        'cekit.builders.osbs.OSBSBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'release': False, 'tech_preview': False, 'user': None, 'nowait': False, 'stage': False, 'koji_target': None, 'commit_message': None
+        }),
+    (
+        ['build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+        }
+    ),
+    (
+        ['build', 'buildah'],
+        'cekit.builders.buildah.BuildahBuilder',
+        None,
+        {
+            'dry_run': False, 'overrides': (), 'pull': False, 'tags': ()
+        }
+    )
+])
+def test_args_command(mocker, args, clazz, common_params, params):
+    if not common_params:
+        common_params = {
+            'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit',
+            'config': '~/.cekit/config', 'redhat': False, 'target': 'target'
+        }
 
-    assert Cekit().parse().args.build_osbs_stage is True
+    cekit_class = mocker.patch('cekit.cli.Cekit')
+    cekit_object = mocker.Mock()
+    cekit_class.return_value = cekit_object
+    CliRunner().invoke(cli, args, catch_exceptions=False)
+
+    cls = get_class_by_name(clazz)
+
+    cekit_class.assert_called_once_with(common_params)
+    cekit_object.run.assert_called_once_with(cls, params)
 
 
-def test_args_osbs_stage_false(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit', 'build'])
+def test_args_not_valid_command():
+    result = CliRunner().invoke(cli, ['explode'], catch_exceptions=False)
 
-    assert Cekit().parse().args.build_osbs_stage is False
-
-
-def test_args_invalid_build_engine(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit', 'build', '--build-engine', 'rkt'])
-
-    with pytest.raises(SystemExit):
-        Cekit().parse()
+    assert isinstance(result.exception, SystemExit)
+    assert 'No such command "explode"' in result.output
+    assert result.exit_code == 2
 
 
-def test_args_osbs_user(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build',
-                                      '--build-engine',
-                                      'osbs',
-                                      '--build-osbs-user',
-                                      'USER'])
+def test_args_invalid_build_engine():
+    result = CliRunner().invoke(cli, ['build', 'rocketscience'], catch_exceptions=False)
 
-    assert Cekit().parse().args.build_osbs_user == 'USER'
-
-
-def test_args_config_default(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'generate'])
-
-    assert Cekit().parse().args.config == '~/.cekit/config'
-
-
-def test_args_workd_dir(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'generate',
-                                      '--work-dir',
-                                      'foo'])
-
-    assert Cekit().parse().args.work_dir == 'foo'
-
-
-def test_args_config(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      '--config',
-                                      'whatever',
-                                      'generate'])
-
-    assert Cekit().parse().args.config == 'whatever'
-
-
-def test_args_target(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build',
-                                      '--target',
-                                      'foo'])
-
-    assert Cekit().parse().args.target == 'foo'
-
-
-def test_args_redhat(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      '--redhat',
-                                      'build'])
-
-    assert Cekit().parse().args.redhat
-
-
-def test_args_redhat_default(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build'])
-
-    assert not Cekit().parse().args.redhat
-
-
-def test_args_osbs_nowait(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build',
-                                      '--build-osbs-nowait'])
-
-    assert Cekit().parse().args.build_osbs_nowait is True
-
-
-def test_args_osbs_no_nowait(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build'])
-
-    assert Cekit().parse().args.build_osbs_nowait is False
-
-
-def test_args_overrides(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build',
-                                      '--overrides',
-                                      'foo'])
-
-    assert Cekit().parse().args.overrides == ['foo']
-
-
-def test_args_overrides_file(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build',
-                                      '--overrides-file',
-                                      'foo'])
-
-    assert Cekit().parse().args.overrides == ['foo']
-
-
-def test_args_overrides_exclusiver(mocker):
-    mocker.patch.object(sys, 'argv', ['cekit',
-                                      'build',
-                                      'overrides',
-                                      'bar',
-                                      '--overrides-file',
-                                      'foo'])
-
-    with pytest.raises(SystemExit):
-        Cekit().parse()
+    assert isinstance(result.exception, SystemExit)
+    assert 'No such command "rocketscience"' in result.output
+    assert result.exit_code == 2

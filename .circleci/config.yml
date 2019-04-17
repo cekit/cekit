@@ -1,12 +1,60 @@
 version: 2
 jobs:
-  build:
+  test:
+    parallelism: 4
     machine:
-     image: circleci/classic:latest
+      image: circleci/classic:201808-01
     steps:
-     - checkout
-     - run: docker version
-     - run: docker info
-     - run: pip install tox tox-pyenv --user
-     - run: pyenv local 2.7.12 3.5.2
-     - run: ~/.local/bin/tox
+      - checkout
+      - run: docker version
+      - run: docker info
+      - run: pip install tox --user
+      - run: echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
+      - run: cd ~/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
+      - run: pyenv local 2.7.12 3.5.2 3.6.5 3.7.0
+      - run: |
+          if [[ "${CIRCLE_NODE_INDEX}" == 0 ]]; then
+             make test-py27
+          fi
+      - run: |
+          if [[ "${CIRCLE_NODE_INDEX}" == 1 ]]; then
+             make test-py35
+          fi
+      - run: |
+          if [[ "${CIRCLE_NODE_INDEX}" == 2 ]]; then
+             make test-py36
+          fi
+      - run: |
+          if [[ "${CIRCLE_NODE_INDEX}" == 3 ]]; then
+             make test-py37
+          fi
+
+  docs-build:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run: sudo apt install -y graphviz
+      - run:
+          name: Install docs dependencies
+          command: |
+            cd docs
+            mkdir -p ./venv
+            virtualenv ./venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: Generate documentation
+          command: |
+            cd docs
+            . venv/bin/activate
+            make html
+      - store_artifacts:
+          path: docs/_build
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test
+      - docs-build

@@ -1,0 +1,27 @@
+---
+
+- name: run the playbook tasks on the localhost
+  hosts: localhost
+
+  tasks:
+
+  - name: Gather package facts
+    package_facts:
+      manager: auto
+    no_log: True
+
+  - name: Install base software
+    package:
+      name: "{{ base_to_install }}"
+      state: present
+
+  - name: Install python software
+    package:
+      name: "{{ python_to_install }}"
+      state: present
+
+  - name: Install guzzle theme
+    pip:
+      chdir: ../../docs
+      executable: pip3
+      requirements: requirements.txt

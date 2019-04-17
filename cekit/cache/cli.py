@@ -1,149 +1,156 @@
-import argparse
 import logging
+import shutil
 import sys
-import traceback
 
-from cekit.config import Config
-from cekit.log import setup_logging
-from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
+import click
+
 from cekit.cache.artifact import ArtifactCache
+from cekit.config import Config
+from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 from cekit.descriptor import Resource
+from cekit.log import setup_logging
+from cekit.tools import Map
 from cekit.version import version
 
-# FIXME we shoudl try to move this to json
 setup_logging()
-logger = logging.getLogger('cekit')
-config = Config()
+LOGGER = logging.getLogger('cekit')
+CONFIG = Config()
 
 
-class MyParser(argparse.ArgumentParser):
+@click.group(context_settings=dict(max_content_width=100))
+@click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
+@click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
+@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default="~/.cekit", show_default=True)
+@click.version_option(message="%(version)s", version=version)
+def cli(config, verbose, work_dir):  # pylint: disable=unused-argument
+    pass
 
-    def error(self, message):
-        self.print_help()
-        sys.stderr.write('\nError: %s\n' % message)
-        sys.exit(2)
+
+@cli.command(name="ls", short_help="List cached artifacts")
+def ls():
+    CacheCli.prepare().ls()
+
+
+@cli.command(name="add", short_help="Add artifact to cache")
+@click.argument('location', metavar="LOCATION")
+@click.option('--md5', metavar="CHECKSUM", help="The md5 checksum of the artifact.")
+@click.option('--sha1', metavar="CHECKSUM", help="The sha1 checksum of the artifact.")
+@click.option('--sha256', metavar="CHECKSUM", help="The sha256 checksum of the artifact.")
+@click.option('--sha512', metavar="CHECKSUM", help="The sha512 checksum of the artifact.")
+def add(location, md5, sha1, sha256, sha512):  # pylint: disable=unused-argument
+    if not (md5 or sha1 or sha256 or sha512):
+        raise click.UsageError("At least one checksum must be provided")
+
+    CacheCli.prepare().add(location, md5, sha1, sha256, sha512)
+
+
+@cli.command(name="rm", short_help="Remove artifact from cache")
+@click.argument('uuid', metavar="UUID")
+def rm(uuid):
+    CacheCli.prepare().rm(uuid)
+
+
+@cli.command(name="clear", short_help="Remove all artifacts from the cache")
+def clear():
+    CacheCli.prepare().clear()
 
 
 class CacheCli():
+    @staticmethod
+    def prepare():
+        """ Returns an initialized object of CacheCli """
+        return CacheCli(Map(click.get_current_context().parent.params))
 
-    def parse(self):
-        parser = MyParser(
-            description='Cekit cache manager',
-            formatter_class=argparse.RawDescriptionHelpFormatter)
+    def __init__(self, args):
 
-        parser.add_argument('-v',
-                            '--verbose',
-                            action='store_true',
-                            help='verbose output')
-
-        parser.add_argument('--version',
-                            action='version',
-                            help='show version and exit', version=version)
-
-        parser.add_argument('--config',
-                            default='~/.cekit/config',
-                            help='path for Cekit config file (~/.cekit/config is default)')
-
-        parser.add_argument('--work-dir',
-                            dest='work_dir',
-                            help="Location of Cekit working directory.")
-
-        subparsers = parser.add_subparsers(dest='cmd')
-
-        add = subparsers.add_parser('add',
-                                    help='cache artifact from url')
-
-        add.add_argument('url',
-                         help='url of the artifact')
-
-        for alg in SUPPORTED_HASH_ALGORITHMS:
-            add.add_argument('--%s' % alg,
-                             help='expected checksum of an object')
-
-        subparsers.add_parser('ls',
-                              help='list all cached artifacts')
-
-        rm = subparsers.add_parser('rm',
-                                   help='remove artifact by id')
-
-        rm.add_argument('uuid',
-                        help='uuid of an artifact which will be removed')
-
-        self.args = parser.parse_args()
-
-        return self
-
-    def run(self):
-
-        if self.args.verbose:
-            logger.setLevel(logging.DEBUG)
+        # TODO: logging is used only when adding the artifact, we need to find out if it would be possible to do it better
+        if args.verbose:
+            LOGGER.setLevel(logging.DEBUG)
         else:
-            logger.setLevel(logging.INFO)
+            LOGGER.setLevel(logging.INFO)
 
-        config.configure(self.args.config, {'work_dir': self.args.work_dir})
+        CONFIG.configure(args.config, {'work_dir': args.work_dir})
 
-        if self.args.cmd == 'add':
-            artifact_cache = ArtifactCache()
+    def add(self, location, md5, sha1, sha256, sha512):
+        artifact_cache = ArtifactCache()
 
-            resource = {}
-            resource['url'] = self.args.url
+        resource = {}
+        resource['url'] = location
 
-            for alg in SUPPORTED_HASH_ALGORITHMS:
-                val = getattr(self.args, alg)
-                if val:
-                    resource[alg] = val
-            artifact = Resource(resource)
+        if md5:
+            resource['md5'] = md5
 
-            if artifact_cache.is_cached(artifact):
-                print('Artifact is already cached!')
-                sys.exit(0)
+        if sha1:
+            resource['sha1'] = sha1
 
-            try:
-                artifact_id = artifact_cache.add(artifact)
-                if self.args.verbose:
-                    print(artifact_id)
-            except Exception as ex:
-                if self.args.verbose:
-                    traceback.print_exc()
-                else:
-                    print(ex)
-                sys.exit(1)
+        if sha256:
+            resource['sha256'] = sha256
 
-        if self.args.cmd == 'ls':
-            self.list()
+        if sha512:
+            resource['sha512'] = sha512
 
-        if self.args.cmd == 'rm':
-            try:
-                artifact_cache = ArtifactCache()
-                artifact_cache.delete(self.args.uuid)
-                print("Artifact removed")
-            except Exception:
-                print("Artifact doesn't exists")
-                sys.exit(1)
+        artifact = Resource(resource)
 
-        sys.exit(0)
+        cached = artifact_cache.cached(artifact)
 
-    def list(self):
+        if cached:
+            click.echo("Artifact {} is already cached!".format(location))
+            sys.exit(0)
+
+        try:
+            artifact_id = artifact_cache.add(artifact)
+            click.echo("Artifact {} cached with UUID '{}'".format(location, artifact_id))
+        except Exception as ex:  # pylint: disable=broad-except
+            click.secho("Cannot cache artifact {}: {}".format(location, str(ex)), fg='red')
+            sys.exit(1)
+
+    def ls(self):
         artifact_cache = ArtifactCache()
         artifacts = artifact_cache.list()
         if artifacts:
-            print("Cached artifacts:")
-            for artifact_id, artifact in artifacts.items():
-                print("%s:" % artifact_id)
+            for artifact_filename, artifact in artifacts.items():
+                click.echo("\n{}:".format(click.style(
+                    artifact_filename.split('.')[0], fg='green', bold=True)))
                 for alg in SUPPORTED_HASH_ALGORITHMS:
-                    if alg in artifact:
-                        print("  %s: %s" % (alg, artifact[alg]))
+                    if alg in artifact and artifact[alg]:
+                        click.echo("  {}: {}".format(click.style(alg, bold=True), artifact[alg]))
+
                 if artifact['names']:
-                    print("  names:")
+                    click.echo("  {}:".format(click.style("names", bold=True)))
                     for name in artifact['names']:
-                        print("    %s" % name)
+                        click.echo("    - %s" % name)
         else:
-            print('No artifacts cached!')
+            click.echo('No artifacts cached!')
 
+    def rm(self, uuid):
+        artifact_cache = ArtifactCache()
 
-def run():
-    CacheCli().parse().run()
+        try:
+            artifact_cache.delete(uuid)
+            click.echo("Artifact with UUID '{}' removed".format(uuid))
+        except Exception:  # pylint: disable=broad-except
+            click.secho("Artifact with UUID '{}' doesn't exists in the cache".format(uuid), fg='yellow')
+            sys.exit(1)
+
+    def clear(self):
+        """
+        Removes the artifact cache directory with all artifacts.
+
+        Use with caution!
+        """
+        artifact_cache = ArtifactCache()
+
+        if not click.confirm("Are you sure to remove all artifacts from cache?", show_default=True):
+            return
+
+        try:
+            shutil.rmtree(artifact_cache.cache_dir)
+            click.echo("Artifact cache cleared!")
+        except Exception:  # pylint: disable=broad-except
+            click.secho("An error occurred while removing the artifact cache directory '{}'".format(
+                artifact_cache.cache_dir), fg='red')
+            sys.exit(1)
 
 
 if __name__ == "__main__":
-    run()
+    cli()  # pylint: disable=no-value-for-parameter

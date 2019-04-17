@@ -2,15 +2,12 @@ import logging
 import os
 import platform
 import subprocess
+
 import yaml
 
-from cekit.cache.artifact import ArtifactCache
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-from cekit.descriptor.resource import _PlainResource
-from cekit.tools import get_brew_url
-
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -18,28 +15,59 @@ config = Config()
 
 class DockerGenerator(Generator):
 
-    def __init__(self, descriptor_path, target, builder, overrides, params):
-        self._params = params
-        super(DockerGenerator, self).__init__(descriptor_path, target, builder, overrides, params)
+    ODCS_HIDDEN_REPOS_FLAG = 'include_unpublished_pulp_repos'
+
+    def __init__(self, descriptor_path, target, overrides):
+        super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
 
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        if config.get('common', 'redhat'):
+            deps['odcs-client'] = {
+                'package': 'odcs-client',
+                'executable': '/usr/bin/odcs'
+            }
+
+            deps['brew'] = {
+                'package': 'brewkoji',
+                'executable': '/usr/bin/brew'
+            }
+
+        return deps
+
     def _prepare_content_sets(self, content_sets):
-        if not config.cfg['common']['redhat']:
+        if not content_sets:
+            return False
+
+        if not config.get('common', 'redhat'):
             return False
 
         arch = platform.machine()
+
         if arch not in content_sets:
-            raise CekitError("There are no contet_sets defined for platform '%s'!")
+            raise CekitError("There are no content_sets defined for platform '{}'!".format(arch))
 
         repos = ' '.join(content_sets[arch])
 
         try:
-            # idealy this will be API for ODCS, but there is no python3 package for ODCS
-            cmd = ['odcs']
+            # ideally this will be API for ODCS, but there is no python3 package for ODCS
+            cmd = ['/usr/bin/odcs']
 
-            if self._params.get('redhat', False):
+            if config.get('common', 'redhat'):
                 cmd.append('--redhat')
-            cmd.extend(['create', 'pulp', repos])
+
+            cmd.append('create')
+
+            compose = self.image.get('osbs', {}).get(
+                'configuration', {}).get('container', {}).get('compose', {})
+
+            if compose.get(DockerGenerator.ODCS_HIDDEN_REPOS_FLAG, False):
+                cmd.extend(['--flag', DockerGenerator.ODCS_HIDDEN_REPOS_FLAG])
+
+            cmd.extend(['pulp', repos])
 
             logger.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
 
@@ -74,14 +102,14 @@ class DockerGenerator(Generator):
         """Goes through artifacts section of image descriptor
         and fetches all of them
         """
-        if 'artifacts' not in self.image:
+        if not self.image.all_artifacts:
             logger.debug("No artifacts to fetch")
             return
 
         logger.info("Handling artifacts...")
         target_dir = os.path.join(self.target, 'image')
 
-        for artifact in self.image['artifacts']:
+        for artifact in self.image.all_artifacts:
             artifact.copy(target_dir)
 
         logger.debug("Artifacts handled")

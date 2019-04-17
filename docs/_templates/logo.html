@@ -1,0 +1,28 @@
+<div class="sidebar-wrapper" style="margin-bottom: 2em;">
+  <p class="logo">
+    <a href="{{ pathto(master_doc) }}">
+      <img
+        class="logo"
+        src="{{ pathto('_static', 1) }}/logo-128.png"
+        alt="Logo"
+      />
+      {% if theme_logo_name|lower == 'true' %}
+      <h1 class="logo logo-name">{{ project }}</h1>
+      {% endif %}
+    </a>
+  </p>
+
+  <p>Container image creation tool</p>
+
+  <p>
+    <iframe
+      src="https://ghbtns.com/github-btn.html?user=cekit&repo=cekit&type=star&count=true"
+      frameborder="0"
+      scrolling="0"
+      width="170px"
+      height="20px"
+    ></iframe>
+  </p>
+
+  <p style="font-size: 0.8em;">{{ release }}</p>
+</div>

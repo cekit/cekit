@@ -1,5 +1,3 @@
-import cekit
-
 from cekit.descriptor import Image, Execute
 from cekit.descriptor.image import get_image_schema
 
@@ -26,16 +24,13 @@ class Module(Image):
         self.skip_merging = ['description',
                              'version',
                              'name',
-                             'release']
+                             'release',
+                             'help']
 
         self._prepare()
         self.name = self._descriptor['name']
         self._descriptor['execute'] = [Execute(x, self.name) for x in self._descriptor.get('execute', [])]
 
-    def fetch_dependencies(self, repo_root):
-        """ Processes modules dependencies and fetches them.
-
-        Arguments:
-        repo_root: A parent directory where repositories will be cloned in
-        """
-        cekit.module.get_dependencies(self._descriptor, repo_root)
+    @property
+    def execute(self):
+        return self.get('execute', [])
