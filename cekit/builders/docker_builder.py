@@ -108,12 +108,11 @@ class DockerBuilder(Builder):
                         LOGGER.info('Docker: %s' % msg)
                     build_log.append(line)
 
-                    if '---> Running in ' in line:
-                        docker_layer_ids.append(line.split(' ')[-1].strip())
-                    elif 'Successfully built ' in line:
-                        docker_layer_ids.append(line.split(' ')[-1].strip())
-                    elif '---> Using cache' in build_log[-2]:
-                        docker_layer_ids.append(line.split(' ')[-1].strip())
+                    layer_id_match = re.search(r'^---> ([\w]{12})$', line.strip())
+
+                    if layer_id_match:
+                        docker_layer_ids.append(layer_id_match.group(1))
+
         except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
             LOGGER.debug("Caught ConnectionError attempting to communicate with Docker ", exc_info=1)
@@ -139,7 +138,7 @@ class DockerBuilder(Builder):
             msg = "Image build failed, see logs above."
             if len(docker_layer_ids) >= 2:
                 LOGGER.error("You can look inside the failed image by running "
-                             "'docker run --rm -ti %s bash'" % docker_layer_ids[-2])
+                             "'docker run --rm -ti %s bash'" % docker_layer_ids[-1])
             if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
                     not os.path.exists(os.path.join(self.target, 'image', 'repos')):
                 msg = "Image build failed with a yum error and you don't " \
