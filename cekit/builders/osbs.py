@@ -257,7 +257,7 @@ class OSBSBuilder(Builder):
 
             # Get the url of the repository
             url = subprocess.check_output(
-                ["git", "remote", "get-url", "origin"]).strip().decode("utf8")
+                ["git", "config", "--get", "remote.origin.url"]).strip().decode("utf8")
             # Get the latest commit hash
             commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode("utf8")
             # Parse the dist-git repository url
