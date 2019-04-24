@@ -74,12 +74,6 @@ def setup_function():
     Config.cfg = {'common': {}}
 
 
-def test_prepare_content_sets_should_return_early_when_redhat_is_not_set(tmpdir):
-    with docker_generator(tmpdir) as generator:
-        with cekit_config(redhat=False):
-            assert generator._prepare_content_sets({'something': []}) is False
-
-
 def test_prepare_content_sets_should_not_fail_when_cs_is_none(tmpdir):
     with docker_generator(tmpdir) as generator:
         with cekit_config(redhat=True):
@@ -93,7 +87,7 @@ def test_prepare_content_sets_should_not_fail_when_cs_is_empty(tmpdir):
 
 
 def test_prepare_content_sets_should_fail_when_cs_are_note_defined_for_current_platform(tmpdir, mocker):
-    mocker.patch('cekit.generator.docker.platform.machine',
+    mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
 
     with docker_generator(tmpdir) as generator:
@@ -104,10 +98,10 @@ def test_prepare_content_sets_should_fail_when_cs_are_note_defined_for_current_p
 
 
 def test_prepare_content_sets_should_request_odcs(tmpdir, mocker):
-    mocker.patch('cekit.generator.docker.platform.machine',
+    mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
     mock_odcs = mocker.patch(
-        'cekit.generator.docker.subprocess.check_output', return_value=odcs_fake_resp)
+        'cekit.generator.base.subprocess.check_output', return_value=odcs_fake_resp)
 
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {'compose': {}}}}}
@@ -120,10 +114,10 @@ def test_prepare_content_sets_should_request_odcs(tmpdir, mocker):
 
 
 def test_prepare_content_sets_should_request_odcs_with_hidden_repos_flag(tmpdir, mocker):
-    mocker.patch('cekit.generator.docker.platform.machine',
+    mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
     mock_odcs = mocker.patch(
-        'cekit.generator.docker.subprocess.check_output', return_value=odcs_fake_resp)
+        'cekit.generator.base.subprocess.check_output', return_value=odcs_fake_resp)
 
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {
@@ -138,10 +132,10 @@ def test_prepare_content_sets_should_request_odcs_with_hidden_repos_flag(tmpdir,
 
 
 def test_prepare_content_sets_should_handle_incorrect_state(tmpdir, mocker):
-    mocker.patch('cekit.generator.docker.platform.machine',
+    mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
     mock_odcs = mocker.patch(
-        'cekit.generator.docker.subprocess.check_output', return_value=odcs_fake_invalid_resp)
+        'cekit.generator.base.subprocess.check_output', return_value=odcs_fake_invalid_resp)
 
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {
@@ -156,10 +150,10 @@ def test_prepare_content_sets_should_handle_incorrect_state(tmpdir, mocker):
 
 
 def test_prepare_content_sets_should_handle_no_odcs_command(tmpdir, mocker):
-    mocker.patch('cekit.generator.docker.platform.machine',
+    mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
     mock_odcs = mocker.patch(
-        'cekit.generator.docker.subprocess.check_output', side_effect=OSError)
+        'cekit.generator.base.subprocess.check_output', side_effect=OSError)
 
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {
