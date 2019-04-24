@@ -27,11 +27,11 @@ class Modules(Descriptor):
 
     @property
     def repositories(self):
-        return self.get('repositories', [])
+        return self.get('repositories')
 
     @property
     def install(self):
-        return self.get('install', [])
+        return self.get('install')
 
 
 

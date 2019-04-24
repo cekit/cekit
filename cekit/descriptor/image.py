@@ -246,7 +246,6 @@ class Image(Descriptor):
             if override.osbs != None:
                 self.osbs = override.osbs.merge(self.osbs)
 
-            # should we really allow overrides to contribute content?
             for package in override.packages.install:
                 if package not in self.packages.install:
                     self.packages.install.append(package)
@@ -271,9 +270,9 @@ class Image(Descriptor):
                 # collect override so we can apply it to modules.
                 # this allows us to override module versions without affecting ordering.
                 module_overrides[name] = module
-                if name in image_modules:
-                    # apply override to image descriptor
-                    image_modules[name] = module
+                # Apply override to image descriptor
+                # If the module does not exists in the original descriptor, add it there
+                image_modules[name] = module
             self.modules._descriptor['install'] = list(image_modules.values())
 
             if override.run != None:

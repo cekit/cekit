@@ -55,6 +55,13 @@ image_descriptor = {
                 'install': [{'name': 'foo'}]}
 }
 
+simple_image_descriptor = {
+    'schema_version': 1,
+    'from': 'centos:latest',
+    'name': 'test/image',
+    'version': '1.0'
+}
+
 feature_label_test = """
 @test
 Feature: Test test
@@ -406,6 +413,51 @@ def test_module_override(tmpdir, mocker):
                                            'original'))
 
     assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/foo/script" ]')
+
+
+# https://github.com/cekit/cekit/issues/489
+def test_override_add_module_and_packages_in_overrides(tmpdir, mocker):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(simple_image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'modules': {
+            'repositories': [
+                {
+                    'name': 'modules',
+                    'path': 'tests/modules/repo_3'
+                }
+            ]
+        }
+    }
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               '--overrides', '{"modules": {"install": [{"name": "master"}, {"name": "child"}] } }',
+               '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
+               '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml"}] }',
+               'docker'])
+
+    module_dir = os.path.join(image_dir,
+                              'target',
+                              'image',
+                              'modules',
+                              'foo')
+
+    assert check_dockerfile(
+        image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
+    assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]')
+    assert check_dockerfile_text(image_dir, 'COPY \\\n    test \\\n    /tmp/artifacts/')
 
 
 def check_dockerfile(image_dir, match):

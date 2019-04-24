@@ -33,4 +33,4 @@ class Module(Image):
 
     @property
     def execute(self):
-        return self.get('execute', [])
+        return self.get('execute')
