@@ -186,7 +186,7 @@ def test_osbs_builder_run_brew_stage(mocker):
     builder.run()
 
     check_output.assert_has_calls([
-        call(['git', 'remote', 'get-url', 'origin']),
+        call(['git', 'config', '--get', 'remote.origin.url']),
         call(['git', 'rev-parse', 'HEAD']),
         call(['/usr/bin/brew-stage', 'call', '--python', 'buildContainer', '--kwargs',
               "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
@@ -206,7 +206,7 @@ def test_osbs_builder_run_brew(mocker):
     builder.run()
 
     check_output.assert_has_calls([
-        call(['git', 'remote', 'get-url', 'origin']),
+        call(['git', 'config', '--get', 'remote.origin.url']),
         call(['git', 'rev-parse', 'HEAD']),
         call(['/usr/bin/brew', 'call', '--python', 'buildContainer', '--kwargs',
               "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
@@ -224,7 +224,7 @@ def test_osbs_builder_run_koji(mocker):
     builder.run()
 
     check_output.assert_has_calls([
-        call(['git', 'remote', 'get-url', 'origin']),
+        call(['git', 'config', '--get', 'remote.origin.url']),
         call(['git', 'rev-parse', 'HEAD']),
         call(['/usr/bin/koji', 'call', '--python', 'buildContainer', '--kwargs',
               "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
