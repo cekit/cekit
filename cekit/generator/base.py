@@ -2,7 +2,11 @@
 
 import logging
 import os
+import platform
+import subprocess
 import shutil
+
+import yaml
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -25,10 +29,10 @@ class Generator(object):
     Args:
       descriptor_path - path to an image descriptor
       target - path to target directory
-      builder - builder type
       overrides - path to overrides file (can be None)
-      params - dictionary of builder specific parameters
     """
+
+    ODCS_HIDDEN_REPOS_FLAG = 'include_unpublished_pulp_repos'
 
     def __init__(self, descriptor_path, target, overrides):
         self._descriptor_path = descriptor_path
@@ -151,7 +155,6 @@ class Generator(object):
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
-
 
     def get_tech_preview_overrides(self):
         class TechPreviewOverrides(Overrides):
@@ -296,6 +299,63 @@ class Generator(object):
         else:
             self.image['packages']['set_url'] = injected_repos
 
+    def _prepare_content_sets(self, content_sets):
+        if not content_sets:
+            return False
+
+        arch = platform.machine()
+
+        if arch not in content_sets:
+            raise CekitError("There are no content_sets defined for platform '{}'!".format(arch))
+
+        repos = ' '.join(content_sets[arch])
+
+        try:
+            # ideally this will be API for ODCS, but there is no python3 package for ODCS
+            cmd = ['/usr/bin/odcs']
+            odcs_service_type = "Fedora"
+
+            if CONFIG.get('common', 'redhat'):
+                odcs_service_type = "Red Hat"
+                cmd.append('--redhat')
+
+            LOGGER.info("Using {} ODCS service to created composes".format(odcs_service_type))
+
+            cmd.append('create')
+
+            compose = self.image.get('osbs', {}).get(
+                'configuration', {}).get('container', {}).get('compose', {})
+
+            if compose.get(Generator.ODCS_HIDDEN_REPOS_FLAG, False):
+                cmd.extend(['--flag', Generator.ODCS_HIDDEN_REPOS_FLAG])
+
+            cmd.extend(['pulp', repos])
+
+            LOGGER.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
+
+            output = subprocess.check_output(cmd).decode()
+            normalized_output = '\n'.join(output.replace(" u'", " '")
+                                          .replace(' u"', ' "')
+                                          .split('\n')[1:])
+
+            odcs_result = yaml.safe_load(normalized_output)
+
+            if odcs_result['state'] != 2:
+                raise CekitError("Cannot create content set: '%s'"
+                                 % odcs_result['state_reason'])
+
+            repo_url = odcs_result['result_repofile']
+            return repo_url
+
+        except CekitError as ex:
+            raise ex
+        except OSError as ex:
+            raise CekitError("ODCS is not installed, please install 'odcs-client' package")
+        except subprocess.CalledProcessError as ex:
+            raise CekitError("Cannot create content set: '%s'" % ex.output)
+        except Exception as ex:
+            raise CekitError('Cannot create content set!', ex)
+
     def _handle_repository(self, repo):
         """Process and prepares all v2 repositories.
 
@@ -325,9 +385,6 @@ class Generator(object):
             return True
 
         return False
-
-    def _prepare_content_sets(self, content_sets):
-        raise NotImplementedError("Content sets repository injection not implemented!")
 
     def _prepare_repository_rpm(self, repo):
         raise NotImplementedError("RPM repository injection was not implemented!")
