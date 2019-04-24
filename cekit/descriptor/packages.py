@@ -71,17 +71,19 @@ class Packages(Descriptor):
         self._descriptor['repositories'] = [Repository(x)
                                             for x in self._descriptor.get('repositories', [])]
 
+        self._descriptor['install'] = self._descriptor.get('install', [])
+
     @property
     def manager(self):
         return self.get('manager')
 
     @property
     def repositories(self):
-        return self.get('repositories', [])
+        return self.get('repositories')
 
     @property
     def install(self):
-        return self.get('install', [])
+        return self.get('install')
 
     @property
     def content_sets(self):
