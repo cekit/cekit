@@ -105,6 +105,10 @@ FROM {{ from }}
 USER root
 {% if packages.repositories_injected %}
 
+# back up existing repo files and clear them out
+RUN cp -a /etc/yum.repos.d /etc/yum.repos.d.cekit-backup
+RUN rm -f /etc/yum.repos.d/*
+
 # Add custom repo files
 COPY {{ repo_create(packages.manager, packages.repositories_injected) }}
 {% endif %}
@@ -151,7 +155,10 @@ RUN {{ repo_clear_cache(packages.manager) }}
 
 {% if packages.repositories_injected %}
 # Remove custom repo files
-RUN {{ repo_remove(packages.manager, packages.repositories_injected) }}
+RUN rm -rf /etc/yum.repos.d
+
+# Restore backed up repo directory
+RUN mv /etc/yum.repos.d.cekit-backup /etc/yum.repos.d
 {% endif %}
 
 # Run user
