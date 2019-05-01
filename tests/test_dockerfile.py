@@ -363,31 +363,10 @@ def test_supported_package_managers(tmpdir, manager):
     regex_dockerfile(
         target, "RUN {} --setopt=tsflags=nodocs install -y foo-repo.rpm".format(manager))
     regex_dockerfile(target, "RUN {} --setopt=tsflags=nodocs install -y a".format(manager))
-    if manager in ['yum', 'dnf']:
-        regex_dockerfile(target, "RUN {} makecache".format(manager))
     regex_dockerfile(target, 'rpm -q a')
 
-
-# https://github.com/cekit/cekit/issues/465
-def test_no_makecache_with_microdnf(tmpdir):
-    target = str(tmpdir.mkdir('target'))
-
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
-             descriptor={'packages': {'manager': 'microdnf',
-                                      'repositories': [{'name': 'foo',
-                                                        'rpm': 'foo-repo.rpm'}],
-                                      'install': ['a']},
-                         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
-                         })
-    regex_dockerfile(
-        target, "RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN microdnf --setopt=tsflags=nodocs install -y a")
-    regex_dockerfile(target, '^((?!RUN microdnf makecache))')
-    regex_dockerfile(target, 'rpm -q a')
 
 # https://github.com/cekit/cekit/issues/406
-
-
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir('target'))
     generate(target, ['build', '--dry-run', 'docker'])

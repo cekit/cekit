@@ -727,7 +727,6 @@ def test_override_modules_flat(tmpdir, mocker):
     run_cekit(image_dir)
 
     assert check_dockerfile_text(image_dir, 'foo="mod_2"')
-    assert not check_dockerfile_text(image_dir, "RUN yum makecache")
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
 
@@ -803,7 +802,6 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
 # end mod_4:None
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
-    assert not check_dockerfile_text(image_dir, "RUN yum makecache")
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
 
@@ -840,7 +838,6 @@ RUN yum --setopt=tsflags=nodocs install -y wget mc \\
 # end packages_module_1:None
 """
 
-    assert check_dockerfile_text(image_dir, "RUN yum makecache")
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
     assert check_dockerfile_text(
         image_dir, "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum")
@@ -865,7 +862,6 @@ RUN yum --setopt=tsflags=nodocs install -y wget mc \\
     && rpm -q wget mc
 """
 
-    assert check_dockerfile_text(image_dir, "RUN yum makecache")
     assert check_dockerfile_text(image_dir, expected_packages_install)
 
 
