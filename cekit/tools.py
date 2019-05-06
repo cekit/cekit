@@ -64,25 +64,42 @@ def decision(question):
 
 def get_brew_url(md5):
     try:
-        LOGGER.debug("Getting brew details for an artifact with '%s' md5 sum" % md5)
+        LOGGER.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
         list_archives_cmd = ['/usr/bin/brew', 'call', '--json-output', 'listArchives',
-                             'checksum=%s' % md5, 'type=maven']
-        LOGGER.debug("Executing '%s'." % " ".join(list_archives_cmd))
-        archive_yaml = yaml.safe_load(subprocess.check_output(list_archives_cmd))
+                             "checksum={}".format(md5), 'type=maven']
+        LOGGER.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
 
-        if not archive_yaml:
-            raise CekitError("Artifact with md5 checksum %s could not be found in Brew" % md5)
+        try:
+            json_archives = subprocess.check_output(list_archives_cmd).strip().decode("utf8")
+        except subprocess.CalledProcessError as ex:
+            if ex.output is not None and 'AuthError' in ex.output:
+                LOGGER.warning(
+                    "Brew authentication failed, please make sure you have a valid Kerberos ticket")
+            raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
 
-        archive = archive_yaml[0]
+        archives = yaml.safe_load(json_archives)
+
+        if not archives:
+            raise CekitError("Artifact with md5 checksum {} could not be found in Brew".format(md5))
+
+        archive = archives[0]
         build_id = archive['build_id']
         filename = archive['filename']
         group_id = archive['group_id']
         artifact_id = archive['artifact_id']
         version = archive['version']
 
-        get_build_cmd = ['brew', 'call', '--json-output', 'getBuild', 'buildInfo=%s' % build_id]
-        LOGGER.debug("Executing '%s'" % " ".join(get_build_cmd))
-        build = yaml.safe_load(subprocess.check_output(get_build_cmd))
+        get_build_cmd = ['brew', 'call', '--json-output',
+                         'getBuild', "buildInfo={}".format(build_id)]
+
+        LOGGER.debug("Executing '{}'".format(" ".join(get_build_cmd)))
+
+        try:
+            json_build = subprocess.check_output(get_build_cmd).strip().decode("utf8")
+        except subprocess.CalledProcessError as ex:
+            raise CekitError("Could not fetch build {} from Brew".format(build_id), ex)
+
+        build = yaml.safe_load(json_build)
 
         build_states = ['BUILDING', 'COMPLETE', 'DELETED', 'FAILED', 'CANCELED']
 

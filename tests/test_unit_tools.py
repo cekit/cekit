@@ -1,5 +1,6 @@
 import logging
 import pytest
+import subprocess
 import yaml
 
 from contextlib import contextmanager
@@ -187,7 +188,7 @@ def brew_call_ok(*args, **kwargs):
             "artifact_id": "artifact_id",
             "version": "version",
           }
-        ]"""
+        ]""".encode("utf8")
     if 'getBuild' in args[0]:
         return """
         {
@@ -195,8 +196,8 @@ def brew_call_ok(*args, **kwargs):
           "release": "release",
           "state": 1
         }
-        """
-    return ""
+        """.encode("utf8")
+    return "".encode("utf8")
 
 
 def brew_call_removed(*args, **kwargs):
@@ -210,7 +211,7 @@ def brew_call_removed(*args, **kwargs):
             "artifact_id": "artifact_id",
             "version": "version",
           }
-        ]"""
+        ]""".encode("utf8")
     if 'getBuild' in args[0]:
         return """
         {
@@ -218,8 +219,8 @@ def brew_call_removed(*args, **kwargs):
           "release": "release",
           "state": 2
         }
-        """
-    return ""
+        """.encode("utf8")
+    return "".encode("utf8")
 
 
 def test_get_brew_url(mocker):
@@ -237,6 +238,22 @@ def test_get_brew_url_when_build_was_removed(mocker):
 
     assert 'Artifact with checksum aa was found in Koji metadata but the build is in incorrect state (DELETED) making the artifact not available for downloading anymore' in str(
         excinfo.value)
+
+
+# https://github.com/cekit/cekit/issues/502
+def test_get_brew_url_no_kerberos(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    kerberos_error = subprocess.CalledProcessError(1, 'CMD')
+    kerberos_error.output = "2019-05-06 14:58:44,502 [ERROR] koji: AuthError: unable to obtain a session"
+
+    mocker.patch('subprocess.check_output', side_effect=kerberos_error)
+
+    with pytest.raises(CekitError) as excinfo:
+        tools.get_brew_url('aa')
+
+    assert 'Could not fetch archives for checksum aa' in str(excinfo.value)
+    assert "Brew authentication failed, please make sure you have a valid Kerberos ticket" in caplog.text
 
 
 @contextmanager
