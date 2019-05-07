@@ -140,12 +140,11 @@ class OSBSBuilder(Builder):
             if os.path.exists("container.yaml"):
                 self._merge_container_yaml("container.yaml",
                                            os.path.join(self.dist_git_dir, "container.yaml"))
-            if os.path.exists("content_sets.yml"):
-                shutil.copy("content_sets.yml",
-                            os.path.join(self.dist_git_dir, "content_sets.yml"))
-            if os.path.exists("fetch-artifacts-url.yaml"):
-                shutil.copy("fetch-artifacts-url.yaml",
-                            os.path.join(self.dist_git_dir, "fetch-artifacts-url.yaml"))
+
+            for special_file in ["content_sets.yml", "fetch-artifacts-url.yaml", "help.md"]:
+                if os.path.exists(special_file):
+                    shutil.copy(special_file,
+                                os.path.join(self.dist_git_dir, special_file))
 
         # Copy also every artifact
         for artifact in self.artifacts:
@@ -232,7 +231,7 @@ class OSBSBuilder(Builder):
             try:
                 subprocess.check_output(cmd, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as ex:
-                LOGGER.error("Cannot run '%s', ouput: '%s'" % (cmd, ex.output))
+                LOGGER.error("Cannot run '%s', output: '%s'" % (cmd, ex.output))
                 raise CekitError("Cannot update sources.")
 
         LOGGER.info("Update finished.")
@@ -345,10 +344,10 @@ class DistGit(object):
         if os.path.exists(self.output):
             with Chdir(self.output):
                 LOGGER.info("Pulling latest changes in repo %s..." % self.repo)
-                subprocess.check_output(["git", "fetch"])
-                subprocess.check_output(
+                subprocess.check_call(["git", "fetch"])
+                subprocess.check_call(
                     ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
-                subprocess.check_output(
+                subprocess.check_call(
                     ["git", "reset", "--hard", "origin/%s" % self.branch])
             LOGGER.debug("Changes pulled")
         else:
@@ -364,7 +363,7 @@ class DistGit(object):
                 cmd += ['--user', user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
             LOGGER.debug("Cloning: '%s'" % ' '.join(cmd))
-            subprocess.check_output(cmd)
+            subprocess.check_call(cmd)
             LOGGER.debug("Repository %s cloned" % self.repo)
 
     def clean(self):
@@ -382,12 +381,10 @@ class DistGit(object):
     def add(self):
         # Add new Dockerfile
         subprocess.check_call(["git", "add", "Dockerfile"])
-        if os.path.exists("container.yaml"):
-            subprocess.check_call(["git", "add", "container.yaml"])
-        if os.path.exists("content_sets.yml"):
-            subprocess.check_call(["git", "add", "content_sets.yml"])
-        if os.path.exists("fetch-artifacts-url.yaml"):
-            subprocess.check_call(["git", "add", "fetch-artifacts-url.yaml"])
+
+        for f in ["container.yaml", "content_sets.yml", "fetch-artifacts-url.yaml", "help.md"]:
+            if os.path.exists(f):
+                subprocess.check_call(["git", "add", f])
 
         for d in ["repos", "modules"]:
             # we probably do not care about non existing files and other errors here
@@ -405,7 +402,7 @@ class DistGit(object):
 
         # Commit the change
         LOGGER.info("Commiting with message: '%s'" % commit_msg)
-        subprocess.check_output(["git", "commit", "-q", "-m", commit_msg])
+        subprocess.check_call(["git", "commit", "-q", "-m", commit_msg])
 
         untracked = subprocess.check_output(
             ["git", "ls-files", "--others", "--exclude-standard"]).decode("utf8")
@@ -438,7 +435,7 @@ class DistGit(object):
             LOGGER.info("Pushing change to the upstream repository...")
             cmd = ["git", "push", "-q", "origin", self.branch]
             LOGGER.debug("Running command '%s'" % ' '.join(cmd))
-            subprocess.check_output(cmd)
+            subprocess.check_call(cmd)
             LOGGER.info("Change pushed.")
         else:
             LOGGER.info("Changes are not pushed, exiting")
