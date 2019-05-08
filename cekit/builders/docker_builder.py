@@ -162,7 +162,7 @@ class DockerBuilder(Builder):
     def _tag(self, docker_client, image_id, tags):
         for tag in tags:
             if ':' in tag:
-                img_repo, img_tag = tag.split(":")
+                img_repo, img_tag = tag.rsplit(":", 1)
                 docker_client.tag(image_id, img_repo, tag=img_tag)
             else:
                 docker_client.tag(image_id, tag)
