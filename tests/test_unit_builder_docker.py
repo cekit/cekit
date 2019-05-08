@@ -134,3 +134,19 @@ def test_docker_client_build_with_failure(mocker, caplog):
     docker_client_build.assert_called_once_with(path='something/image', pull=None, rm=True)
     assert "Docker: Step 3/159 : COPY modules /tmp/scripts/" in caplog.text
     assert "You can look inside the failed image by running 'docker run --rm -ti 81a88b63f47f bash'" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/508
+def test_docker_tag(mocker):
+    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+
+    docker_client_mock = mocker.Mock()
+
+    builder._tag(docker_client_mock, "image_id", ["image:latest", "host:5000/repo/image:tag"])
+
+    assert len(docker_client_mock.tag.mock_calls) == 2
+
+    docker_client_mock.tag.assert_has_calls([
+        mocker.call("image_id", "image", tag="latest"),
+        mocker.call("image_id", "host:5000/repo/image", tag="tag")
+    ])
