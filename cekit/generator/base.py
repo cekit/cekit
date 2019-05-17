@@ -100,10 +100,10 @@ class Generator(object):
 
     def generate(self, builder):
         self.copy_modules()
+        self.prepare_artifacts()
         self.prepare_repositories(builder)
         self.image.remove_none_keys()
         self.image.write(os.path.join(self.target, 'image.yaml'))
-        self.prepare_artifacts()
         self.render_dockerfile()
         self.render_help()
 
