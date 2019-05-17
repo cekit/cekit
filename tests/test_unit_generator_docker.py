@@ -2,6 +2,7 @@
 
 # pylint: disable=protected-access
 
+import logging
 import os
 
 from contextlib import contextmanager
@@ -13,39 +14,56 @@ from cekit.errors import CekitError
 from cekit.generator.docker import DockerGenerator
 
 
-odcs_fake_resp = b"""Result:
-{u'arches': u'x86_64',
- u'flags': [],
- u'id': 2019,
- u'koji_event': None,
- u'koji_task_id': None,
- u'owner': u'dbecvari',
- u'packages': None,
- u'removed_by': None,
- u'result_repo': u'http://hidden/compose/Temporary',
- u'result_repofile': u'http://hidden/Temporary/odcs-2019.repo',
- u'results': [u'repository'],
- u'sigkeys': u'FD431D51',
- u'source': u'rhel-7-server-rpms',
- u'source_type': 4,
- u'state': 2,
- u'state_name': u'done',
- u'state_reason': u'Compose is generated successfully',
- u'time_done': u'2018-05-02T14:11:19Z',
- u'time_removed': None,
- u'time_submitted': u'2018-05-02T14:11:16Z',
- u'time_to_expire': u'2018-05-03T14:11:16Z'}"""
+odcs_fake_resp = {
+    "arches": "x86_64 ppc64",
+    "flags": [
+        "no_deps"
+    ],
+    "id": 1,
+    "owner": "me",
+    "packages": "gofer-package",
+    "removed_by": None,
+    "result_repo": "https://odcs.fedoraproject.org/composes/latest-odcs-1-1/compose/Temporary",
+    "result_repofile": "http://hidden/Temporary/odcs-2019.repo",
+    "results": [
+        "repository"
+    ],
+    "sigkeys": "",
+    "source": "f26",
+    "source_type": 1,
+    "state": 2,
+    "state_name": "done",
+    "time_done": "2017-10-13T17:03:13Z",
+    "time_removed": "2017-10-14T17:00:00Z",
+    "time_submitted": "2017-10-13T16:59:51Z",
+    "time_to_expire": "2017-10-14T16:59:51Z"
+}
 
-odcs_fake_invalid_resp = b"""Result:
-{u'arches': u'x86_64',
- u'results': [u'repository'],
- u'sigkeys': u'FD431D51',
- u'source': u'rhel-7-server-rpms',
- u'source_type': 4,
- u'state': 1,
- u'state_name': u'fail',
- u'state_reason': u'Compose failed',
- u'time_to_expire': u'2018-05-03T14:11:16Z'}"""
+odcs_fake_invalid_resp = {
+    "arches": "x86_64 ppc64",
+    "flags": [
+        "no_deps"
+    ],
+    "id": 1,
+    "owner": "me",
+    "packages": "gofer-package",
+    "removed_by": None,
+    "result_repo": "https://odcs.fedoraproject.org/composes/latest-odcs-1-1/compose/Temporary",
+    "result_repofile": "http://hidden/Temporary/odcs-2019.repo",
+    "results": [
+        "repository"
+    ],
+    "sigkeys": "",
+    "source": "f26",
+    "source_type": 1,
+    "state": 1,
+    "state_name": "wait",
+    "state_reason": "Compose failed",
+    "time_done": "2017-10-13T17:03:13Z",
+    "time_removed": "2017-10-14T17:00:00Z",
+    "time_submitted": "2017-10-13T16:59:51Z",
+    "time_to_expire": "2017-10-14T16:59:51Z"
+}
 
 
 @contextmanager
@@ -100,8 +118,10 @@ def test_prepare_content_sets_should_fail_when_cs_are_note_defined_for_current_p
 def test_prepare_content_sets_should_request_odcs(tmpdir, mocker):
     mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
-    mock_odcs = mocker.patch(
-        'cekit.generator.base.subprocess.check_output', return_value=odcs_fake_resp)
+    mock_odcs_new_compose = mocker.patch(
+        'odcs.client.odcs.ODCS.new_compose', return_value=odcs_fake_resp)
+    mock_odcs_wait_for_compose = mocker.patch(
+        'odcs.client.odcs.ODCS.wait_for_compose', return_value=odcs_fake_resp)
 
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {'compose': {}}}}}
@@ -110,14 +130,17 @@ def test_prepare_content_sets_should_request_odcs(tmpdir, mocker):
             assert generator._prepare_content_sets(
                 {'current_platform': ['ca1', 'cs2']}) == "http://hidden/Temporary/odcs-2019.repo"
 
-    mock_odcs.assert_called_once_with(['/usr/bin/odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
+    mock_odcs_new_compose.assert_called_once_with('ca1 cs2', 'pulp', flags=[])
+    mock_odcs_wait_for_compose.assert_called_once_with(1, timeout=600)
 
 
 def test_prepare_content_sets_should_request_odcs_with_hidden_repos_flag(tmpdir, mocker):
     mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
-    mock_odcs = mocker.patch(
-        'cekit.generator.base.subprocess.check_output', return_value=odcs_fake_resp)
+    mock_odcs_new_compose = mocker.patch(
+        'odcs.client.odcs.ODCS.new_compose', return_value=odcs_fake_resp)
+    mock_odcs_wait_for_compose = mocker.patch(
+        'odcs.client.odcs.ODCS.wait_for_compose', return_value=odcs_fake_resp)
 
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {
@@ -127,41 +150,26 @@ def test_prepare_content_sets_should_request_odcs_with_hidden_repos_flag(tmpdir,
             assert generator._prepare_content_sets(
                 {'current_platform': ['ca1', 'cs2']}) == "http://hidden/Temporary/odcs-2019.repo"
 
-    mock_odcs.assert_called_once_with(
-        ['/usr/bin/odcs', '--redhat', 'create', '--flag', 'include_unpublished_pulp_repos', 'pulp', 'ca1 cs2'])
+    mock_odcs_new_compose.assert_called_once_with(
+        'ca1 cs2', 'pulp', flags=['include_unpublished_pulp_repos'])
+    mock_odcs_wait_for_compose.assert_called_once_with(1, timeout=600)
 
 
 def test_prepare_content_sets_should_handle_incorrect_state(tmpdir, mocker):
     mocker.patch('cekit.generator.base.platform.machine',
                  return_value="current_platform")
-    mock_odcs = mocker.patch(
-        'cekit.generator.base.subprocess.check_output', return_value=odcs_fake_invalid_resp)
 
+    mock_odcs_new_compose = mocker.patch('odcs.client.odcs.ODCS.new_compose',
+                                         return_value=odcs_fake_invalid_resp)
+    mock_odcs_wait_for_compose = mocker.patch('odcs.client.odcs.ODCS.wait_for_compose',
+                                              return_value=odcs_fake_invalid_resp)
     with docker_generator(tmpdir) as generator:
         generator.image = {'osbs': {'configuration': {'container': {
             'compose': {}}}}}
 
         with cekit_config(redhat=True):
-            with pytest.raises(CekitError, match="Cannot create content set: 'Compose failed'"):
+            with pytest.raises(CekitError, match=r"Cannot create ODCS compose: '.*'"):
                 generator._prepare_content_sets({'current_platform': ['ca1', 'cs2']})
 
-    mock_odcs.assert_called_once_with(
-        ['/usr/bin/odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
-
-
-def test_prepare_content_sets_should_handle_no_odcs_command(tmpdir, mocker):
-    mocker.patch('cekit.generator.base.platform.machine',
-                 return_value="current_platform")
-    mock_odcs = mocker.patch(
-        'cekit.generator.base.subprocess.check_output', side_effect=OSError)
-
-    with docker_generator(tmpdir) as generator:
-        generator.image = {'osbs': {'configuration': {'container': {
-            'compose': {}}}}}
-
-        with cekit_config(redhat=True):
-            with pytest.raises(CekitError, match="ODCS is not installed, please install 'odcs-client' package"):
-                generator._prepare_content_sets({'current_platform': ['ca1', 'cs2']})
-
-    mock_odcs.assert_called_once_with(
-        ['/usr/bin/odcs', '--redhat', 'create', 'pulp', 'ca1 cs2'])
+    mock_odcs_new_compose.assert_called_once_with('ca1 cs2', 'pulp', flags=[])
+    mock_odcs_wait_for_compose.assert_called_once_with(1, timeout=600)

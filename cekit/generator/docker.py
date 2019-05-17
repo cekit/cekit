@@ -15,23 +15,6 @@ class DockerGenerator(Generator):
         super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
 
-    @staticmethod
-    def dependencies():
-        deps = {}
-
-        if config.get('common', 'redhat'):
-            deps['odcs-client'] = {
-                'package': 'odcs-client',
-                'executable': '/usr/bin/odcs'
-            }
-
-            deps['brew'] = {
-                'package': 'brewkoji',
-                'executable': '/usr/bin/brew'
-            }
-
-        return deps
-
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template
         pass

@@ -29,30 +29,6 @@ def print_test_name(value):
     return "\b"
 
 
-odcs_fake_resp = b"""Result:
-{u'arches': u'x86_64',
- u'flags': [],
- u'id': 2019,
- u'koji_event': None,
- u'koji_task_id': None,
- u'owner': u'dbecvari',
- u'packages': None,
- u'removed_by': None,
- u'result_repo': u'http://hidden/compose/Temporary',
- u'result_repofile': u'http://hidden/Temporary/odcs-2019.repo',
- u'results': [u'repository'],
- u'sigkeys': u'FD431D51',
- u'source': u'rhel-7-server-rpms',
- u'source_type': 4,
- u'state': 2,
- u'state_name': u'done',
- u'state_reason': u'Compose is generated successfully',
- u'time_done': u'2018-05-02T14:11:19Z',
- u'time_removed': None,
- u'time_submitted': u'2018-05-02T14:11:16Z',
- u'time_to_expire': u'2018-05-03T14:11:16Z'}"""
-
-
 @pytest.mark.parametrize('name, desc_part, exp_regex', [
     ('test_run_user',
      {'run': {'user': 1347, 'cmd': ['whoami']}}, r'.*USER 1347\n((#.*)?\n)*CMD.*'),
@@ -121,7 +97,9 @@ def test_dockerfile_rendering_tech_preview(tmpdir, mocker, desc_part, exp_regex)
 
 
 def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies')
@@ -136,7 +114,9 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
 
 
 def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
@@ -153,7 +133,9 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
 
 
 def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'manager': 'microdnf',
@@ -168,7 +150,9 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
@@ -191,7 +175,9 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
@@ -213,7 +199,9 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
 
 def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
     config.cfg['common']['redhat'] = True
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
@@ -230,7 +218,9 @@ def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_url_only(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
@@ -250,7 +240,9 @@ def test_dockerfile_osbs_url_only(tmpdir, mocker):
 
 
 def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
-    mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
 
