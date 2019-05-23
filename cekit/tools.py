@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import subprocess
 import sys
 
@@ -127,6 +128,39 @@ def get_brew_url(md5):
                      ex.output)
         raise ex
     return url
+
+
+def copy_recursively(source_directory, destination_directory):
+    """
+    Copies contents of a directory to selected target location (also a directory).
+    the specific source file to destination.
+
+    If the source directory contains a directory, it will copy all the content recursively.
+    Symlinks are preserved (not followed).
+
+    The destination directory tree will be created if it does not exist.
+    """
+
+    # If the source directory does not exists, return
+    if not os.path.isdir(source_directory):
+        return
+
+    # Iterate over content in the source directory
+    for name in os.listdir(source_directory):
+        src = os.path.join(source_directory, name)
+        dst = os.path.join(destination_directory, name)
+
+        LOGGER.debug("Copying '{}' to '{}'...".format(src, dst))
+
+        if not os.path.isdir(os.path.dirname(dst)):
+            os.makedirs(os.path.dirname(dst))
+
+        if os.path.islink(src):
+            os.symlink(os.readlink(src), dst)
+        elif os.path.isdir(src):
+            shutil.copytree(src, dst, symlinks=True)
+        else:
+            shutil.copy2(src, dst)
 
 
 class Chdir(object):

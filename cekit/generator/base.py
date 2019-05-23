@@ -56,6 +56,9 @@ class Generator(object):
         Initializes the image object.
         """
 
+        LOGGER.debug("Removing old target directory")
+        shutil.rmtree(self.target, ignore_errors=True)
+
         # Read the main image descriptor and create an Image object from it
         descriptor = tools.load_descriptor(self._descriptor_path)
         self.image = Image(descriptor, os.path.dirname(os.path.abspath(self._descriptor_path)))

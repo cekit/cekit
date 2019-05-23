@@ -19,7 +19,7 @@ from cekit.config import Config
 from cekit.builder import Builder
 from cekit.descriptor.resource import _PlainResource
 from cekit.errors import CekitError
-from cekit.tools import Chdir
+from cekit.tools import Chdir, copy_recursively
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
@@ -86,6 +86,7 @@ class OSBSBuilder(Builder):
         super(OSBSBuilder, self).prepare()
 
         self.prepare_dist_git()
+        self.copy_to_dist_git()
 
     def prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
@@ -128,31 +129,9 @@ class OSBSBuilder(Builder):
             self._rhpkg_set_url_repos = [x['url']['repository']
                                          for x in self.generator.image['packages']['set_url']]
 
-        self.update_osbs_image_source()
-
-    def update_osbs_image_source(self):
-        with Chdir(os.path.join(self.target, 'image')):
-            for obj in ["repos", "modules"]:
-                if os.path.exists(obj):
-                    shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
-            shutil.copy("Dockerfile",
-                        os.path.join(self.dist_git_dir, "Dockerfile"))
-            if os.path.exists("container.yaml"):
-                self._merge_container_yaml("container.yaml",
-                                           os.path.join(self.dist_git_dir, "container.yaml"))
-
-            for special_file in ["content_sets.yml", "fetch-artifacts-url.yaml", "help.md"]:
-                if os.path.exists(special_file):
-                    shutil.copy(special_file,
-                                os.path.join(self.dist_git_dir, special_file))
-
-        # Copy also every artifact
-        for artifact in self.artifacts:
-            shutil.copy(os.path.join(self.target,
-                                     'image',
-                                     artifact),
-                        os.path.join(self.dist_git_dir,
-                                     artifact))
+    def copy_to_dist_git(self):
+        LOGGER.debug("Copying files to dist-git '{}' directory".format(self.dist_git_dir))
+        copy_recursively(os.path.join(self.target, 'image'), self.dist_git_dir)
 
     def _merge_container_yaml(self, src, dest):
         # FIXME - this is temporary needs to be refactored to proper merging
@@ -245,7 +224,7 @@ class OSBSBuilder(Builder):
         cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
         with Chdir(self.dist_git_dir):
-            self.dist_git.add()
+            self.dist_git.add(self.artifacts)
             self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
@@ -324,6 +303,7 @@ class DistGit(object):
 
     def __init__(self, output, source, repo, branch, noninteractive=False):
         self.output = output
+        self.source = source
         self.repo = repo
         self.branch = branch
         self.dockerfile = os.path.join(self.output, "Dockerfile")
@@ -378,17 +358,17 @@ class DistGit(object):
                 if d in git_files:
                     subprocess.check_output(["git", "rm", "-rf", d])
 
-    def add(self):
-        # Add new Dockerfile
-        subprocess.check_call(["git", "add", "Dockerfile"])
+    def add(self, artifacts):
+        LOGGER.debug("Adding files to git stage...")
 
-        for f in ["container.yaml", "content_sets.yml", "fetch-artifacts-url.yaml", "help.md"]:
-            if os.path.exists(f):
-                subprocess.check_call(["git", "add", f])
+        for obj in os.listdir('.'):
+            if obj in artifacts:
+                LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
+                continue
 
-        for d in ["repos", "modules"]:
-            # we probably do not care about non existing files and other errors here
-            subprocess.call(["git", "add", "--all", d])
+            LOGGER.debug("Staging '{}'...".format(obj))
+
+            subprocess.check_call(["git", "add", "--all", obj])
 
     def commit(self, commit_msg):
         if not commit_msg:
