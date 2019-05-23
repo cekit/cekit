@@ -12,6 +12,8 @@ map:
       name: {type: str}
       branch: {type: str}
   configuration: {type: any}
+  extra_dir: {type: str}
+
 """)]
 
 configuration_schema = [yaml.safe_load("""
@@ -22,11 +24,14 @@ configuration_schema = [yaml.safe_load("""
 
 
 class Osbs(Descriptor):
-    """Object Representing OSBS configuration
+    """
+    Object Representing OSBS configuration
 
     Args:
-      descriptor - yaml containing Osbs object
+      descriptor: dictionary object containing OSBS configuration
+      descriptor_path: path to descriptor file
     """
+
     def __init__(self, descriptor, descriptor_path):
         self.schemas = osbs_schema
         self.descriptor_path = descriptor_path
@@ -54,6 +59,15 @@ class Osbs(Descriptor):
     @property
     def configuration(self):
         return self.get('configuration')
+
+    @property
+    def extra_dir(self):
+        return self.get('extra_dir')
+
+    @extra_dir.setter
+    def extra_dir(self, value):
+        self._descriptor['extra_dir'] = value
+
 
 class Configuration(Descriptor):
     """Internal object represeting OSBS configuration subObject

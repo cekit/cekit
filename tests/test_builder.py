@@ -136,7 +136,7 @@ def test_merge_container_yaml_limit_arch(mocker, tmpdir):
 
 
 class DistGitMock(object):
-    def add(self):
+    def add(self, artifacts):
         pass
 
     def stage_modified(self):
@@ -414,7 +414,7 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
     mocker.patch('cekit.tools.DependencyHandler.handle')
     mocker.patch('cekit.descriptor.resource.Resource.copy')
-    copy_mock = mocker.patch('cekit.builders.osbs.shutil.copy')
+    copy_mock = mocker.patch('cekit.builders.osbs.shutil.copy2')
 
     dist_git_class = mocker.patch('cekit.builders.osbs.DistGit')
     dist_git_class.return_value = DistGitMock()
@@ -448,10 +448,10 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     dist_git_class.assert_called_once_with(os.path.join(
         str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch')
 
-    calls = [mocker.call('Dockerfile', os.path.join(str(tmpdir), 'osbs/repo/Dockerfile')),
-             mocker.call(os.path.join(str(tmpdir), src), os.path.join(str(tmpdir), target))]
-
-    copy_mock.assert_has_calls(calls)
+    copy_mock.assert_has_calls([
+        mocker.call(os.path.join(str(tmpdir), 'image', 'Dockerfile'),
+                    os.path.join(str(tmpdir), 'osbs/repo/Dockerfile'))
+    ])
 
 
 def test_docker_builder_defaults():
