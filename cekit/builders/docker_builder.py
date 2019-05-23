@@ -86,32 +86,41 @@ class DockerBuilder(Builder):
         docker_args['path'] = os.path.join(self.target, 'image')
         docker_args['pull'] = self.params.pull
         docker_args['rm'] = True
+        docker_args['decode'] = True
 
-        build_log = [""]
+        build_log = []
         docker_layer_ids = []
 
         try:
-            out = docker_client.build(**docker_args)
-            for line in out:
-                if b'stream' in line:
-                    line = yaml.safe_load(line)['stream']
-                elif b'status' in line:
-                    line = yaml.safe_load(line)['status']
-                elif b'errorDetail' in line:
-                    line = yaml.safe_load(line)['errorDetail']['message']
-                    raise CekitError("Image build failed: '%s'" % line)
+            stream = docker_client.build(**docker_args)
 
-                if line != build_log[-1]:
-                    # this prevents poluting cekit log with dowloading/extracting msgs
-                    log_msg = ANSI_ESCAPE.sub('', line).strip()
-                    for msg in log_msg.split('\n'):
-                        LOGGER.info('Docker: %s' % msg)
-                    build_log.append(line)
+            for part in stream:
+                # In case an error is returned, log the message and fail the build
+                if 'errorDetail' in part:
+                    message = part.get('errorDetail', {}).get('message', '')
+                    raise CekitError("Image build failed: '{}'".format(message))
 
-                    layer_id_match = re.search(r'^---> ([\w]{12})$', line.strip())
+                if 'stream' in part:
+                    messages = part['stream']
+                else:
+                    # We actually expect only 'stream' here
+                    # If there is something different, we log it but do not
+                    # do anything special about it
+                    LOGGER.debug("Docker: {}".format(part))
+                    continue
 
-                    if layer_id_match:
-                        docker_layer_ids.append(layer_id_match.group(1))
+                # This prevents poluting CEKit log with dowloading/extracting msgs
+                messages = ANSI_ESCAPE.sub('', messages).strip()
+
+                for message in messages.split('\n'):
+                    LOGGER.info('Docker: {}'.format(message))
+
+                build_log.append(messages)
+
+                layer_id_match = re.search(r'^---> ([\w]{12})$', messages)
+
+                if layer_id_match:
+                    docker_layer_ids.append(layer_id_match.group(1))
 
         except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
@@ -119,8 +128,8 @@ class DockerBuilder(Builder):
 
             if 'PermissionError' in exception_chain:
                 message = "Unable to contact docker daemon. Is it correctly setup?\n" \
-                          "See https://developer.fedoraproject.org/tools/docker/docker-installation.html and " \
-                          "http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-run-docker-in-centos-fedora-or-rhel"
+                    "See https://developer.fedoraproject.org/tools/docker/docker-installation.html and " \
+                    "http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-run-docker-in-centos-fedora-or-rhel"
             elif 'FileNotFoundError' in exception_chain:
                 message = "Unable to contact docker daemon. Is it started?"
             else:
@@ -138,13 +147,13 @@ class DockerBuilder(Builder):
             msg = "Image build failed, see logs above."
             if len(docker_layer_ids) >= 2:
                 LOGGER.error("You can look inside the failed image by running "
-                             "'docker run --rm -ti %s bash'" % docker_layer_ids[-1])
+                             "'docker run --rm -ti {} bash'".format(docker_layer_ids[-1]))
             if "To enable Red Hat Subscription Management repositories:" in ' '.join(build_log) and \
                     not os.path.exists(os.path.join(self.target, 'image', 'repos')):
                 msg = "Image build failed with a yum error and you don't " \
-                      "have any yum repository configured, please check " \
-                      "your image/module descriptor for proper repository " \
-                      " definitions."
+                    "have any yum repository configured, please check " \
+                    "your image/module descriptor for proper repository " \
+                    " definitions."
             raise CekitError(msg, ex)
 
         return docker_layer_ids[-1]
