@@ -97,16 +97,16 @@ class DockerBuilder(Builder):
             for part in stream:
                 # In case an error is returned, log the message and fail the build
                 if 'errorDetail' in part:
-                    message = part.get('errorDetail', {}).get('message', '')
-                    raise CekitError("Image build failed: '{}'".format(message))
-
-                if 'stream' in part:
+                    error_message = part.get('errorDetail', {}).get('message', '')
+                    raise CekitError("Image build failed: '{}'".format(error_message))
+                elif 'stream' in part:
                     messages = part['stream']
                 else:
-                    # We actually expect only 'stream' here
-                    # If there is something different, we log it but do not
-                    # do anything special about it
-                    LOGGER.debug("Docker: {}".format(part))
+                    # We actually expect only 'stream' here.
+                    # If there is something different, we ignore it.
+                    # It's safe to do so because if it would be an error, we would catch it
+                    # earlier. Ignored logs are related to fetching/pulling/extracing
+                    # of container images.
                     continue
 
                 # This prevents poluting CEKit log with dowloading/extracting msgs
