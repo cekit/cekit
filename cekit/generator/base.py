@@ -64,7 +64,7 @@ class Generator(object):
         deps = {}
 
         deps['odcs-client'] = {
-            'package': 'python2-odcs-client',
+            'package': 'python3-odcs-client',
             'library': 'odcs',
             'rhel': {
                 'package': 'python2-odcs-client'
