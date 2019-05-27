@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 import platform
 import shutil
 
@@ -115,6 +116,11 @@ class Generator(object):
         # we will persist cekit version in a label here, so we know which version of cekit
         # was used to build the image
         image_labels.append(Label({'name': 'io.cekit.version', 'value': cekit_version}))
+
+        for label in image_labels:
+            if len(label.value) > 128:
+                # breaks the line each time it reaches 128 characters
+                label.value = "\\\n".join(re.findall("(?s).{,128}", label.value))[:]
 
         # If we define the label in the image descriptor
         # we should *not* override it with value from
