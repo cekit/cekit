@@ -3,10 +3,7 @@
 import logging
 import os
 import platform
-import subprocess
 import shutil
-
-import yaml
 
 from jinja2 import Environment, FileSystemLoader
 
