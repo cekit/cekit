@@ -7,10 +7,12 @@ import os
 from contextlib import contextmanager
 
 import pytest
+import yaml
 
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.generator.docker import DockerGenerator
+from cekit.descriptor import Image
 
 
 odcs_fake_resp = b"""Result:
@@ -84,6 +86,22 @@ def test_prepare_content_sets_should_not_fail_when_cs_is_empty(tmpdir):
     with docker_generator(tmpdir) as generator:
         with cekit_config(redhat=True):
             assert generator._prepare_content_sets({}) is False
+
+
+def test_large_labels_should_break_lines(tmpdir):
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: 'the.large.label'
+        value: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium finibus lorem vitae pellentesque. Maecenas tincidunt amet.
+    """), 'foo')
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        with cekit_config(redhat=True):
+            generator.add_build_labels()
+            assert image.labels[0].value == "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium finibus lorem vitae pellentesque. Maecenas tincidunt amet\\\n.\\\n"
 
 
 def test_prepare_content_sets_should_fail_when_cs_are_note_defined_for_current_platform(tmpdir, mocker):
