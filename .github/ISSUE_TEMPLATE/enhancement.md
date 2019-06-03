@@ -2,7 +2,7 @@
 name: Enhancement
 about: Want to see something new? Let us know!
 title: ''
-labels: type/enhancement
+labels: status/review, type/enhancement
 assignees: ''
 
 ---

@@ -26,6 +26,30 @@ It contains two main keys:
                 compose:
                     pulp_repos: true
 
+OSBS extra directory
+^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``extra_dir``
+Required
+    No
+
+If a directory name specified by ``extra_dir`` key will be found next to the image descriptor, the contents of this directory
+will be copied into the target directory and later to the dist-git directory.
+
+Symbolic links are preserved (not followed).
+
+Copying files is done before generation, which means that files from the extra directory can be overridden
+in the :ref:`generation phase<handbook/building/build-process:Generating required files>` .
+
+.. note::
+    If you do not specify this key in image descriptor, the default value of ``osbs_extra`` will be used.
+
+.. code-block:: yaml
+
+    osbs:
+        extra_dir: custom-files
+
 OSBS repository
 ^^^^^^^^^^^^^^^^
 

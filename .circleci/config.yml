@@ -5,6 +5,7 @@ jobs:
     machine:
       image: circleci/classic:201808-01
     steps:
+      - run: sudo apt-get install libkrb5-dev
       - checkout
       - run: docker version
       - run: docker info

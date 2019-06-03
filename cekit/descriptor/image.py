@@ -81,6 +81,10 @@ class Image(Descriptor):
         if not self.packages.manager:
             self.packages._descriptor['manager'] = 'yum'
 
+        # Default directory for supplementary files that should be copied to dist-git directory
+        if not self.osbs.extra_dir:
+            self.osbs._descriptor['extra_dir'] = 'osbs_extra'
+
     @property
     def name(self):
         return self.get('name')

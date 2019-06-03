@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import subprocess
 import sys
 
@@ -64,25 +65,42 @@ def decision(question):
 
 def get_brew_url(md5):
     try:
-        LOGGER.debug("Getting brew details for an artifact with '%s' md5 sum" % md5)
+        LOGGER.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
         list_archives_cmd = ['/usr/bin/brew', 'call', '--json-output', 'listArchives',
-                             'checksum=%s' % md5, 'type=maven']
-        LOGGER.debug("Executing '%s'." % " ".join(list_archives_cmd))
-        archive_yaml = yaml.safe_load(subprocess.check_output(list_archives_cmd))
+                             "checksum={}".format(md5), 'type=maven']
+        LOGGER.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
 
-        if not archive_yaml:
-            raise CekitError("Artifact with md5 checksum %s could not be found in Brew" % md5)
+        try:
+            json_archives = subprocess.check_output(list_archives_cmd).strip().decode("utf8")
+        except subprocess.CalledProcessError as ex:
+            if ex.output is not None and 'AuthError' in ex.output:
+                LOGGER.warning(
+                    "Brew authentication failed, please make sure you have a valid Kerberos ticket")
+            raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
 
-        archive = archive_yaml[0]
+        archives = yaml.safe_load(json_archives)
+
+        if not archives:
+            raise CekitError("Artifact with md5 checksum {} could not be found in Brew".format(md5))
+
+        archive = archives[0]
         build_id = archive['build_id']
         filename = archive['filename']
         group_id = archive['group_id']
         artifact_id = archive['artifact_id']
         version = archive['version']
 
-        get_build_cmd = ['brew', 'call', '--json-output', 'getBuild', 'buildInfo=%s' % build_id]
-        LOGGER.debug("Executing '%s'" % " ".join(get_build_cmd))
-        build = yaml.safe_load(subprocess.check_output(get_build_cmd))
+        get_build_cmd = ['brew', 'call', '--json-output',
+                         'getBuild', "buildInfo={}".format(build_id)]
+
+        LOGGER.debug("Executing '{}'".format(" ".join(get_build_cmd)))
+
+        try:
+            json_build = subprocess.check_output(get_build_cmd).strip().decode("utf8")
+        except subprocess.CalledProcessError as ex:
+            raise CekitError("Could not fetch build {} from Brew".format(build_id), ex)
+
+        build = yaml.safe_load(json_build)
 
         build_states = ['BUILDING', 'COMPLETE', 'DELETED', 'FAILED', 'CANCELED']
 
@@ -104,12 +122,45 @@ def get_brew_url(md5):
         url = 'http://download.devel.redhat.com/brewroot/packages/' + package + '/' + \
             version.replace('-', '_') + '/' + release + '/maven/' + \
             group_id.replace('.', '/') + '/' + \
-            artifact_id.replace('.', '/') + '/' + version + '/' + filename
+            artifact_id + '/' + version + '/' + filename
     except subprocess.CalledProcessError as ex:
         LOGGER.error("Can't fetch artifacts details from brew: '%s'." %
                      ex.output)
         raise ex
     return url
+
+
+def copy_recursively(source_directory, destination_directory):
+    """
+    Copies contents of a directory to selected target location (also a directory).
+    the specific source file to destination.
+
+    If the source directory contains a directory, it will copy all the content recursively.
+    Symlinks are preserved (not followed).
+
+    The destination directory tree will be created if it does not exist.
+    """
+
+    # If the source directory does not exists, return
+    if not os.path.isdir(source_directory):
+        return
+
+    # Iterate over content in the source directory
+    for name in os.listdir(source_directory):
+        src = os.path.join(source_directory, name)
+        dst = os.path.join(destination_directory, name)
+
+        LOGGER.debug("Copying '{}' to '{}'...".format(src, dst))
+
+        if not os.path.isdir(os.path.dirname(dst)):
+            os.makedirs(os.path.dirname(dst))
+
+        if os.path.islink(src):
+            os.symlink(os.readlink(src), dst)
+        elif os.path.isdir(src):
+            shutil.copytree(src, dst, symlinks=True)
+        else:
+            shutil.copy2(src, dst)
 
 
 class Chdir(object):

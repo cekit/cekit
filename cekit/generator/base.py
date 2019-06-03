@@ -2,8 +2,8 @@
 
 import logging
 import os
+import re
 import platform
-import subprocess
 import shutil
 
 import yaml
@@ -19,6 +19,14 @@ from cekit.version import version as cekit_version
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
+
+
+try:
+    from odcs.client.odcs import ODCS, AuthMech
+    # Requests is a dependency of ODCS client, so this should be safe
+    import requests
+except ImportError:
+    pass
 
 
 class Generator(object):
@@ -51,10 +59,33 @@ class Generator(object):
 
         LOGGER.info("Initializing image descriptor...")
 
+    @staticmethod
+    def dependencies():
+        deps = {}
+
+        deps['odcs-client'] = {
+            'package': 'python3-odcs-client',
+            'library': 'odcs',
+            'rhel': {
+                'package': 'python2-odcs-client'
+            }
+        }
+
+        if CONFIG.get('common', 'redhat'):
+            deps['brew'] = {
+                'package': 'brewkoji',
+                'executable': '/usr/bin/brew'
+            }
+
+        return deps
+
     def init(self):
         """
         Initializes the image object.
         """
+
+        LOGGER.debug("Removing old target directory")
+        shutil.rmtree(self.target, ignore_errors=True)
 
         # Read the main image descriptor and create an Image object from it
         descriptor = tools.load_descriptor(self._descriptor_path)
@@ -72,10 +103,10 @@ class Generator(object):
 
     def generate(self, builder):
         self.copy_modules()
+        self.prepare_artifacts()
         self.prepare_repositories(builder)
         self.image.remove_none_keys()
         self.image.write(os.path.join(self.target, 'image.yaml'))
-        self.prepare_artifacts()
         self.render_dockerfile()
         self.render_help()
 
@@ -90,6 +121,11 @@ class Generator(object):
         # we will persist cekit version in a label here, so we know which version of cekit
         # was used to build the image
         image_labels.append(Label({'name': 'io.cekit.version', 'value': cekit_version}))
+
+        for label in image_labels:
+            if len(label.value) > 128:
+                # breaks the line each time it reaches 128 characters
+                label.value = "\\\n".join(re.findall("(?s).{,128}", label.value))[:]
 
         # If we define the label in the image descriptor
         # we should *not* override it with value from
@@ -310,51 +346,64 @@ class Generator(object):
 
         repos = ' '.join(content_sets[arch])
 
+        odcs_service_type = "Fedora"
+        odcs_url = "https://odcs.fedoraproject.org"
+
+        if CONFIG.get('common', 'redhat'):
+            odcs_service_type = "Red Hat"
+            odcs_url = "https://odcs.engineering.redhat.com"
+
+        LOGGER.info("Using {} ODCS service to create composes".format(odcs_service_type))
+
+        flags = []
+
+        compose = self.image.get('osbs', {}).get(
+            'configuration', {}).get('container', {}).get('compose', {})
+
+        if compose.get(Generator.ODCS_HIDDEN_REPOS_FLAG, False):
+            flags.append(Generator.ODCS_HIDDEN_REPOS_FLAG)
+
+        odcs = ODCS(odcs_url, auth_mech=AuthMech.Kerberos)
+
+        LOGGER.debug(
+            "Requesting ODCS pulp compose for '{}' repositories with '{}' flags...".format(repos, flags))
+
         try:
-            # ideally this will be API for ODCS, but there is no python3 package for ODCS
-            cmd = ['/usr/bin/odcs']
-            odcs_service_type = "Fedora"
+            compose = odcs.new_compose(repos, 'pulp', flags=flags)
+        except requests.exceptions.HTTPError as ex:
+            if ex.response.status_code == 401:
+                LOGGER.error("You are not authorized to use {} ODCS service. Are you sure you have a valid Kerberos session?".format(
+                    odcs_service_type))
+            raise CekitError("Could not create ODCS compose", ex)
 
-            if CONFIG.get('common', 'redhat'):
-                odcs_service_type = "Red Hat"
-                cmd.append('--redhat')
+        compose_id = compose.get('id', None)
 
-            LOGGER.info("Using {} ODCS service to created composes".format(odcs_service_type))
+        if not compose_id:
+            raise CekitError(
+                "Invalid response from ODCS service: no compose id found: {}".format(compose))
 
-            cmd.append('create')
+        LOGGER.debug("Waiting for compose {} to finish...".format(compose_id))
 
-            compose = self.image.get('osbs', {}).get(
-                'configuration', {}).get('container', {}).get('compose', {})
+        compose = odcs.wait_for_compose(compose_id, timeout=600)
+        state = compose.get('state', None)
 
-            if compose.get(Generator.ODCS_HIDDEN_REPOS_FLAG, False):
-                cmd.extend(['--flag', Generator.ODCS_HIDDEN_REPOS_FLAG])
+        if not state:
+            raise CekitError(
+                "Invalid response from ODCS service: no state found: {}".format(compose))
 
-            cmd.extend(['pulp', repos])
+        # State 2 is "done"
+        if state != 2:
+            raise CekitError("Cannot create ODCS compose: '{}'".format(compose))
 
-            LOGGER.debug("Creating ODCS content set via '%s'" % " ".join(cmd))
+        LOGGER.debug("Compose finished successfully")
 
-            output = subprocess.check_output(cmd).decode()
-            normalized_output = '\n'.join(output.replace(" u'", " '")
-                                          .replace(' u"', ' "')
-                                          .split('\n')[1:])
+        repofile = compose.get('result_repofile', None)
 
-            odcs_result = yaml.safe_load(normalized_output)
+        if not repofile:
+            raise CekitError(
+                "Invalid response from ODCS service: no state_repofile key found: {}".format(compose))
 
-            if odcs_result['state'] != 2:
-                raise CekitError("Cannot create content set: '%s'"
-                                 % odcs_result['state_reason'])
-
-            repo_url = odcs_result['result_repofile']
-            return repo_url
-
-        except CekitError as ex:
-            raise ex
-        except OSError as ex:
-            raise CekitError("ODCS is not installed, please install 'odcs-client' package")
-        except subprocess.CalledProcessError as ex:
-            raise CekitError("Cannot create content set: '%s'" % ex.output)
-        except Exception as ex:
-            raise CekitError('Cannot create content set!', ex)
+        return repofile
 
     def _handle_repository(self, repo):
         """Process and prepares all v2 repositories.

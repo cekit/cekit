@@ -19,7 +19,7 @@ from cekit.config import Config
 from cekit.builder import Builder
 from cekit.descriptor.resource import _PlainResource
 from cekit.errors import CekitError
-from cekit.tools import Chdir
+from cekit.tools import Chdir, copy_recursively
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
@@ -86,6 +86,7 @@ class OSBSBuilder(Builder):
         super(OSBSBuilder, self).prepare()
 
         self.prepare_dist_git()
+        self.copy_to_dist_git()
 
     def prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
@@ -128,32 +129,9 @@ class OSBSBuilder(Builder):
             self._rhpkg_set_url_repos = [x['url']['repository']
                                          for x in self.generator.image['packages']['set_url']]
 
-        self.update_osbs_image_source()
-
-    def update_osbs_image_source(self):
-        with Chdir(os.path.join(self.target, 'image')):
-            for obj in ["repos", "modules"]:
-                if os.path.exists(obj):
-                    shutil.copytree(obj, os.path.join(self.dist_git_dir, obj))
-            shutil.copy("Dockerfile",
-                        os.path.join(self.dist_git_dir, "Dockerfile"))
-            if os.path.exists("container.yaml"):
-                self._merge_container_yaml("container.yaml",
-                                           os.path.join(self.dist_git_dir, "container.yaml"))
-            if os.path.exists("content_sets.yml"):
-                shutil.copy("content_sets.yml",
-                            os.path.join(self.dist_git_dir, "content_sets.yml"))
-            if os.path.exists("fetch-artifacts-url.yaml"):
-                shutil.copy("fetch-artifacts-url.yaml",
-                            os.path.join(self.dist_git_dir, "fetch-artifacts-url.yaml"))
-
-        # Copy also every artifact
-        for artifact in self.artifacts:
-            shutil.copy(os.path.join(self.target,
-                                     'image',
-                                     artifact),
-                        os.path.join(self.dist_git_dir,
-                                     artifact))
+    def copy_to_dist_git(self):
+        LOGGER.debug("Copying files to dist-git '{}' directory".format(self.dist_git_dir))
+        copy_recursively(os.path.join(self.target, 'image'), self.dist_git_dir)
 
     def _merge_container_yaml(self, src, dest):
         # FIXME - this is temporary needs to be refactored to proper merging
@@ -232,7 +210,7 @@ class OSBSBuilder(Builder):
             try:
                 subprocess.check_output(cmd, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as ex:
-                LOGGER.error("Cannot run '%s', ouput: '%s'" % (cmd, ex.output))
+                LOGGER.error("Cannot run '%s', output: '%s'" % (cmd, ex.output))
                 raise CekitError("Cannot update sources.")
 
         LOGGER.info("Update finished.")
@@ -246,7 +224,7 @@ class OSBSBuilder(Builder):
         cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
         with Chdir(self.dist_git_dir):
-            self.dist_git.add()
+            self.dist_git.add(self.artifacts)
             self.update_lookaside_cache()
 
             if self.dist_git.stage_modified():
@@ -325,6 +303,7 @@ class DistGit(object):
 
     def __init__(self, output, source, repo, branch, noninteractive=False):
         self.output = output
+        self.source = source
         self.repo = repo
         self.branch = branch
         self.dockerfile = os.path.join(self.output, "Dockerfile")
@@ -345,10 +324,10 @@ class DistGit(object):
         if os.path.exists(self.output):
             with Chdir(self.output):
                 LOGGER.info("Pulling latest changes in repo %s..." % self.repo)
-                subprocess.check_output(["git", "fetch"])
-                subprocess.check_output(
+                subprocess.check_call(["git", "fetch"])
+                subprocess.check_call(
                     ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
-                subprocess.check_output(
+                subprocess.check_call(
                     ["git", "reset", "--hard", "origin/%s" % self.branch])
             LOGGER.debug("Changes pulled")
         else:
@@ -364,7 +343,7 @@ class DistGit(object):
                 cmd += ['--user', user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
             LOGGER.debug("Cloning: '%s'" % ' '.join(cmd))
-            subprocess.check_output(cmd)
+            subprocess.check_call(cmd)
             LOGGER.debug("Repository %s cloned" % self.repo)
 
     def clean(self):
@@ -379,19 +358,17 @@ class DistGit(object):
                 if d in git_files:
                     subprocess.check_output(["git", "rm", "-rf", d])
 
-    def add(self):
-        # Add new Dockerfile
-        subprocess.check_call(["git", "add", "Dockerfile"])
-        if os.path.exists("container.yaml"):
-            subprocess.check_call(["git", "add", "container.yaml"])
-        if os.path.exists("content_sets.yml"):
-            subprocess.check_call(["git", "add", "content_sets.yml"])
-        if os.path.exists("fetch-artifacts-url.yaml"):
-            subprocess.check_call(["git", "add", "fetch-artifacts-url.yaml"])
+    def add(self, artifacts):
+        LOGGER.debug("Adding files to git stage...")
 
-        for d in ["repos", "modules"]:
-            # we probably do not care about non existing files and other errors here
-            subprocess.call(["git", "add", "--all", d])
+        for obj in os.listdir('.'):
+            if obj in artifacts:
+                LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
+                continue
+
+            LOGGER.debug("Staging '{}'...".format(obj))
+
+            subprocess.check_call(["git", "add", "--all", obj])
 
     def commit(self, commit_msg):
         if not commit_msg:
@@ -405,7 +382,7 @@ class DistGit(object):
 
         # Commit the change
         LOGGER.info("Commiting with message: '%s'" % commit_msg)
-        subprocess.check_output(["git", "commit", "-q", "-m", commit_msg])
+        subprocess.check_call(["git", "commit", "-q", "-m", commit_msg])
 
         untracked = subprocess.check_output(
             ["git", "ls-files", "--others", "--exclude-standard"]).decode("utf8")
@@ -438,7 +415,7 @@ class DistGit(object):
             LOGGER.info("Pushing change to the upstream repository...")
             cmd = ["git", "push", "-q", "origin", self.branch]
             LOGGER.debug("Running command '%s'" % ' '.join(cmd))
-            subprocess.check_output(cmd)
+            subprocess.check_call(cmd)
             LOGGER.info("Change pushed.")
         else:
             LOGGER.info("Changes are not pushed, exiting")

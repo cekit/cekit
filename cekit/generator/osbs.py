@@ -6,7 +6,7 @@ import yaml
 from cekit.config import Config
 from cekit.descriptor.resource import _PlainResource
 from cekit.generator.base import Generator
-from cekit.tools import get_brew_url
+from cekit.tools import get_brew_url, copy_recursively
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -21,6 +21,18 @@ class OSBSGenerator(Generator):
         super(OSBSGenerator, self).init()
 
         self._prepare_container_yaml()
+
+    def generate(self, builder):
+        # If extra directory exists (by default named 'osbs_extra') next to
+        # the image descriptor, copy it contents to the target directory.
+        #
+        # https://github.com/cekit/cekit/issues/394
+        copy_recursively(
+            os.path.join(os.path.dirname(self._descriptor_path), self.image.osbs.extra_dir),
+            os.path.join(self.target, 'image')
+        )
+
+        super(OSBSGenerator, self).generate(builder)
 
     def _prepare_content_sets(self, content_sets):
         content_sets_f = os.path.join(self.target, 'image', 'content_sets.yml')

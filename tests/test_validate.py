@@ -116,6 +116,9 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
 def test_content_sets_file_container_file(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets_file': 'content_sets.yml'},
@@ -134,13 +137,18 @@ def test_content_sets_file_container_file(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Requesting ODCS pulp compose for 'aaa bbb' repositories with '[]' flags..." in caplog.text
+    assert "Waiting for compose 12 to finish..." in caplog.text
+    assert "Compose finished successfully" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
 def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets_file': 'content_sets.yml'},
@@ -155,13 +163,18 @@ def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Requesting ODCS pulp compose for 'aaa bbb' repositories with '[]' flags..." in caplog.text
+    assert "Waiting for compose 12 to finish..." in caplog.text
+    assert "Compose finished successfully" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
 def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets': {'x86_64': ['aaa', 'bbb']}},
@@ -171,13 +184,19 @@ def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Requesting ODCS pulp compose for 'aaa bbb' repositories with '[]' flags..." in caplog.text
+    assert "Waiting for compose 12 to finish..." in caplog.text
+    assert "Compose finished successfully" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
 def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
     # Do not try to validate dependencies while running tests, these are not necessary
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies').return_value({})
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+                 'state': 2, 'result_repofile': 'url'})
+
     overrides_descriptor = {
         'schema_version': 1,
         'packages': {'content_sets': {'x86_64': ['aaa', 'bbb']}},
@@ -191,7 +210,9 @@ def test_content_sets_embedded_container_file(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
-    assert "Creating ODCS content set via '/usr/bin/odcs --redhat create pulp aaa bbb'" in caplog.text
+    assert "Requesting ODCS pulp compose for 'aaa bbb' repositories with '[]' flags..." in caplog.text
+    assert "Waiting for compose 12 to finish..." in caplog.text
+    assert "Compose finished successfully" in caplog.text
     assert "The image has ContentSets repositories specified, all other repositories are removed!" in caplog.text
 
 
@@ -447,12 +468,6 @@ def test_override_add_module_and_packages_in_overrides(tmpdir, mocker):
                '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
                '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml"}] }',
                'docker'])
-
-    module_dir = os.path.join(image_dir,
-                              'target',
-                              'image',
-                              'modules',
-                              'foo')
 
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
@@ -727,7 +742,6 @@ def test_override_modules_flat(tmpdir, mocker):
     run_cekit(image_dir)
 
     assert check_dockerfile_text(image_dir, 'foo="mod_2"')
-    assert not check_dockerfile_text(image_dir, "RUN yum makecache")
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
 
@@ -803,7 +817,6 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
 # end mod_4:None
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
-    assert not check_dockerfile_text(image_dir, "RUN yum makecache")
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
 
 
@@ -840,7 +853,6 @@ RUN yum --setopt=tsflags=nodocs install -y wget mc \\
 # end packages_module_1:None
 """
 
-    assert check_dockerfile_text(image_dir, "RUN yum makecache")
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
     assert check_dockerfile_text(
         image_dir, "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum")
@@ -865,7 +877,6 @@ RUN yum --setopt=tsflags=nodocs install -y wget mc \\
     && rpm -q wget mc
 """
 
-    assert check_dockerfile_text(image_dir, "RUN yum makecache")
     assert check_dockerfile_text(image_dir, expected_packages_install)
 
 
