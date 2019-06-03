@@ -180,23 +180,114 @@ def test_merge_run_cmd():
 def brew_call_ok(*args, **kwargs):
     if 'listArchives' in args[0]:
         return """
-        [
-          {
-            "build_id": "build_id",
-            "filename": "filename",
-            "group_id": "group_id",
-            "artifact_id": "artifact_id",
-            "version": "version",
-          }
-        ]""".encode("utf8")
+            [
+            {
+                "build_id": 179262,
+                "version": "20100527",
+                "type_name": "jar",
+                "artifact_id": "oauth",
+                "type_id": 1,
+                "checksum": "91c7c70579f95b7ddee95b2143a49b41",
+                "extra": null,
+                "filename": "oauth-20100527.jar",
+                "type_description": "Jar file",
+                "metadata_only": false,
+                "type_extensions": "jar war rar ear sar kar jdocbook jdocbook-style plugin",
+                "btype": "maven",
+                "checksum_type": 0,
+                "btype_id": 2,
+                "group_id": "net.oauth.core",
+                "buildroot_id": null,
+                "id": 105858,
+                "size": 44209
+            }
+            ]""".encode("utf8")
     if 'getBuild' in args[0]:
         return """
-        {
-          "package_name": "package_name",
-          "release": "release",
-          "state": 1
-        }
-        """.encode("utf8")
+            {
+            "package_name": "net.oauth.core-oauth",
+            "extra": null,
+            "creation_time": "2011-09-12 05:38:16.978647",
+            "completion_time": "2011-09-12 05:38:16.978647",
+            "package_id": 18782,
+            "id": 179262,
+            "build_id": 179262,
+            "epoch": null,
+            "source": null,
+            "state": 1,
+            "version": "20100527",
+            "completion_ts": 1315805896.97865,
+            "owner_id": 1515,
+            "owner_name": "hfnukal",
+            "nvr": "net.oauth.core-oauth-20100527-1",
+            "start_time": null,
+            "creation_event_id": 4204830,
+            "start_ts": null,
+            "volume_id": 8,
+            "creation_ts": 1315805896.97865,
+            "name": "net.oauth.core-oauth",
+            "task_id": null,
+            "volume_name": "rhel-7",
+            "release": "1"
+            }
+            """.encode("utf8")
+    return "".encode("utf8")
+
+
+def brew_call_ok_with_dot(*args, **kwargs):
+    if 'listArchives' in args[0]:
+        return """
+            [
+            {
+                "build_id": 410568,
+                "version": "1.0.4",
+                "type_name": "jar",
+                "artifact_id": "javax.json",
+                "type_id": 1,
+                "checksum": "569870f975deeeb6691fcb9bc02a9555",
+                "extra": null,
+                "filename": "javax.json-1.0.4.jar",
+                "type_description": "Jar file",
+                "metadata_only": false,
+                "type_extensions": "jar war rar ear sar kar jdocbook jdocbook-style plugin",
+                "btype": "maven",
+                "checksum_type": 0,
+                "btype_id": 2,
+                "group_id": "org.glassfish",
+                "buildroot_id": null,
+                "id": 863130,
+                "size": 85147
+            }
+            ]""".encode("utf8")
+    if 'getBuild' in args[0]:
+        return """
+            {
+            "package_name": "org.glassfish-javax.json",
+            "extra": null,
+            "creation_time": "2015-01-10 16:28:59.105878",
+            "completion_time": "2015-01-10 16:28:59.105878",
+            "package_id": 49642,
+            "id": 410568,
+            "build_id": 410568,
+            "epoch": null,
+            "source": null,
+            "state": 1,
+            "version": "1.0.4",
+            "completion_ts": 1420907339.10588,
+            "owner_id": 2679,
+            "owner_name": "pgallagh",
+            "nvr": "org.glassfish-javax.json-1.0.4-1",
+            "start_time": null,
+            "creation_event_id": 10432034,
+            "start_ts": null,
+            "volume_id": 8,
+            "creation_ts": 1420907339.10588,
+            "name": "org.glassfish-javax.json",
+            "task_id": null,
+            "volume_name": "rhel-7",
+            "release": "1"
+            }
+            """.encode("utf8")
     return "".encode("utf8")
 
 
@@ -226,8 +317,7 @@ def brew_call_removed(*args, **kwargs):
 def test_get_brew_url(mocker):
     mocker.patch('subprocess.check_output', side_effect=brew_call_ok)
     url = tools.get_brew_url('aa')
-    assert url == "http://download.devel.redhat.com/brewroot/packages/package_name/" + \
-        "version/release/maven/group_id/artifact_id/version/filename"
+    assert url == "http://download.devel.redhat.com/brewroot/packages/net.oauth.core-oauth/20100527/1/maven/net/oauth/core/oauth/20100527/oauth-20100527.jar"
 
 
 def test_get_brew_url_when_build_was_removed(mocker):
@@ -254,6 +344,13 @@ def test_get_brew_url_no_kerberos(mocker, caplog):
 
     assert 'Could not fetch archives for checksum aa' in str(excinfo.value)
     assert "Brew authentication failed, please make sure you have a valid Kerberos ticket" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/531
+def test_get_brew_url_with_artifact_containing_dot(mocker):
+    mocker.patch('subprocess.check_output', side_effect=brew_call_ok_with_dot)
+    url = tools.get_brew_url('aa')
+    assert url == "http://download.devel.redhat.com/brewroot/packages/org.glassfish-javax.json/1.0.4/1/maven/org/glassfish/javax.json/1.0.4/javax.json-1.0.4.jar"
 
 
 @contextmanager
