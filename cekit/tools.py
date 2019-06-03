@@ -122,7 +122,7 @@ def get_brew_url(md5):
         url = 'http://download.devel.redhat.com/brewroot/packages/' + package + '/' + \
             version.replace('-', '_') + '/' + release + '/maven/' + \
             group_id.replace('.', '/') + '/' + \
-            artifact_id.replace('.', '/') + '/' + version + '/' + filename
+            artifact_id + '/' + version + '/' + filename
     except subprocess.CalledProcessError as ex:
         LOGGER.error("Can't fetch artifacts details from brew: '%s'." %
                      ex.output)
