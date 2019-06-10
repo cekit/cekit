@@ -918,8 +918,9 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
     assert "Key 'wrong!' was not defined" in caplog.text
 
 
-def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
-    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', side_effect=PermissionError())
+def test_simple_image_build_error_local_docker_socket_permission_denied(tmpdir, mocker, caplog):
+    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
+                 side_effect=PermissionError())
 
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -931,15 +932,10 @@ def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
                                     'build',
                                     'docker'])
 
-    if sys.version_info.major == 2:
-        message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup"
-    else:
-        message = "Unable to contact docker daemon. Is it correctly setup"
-
-    assert message in caplog.text
+    assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
 
 
-def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
+def test_simple_image_build_error_local_docker_stopped(tmpdir, mocker, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=FileNotFoundError())
 
@@ -949,17 +945,32 @@ def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
-    if sys.version_info.major == 2:
-        message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup"
-    else:
-        message = "Unable to contact docker daemon. Is it started"
-
     run_cekit_exception(image_dir,
                         ['-v',
                          'build',
                          'docker'])
 
-    assert message in caplog.text
+    assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
+
+
+def test_simple_image_build_error_connection_error_remote_docker_with_custom_docker_host(tmpdir, mocker, monkeypatch, caplog):
+    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
+                 side_effect=PermissionError())
+
+    monkeypatch.setenv("DOCKER_HOST", "tcp://127.0.0.1:1234")
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir, ['-v',
+                                    'build',
+                                    'docker'])
+
+    assert "Could not connect to the Docker daemon at 'http://127.0.0.1:1234', please make sure the Docker daemon is running" in caplog.text
+    assert "If Docker daemon is running, please make sure that you specified valid parameters in the 'DOCKER_HOST' environment variable, examples: 'unix:///var/run/docker.sock', 'tcp://127.0.0.1:1234'. You may also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' environment variables" in caplog.text
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")

@@ -4,8 +4,6 @@ import re
 import sys
 import traceback
 
-import yaml
-
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
@@ -20,7 +18,8 @@ except ImportError:
     pass
 
 try:
-    # Docker Python library, the old one
+    # Docker Python library, the new one
+    import docker
     from docker.api.client import APIClient as APIClientClass
 except ImportError:
     pass
@@ -34,7 +33,8 @@ except ImportError:
     pass
 
 try:
-    # Docker Python library, the new one
+    # Docker Python library, the old one
+    import docker  # pylint: disable=ungrouped-imports
     from docker.client import Client as APIClientClass  # pylint: disable=ungrouped-imports
 except ImportError:
     pass
@@ -47,19 +47,6 @@ class DockerBuilder(Builder):
 
     def __init__(self, common_params, params):
         super(DockerBuilder, self).__init__('docker', common_params, params)
-
-        # Default Docker daemon connection timeout 10 minutes
-        # It needs to be high enough to allow Docker daemon to export the
-        # image for squashing.
-        try:
-            self.timeout = int(os.getenv('DOCKER_TIMEOUT', '600'))
-        except ValueError:
-            raise CekitError("Provided timeout value: %s cannot be parsed as integer, exiting." %
-                             os.getenv('DOCKER_TIMEOUT'))
-
-        if self.timeout <= 0:
-            raise CekitError(
-                "Provided timeout value needs to be greater than zero, currently: %s, exiting." % self.timeout)
 
     @staticmethod
     def dependencies():
@@ -157,7 +144,7 @@ class DockerBuilder(Builder):
                 msg = "Image build failed with a yum error and you don't " \
                     "have any yum repository configured, please check " \
                     "your image/module descriptor for proper repository " \
-                    " definitions."
+                    "definitions."
 
             raise CekitError(msg, ex)
 
@@ -181,6 +168,64 @@ class DockerBuilder(Builder):
             else:
                 docker_client.tag(image_id, tag)
 
+    def _docker_client(self):
+        LOGGER.debug("Preparing Docker client...")
+
+        # Default Docker daemon connection timeout 10 minutes
+        # It needs to be high enough to allow Docker daemon to export the
+        # image for squashing.
+        try:
+            timeout = int(os.getenv('DOCKER_TIMEOUT', '600'))
+        except ValueError:
+            raise CekitError("Provided timeout value: '{}' cannot be parsed as integer, exiting.".format(
+                os.getenv('DOCKER_TIMEOUT')))
+
+        if timeout <= 0:
+            raise CekitError(
+                "Provided timeout value needs to be greater than zero, currently: '{}', exiting.".format(timeout))
+
+        params = {"version": "1.22"}
+        params.update(docker.utils.kwargs_from_env())
+        params["timeout"] = timeout
+
+        try:
+            client = APIClientClass(**params)
+        except docker.errors.DockerException as e:
+            LOGGER.error("Could not create Docker client, please make sure that you "
+                         "specified valid parameters in the 'DOCKER_HOST' environment variable, "
+                         "examples: 'unix:///var/run/docker.sock', 'tcp://127.0.0.1:1234'")
+            raise CekitError("Error while creating the Docker client", e)
+
+        if client and self._valid_docker_connection(client):
+            LOGGER.debug("Docker client ready and working")
+            LOGGER.debug(client.version())
+            return client
+
+        LOGGER.error(
+            "Could not connect to the Docker daemon at '{}', please make sure the Docker "
+            "daemon is running.".format(client.base_url))
+
+        if client.base_url.startswith('unix'):
+            LOGGER.error(
+                "Please make sure the Docker socket has correct permissions.")
+
+        if os.environ.get('DOCKER_HOST'):
+            LOGGER.error("If Docker daemon is running, please make sure that you specified valid "
+                         "parameters in the 'DOCKER_HOST' environment variable, examples: "
+                         "'unix:///var/run/docker.sock', 'tcp://127.0.0.1:1234'. You may "
+                         "also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' "
+                         "environment variables.")
+
+        raise CekitError("Cannot connect to Docker daemon")
+
+    def _valid_docker_connection(self, client):
+        try:
+            return client.ping()
+        except requests.exceptions.ConnectionError:
+            pass
+
+        return False
+
     def run(self):
         tags = self.params.tags
 
@@ -190,7 +235,7 @@ class DockerBuilder(Builder):
         LOGGER.info("Building container image using Docker...")
         LOGGER.debug("Building image with tags: '%s'" % "', '".join(tags))
 
-        docker_client = APIClientClass(version="1.22", timeout=self.timeout)
+        docker_client = self._docker_client()
 
         # Build image
         image_id = self._build_with_docker(docker_client)
