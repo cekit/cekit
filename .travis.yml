@@ -1,0 +1,9 @@
+os: osx
+language: generic
+
+before_script:
+  - pip install tox
+
+script:
+  - make test-py27
+  - make test-py36
