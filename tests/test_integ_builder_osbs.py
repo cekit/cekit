@@ -49,6 +49,8 @@ def run_cekit(cwd,
               message=None):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+        assert result.exit_code == 0
+
         if message:
             assert message in result.output
 

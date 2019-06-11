@@ -109,8 +109,12 @@ class DockerBuilder(Builder):
                     # of container images.
                     continue
 
-                # This prevents poluting CEKit log with dowloading/extracting msgs
+                # This prevents polluting CEKit log with dowloading/extracting messages
                 messages = ANSI_ESCAPE.sub('', messages).strip()
+
+                # Python 2 compatibility
+                if sys.version_info[0] == 2:
+                    messages = messages.encode("utf-8", errors="ignore")
 
                 for message in messages.split('\n'):
                     LOGGER.info('Docker: {}'.format(message))
@@ -154,6 +158,7 @@ class DockerBuilder(Builder):
                     "have any yum repository configured, please check " \
                     "your image/module descriptor for proper repository " \
                     " definitions."
+
             raise CekitError(msg, ex)
 
         return docker_layer_ids[-1]
