@@ -30,6 +30,40 @@ Example
 
         $ cekit build docker
 
+Docker environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to use environment variables to let CEKit know where is the Docker daemon
+located it should connect to.
+
+.. note::
+    Read more about `Docker daemon settings related to exposing it to clients <https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-socket-option>`__.
+
+By default, if you do not specify anything, **CEKit will try to use a locally running Docker daemon**.
+
+If you need to customize this behavior (for example when you want to use Docker daemon
+running in a VM) you can set following environment variables:
+
+``DOCKER_HOST``
+    The ``DOCKER_HOST`` environment variable is where you specify where the Daemon is running. It supports
+    multiple protocols, but the most widely used ones are: ``unix://`` (where you specify path to a local
+    socket) and ``tcp://`` (where you can define host location and port).
+
+    Examples of ``DOCKER_HOST``: ``unix:///var/run/docker.sock``, ``tcp://192.168.22.33:1234``.
+
+    Depending how your daemon is configured you may need to configure settings related to encryption.
+
+    .. code-block:: bash
+
+        # Connect to a remote Docker daemon
+        $ DOCKER_HOST="tcp://192.168.22.33:1234" cekit build docker
+``DOCKER_TLS_VERIFY``
+    You can set ``DOCKER_TLS_VERIFY`` to a non-empty value to indicate that the TLS verification should
+    take place. By default certificate verification is **disabled**.
+``DOCKER_CERT_PATH``
+    You can point ``DOCKER_CERT_PATH`` environment variable to a directory containing certificates to use when
+    connecting to the Docker daemon.
+
 
 OSBS builder
 ---------------------------
