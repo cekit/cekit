@@ -193,7 +193,7 @@ class DockerBuilder(Builder):
         except docker.errors.DockerException as e:
             LOGGER.error("Could not create Docker client, please make sure that you "
                          "specified valid parameters in the 'DOCKER_HOST' environment variable, "
-                         "examples: 'unix:///var/run/docker.sock', 'tcp://127.0.0.1:1234'")
+                         "examples: 'unix:///var/run/docker.sock', 'tcp://192.168.22.33:1234'")
             raise CekitError("Error while creating the Docker client", e)
 
         if client and self._valid_docker_connection(client):
@@ -212,7 +212,7 @@ class DockerBuilder(Builder):
         if os.environ.get('DOCKER_HOST'):
             LOGGER.error("If Docker daemon is running, please make sure that you specified valid "
                          "parameters in the 'DOCKER_HOST' environment variable, examples: "
-                         "'unix:///var/run/docker.sock', 'tcp://127.0.0.1:1234'. You may "
+                         "'unix:///var/run/docker.sock', 'tcp://192.168.22.33:1234'. You may "
                          "also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' "
                          "environment variables.")
 

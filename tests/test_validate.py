@@ -970,7 +970,7 @@ def test_simple_image_build_error_connection_error_remote_docker_with_custom_doc
                                     'docker'])
 
     assert "Could not connect to the Docker daemon at 'http://127.0.0.1:1234', please make sure the Docker daemon is running" in caplog.text
-    assert "If Docker daemon is running, please make sure that you specified valid parameters in the 'DOCKER_HOST' environment variable, examples: 'unix:///var/run/docker.sock', 'tcp://127.0.0.1:1234'. You may also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' environment variables" in caplog.text
+    assert "If Docker daemon is running, please make sure that you specified valid parameters in the 'DOCKER_HOST' environment variable, examples: 'unix:///var/run/docker.sock', 'tcp://192.168.22.33:1234'. You may also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' environment variables" in caplog.text
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
