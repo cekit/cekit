@@ -46,7 +46,9 @@ def run_cekit(image_dir, args=None, descriptor=None):
         with open('image.yaml', 'w') as fd:
             yaml.dump(descriptor, fd, default_flow_style=False)
 
-        return CliRunner().invoke(cli, args, catch_exceptions=False)
+        result = CliRunner().invoke(cli, args, catch_exceptions=False)
+        assert result.exit_code == 0
+        return result
 
 
 def setup_config(tmpdir, contents):

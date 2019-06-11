@@ -1,0 +1,27 @@
+schema_version: 1
+
+name: &imgName "wildfly/test"
+description: "The WildFly s2i image"
+version: &imgVersion "dev"
+from: "alpine:3.9"
+labels:
+    - name: io.k8s.description
+      value: "Platform for building and running JEE applications on WildFly $WILDFLY_VERSION"
+    - name: io.k8s.display-name
+      value: "WildFly $WILDFLY_VERSION"
+    - name: io.openshift.expose-services
+      value: "8080:http,8778:jolokia"
+    - name: io.openshift.tags
+      value: "builder,wildfly,wildfly17"
+    - name: maintainer
+      value: "Jean-François Denise <AAA@BBB.com>"
+envs:
+    - name: SCRIPT_DEBUG
+      description: If set to true, ensures that the bash scripts are executed with the -x option, printing the commands and their arguments as they are executed.
+      example: "true"
+    - name: IMAGE_NAME
+      value: *imgName
+    - name: IMAGE_VERSION
+      value: *imgVersion
+ports:
+- value: 8080
