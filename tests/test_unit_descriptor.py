@@ -85,6 +85,51 @@ def test_packages_invalid_old_repository_definition():
             - pkg-foo"""), "a/path/image.yaml")
 
 
+def test_packages_content_sets_and_content_sets_file():
+    with pytest.raises(CekitError, match=r"You cannot specify 'content_sets' and 'content_sets_file' together in the packages section!"):
+        Packages(
+            {
+                'content_sets': {
+                    'x86_64': ['rhel-server-rhscl-7-rpms', 'rhel-7-server-rpms']
+                },
+                'content_sets_file': "a_path.yaml"
+            },
+            "a/path"
+        )
+
+
+def test_packages_content_sets():
+    pkg = Packages(
+        {
+            'content_sets': {
+                'x86_64': ['rhel-server-rhscl-7-rpms', 'rhel-7-server-rpms']
+            },
+            'install': ['package_a', 'package_b']
+        },
+        "a/path"
+    )
+
+    assert 'package_a' in pkg['install']
+    assert 'content_sets_file' not in pkg
+
+
+def test_packages_content_sets_file(mocker):
+    with mocker.mock_module.patch('cekit.descriptor.packages.os.path.exists') as exists_mock:
+        exists_mock.return_value = True
+        with mocker.mock_module.patch('cekit.descriptor.packages.open', mocker.mock_open(read_data='{"a": 12}')):
+            pkg = Packages(
+                {
+                    'content_sets_file': "a_path.yaml",
+                    'install': ['package_a', 'package_b']
+                },
+                "a/path"
+            )
+
+    assert 'package_a' in pkg['install']
+    assert 'content_sets_file' not in pkg
+    assert pkg['content_sets'] == {'a': 12}
+
+
 def test_image():
     image = Image(yaml.safe_load("""
     from: foo

@@ -42,7 +42,8 @@ map:
 
 
 class Packages(Descriptor):
-    """Object representing Pakcages
+    """
+    Object representing packages
 
     Args:
       descriptor - yaml containing Packages section
@@ -52,10 +53,16 @@ class Packages(Descriptor):
         self.schemas = packages_schema
         self.descriptor_path = descriptor_path
         super(Packages, self).__init__(descriptor)
-        if ('content_sets_file' in descriptor and 'content_sets' in descriptor):
-            raise CekitError("You cannot specify content_sets and content_sets_file together!")
 
-        if 'content_sets_file' in descriptor:
+        # If 'content_sets' and 'content_sets_file' are defined at the same time
+        if set(['content_sets', 'content_sets_file']).issubset(set(descriptor.keys())):
+            raise CekitError(
+                "You cannot specify 'content_sets' and 'content_sets_file' together in the packages section!")
+
+        # If the 'content_sets_file' key is set and is not None we need to read the specified
+        # file and make it available in the 'content_sets' key. The 'content_sets_file' key is removed
+        # afterwards.
+        if descriptor.get('content_sets_file', None):
             content_sets_file = os.path.join(self.descriptor_path, descriptor['content_sets_file'])
 
             if not os.path.exists(content_sets_file):
