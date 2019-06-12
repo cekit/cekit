@@ -973,12 +973,13 @@ def test_simple_image_build_error_connection_error_remote_docker_with_custom_doc
     assert "If Docker daemon is running, please make sure that you specified valid parameters in the 'DOCKER_HOST' environment variable, examples: 'unix:///var/run/docker.sock', 'tcp://192.168.22.33:1234'. You may also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' environment variables" in caplog.text
 
 
+# https://github.com/cekit/cekit/issues/538
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
 def test_proper_decoding(tmpdir, caplog):
     image_dir = str(tmpdir.mkdir('source'))
 
     shutil.copy2(
-        os.path.join(os.path.dirname(__file__), 'images', 'gh-538-encoding-mac', 'image.yaml'),
+        os.path.join(os.path.dirname(__file__), 'images', 'image-gh-538-py27-encoding.yaml'),
         os.path.join(image_dir, 'image.yaml')
     )
 
@@ -987,6 +988,36 @@ def test_proper_decoding(tmpdir, caplog):
                'build',
                'docker'])
 
+    assert "Finished!" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/533
+@pytest.mark.parametrize('parameter', ['content_sets', 'content_sets_file'])
+def test_disabling_content_sets(tmpdir, caplog, parameter):
+    image_dir = str(tmpdir.mkdir('source'))
+
+    shutil.copy2(
+        os.path.join(os.path.dirname(__file__), 'images',
+                     'image-gh-533-disable-content-sets-file.yaml'),
+        os.path.join(image_dir, 'image.yaml')
+    )
+
+    with open(os.path.join(image_dir, 'content_sets.yml'), 'w') as fd:
+        yaml.dump({'x86_64': ['rhel-server-rhscl-7-rpms', 'rhel-7-server-rpms']},
+                  fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               # Ugly, but double braces are required for 'format to work'
+               '--overrides', '{{"packages": {{"{0}": ~}}}}'.format(parameter),
+               'docker'])
+
+    with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
+        effective_image = yaml.safe_load(file_)
+
+    assert 'content_sets' not in effective_image['packages']
     assert "Finished!" in caplog.text
 
 
