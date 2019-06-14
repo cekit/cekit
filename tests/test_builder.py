@@ -444,6 +444,7 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
     with mocker.patch('cekit.tools.get_brew_url', side_effect=subprocess.CalledProcessError(1, 'command')):
         builder.prepare()
+        builder.before_run()
 
     dist_git_class.assert_called_once_with(os.path.join(
         str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch')
@@ -458,6 +459,68 @@ def test_docker_builder_defaults():
     builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
 
     assert builder.params.tags == ['foo', 'bar']
+
+
+def test_osbs_dist_git_sync_called(mocker, tmpdir):
+    mocker.patch('cekit.tools.DependencyHandler.handle')
+
+    image_descriptor = {
+        'schema_version': 1,
+        'from': 'centos:latest',
+        'name': 'test/image',
+        'version': '1.0',
+        'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
+        'osbs': {
+            'repository': {
+                'name': 'repo',
+                'branch': 'branch'
+            }
+        }
+    }
+
+    builder = create_builder_object(
+        mocker, 'osbs', {}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
+
+    prepare_dist_git = mocker.patch.object(builder, 'prepare_dist_git')
+    copy_to_dist_git = mocker.patch.object(builder, 'copy_to_dist_git')
+    run = mocker.patch.object(builder, 'run')
+
+    builder.execute()
+
+    prepare_dist_git.assert_called_once_with()
+    copy_to_dist_git.assert_called_once_with()
+    run.assert_called_once_with()
+
+
+def test_osbs_dist_git_sync_NOT_called_when_dry_run_set(mocker, tmpdir):
+    mocker.patch('cekit.tools.DependencyHandler.handle')
+
+    image_descriptor = {
+        'schema_version': 1,
+        'from': 'centos:latest',
+        'name': 'test/image',
+        'version': '1.0',
+        'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
+        'osbs': {
+            'repository': {
+                'name': 'repo',
+                'branch': 'branch'
+            }
+        }
+    }
+
+    builder = create_builder_object(
+        mocker, 'osbs', {'dry_run': True}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
+
+    prepare_dist_git = mocker.patch.object(builder, 'prepare_dist_git')
+    copy_to_dist_git = mocker.patch.object(builder, 'copy_to_dist_git')
+    run = mocker.patch.object(builder, 'run')
+
+    builder.execute()
+
+    prepare_dist_git.assert_not_called()
+    copy_to_dist_git.assert_not_called()
+    run.assert_not_called()
 
 
 def test_docker_build_default_tags(mocker):
