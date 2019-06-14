@@ -29,10 +29,15 @@ class Command(object):
     def prepare(self):
         pass
 
+    def before_run(self):
+        pass
+
     def run(self):
         raise CekitError(
             "Command.run() method is not implemented for '{}' command and '{}' type. Please report it!".format(self._command, self._type))
 
+    def after_run(self):
+        pass
 
 class Builder(Command):
     """
@@ -57,7 +62,15 @@ class Builder(Command):
             LOGGER.info("The --dry-run parameter was specified, build will not be executed")
             return
 
+        self.before_run()
+
         self.run()
+
+        self.after_run()
+
+    def before_run(self):
+        LOGGER.debug("Checking CEKit build dependencies...")
+        self.dependency_handler.handle(self)
 
     def prepare(self):
         if self.build_engine == 'docker' or self.build_engine == 'buildah' or self.build_engine == "podman":
@@ -87,6 +100,3 @@ class Builder(Command):
 
         self.generator.init()
         self.generator.generate(self.build_engine)
-
-        LOGGER.debug("Checking CEKit build dependencies...")
-        self.dependency_handler.handle(self)

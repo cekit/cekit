@@ -80,10 +80,10 @@ class OSBSBuilder(Builder):
 
         return deps
 
-    def prepare(self):
+    def before_run(self):
         """Prepares dist-git repository for OSBS build."""
 
-        super(OSBSBuilder, self).prepare()
+        super(OSBSBuilder, self).before_run()
 
         self.prepare_dist_git()
         self.copy_to_dist_git()
