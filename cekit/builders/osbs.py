@@ -356,7 +356,7 @@ class DistGit(object):
                 shutil.rmtree(d, ignore_errors=True)
 
                 if d in git_files:
-                    subprocess.check_output(["git", "rm", "-rf", d])
+                    subprocess.check_call(["git", "rm", "-rf", d])
 
     def add(self, artifacts):
         LOGGER.debug("Adding files to git stage...")
@@ -364,6 +364,10 @@ class DistGit(object):
         for obj in os.listdir('.'):
             if obj in artifacts:
                 LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
+                continue
+
+            if obj == ".git":
+                LOGGER.debug("Skipping '.git' directory")
                 continue
 
             LOGGER.debug("Staging '{}'...".format(obj))
