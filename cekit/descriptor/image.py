@@ -59,8 +59,7 @@ class Image(Descriptor):
                                          for a in self._descriptor.get('artifacts', [])]
         self._descriptor['modules'] = Modules(self._descriptor.get('modules', {}), self.path)
         self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}), self.path)
-        if 'osbs' in self._descriptor:
-            self._descriptor['osbs'] = Osbs(self._descriptor['osbs'], self.path)
+        self._descriptor['osbs'] = Osbs(self._descriptor.get('osbs', {}), self.path)
         self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
 
         # make sure image declarations override any module definitions
@@ -163,7 +162,7 @@ class Image(Descriptor):
 
     @property
     def osbs(self):
-        return self.get('osbs', Osbs({}, self.path))
+        return self.get('osbs')
 
     @osbs.setter
     def osbs(self, value):
