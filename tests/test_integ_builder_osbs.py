@@ -4,6 +4,7 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import yaml
 
@@ -46,10 +47,11 @@ image_descriptor = {
 
 def run_cekit(cwd,
               parameters=['build', '--dry-run', 'docker'],
-              message=None):
+              message=None, return_code=0):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
-        assert result.exit_code == 0
+
+        assert result.exit_code == return_code
 
         if message:
             assert message in result.output
@@ -57,7 +59,7 @@ def run_cekit(cwd,
         return result
 
 
-def run_osbs(descriptor, image_dir, mocker):
+def run_osbs(descriptor, image_dir, mocker, return_code=0):
     # We are mocking it, so do not require it at test time
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies', return_value={})
     mocker.patch('cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task')
@@ -86,10 +88,10 @@ def run_osbs(descriptor, image_dir, mocker):
 
     return run_cekit(image_dir, ['-v',
                                  '--work-dir', image_dir,
-                                 '--config',
-                                 'config',
+                                 '--config', 'config',
                                  'build',
-                                 'osbs'])
+                                 'osbs'],
+                     return_code=return_code)
 
 
 def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
@@ -282,3 +284,30 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
         os.path.join(str(repo_dir), 'file_b')) in caplog.text
     assert "Staging 'file_a'..." in caplog.text
     assert "Staging 'a_symlink'..." in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/542
+def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    source_dir = tmpdir.mkdir('source')
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mocker.patch.object(subprocess, 'check_call')
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'modules'),
+        os.path.join(str(source_dir), 'tests', 'modules')
+    )
+
+    descriptor = image_descriptor.copy()
+
+    del descriptor['osbs']
+
+    run_osbs(descriptor, str(source_dir), mocker, return_code=1)
+
+    with open(os.path.join(str(source_dir), 'target', 'image.yaml'), 'r') as _file:
+        effective = yaml.safe_load(_file)
+
+    assert effective['osbs'] is not None
+    assert effective['osbs']['extra_dir'] == 'osbs_extra'
