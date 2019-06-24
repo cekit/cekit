@@ -1,4 +1,10 @@
 import collections
+
+try:
+    collectionsAbc = collections.abc
+except AttributeError:
+    collectionsAbc = collections
+
 import logging
 import os
 
@@ -10,7 +16,7 @@ from cekit.errors import CekitError
 logger = logging.getLogger('cekit')
 
 
-class Descriptor(collections.MutableMapping):
+class Descriptor(collectionsAbc.MutableMapping):
     """Class serving as parent for any descriptor in cekit.
 
     Class implement collections.MutableMapping so it can be used as a dictionary.

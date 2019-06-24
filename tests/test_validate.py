@@ -243,8 +243,6 @@ def test_simple_image_test(tmpdir):
 
     run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
-    # FIXME: Check if the directory below should not exist
-    assert not os.path.exists(os.path.join(image_dir, 'target', 'image'))
     assert not os.path.exists(os.path.join(image_dir, 'target', 'image', 'Dockerfile'))
 
 
