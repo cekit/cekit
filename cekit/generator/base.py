@@ -86,6 +86,7 @@ class Generator(object):
 
         LOGGER.debug("Removing old target directory")
         shutil.rmtree(self.target, ignore_errors=True)
+        os.makedirs(os.path.join(self.target, 'image'))
 
         # Read the main image descriptor and create an Image object from it
         descriptor = tools.load_descriptor(self._descriptor_path)

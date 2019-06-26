@@ -1,24 +1,17 @@
-import click
-import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
 import pytest
 import yaml
 
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 
-from click import Context
-from cekit.cli import Cekit, Map, cli
+from cekit.cli import cli
 from cekit.descriptor import Repository
 from cekit.tools import Chdir
 from click.testing import CliRunner
-
-# pytestmark = pytest.mark.skipif('CEKIT_TEST_VALIDATE' not in os.environ, reason="Tests require "
-#                                "Docker installed, export 'CEKIT_TEST_VALIDATE=y' variable if "
-#                                "you need to run them.")
-
 
 odcs_fake_resp = b"""Result:
 {u'arches': u'x86_64',
@@ -222,7 +215,8 @@ def copy_repos(dst):
                     os.path.join(dst, 'tests', 'modules'))
 
 
-def test_simple_image_build(tmpdir, mocker):
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+def test_simple_image_build(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -232,7 +226,8 @@ def test_simple_image_build(tmpdir, mocker):
     run_cekit(image_dir, ['-v', 'build', 'docker'])
 
 
-def test_simple_image_test(tmpdir, mocker):
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+def test_simple_image_test(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -246,14 +241,12 @@ def test_simple_image_test(tmpdir, mocker):
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
-    run_cekit(image_dir, ['-v', 'test', 'test/image:1.0'])
+    run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
-    # FIXME: Check if the directory below should not exist
-    assert not os.path.exists(os.path.join(image_dir, 'target', 'image'))
     assert not os.path.exists(os.path.join(image_dir, 'target', 'image', 'Dockerfile'))
 
 
-def test_image_generate_with_multiple_overrides(tmpdir, mocker):
+def test_image_generate_with_multiple_overrides(tmpdir):
     override1 = "{'labels': [{'name': 'foo', 'value': 'bar'}]}"
 
     override2 = "{'labels': [{'name': 'foo', 'value': 'baz'}]}"
@@ -288,7 +281,8 @@ def test_image_generate_with_multiple_overrides(tmpdir, mocker):
     assert {'name': 'foo', 'value': 'baz'} in effective_image['labels']
 
 
-def test_image_test_with_override(tmpdir, mocker):
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+def test_image_test_with_override(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -319,13 +313,11 @@ def test_image_test_with_override(tmpdir, mocker):
 
     assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
 
-    run_cekit(image_dir,
-              ['-v',
-               'test',
-               'test/image:1.0'])
+    run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
 
-def test_image_test_with_multiple_overrides(tmpdir, mocker):
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+def test_image_test_with_multiple_overrides(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -365,13 +357,11 @@ def test_image_test_with_multiple_overrides(tmpdir, mocker):
 
     assert {'name': 'foo', 'value': 'overriden'} in effective_image['labels']
 
-    run_cekit(image_dir,
-              ['-v',
-               'test',
-               'test/image:1.0'])
+    run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
 
-def test_image_test_with_override_on_cmd(tmpdir, mocker):
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+def test_image_test_with_override_on_cmd(tmpdir):
     overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
 
     image_dir = str(tmpdir.mkdir('source'))
@@ -393,13 +383,10 @@ def test_image_test_with_override_on_cmd(tmpdir, mocker):
                '--overrides', overrides_descriptor,
                'docker'])
 
-    run_cekit(image_dir,
-              ['-v',
-               'test',
-               'test/image:1.0'])
+    run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
 
-def test_module_override(tmpdir, mocker):
+def test_module_override(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -437,7 +424,7 @@ def test_module_override(tmpdir, mocker):
 
 
 # https://github.com/cekit/cekit/issues/489
-def test_override_add_module_and_packages_in_overrides(tmpdir, mocker):
+def test_override_add_module_and_packages_in_overrides(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -505,7 +492,7 @@ def check_dockerfile_uniq(image_dir, match):
     return found
 
 
-def test_local_module_not_injected(tmpdir, mocker):
+def test_local_module_not_injected(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
 
     local_desc = image_descriptor.copy()
@@ -524,7 +511,7 @@ def test_local_module_not_injected(tmpdir, mocker):
                                            'modules'))
 
 
-def test_run_override_user(tmpdir, mocker):
+def test_run_override_user(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -548,7 +535,7 @@ def test_run_override_user(tmpdir, mocker):
     assert check_dockerfile(image_dir, 'USER 4321')
 
 
-def test_run_override_artifact(tmpdir, mocker):
+def test_run_override_artifact(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -578,7 +565,7 @@ def test_run_override_artifact(tmpdir, mocker):
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
 
-def test_run_path_artifact_brew(tmpdir, mocker, caplog):
+def test_run_path_artifact_brew(tmpdir, caplog):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -598,7 +585,7 @@ def test_run_path_artifact_brew(tmpdir, mocker, caplog):
     assert "Cekit is not able to fetch resource 'aaa' automatically. Please use cekit-cache command to add this artifact manually." in caplog.text
 
 
-def test_run_path_artifact_target(tmpdir, mocker):
+def test_run_path_artifact_target(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
 
     copy_repos(image_dir)
@@ -618,7 +605,7 @@ def test_run_path_artifact_target(tmpdir, mocker):
     assert check_dockerfile_uniq(image_dir, 'target_foo \\')
 
 
-def test_execution_order(tmpdir, mocker):
+def test_execution_order(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
 
@@ -929,8 +916,9 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
     assert "Key 'wrong!' was not defined" in caplog.text
 
 
-def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
-    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen', side_effect=PermissionError())
+def test_simple_image_build_error_local_docker_socket_permission_denied(tmpdir, mocker, caplog):
+    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
+                 side_effect=PermissionError())
 
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -942,15 +930,10 @@ def test_simple_image_build_no_docker_perm(tmpdir, mocker, caplog):
                                     'build',
                                     'docker'])
 
-    if sys.version_info.major == 2:
-        message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup"
-    else:
-        message = "Unable to contact docker daemon. Is it correctly setup"
-
-    assert message in caplog.text
+    assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
 
 
-def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
+def test_simple_image_build_error_local_docker_stopped(tmpdir, mocker, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=FileNotFoundError())
 
@@ -960,17 +943,80 @@ def test_simple_image_build_no_docker_start(tmpdir, mocker, caplog):
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
-    if sys.version_info.major == 2:
-        message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup"
-    else:
-        message = "Unable to contact docker daemon. Is it started"
-
     run_cekit_exception(image_dir,
                         ['-v',
                          'build',
                          'docker'])
 
-    assert message in caplog.text
+    assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
+
+
+def test_simple_image_build_error_connection_error_remote_docker_with_custom_docker_host(tmpdir, mocker, monkeypatch, caplog):
+    mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
+                 side_effect=PermissionError())
+
+    monkeypatch.setenv("DOCKER_HOST", "tcp://127.0.0.1:1234")
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir, ['-v',
+                                    'build',
+                                    'docker'])
+
+    assert "Could not connect to the Docker daemon at 'http://127.0.0.1:1234', please make sure the Docker daemon is running" in caplog.text
+    assert "If Docker daemon is running, please make sure that you specified valid parameters in the 'DOCKER_HOST' environment variable, examples: 'unix:///var/run/docker.sock', 'tcp://192.168.22.33:1234'. You may also need to specify 'DOCKER_TLS_VERIFY', and 'DOCKER_CERT_PATH' environment variables" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/538
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+def test_proper_decoding(tmpdir, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+
+    shutil.copy2(
+        os.path.join(os.path.dirname(__file__), 'images', 'image-gh-538-py27-encoding.yaml'),
+        os.path.join(image_dir, 'image.yaml')
+    )
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               'docker'])
+
+    assert "Finished!" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/533
+@pytest.mark.parametrize('parameter', ['content_sets', 'content_sets_file'])
+def test_disabling_content_sets(tmpdir, caplog, parameter):
+    image_dir = str(tmpdir.mkdir('source'))
+
+    shutil.copy2(
+        os.path.join(os.path.dirname(__file__), 'images',
+                     'image-gh-533-disable-content-sets-file.yaml'),
+        os.path.join(image_dir, 'image.yaml')
+    )
+
+    with open(os.path.join(image_dir, 'content_sets.yml'), 'w') as fd:
+        yaml.dump({'x86_64': ['rhel-server-rhscl-7-rpms', 'rhel-7-server-rpms']},
+                  fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               # Ugly, but double braces are required for 'format to work'
+               '--overrides', '{{"packages": {{"{0}": ~}}}}'.format(parameter),
+               'docker'])
+
+    with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
+        effective_image = yaml.safe_load(file_)
+
+    assert 'content_sets' not in effective_image['packages']
+    assert "Finished!" in caplog.text
 
 
 def run_cekit(cwd,
@@ -978,6 +1024,8 @@ def run_cekit(cwd,
               message=None):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+        assert result.exit_code == 0
+
         if message:
             assert message in result.output
 

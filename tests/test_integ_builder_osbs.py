@@ -4,6 +4,7 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import yaml
 
@@ -46,16 +47,19 @@ image_descriptor = {
 
 def run_cekit(cwd,
               parameters=['build', '--dry-run', 'docker'],
-              message=None):
+              message=None, return_code=0):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+
+        assert result.exit_code == return_code
+
         if message:
             assert message in result.output
 
         return result
 
 
-def run_osbs(descriptor, image_dir, mocker):
+def run_osbs(descriptor, image_dir, mocker, return_code=0):
     # We are mocking it, so do not require it at test time
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies', return_value={})
     mocker.patch('cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task')
@@ -63,16 +67,17 @@ def run_osbs(descriptor, image_dir, mocker):
     mocker.patch('cekit.builders.osbs.DistGit.prepare')
     mocker.patch('cekit.tools.decision', return_value=True)
 
-    mocker_check_call = mocker.patch.object(subprocess, 'check_output', side_effect=[
+    mocker_check_output = mocker.patch.object(subprocess, 'check_output', side_effect=[
         b"true",  # git rev-parse --is-inside-work-tree
         b"/home/repos/path",  # git rev-parse --show-toplevel
         b"branch",  # git rev-parse --abbrev-ref HEAD
         b"3b9283cb26b35511517ff5c0c3e11f490cba8feb",  # git rev-parse HEAD
+        b"",  # git ls-files .
         b"",  # git ls-files --others --exclude-standard
         b"",  # git diff-files --name-only
         b"ssh://someuser@somehost.com/containers/somerepo",  # git config --get remote.origin.url
         b"3b9283cb26b35511517ff5c0c3e11f490cba8feb",  # git rev-parse HEAD
-        b"1234",  # brew call --python...
+        b"1234"  # brew call --python...
     ])
 
     with open(os.path.join(image_dir, 'config'), 'w') as fd:
@@ -84,10 +89,10 @@ def run_osbs(descriptor, image_dir, mocker):
 
     return run_cekit(image_dir, ['-v',
                                  '--work-dir', image_dir,
-                                 '--config',
-                                 'config',
+                                 '--config', 'config',
                                  'build',
-                                 'osbs'])
+                                 'osbs'],
+                     return_code=return_code)
 
 
 def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
@@ -280,3 +285,62 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
         os.path.join(str(repo_dir), 'file_b')) in caplog.text
     assert "Staging 'file_a'..." in caplog.text
     assert "Staging 'a_symlink'..." in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/542
+def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    source_dir = tmpdir.mkdir('source')
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mocker.patch.object(subprocess, 'check_call')
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'modules'),
+        os.path.join(str(source_dir), 'tests', 'modules')
+    )
+
+    descriptor = image_descriptor.copy()
+
+    del descriptor['osbs']
+
+    run_osbs(descriptor, str(source_dir), mocker, return_code=1)
+
+    with open(os.path.join(str(source_dir), 'target', 'image.yaml'), 'r') as _file:
+        effective = yaml.safe_load(_file)
+
+    assert effective['osbs'] is not None
+    assert effective['osbs']['extra_dir'] == 'osbs_extra'
+
+
+def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, mocker, caplog):
+    mocker.patch.object(subprocess, 'call')
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+    #mock_check_output = mocker.patch.object(subprocess, 'check_output')
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+
+    repo_dir = tmpdir.mkdir('osbs').mkdir('repo').mkdir(
+        '.git').join('other').write_text(u'Some content', 'utf8')
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [{'url': 'https://foo/bar.jar'}]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    calls = [
+        mocker.call(['git', 'push', '-q', 'origin', 'branch']),
+        mocker.call(['git', 'commit', '-q', '-m',
+                     'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile'])
+    ]
+
+    assert len(mock_check_call.mock_calls) == len(calls)
+    mock_check_call.assert_has_calls(calls, any_order=True)
+    assert "Skipping '.git' directory" in caplog.text

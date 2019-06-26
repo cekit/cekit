@@ -3,7 +3,7 @@
 import os
 import shutil
 import tempfile
-
+import platform
 import pytest
 import yaml
 
@@ -49,6 +49,7 @@ def fixture_build_image():
     return _build_image
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS")
 def test_execute_simple_behave_test(build_image):
     feature = """@test
 Feature: Basic tests
@@ -81,6 +82,7 @@ Feature: Basic tests
     shutil.rmtree(os.path.join(test_image_dir, 'target'), ignore_errors=True)
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS")
 def test_execute_simple_behave_test_with_overrides(build_image):
     feature = """@different
 Feature: Basic tests
