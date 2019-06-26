@@ -18,7 +18,7 @@ setup(
     },
     url='https://github.com/cekit/cekit',
     download_url="https://github.com/cekit/cekit/archive/%s.tar.gz" % version,
-    author='Cekit team',
+    author='CEKit team',
     author_email='cekit@cekit.io',
     description='Containers creator',
     long_description=codecs.open('README.rst', encoding="utf8").read(),
