@@ -80,7 +80,7 @@ Parameters
     * ``--nowait`` -- do not wait for the task to finish
     * ``--stage`` -- use stage environment
     * ``--koji-target`` -- overrides the default ``koji`` target
-    * ``--commit-msg`` -- custom commit message for dist-git
+    * ``--commit-message`` -- custom commit message for dist-git
 
 Example
     Performing scratch build
