@@ -26,7 +26,7 @@ def get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': True, 'target': 'target'
         },
         {
-            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     # Check custom target
@@ -37,7 +37,7 @@ def get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False, 'target': 'custom-target'
         },
         {
-            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     # Check custom work dir
@@ -48,7 +48,7 @@ def get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': 'custom-workdir', 'config': '~/.cekit/config', 'redhat': False, 'target': 'target'
         },
         {
-            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     # Check custom config file
@@ -59,7 +59,7 @@ def get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': 'custom-config', 'redhat': False, 'target': 'target'
         },
         {
-            'dry_run': False, 'overrides': (),  'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (),  'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     # Test default values for Docker builder
@@ -68,7 +68,7 @@ def get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     # Test overrides
@@ -77,7 +77,7 @@ def get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         None,
         {
-            'dry_run': False, 'overrides': ('foo', 'bar'), 'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': ('foo', 'bar'), 'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     # Test default values for OSBS builder
@@ -86,7 +86,7 @@ def get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None
+            'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None
         }
     ),
     # Test setting user for OSBS
@@ -95,7 +95,7 @@ def get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': 'SOMEUSER', 'stage': False, 'koji_target': None, 'commit_message': None
+            'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': 'SOMEUSER', 'stage': False, 'koji_target': None, 'commit_message': None
         }
     ),
     # Test setting stage environment for OSBS
@@ -104,7 +104,7 @@ def get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': None, 'stage': True, 'koji_target': None, 'commit_message': None
+            'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False, 'release': False, 'tech_preview': False, 'user': None, 'stage': True, 'koji_target': None, 'commit_message': None
         }
     ),
     # Test setting nowait for OSBS
@@ -113,7 +113,7 @@ def get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'nowait': True, 'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None
+            'validate': False, 'dry_run': False, 'overrides': (), 'nowait': True, 'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None
         }
     ),
     (
@@ -131,7 +131,7 @@ def get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'pull': True, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': True, 'no_squash': False, 'tags': ()
         }
     ),
     (
@@ -139,14 +139,14 @@ def get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'release': False, 'tech_preview': False, 'user': None, 'nowait': False, 'stage': False, 'koji_target': None, 'commit_message': None
+            'validate': False, 'dry_run': False, 'overrides': (), 'release': False, 'tech_preview': False, 'user': None, 'nowait': False, 'stage': False, 'koji_target': None, 'commit_message': None
         }),
     (
         ['build', 'docker'],
         'cekit.builders.docker_builder.DockerBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
     (
@@ -154,7 +154,7 @@ def get_class_by_name(clazz):
         'cekit.builders.buildah.BuildahBuilder',
         None,
         {
-            'dry_run': False, 'overrides': (), 'pull': False, 'tags': ()
+            'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': ()
         }
     )
 ])

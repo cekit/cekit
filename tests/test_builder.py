@@ -444,7 +444,9 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
     with mocker.patch('cekit.tools.get_brew_url', side_effect=subprocess.CalledProcessError(1, 'command')):
         builder.prepare()
-        builder.before_run()
+        builder.before_generate()
+        builder.generate()
+        builder.before_build()
 
     dist_git_class.assert_called_once_with(os.path.join(
         str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch')

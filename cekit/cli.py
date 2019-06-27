@@ -55,10 +55,11 @@ def cli(descriptor, verbose, work_dir, config, redhat, target):  # pylint: disab
 
 
 @cli.group(short_help="Build container image")
+@click.option('--validate', help="Do not execute the build nor generate files, just validate image and module descriptors.", is_flag=True)
 @click.option('--dry-run', help="Do not execute the build, just generate required files.", is_flag=True)
 @click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
 @click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
-def build(dry_run, overrides):  # pylint: disable=unused-argument
+def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
