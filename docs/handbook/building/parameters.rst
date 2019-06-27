@@ -4,10 +4,19 @@ Common build parameters
 Below you can find description of the common parameters that can be added to every build
 command.
 
+``--validate``
+    Do not generate files nor execute the build but prepare image sources and
+    check if these are valid. Useful when you just want to make sure that the
+    content is buildable.
+
+    See ``--dry-run``.
+
 ``--dry-run``
-    Does not execute the actual build but let's CEKit prepare all required files to
-    be able to build the image. This is very handy when you want manually check generated
-    content.
+    Do not execute the build but let's CEKit prepare all required files to
+    be able to build the image for selected builder engine. This is very handy
+    when you want manually check generated content.
+
+    See ``--validate``.
 
 ``--overrides``
     Allows to specify overrides content as a JSON formatted string, directly

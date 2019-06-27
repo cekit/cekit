@@ -1019,6 +1019,43 @@ def test_disabling_content_sets(tmpdir, caplog, parameter):
     assert "Finished!" in caplog.text
 
 
+# https://github.com/cekit/cekit/issues/551
+def test_validation_of_image_and_module_descriptors(tmpdir, mocker, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir, ['-v',
+                          'build',
+                          '--validate',
+                          'docker'])
+
+    assert "The --validate parameter was specified, generation will not be performed, exiting" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/551
+def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descriptor(tmpdir, mocker, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    descriptor = image_descriptor.copy()
+
+    del descriptor['name']
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(descriptor, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir, ['-v',
+                                    'build',
+                                    '--validate',
+                                    'docker'])
+
+    assert "Cannot validate schema: Image" in caplog.text
+    assert "Cannot find required key 'name'" in caplog.text
+
+
 def run_cekit(cwd,
               parameters=['build', '--dry-run', 'docker'],
               message=None):
