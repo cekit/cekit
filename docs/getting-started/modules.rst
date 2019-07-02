@@ -5,9 +5,15 @@ As described in the :doc:`module reference </descriptor/module>` modules are use
 
 To add a module, the ``image.yaml`` file must be modified to add a modules section. This is responsible for defining module repositories and providing the list of modules to be installed in order. Modules may come from the local file system or from remote git based repositories e.g. on github.
 
-Edit the file to add the following
+Edit the file to add the highlighted section below.
 
 .. code-block:: yaml
+  :emphasize-lines: 5-8
+
+  name: my-example
+  version: 1.0
+  from: centos:7
+  description: My Example Image
 
   modules:
     repositories:
@@ -41,9 +47,14 @@ As per the below diagram a number of directories must be created next to ``image
         descriptor [label="image.yaml"];
     }
 
-Once the modules subdirectory and the respective module directories below that have been created they can be added to the image. In order to select a module component from a repository it is necessary to add an ``install`` section.
+Once the modules subdirectory and the respective module directories below that have been created they can be added to the image. In order to select a module component from a repository it is necessary to add an ``install`` section as per the highlighted section below.
 
 .. code-block:: yaml
+  :emphasize-lines: 6-9
+
+  modules:
+    repositories:
+        - path: modules
 
     # Install selected modules (in order)
     install:
