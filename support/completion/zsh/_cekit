@@ -1,7 +1,11 @@
+#compdef cekit cekit-cache
+
 _cekit_completion() {
     local -a completions
     local -a completions_with_descriptions
     local -a response
+    (( ! $+commands[cekit] )) && return 1
+
     response=("${(@f)$( env COMP_WORDS="${words[*]}" \
                         COMP_CWORD=$((CURRENT-1)) \
                         _CEKIT_COMPLETE="complete_zsh" \
@@ -31,6 +35,8 @@ _cekit_cache_completion() {
     local -a completions
     local -a completions_with_descriptions
     local -a response
+    (( ! $+commands[cekit-cache] )) && return 1
+
     response=("${(@f)$( env COMP_WORDS="${words[*]}" \
                         COMP_CWORD=$((CURRENT-1)) \
                         _CEKIT_CACHE_COMPLETE="complete_zsh" \
