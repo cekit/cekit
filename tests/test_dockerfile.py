@@ -387,7 +387,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
                                                        'path': 'modules'}],
                                      'install': [{'name': 'foo'}]}})
 
-    regex_dockerfile(target, 'COPY modules /tmp/scripts/')
+    regex_dockerfile(target, 'COPY modules/foo /tmp/scripts/foo')
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):

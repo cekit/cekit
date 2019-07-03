@@ -276,9 +276,8 @@ class Image(Descriptor):
                 artifact_overrides[name] = artifact
                 # add it to the list of everything
                 self._all_artifacts[name] = artifact
-                if name in image_artifacts:
-                    # apply override to image descriptor
-                    image_artifacts[name] = artifact
+                # Apply override to image descriptor
+                image_artifacts[name] = artifact
             self._descriptor['artifacts'] = list(image_artifacts.values())
 
             module_overrides = self._image_overrides['modules']

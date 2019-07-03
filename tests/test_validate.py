@@ -654,7 +654,11 @@ def test_execution_order(tmpdir):
     run_cekit(image_dir)
 
     expected_modules_order = """
-# begin child_of_child:None
+# START module child_of_child:None
+
+# Copy module child_of_child content
+COPY modules/child_of_child /tmp/scripts/child_of_child
+
 
 # Environment variables
 ENV \\
@@ -664,22 +668,34 @@ ENV \\
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
 
-# end child_of_child:None
-# begin child2_of_child:None
+# END module child_of_child:None
+# START module child2_of_child:None
+
+# Copy module child2_of_child content
+COPY modules/child2_of_child /tmp/scripts/child2_of_child
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
 
-# end child2_of_child:None
-# begin child3_of_child:None
+# END module child2_of_child:None
+# START module child3_of_child:None
+
+# Copy module child3_of_child content
+COPY modules/child3_of_child /tmp/scripts/child3_of_child
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
 
-# end child3_of_child:None
-# begin child:None
+# END module child3_of_child:None
+# START module child:None
+
+# Copy module child content
+COPY modules/child /tmp/scripts/child
+
 
 # Environment variables
 ENV \\
@@ -689,32 +705,52 @@ ENV \\
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
 
-# end child:None
-# begin child_2:None
+# END module child:None
+# START module child_2:None
+
+# Copy module child_2 content
+COPY modules/child_2 /tmp/scripts/child_2
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
 
-# end child_2:None
-# begin child_of_child3:None
+# END module child_2:None
+# START module child_of_child3:None
+
+# Copy module child_of_child3 content
+COPY modules/child_of_child3 /tmp/scripts/child_of_child3
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
 
-# end child_of_child3:None
-# begin child2_of_child3:None
+# END module child_of_child3:None
+# START module child2_of_child3:None
+
+# Copy module child2_of_child3 content
+COPY modules/child2_of_child3 /tmp/scripts/child2_of_child3
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
 
-# end child2_of_child3:None
-# begin child_3:None
+# END module child2_of_child3:None
+# START module child_3:None
 
-# end child_3:None
-# begin master:None
+# Copy module child_3 content
+COPY modules/child_3 /tmp/scripts/child_3
+
+
+# END module child_3:None
+# START module master:None
+
+# Copy module master content
+COPY modules/master /tmp/scripts/master
+
 
 # Environment variables
 ENV \\
@@ -724,7 +760,7 @@ ENV \\
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]
 
-# end master:None
+# END module master:None
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
@@ -784,7 +820,11 @@ def test_execution_order_flat(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_modules_order = """
-# begin mod_1:None
+# START module mod_1:None
+
+# Copy module mod_1 content
+COPY modules/mod_1 /tmp/scripts/mod_1
+
 
 # Environment variables
 ENV \\
@@ -798,8 +838,12 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_1/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
 
-# end mod_1:None
-# begin mod_2:None
+# END module mod_1:None
+# START module mod_2:None
+
+# Copy module mod_2 content
+COPY modules/mod_2 /tmp/scripts/mod_2
+
 
 # Environment variables
 ENV \\
@@ -813,8 +857,12 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_2/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
 
-# end mod_2:None
-# begin mod_3:None
+# END module mod_2:None
+# START module mod_3:None
+
+# Copy module mod_3 content
+COPY modules/mod_3 /tmp/scripts/mod_3
+
 
 # Custom scripts
 USER root
@@ -824,8 +872,12 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_3/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
 
-# end mod_3:None
-# begin mod_4:None
+# END module mod_3:None
+# START module mod_4:None
+
+# Copy module mod_4 content
+COPY modules/mod_4 /tmp/scripts/mod_4
+
 
 # Custom scripts
 USER root
@@ -835,7 +887,7 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
 
-# end mod_4:None
+# END module mod_4:None
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
@@ -856,22 +908,28 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_order_install = """
-# begin packages_module:None
+# START module packages_module:None
 
-# Install required RPMs and ensure that the packages were installed
+# Copy module packages_module content
+COPY modules/packages_module /tmp/scripts/packages_module
+
 USER root
+
 RUN yum --setopt=tsflags=nodocs install -y kernel java \\
     && rpm -q kernel java
 
-# end packages_module:None
-# begin packages_module_1:None
+# END module packages_module:None
+# START module packages_module_1:None
 
-# Install required RPMs and ensure that the packages were installed
+# Copy module packages_module_1 content
+COPY modules/packages_module_1 /tmp/scripts/packages_module_1
+
 USER root
+
 RUN yum --setopt=tsflags=nodocs install -y wget mc \\
     && rpm -q wget mc
 
-# end packages_module_1:None
+# END module packages_module_1:None
 """
 
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
@@ -892,8 +950,8 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_install = """
-# Install required RPMs and ensure that the packages were installed
 USER root
+
 RUN yum --setopt=tsflags=nodocs install -y wget mc \\
     && rpm -q wget mc
 """
