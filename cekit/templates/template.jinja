@@ -19,6 +19,9 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {% macro pkg_install(pkg_manager, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
+    {% if pkg_manager == 'microdnf' %}
+    && {{ pkg_manager }} clean all \
+    {% endif %}
     && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
 {%- endmacro %}
