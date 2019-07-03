@@ -61,8 +61,8 @@ When your work is finished, commit and push your changes to a module repository.
 Injecting local artifacts
 ----------------------------
 
-During module/image development there can be a need to use locally built artifact instead of a released one. The easiest way to inject
-such artifact is to use override mechanism.
+During module/image development there can be a need to use locally built artifact instead of a released one.
+The easiest way to inject such artifact is to use override mechanism.
 
 Imagine that you have an artifact defined in following way:
 
@@ -93,3 +93,35 @@ pass integrity checks you need to define checksum also in overrides in a followi
           md5: d31c6b1525e6d2d24062ef26a9f639a8
           path: /tmp/build/joloika.jar
 
+Using Docker cache
+--------------------
+
+.. versionadded:: 3.3.0
+
+Docker has support for caching layers. This is very convenient when you are developing images. It saves time by
+not rebuilding the whole image on any change, but instead it rebuilds layers that were changed only.
+
+You can read more about it `in Docker's documentation <https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache>`__.
+
+In version ``3.3.0`` CEKit we optimized the way we generate Dockerfile making it much easier to fully
+leverage the caching mechanism.
+
+In order to make most of this feature we strongly suggest to execute Docker build with the the ``--no-squash``
+parameter. This will make sure that the intermediate layers won't be removed. In other case, the
+squashing post-processing will take place and any intermediate layers will be cleaned afterwards
+effectively losing cached layers.
+
+.. code-block:: bash
+
+    $ cekit build docker --no-squash
+
+.. warning::
+
+    You need to be aware that rebuilding a Docker image numerous times with the ``--no-squash``
+    option will leave many dangling layers that could fill your Docker storage. To prevent
+    this you need to remove unused images from time to time. The ``docker system prune -a`` command
+    may be useful.
+
+.. note::
+    Please note that ``--no-squash`` switch may be only useful when developing the image.
+    We strongly suggest to not use it to build the final image.
