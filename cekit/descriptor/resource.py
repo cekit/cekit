@@ -262,7 +262,7 @@ class _PathResource(Resource):
         if os.path.isdir(self.path):
             shutil.copytree(self.path, target)
         else:
-            shutil.copy(self.path, target)
+            shutil.copy2(self.path, target)
         return target
 
 
