@@ -462,6 +462,40 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
     assert check_dockerfile_text(image_dir, 'COPY \\\n    test \\\n    /tmp/artifacts/')
 
 
+# Test work of workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1700341
+def test_microdnf_clean_all_cmd_present(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'packages': {'manager': 'microdnf' }
+    }
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
+               'docker'])
+
+    required_matches = [
+        'RUN microdnf --setopt=tsflags=nodocs install -y package1 package2 \\',
+        '&& microdnf clean all \\',
+        '&& rpm -q package1 package2'
+    ]
+
+    for match in required_matches:
+        assert check_dockerfile(image_dir, match)
+
+
 def check_dockerfile(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         for line in fd.readlines():
