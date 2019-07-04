@@ -30,7 +30,7 @@ Example
 
         $ cekit build docker
 
-Docker environment variables
+Remote Docker daemon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible to use environment variables to let CEKit know where is the Docker daemon
@@ -42,7 +42,12 @@ located it should connect to.
 By default, if you do not specify anything, **CEKit will try to use a locally running Docker daemon**.
 
 If you need to customize this behavior (for example when you want to use Docker daemon
-running in a VM) you can set following environment variables:
+running in a VM) you can set following environment variables: ``DOCKER_HOST``, ``DOCKER_TLS_VERIFY`` and
+``DOCKER_CERT_PATH``. See section about :ref:`Docker environment variables <handbook/building/builder-engines:Docker environment variables>`
+below for more information.
+
+Docker environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``DOCKER_HOST``
     The ``DOCKER_HOST`` environment variable is where you specify where the Daemon is running. It supports
@@ -63,7 +68,44 @@ running in a VM) you can set following environment variables:
 ``DOCKER_CERT_PATH``
     You can point ``DOCKER_CERT_PATH`` environment variable to a directory containing certificates to use when
     connecting to the Docker daemon.
+``DOCKER_TMPDIR``
+    You can change the temporary directory used by Docker daemon by specifying the ``DOCKER_TMPDIR`` environment
+    variable.
 
+    .. note::
+        Please note that this is environment variable **should be set on the daemon** and not on the client
+        (CEKit command you execute). You need to modify your Docker daemon configuration and restart Docker
+        to apply new value.
+
+    By default it points to ``/var/lib/docker/tmp``. If you are short on space there, you may want to use
+    a different directory. This temporary directory is used to generate the TAR file with the image that is
+    later processed by the squash tool. If you have large images, make sure you have sufficient free space there.
+``TMPDIR``
+    This environment variable controls which directory should be used when a temporary directory is created
+    by the CEKit tool. In case the default temporary directory location is low on space it may be required
+    to point to a different location.
+
+    One example when such change could be required is when the squash post-processing of the image is taking place
+    and the default temporary directory location is low on space. Squashing requires to unpack the original
+    image TAR file and apply transformation on it. This can be very storage-consuming process.
+
+    You can read more on how this variable is used in the `Python docs <https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir>`__.
+
+    .. code-block:: bash
+
+        $ TMPDIR="/mnt/external/tmp" cekit build docker
+``DOCKER_TIMEOUT``
+    By default it is set to ``600`` seconds.
+
+    This environment variable is responsible for setting how long we will wait for the Docker
+    daemon to return data. Sometimes, when the Docker daemon is busy and you have large images, it may be
+    required to set this variable to some even higher number. Setting proper value is especially important
+    when the squashing post-processing takes place because this is a very resource-consuming task and can
+    take several minutes.
+
+    .. code-block:: bash
+
+        $ DOCKER_TIMEOUT="1000" cekit build docker
 
 OSBS builder
 ---------------------------
