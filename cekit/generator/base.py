@@ -109,7 +109,9 @@ class Generator(object):
         self.render_dockerfile()
         self.render_help()
 
+    # TODO: Remove in 3.5
     def add_tech_preview_overrides(self):
+        LOGGER.warning("The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5")
         self._overrides.append(self.get_tech_preview_overrides())
 
     def add_redhat_overrides(self):

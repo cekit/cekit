@@ -472,7 +472,7 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
 
     overrides_descriptor = {
         'schema_version': 1,
-        'packages': {'manager': 'microdnf' }
+        'packages': {'manager': 'microdnf'}
     }
 
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
@@ -1088,6 +1088,24 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
 
     assert "Cannot validate schema: Image" in caplog.text
     assert "Cannot find required key 'name'" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/559
+def test_osbs_builder_tech_preview_deprecation(tmpdir, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir, ['-v',
+                          'build',
+                          '--dry-run',
+                          'osbs',
+                          '--tech-preview'
+                          ])
+
+    assert "The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5" in caplog.text
 
 
 def run_cekit(cwd,
