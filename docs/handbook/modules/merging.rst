@@ -49,14 +49,6 @@ The same order is used later in the module merge process too.
     Defining module *repositories* in the ``repositories`` section does not require any particular order.
     Modules are investigated after all modules repositories are fetched.
 
-Note about image development
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Module install order matters at image development time too. If you are going to modify code of some module
-installed very early in the process, you should expect that the image build time will be much slower.
-Reason for this is that every step below this particular module installation is **automatically invalidated**,
-cache cannot be used and needs a full rebuild.
-
 Module processing in template
 -------------------------------
 
