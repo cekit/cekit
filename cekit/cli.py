@@ -139,7 +139,7 @@ def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
 @click.option('--release', help="Execute a release build.", is_flag=True)
-# TODO: Ensure this still makes sense
+# TODO: Remove in 3.5
 @click.option('--tech-preview', help="Execute a tech preview build.", is_flag=True)
 @click.option('--user', metavar="USER", help="User used to kick the build as.")
 @click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
