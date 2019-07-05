@@ -16,19 +16,25 @@ class TemplateHelper(object):
         Method that returns list of packages to be installed by any of
         modules or directly in the image
         """
-        all_modules = []
+        all_modules = self.modules(image)
+
         packages = []
-
-        if 'modules' in image and 'install' in image.modules:
-            all_modules += [self.module(m) for m in image.modules.install]
-
-        all_modules.append(image)
 
         for module in all_modules:
             if 'packages' in module and 'install' in module.packages:
                 packages += module.packages.install
 
         return packages
+
+    def modules(self, image):
+        all_modules = []
+
+        if 'modules' in image and 'install' in image.modules:
+            all_modules += [self.module(m) for m in image.modules.install]
+
+        all_modules.append(image)
+
+        return all_modules
 
     def filename(self, source):
         """Simple helper to return the file specified name"""
@@ -50,18 +56,19 @@ class TemplateHelper(object):
             ret.append("\"%s\"" % cmd)
         return "[%s]" % ', '.join(ret)
 
-    def envs(self, env_variables):
-        """Combines all environment variables that should be added to the
-        Dockerfile into one array
-        """
-
+    def all_envs(self, image):
         envs = []
-
-        for env in env_variables:
-            if env.get('value') is not None:
-                envs.append(env)
+        for module in self.modules(image):
+            envs += module.envs
 
         return envs
+
+    def all_labels(self, image):
+        labels = []
+        for module in self.modules(image):
+            labels += module.labels
+
+        return labels
 
     def ports(self, available_ports):
         """

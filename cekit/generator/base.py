@@ -295,6 +295,7 @@ class Generator(object):
         loader = FileSystemLoader(help_dirname)
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
+        env.globals['image'] = self.image
         help_template = env.get_template(help_basename)
 
         helpfile = os.path.join(self.target, 'image', 'help.md')
