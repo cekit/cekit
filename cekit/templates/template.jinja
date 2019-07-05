@@ -38,16 +38,16 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 USER root
 RUN {{ pkg_install(packages.manager, module.packages.install) }}
 {% endif %}
-{% if helper.envs(module.envs)|length > 0 %}
+{% if module.envs|rejectattr("value", "none")|list|length > 0 %}
 
 # Environment variables
 ENV \
-    {% for env in helper.envs(module.envs)|sort(attribute='name') %}
+    {% for env in module.envs|sort(attribute='name')|rejectattr("value", "none")|list %}
     {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
 
     {% endfor %}
 {% endif %}
-{% if module.labels|length > 0 %}
+{% if module.labels|count > 0 %}
 
 # Labels
 LABEL \

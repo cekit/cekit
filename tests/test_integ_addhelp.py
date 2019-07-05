@@ -102,5 +102,9 @@ def test_should_generate_help_if_enabled_in_descriptor(tmpdir):
                     descriptor=my_image_descriptor).output)
     assert os.path.exists(os.path.join(tmpdir, 'target', 'image', 'help.md'))
     assert check_file_text(tmpdir, 'ADD help.md /') is True
-    assert check_file_text(tmpdir, '# test/image', 'help.md') is True
-    assert check_file_text(tmpdir, "The container runs as root", 'help.md') is True
+    assert check_file_text(tmpdir, '# `test/image:1.0`', 'help.md') is True
+    assert check_file_text(tmpdir, "Container will run as `root` user.", 'help.md') is True
+    assert check_file_text(tmpdir, "There are no defined ports.", 'help.md') is True
+    assert check_file_text(tmpdir, "There are no volumes defined.", 'help.md') is True
+    assert check_file_text(tmpdir, "This image is based on the `centos:latest` image.", 'help.md') is True
+    assert check_file_text(tmpdir, "There is no entrypoint specified for the container.", 'help.md') is True
