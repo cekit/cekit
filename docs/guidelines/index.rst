@@ -7,9 +7,10 @@ This chapter focuses on best practices and guides related to developing images.
     :maxdepth: 2
 
     local-development
+    modules/index
     repositories
 
 .. custom-templates
-.. modules/index
+
 
 

@@ -380,7 +380,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     os.makedirs(module_dir)
 
     with open(module_yaml_path, 'w') as outfile:
-        yaml.dump({'name': 'foo'}, outfile, default_flow_style=False)
+        yaml.dump({'name': 'foo', 'version': '1.0'}, outfile, default_flow_style=False)
 
     generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'docker'],
              descriptor={'modules': {'repositories': [{'name': 'modules',

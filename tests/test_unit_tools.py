@@ -61,7 +61,7 @@ class MockedDescriptor(Descriptor):
 def test_merging_description_image():
     desc1 = Image({'name': 'foo', 'version': 1}, None)
 
-    desc2 = Module({'name': 'mod1',
+    desc2 = Module({'name': 'mod1', 'version': 2,
                     'description': 'mod_desc'}, None, None)
 
     merged = _merge_descriptors(desc1, desc2)
@@ -69,9 +69,9 @@ def test_merging_description_image():
 
 
 def test_merging_description_modules():
-    desc1 = Module({'name': 'foo'}, None, None)
+    desc1 = Module({'name': 'foo', 'version': '1.0'}, None, None)
 
-    desc2 = Module({'name': 'mod1',
+    desc2 = Module({'name': 'mod1', 'version': '1.0',
                     'description': 'mod_desc'}, None, None)
 
     merged = _merge_descriptors(desc1, desc2)

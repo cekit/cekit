@@ -8,3 +8,4 @@ to succeed with CEKit.
     :titlesonly:
 
     merging
+    versioning
