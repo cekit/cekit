@@ -1,5 +1,6 @@
 schema_version: 1
 name: child_of_child
+version: 1.0
 envs:
   - name: foo
     value: child_of_child

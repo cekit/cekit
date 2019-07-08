@@ -1,5 +1,6 @@
 schema_version: 1
 name: child
+version: 1.0
 execute:
   - script: script_b
 envs:

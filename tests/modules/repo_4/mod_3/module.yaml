@@ -1,5 +1,6 @@
 schema_version: 1
 name: mod_3
+version: 1.0
 execute:
   - script: a
   - script: b

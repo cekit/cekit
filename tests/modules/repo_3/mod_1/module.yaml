@@ -1,5 +1,6 @@
 schema_version: 1
 name: master
+version: 1.0
 execute:
   - script: script_a
 envs:
