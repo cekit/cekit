@@ -14,7 +14,7 @@ class Module(Image):
         self.path = path
         schema = get_image_schema().copy()
         self.schemas = [schema]
-        # calling Descriptor constructor only here (we dont wat Image() to mess with schema)
+        # calling Descriptor constructor only here (we don't want Image() to mess with schema)
         super(Image, self).__init__(descriptor)
         self.skip_merging = ['description',
                              'version',

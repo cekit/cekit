@@ -58,7 +58,7 @@ class Resource(Descriptor):
         super(Resource, self).__init__(descriptor)
         self.skip_merging = ['md5', 'sha1', 'sha256', 'sha512']
 
-        # forwarded import to prevent circural imports
+        # forwarded import to prevent circular imports
         from cekit.cache.artifact import ArtifactCache
         self.cache = ArtifactCache()
 
@@ -80,6 +80,12 @@ class Resource(Descriptor):
             return not self['name'] == other['name']
         return NotImplemented
 
+    @staticmethod
+    def empty_descriptor(default_value, container=""):
+        logger.warning("No value found for 'name' in %s; using auto-generated value of %s" %
+                       (container, default_value))
+        return default_value
+
     def _copy_impl(self, target):
         raise NotImplementedError("Implement _copy_impl() for Resource: " +
                                   self.__module__ + "." +
@@ -91,6 +97,7 @@ class Resource(Descriptor):
         return self['target']
 
     def copy(self, target=os.getcwd()):
+
         if os.path.isdir(target):
             target = os.path.join(target, self.target_file_name())
 
@@ -226,15 +233,16 @@ class Resource(Descriptor):
 
 class _PathResource(Resource):
 
-    def __init__(self, descriptor, directory, **kwargs):
-        # if the path si relative its considered relative to the directory parameter
-        # it defualts to CWD, but should be set for a descriptor dir if used for artifacts
+    def __init__(self, descriptor, directory, container="", **kwargs):
+        # if the path is relative its considered relative to the directory parameter
+        # it defaults to CWD, but should be set for a descriptor dir if used for artifacts
         if not os.path.isabs(descriptor['path']):
             descriptor['path'] = os.path.join(directory,
                                               descriptor['path'])
 
         if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['path'])
+            descriptor['name'] = Resource.empty_descriptor(os.path.basename(descriptor['path']), container)
+
         super(_PathResource, self).__init__(descriptor)
         self.path = descriptor['path']
 
@@ -268,9 +276,9 @@ class _PathResource(Resource):
 
 class _UrlResource(Resource):
 
-    def __init__(self, descriptor, **kwargs):
+    def __init__(self, descriptor, container="", **kwargs):
         if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['url'])
+            descriptor['name'] = Resource.empty_descriptor(os.path.basename(descriptor['url']), container)
         super(_UrlResource, self).__init__(descriptor)
         self.url = descriptor['url'].strip()
 
@@ -285,9 +293,9 @@ class _UrlResource(Resource):
 
 class _GitResource(Resource):
 
-    def __init__(self, descriptor, **kwargs):
+    def __init__(self, descriptor, container="", **kwargs):
         if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['git']['url'])
+            descriptor['name'] = Resource.empty_descriptor(os.path.basename(descriptor['git']['url']), container)
         super(_GitResource, self).__init__(descriptor)
         self.url = descriptor['git']['url']
         self.ref = descriptor['git']['ref']
