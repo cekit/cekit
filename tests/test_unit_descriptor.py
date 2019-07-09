@@ -2,13 +2,13 @@ import pytest
 import yaml
 
 from cekit.config import Config
+from cekit.log import setup_logging
 from cekit.errors import CekitError
-from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
-    Repository
-
+from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
 
 config = Config()
 config.configure('/dev/null', {'redhat': True})
+setup_logging()
 
 
 def test_label():
@@ -170,3 +170,29 @@ def test_remove_none_key():
 
     assert 'envs' in image
     assert 'value' not in image['envs'][0]
+
+
+def test_image_artifacts(caplog):
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: test
+        value: val1
+      - name: label2
+        value: val2
+    artifacts:
+      - url: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
+        md5: 080075877a66adf52b7f6d0013fa9730
+    envs:
+      - name: env1
+        value: env1val
+    """), 'foo')
+
+    assert image['name'] == 'test/foo'
+    assert type(image['labels'][0]) == Label
+    assert image['labels'][0]['name'] == 'test'
+    assert "No value found for 'name' in artifacts; using auto-generated value of apache-tomcat-8.5.24.tar" \
+           in caplog.text
+

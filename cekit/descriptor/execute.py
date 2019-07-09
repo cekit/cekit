@@ -1,3 +1,4 @@
+import logging
 import yaml
 
 import cekit
@@ -13,6 +14,8 @@ container_schemas = [yaml.safe_load("""
         seq:
           - {type: any}""")]
 
+logger = logging.getLogger('cekit')
+
 
 class Execute(Descriptor):
     def __init__(self, descriptor, module_name):
@@ -24,6 +27,8 @@ class Execute(Descriptor):
         descriptor['module_name'] = module_name
 
         if 'name' not in descriptor:
+            logger.warning("No value found for 'name'; using auto-generated value of %s/%s" %
+                           (module_name, descriptor['script']))
             descriptor['name'] = "%s/%s" % (module_name,
                                             descriptor['script'])
 

@@ -21,7 +21,7 @@ class Modules(Descriptor):
     def __init__(self, descriptor, path):
         self.schemas = modules_schema
         super(Modules, self).__init__(descriptor)
-        self._descriptor['repositories'] = [Resource(r, directory=path)
+        self._descriptor['repositories'] = [Resource(r, directory=path, container='artifacts')
                                             for r in self._descriptor.get('repositories', [])]
         self._descriptor['install'] = [Install(x) for x in self._descriptor.get('install', [])]
 
