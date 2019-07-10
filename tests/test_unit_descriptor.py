@@ -214,3 +214,26 @@ def test_image_plain_artifacts(caplog):
                 md5: 080075877a66adf52b7f6d0013fa9730
             """), 'foo')
     assert "Missing name attribute for plain artifact" in excinfo.value.message
+
+
+def test_image_modules_git_repo(caplog):
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    modules:
+        repositories:
+            - git:
+                url: "https://github.com/company/foobar-project-modules"
+                ref: "release-3.1.0"
+            - name: "another-module"
+              git:
+                url: "https://github.com/company/another-git-module"
+                ref: "release-1.1"
+        install:
+            - name: "org.company.project.feature"
+    """), 'foo')
+
+    assert image['name'] == 'test/foo'
+    assert "No value found for 'name' in '[repositories][git]'; using auto-generated value of 'foobar-project-modules'" \
+           in caplog.text

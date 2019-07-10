@@ -236,8 +236,8 @@ class _PathResource(Resource):
 
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['path'])
-            logger.warning("No value found for 'name' in '[artifacts][path]'; using auto-generated value of '%s'" %
-                           (descriptor['name']))
+            logger.warning("No value found for 'name' in '[artifacts][path]'; using auto-generated value of '{}'".
+                           format(descriptor['name']))
 
         super(_PathResource, self).__init__(descriptor)
         self.path = descriptor['path']
@@ -275,8 +275,8 @@ class _UrlResource(Resource):
     def __init__(self, descriptor, **kwargs):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['url'])
-            logger.warning("No value found for 'name' in '[artifacts][url]'; using auto-generated value of '%s'" %
-                           (descriptor['name']))
+            logger.warning("No value found for 'name' in '[artifacts][url]'; using auto-generated value of '{}'".
+                           format(descriptor['name']))
 
         super(_UrlResource, self).__init__(descriptor)
         self.url = descriptor['url'].strip()
@@ -295,9 +295,8 @@ class _GitResource(Resource):
     def __init__(self, descriptor, **kwargs):
         if 'name' not in descriptor:
             descriptor['name'] = os.path.basename(descriptor['git']['url'])
-# TODO: Establish git resource naming policy.
-#            logger.warning("No value found for 'name' in 'artifacts:git'; using auto-generated value of %s" %
-#                           (descriptor['name']))
+            logger.warning("No value found for 'name' in '[repositories][git]'; using auto-generated value of '{}'".
+                           format(descriptor['name']))
         super(_GitResource, self).__init__(descriptor)
         self.url = descriptor['git']['url']
         self.ref = descriptor['git']['ref']
