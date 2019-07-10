@@ -55,7 +55,7 @@ class Image(Descriptor):
         self._descriptor['ports'] = [Port(x) for x in self._descriptor.get('ports', [])]
         if 'run' in self._descriptor:
             self._descriptor['run'] = Run(self._descriptor['run'])
-        self._descriptor['artifacts'] = [Resource(a, directory=self._artifact_dir, container='artifacts')
+        self._descriptor['artifacts'] = [Resource(a, directory=self._artifact_dir)
                                          for a in self._descriptor.get('artifacts', [])]
         self._descriptor['modules'] = Modules(self._descriptor.get('modules', {}), self.path)
         self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}), self.path)

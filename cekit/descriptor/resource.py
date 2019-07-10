@@ -80,12 +80,6 @@ class Resource(Descriptor):
             return not self['name'] == other['name']
         return NotImplemented
 
-    @staticmethod
-    def empty_descriptor(default_value, container=""):
-        logger.warning("No value found for 'name' in %s; using auto-generated value of %s" %
-                       (container, default_value))
-        return default_value
-
     def _copy_impl(self, target):
         raise NotImplementedError("Implement _copy_impl() for Resource: " +
                                   self.__module__ + "." +
@@ -233,7 +227,7 @@ class Resource(Descriptor):
 
 class _PathResource(Resource):
 
-    def __init__(self, descriptor, directory, container="", **kwargs):
+    def __init__(self, descriptor, directory, **kwargs):
         # if the path is relative its considered relative to the directory parameter
         # it defaults to CWD, but should be set for a descriptor dir if used for artifacts
         if not os.path.isabs(descriptor['path']):
@@ -241,7 +235,9 @@ class _PathResource(Resource):
                                               descriptor['path'])
 
         if 'name' not in descriptor:
-            descriptor['name'] = Resource.empty_descriptor(os.path.basename(descriptor['path']), container)
+            descriptor['name'] = os.path.basename(descriptor['path'])
+            logger.warning("No value found for 'name' in '[artifacts][path]'; using auto-generated value of '%s'" %
+                           (descriptor['name']))
 
         super(_PathResource, self).__init__(descriptor)
         self.path = descriptor['path']
@@ -276,9 +272,12 @@ class _PathResource(Resource):
 
 class _UrlResource(Resource):
 
-    def __init__(self, descriptor, container="", **kwargs):
+    def __init__(self, descriptor, **kwargs):
         if 'name' not in descriptor:
-            descriptor['name'] = Resource.empty_descriptor(os.path.basename(descriptor['url']), container)
+            descriptor['name'] = os.path.basename(descriptor['url'])
+            logger.warning("No value found for 'name' in '[artifacts][url]'; using auto-generated value of '%s'" %
+                           (descriptor['name']))
+
         super(_UrlResource, self).__init__(descriptor)
         self.url = descriptor['url'].strip()
 
@@ -293,9 +292,12 @@ class _UrlResource(Resource):
 
 class _GitResource(Resource):
 
-    def __init__(self, descriptor, container="", **kwargs):
+    def __init__(self, descriptor, **kwargs):
         if 'name' not in descriptor:
-            descriptor['name'] = Resource.empty_descriptor(os.path.basename(descriptor['git']['url']), container)
+            descriptor['name'] = os.path.basename(descriptor['git']['url'])
+# TODO: Establish git resource naming policy.
+#            logger.warning("No value found for 'name' in 'artifacts:git'; using auto-generated value of %s" %
+#                           (descriptor['name']))
         super(_GitResource, self).__init__(descriptor)
         self.url = descriptor['git']['url']
         self.ref = descriptor['git']['ref']
@@ -318,6 +320,8 @@ class _GitResource(Resource):
 class _PlainResource(Resource):
 
     def __init__(self, descriptor, **kwargs):
+        if 'name' not in descriptor:
+            raise CekitError("Missing name attribute for plain artifact")
         super(_PlainResource, self).__init__(descriptor)
 
         # Set target based on name
