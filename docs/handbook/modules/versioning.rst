@@ -10,7 +10,6 @@ to control what exactly content should be part of the image.
 This section describes how module versions are handled in CEKit.
 
 .. seealso::
-
     If you want to learn best practices around module versioning, take a look at :doc:`module guidelines </guidelines/modules/versioning>`.
 
 Requirements
@@ -53,10 +52,22 @@ and
 
 are **exactly the same versions** for CEKit.
 
-Internal processing
-^^^^^^^^^^^^^^^^^^^^^^^^
+Handling modules with multiple versions
+-----------------------------------------
 
-Internally we use the `packaging module <https://packaging.pypa.io/en/latest/>`__ to convert the version
+.. seealso::
+    See :doc:`module descriptor documentation </descriptor/module>` and :ref:`image descriptor modules section documentation <descriptor/image:Modules>`
+    for more information how to reference modules.
+
+In case you do not specify version requirement in the module installation list in the image descriptor,
+CEKit will use **newest version to install**.
+
+Internally we use the `packaging module <https://packaging.pypa.io/en/latest/>`__ to convert the module version
 string into a `Version <https://packaging.pypa.io/en/latest/version/#packaging.version.Version>`__ object.
 If you use a :ref:`custom versioning scheme <guidelines/modules/versioning:Custom versioning scheme>`
 your version may be represented by a `LegacyVersion <https://packaging.pypa.io/en/latest/version/#packaging.version.LegacyVersion>`__ object.
+
+Parsed versions are compared according to `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`__ versioning scheme.
+
+:ref:`Custom versioning scheme <guidelines/modules/versioning:Custom versioning scheme>` in comparison with a PEP 440
+version will be **always older**.
