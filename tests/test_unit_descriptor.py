@@ -48,12 +48,14 @@ def test_volume():
     assert volume['path'] == '/tmp/a'
 
 
-def test_volume_name():
+def test_volume_name(caplog):
     volume = Volume(yaml.safe_load("""
     path: /tmp/a
 """))
     assert volume['name'] == 'a'
     assert volume['path'] == '/tmp/a'
+    assert "No value found for 'name' in 'volume'; using auto-generated value of 'a'" \
+           in caplog.text
 
 
 def test_osbs():
@@ -185,6 +187,8 @@ def test_image_artifacts(caplog):
     artifacts:
       - url: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
         md5: 080075877a66adf52b7f6d0013fa9730
+      - path: /foo/bar
+        md5: 080075877a66adf52b7f6d0013fa9730
     envs:
       - name: env1
         value: env1val
@@ -193,6 +197,20 @@ def test_image_artifacts(caplog):
     assert image['name'] == 'test/foo'
     assert type(image['labels'][0]) == Label
     assert image['labels'][0]['name'] == 'test'
-    assert "No value found for 'name' in artifacts; using auto-generated value of apache-tomcat-8.5.24.tar" \
+    assert "No value found for 'name' in '[artifacts][url]'; using auto-generated value of 'apache-tomcat-8.5.24.tar.gz'" \
+           in caplog.text
+    assert "No value found for 'name' in '[artifacts][path]'; using auto-generated value of 'bar'" \
            in caplog.text
 
+
+def test_image_plain_artifacts(caplog):
+    with pytest.raises(CekitError) as excinfo:
+            Image(yaml.safe_load("""
+            from: foo
+            name: test/foo
+            version: 1.9
+            artifacts:
+              - target: jolokia.jar
+                md5: 080075877a66adf52b7f6d0013fa9730
+            """), 'foo')
+    assert "Missing name attribute for plain artifact" in excinfo.value.message
