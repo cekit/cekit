@@ -27,8 +27,8 @@ class Execute(Descriptor):
         descriptor['module_name'] = module_name
 
         if 'name' not in descriptor:
-            logger.warning("No value found for 'name'; using auto-generated value of %s/%s" %
-                           (module_name, descriptor['script']))
+            logger.warning("No value found for 'name'; using auto-generated value of {}/{}".
+                           format(module_name, descriptor['script']))
             descriptor['name'] = "%s/%s" % (module_name,
                                             descriptor['script'])
 
