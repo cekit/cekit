@@ -73,7 +73,7 @@ class OSBSGenerator(Generator):
         fetch_artifacts_url = []
 
         for artifact in self.image.all_artifacts:
-            logger.info("Preparing artifact %s" % artifact['name'])
+            logger.info("Preparing artifact {}".format(artifact['name']))
 
             if isinstance(artifact, _PlainResource) and \
                config.get('common', 'redhat'):
@@ -84,8 +84,8 @@ class OSBSGenerator(Generator):
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
                     logger.debug("Artifact added to fetch-artifacts-url.yaml")
                 except:
-                    logger.warning(
-                        "Plain artifact %s could not be found in Brew, trying to handle it using lookaside cache" % artifact['name'])
+                    logger.warning("Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".
+                                   format(artifact['name']))
                     artifact.copy(target_dir)
                     # TODO: This is ugly, rewrite this!
                     artifact['lookaside'] = True

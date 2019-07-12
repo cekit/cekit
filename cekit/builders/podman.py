@@ -37,8 +37,7 @@ class PodmanBuilder(Builder):
             cmd.append('--pull-always')
 
         # Custom tags for the container image
-        LOGGER.debug("Building image with tags: '%s'" %
-                     "', '".join(tags))
+        LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
 
         for tag in tags:
             cmd.extend(["-t", tag])
@@ -47,12 +46,11 @@ class PodmanBuilder(Builder):
 
         cmd.append(os.path.join(self.target, 'image'))
 
-        LOGGER.debug("Running Podman build: '%s'" % " ".join(cmd))
+        LOGGER.debug("Running Podman build: '{}'".format(" ".join(cmd)))
 
         try:
             subprocess.check_call(cmd)
 
-            LOGGER.info("Image built and available under following tags: %s"
-                        % ", ".join(tags))
+            LOGGER.info("Image built and available under following tags: {}".format(", ".join(tags)))
         except:
             raise CekitError("Image build failed, see logs above.")

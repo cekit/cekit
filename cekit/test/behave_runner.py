@@ -33,7 +33,7 @@ class BehaveTestRunner(object):
     def run(self, image, run_tags, test_names):
         """Run test suite"""
         test_path = os.path.join(self.target, 'test')
-        logger.debug("Running behave in '%s'." % test_path)
+        logger.debug("Running behave in '{}'.".format(test_path))
         args = [test_path,
                 '--junit',
                 '--junit-directory', 'results',

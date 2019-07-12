@@ -29,8 +29,7 @@ class Execute(Descriptor):
         if 'name' not in descriptor:
             logger.warning("No value found for 'name'; using auto-generated value of {}/{}".
                            format(module_name, descriptor['script']))
-            descriptor['name'] = "%s/%s" % (module_name,
-                                            descriptor['script'])
+            descriptor['name'] = "%s/%s" % (module_name, descriptor['script'])
 
     @property
     def name(self):

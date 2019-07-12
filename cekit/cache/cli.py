@@ -55,7 +55,7 @@ def clear():
     CacheCli.prepare().clear()
 
 
-class CacheCli():
+class CacheCli:
     @staticmethod
     def prepare():
         """ Returns an initialized object of CacheCli """

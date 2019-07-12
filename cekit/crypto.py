@@ -25,13 +25,13 @@ def check_sum(target, algorithm, expected, name=None):
     """
     if not name:
         name = target
-    logger.debug("Checking '%s' %s hash..." % (target, algorithm))
+    logger.debug("Checking '{}' {} hash...".format(target, algorithm))
 
     checksum = get_sum(target, algorithm)
 
     if checksum.lower() != expected.lower():
-        logger.error("The %s computed for the '%s' file ('%s') doesn't match the '%s' value"
-                     % (algorithm, target, checksum, expected))
+        logger.error("The {} computed for the '{}' file ('{}') doesn't match the '{}' value".
+                     format(algorithm, target, checksum, expected))
         return False
 
     logger.debug("Hash is correct.")

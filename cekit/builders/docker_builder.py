@@ -151,7 +151,7 @@ class DockerBuilder(Builder):
         return docker_layer_ids[-1]
 
     def _squash(self, docker_client, image_id):
-        LOGGER.info("Squashing image %s..." % image_id)
+        LOGGER.info("Squashing image {}...".format(image_id))
 
         squash = Squash(docker=docker_client,
                         log=LOGGER,
@@ -233,7 +233,7 @@ class DockerBuilder(Builder):
             tags = self.generator.get_tags()
 
         LOGGER.info("Building container image using Docker...")
-        LOGGER.debug("Building image with tags: '%s'" % "', '".join(tags))
+        LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
 
         docker_client = self._docker_client()
 
@@ -247,5 +247,4 @@ class DockerBuilder(Builder):
         # Tag the image
         self._tag(docker_client, image_id, tags)
 
-        LOGGER.info("Image built and available under following tags: %s" %
-                    ", ".join(tags))
+        LOGGER.info("Image built and available under following tags: {}".format(", ".join(tags)))

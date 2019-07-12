@@ -146,7 +146,7 @@ class Repository(Descriptor):
 
     def fetch(self, target_dir):
         if not self._descriptor['url']['repository']:
-            raise CekitError("Repository not defined for '%s'." % (self.name))
+            raise CekitError("Repository not defined for '{}'.".format(self.name))
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         Resource({'url': self._descriptor['url']['repository']}) \

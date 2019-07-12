@@ -38,7 +38,7 @@ class BehaveTestCollector(object):
 
     def _fetch_steps(self, version, url):
         """ Method fetches common steps """
-        logger.info("Fetching common steps from '%s'." % url)
+        logger.info("Fetching common steps from '{}'.".format(url))
         cmd = ['git',
                'clone',
                '--depth',
@@ -47,7 +47,7 @@ class BehaveTestCollector(object):
                self.test_dir,
                '-b',
                'v%s' % version]
-        logger.debug("Running '%s'" % ' '.join(cmd))
+        logger.debug("Running '{}'".format(' '.join(cmd)))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
     def collect(self, version, url):
@@ -83,8 +83,7 @@ class BehaveTestCollector(object):
                                       obj_name,
                                       name,
                                       target_dir)
-                logger.debug("Collecting tests from '%s' into '%s'" % (obj_path,
-                                                                       target))
+                logger.debug("Collecting tests from '{}' into '{}'".format(obj_path, target))
                 if obj_name == 'features':
                     self.collected = True
                 shutil.copytree(obj_path, target)
