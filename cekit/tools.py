@@ -124,8 +124,8 @@ def get_brew_url(md5):
             group_id.replace('.', '/') + '/' + \
             artifact_id + '/' + version + '/' + filename
     except subprocess.CalledProcessError as ex:
-        LOGGER.error("Can't fetch artifacts details from brew: '%s'." %
-                     ex.output)
+        LOGGER.error("Can't fetch artifacts details from brew: '{}'.".format(
+                     ex.output))
         raise ex
     return url
 

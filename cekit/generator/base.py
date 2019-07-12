@@ -52,7 +52,7 @@ class Generator(object):
         if overrides:
             for override in overrides:
                 # TODO: If the overrides is provided as text, why do we try to get path to it?
-                LOGGER.debug("Loading override '%s'" % (override))
+                LOGGER.debug("Loading override '{}'".format(override))
                 self._overrides.append(Overrides(tools.load_descriptor(
                     override), os.path.dirname(os.path.abspath(override))))
 
@@ -152,7 +152,7 @@ class Generator(object):
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
         for repo in self.image.modules.repositories:
-            LOGGER.debug("Downloading module repository: '%s'" % (repo.name))
+            LOGGER.debug("Downloading module repository: '{}'".format(repo.name))
             repo.copy(base_dir)
             self.load_repository(os.path.join(base_dir, repo.target_file_name()))
 
@@ -166,7 +166,7 @@ class Generator(object):
                 module = Module(tools.load_descriptor(module_descriptor_path),
                                 modules_dir,
                                 os.path.dirname(module_descriptor_path))
-                LOGGER.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
+                LOGGER.debug("Adding module '{}', path: '{}'".format(module.name, module.path))
                 self._module_registry.add_module(module)
 
     def get_tags(self):
@@ -183,13 +183,12 @@ class Generator(object):
         target = os.path.join(self.target, 'image', 'modules')
         for module in self.image.modules.install:
             module = self._module_registry.get_module(module.name, module.version)
-            LOGGER.debug("Copying module '%s' required by '%s'."
-                         % (module.name, self.image.name))
+            LOGGER.debug("Copying module '{}' required by '{}'.".format(module.name, self.image.name))
 
             dest = os.path.join(target, module.name)
 
             if not os.path.exists(dest):
-                LOGGER.debug("Copying module '%s' to: '%s'" % (module.name, dest))
+                LOGGER.debug("Copying module '{}' to: '{}'".format(module.name, dest))
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
@@ -420,9 +419,8 @@ class Generator(object):
             "Loading configuration for repository: '{}' from 'repositories'.".format(repo['name']))
 
         if 'id' in repo:
-            LOGGER.warning("Repository '%s' is defined as plain. It must be available "
-                           "inside the image as Cekit will not inject it."
-                           % repo['name'])
+            LOGGER.warning("Repository '{}' is defined as plain. It must be available "
+                           "inside the image as Cekit will not inject it.".format(repo['name']))
             return False
 
         if 'content_sets' in repo:

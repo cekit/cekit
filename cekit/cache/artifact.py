@@ -11,7 +11,7 @@ from cekit.errors import CekitError
 CONFIG = Config()
 
 
-class ArtifactCache():
+class ArtifactCache:
     """
     Represents Artifact cache for cekit. All cached resource are saved into cache subdirectory
     of a Cekit 'work_dir'. All files are stored by random generated uuid with an yaml file

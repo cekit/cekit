@@ -95,10 +95,10 @@ class Resource(Descriptor):
         if os.path.isdir(target):
             target = os.path.join(target, self.target_file_name())
 
-        logger.info("Preparing resource '%s'" % (self.name))
+        logger.info("Preparing resource '{}'".format(self.name))
 
         if os.path.exists(target) and self.__verify(target):
-            logger.debug("Local resource '%s' exists and is valid" % self.name)
+            logger.debug("Local resource '{}' exists and is valid".format(self.name))
             return target
 
         cached_resource = self.cache.cached(self)
@@ -106,7 +106,7 @@ class Resource(Descriptor):
         if cached_resource:
             shutil.copy(cached_resource['cached_path'],
                         target)
-            logger.info("Using cached artifact '%s'." % self.name)
+            logger.info("Using cached artifact '{}'.".format(self.name))
 
         else:
             try:
@@ -114,7 +114,7 @@ class Resource(Descriptor):
                 cached_resource = self.cache.get(self)
                 shutil.copy(cached_resource['cached_path'],
                             target)
-                logger.info("Using cached artifact '%s'." % self.name)
+                logger.info("Using cached artifact '{}'.".format(self.name))
             except ValueError:
                 return self.guarded_copy(target)
 
@@ -122,8 +122,8 @@ class Resource(Descriptor):
         try:
             self._copy_impl(target)
         except Exception as ex:
-            logger.warning("Cekit is not able to fetch resource '%s' automatically. "
-                           "Please use cekit-cache command to add this artifact manually." % self.name)
+            logger.warning("Cekit is not able to fetch resource '{}' automatically. "
+                           "Please use cekit-cache command to add this artifact manually.".format(self.name))
 
             if self.description:
                 logger.info(self.description)
@@ -141,8 +141,7 @@ class Resource(Descriptor):
     def __verify(self, target):
         """ Checks all defined check_sums for an aritfact """
         if not set(SUPPORTED_HASH_ALGORITHMS).intersection(self):
-            logger.debug("Artifact '%s' lacks any checksum definition."
-                         % self.name)
+            logger.debug("Artifact '{}' lacks any checksum definition.".format(self.name))
             return False
         if not Resource.CHECK_INTEGRITY:
             logger.info("Integrity checking disabled, skipping verification.")
@@ -181,16 +180,16 @@ class Resource(Descriptor):
         if not url:
             raise CekitError("Artifact %s cannot be downloaded, no URL provided" % self.name)
 
-        logger.debug("Downloading from '%s' as %s" % (url, destination))
+        logger.debug("Downloading from '{}' as {}".format(url, destination))
 
-        parsedUrl = urlparse(url)
+        parsed_url = urlparse(url)
 
-        if parsedUrl.scheme == 'file' or not parsedUrl.scheme:
-            if os.path.isdir(parsedUrl.path):
-                shutil.copytree(parsedUrl.path, destination)
+        if parsed_url.scheme == 'file' or not parsed_url.scheme:
+            if os.path.isdir(parsed_url.path):
+                shutil.copytree(parsed_url.path, destination)
             else:
-                shutil.copy(parsedUrl.path, destination)
-        elif parsedUrl.scheme in ['http', 'https']:
+                shutil.copy(parsed_url.path, destination)
+        elif parsed_url.scheme in ['http', 'https']:
             verify = config.get('common', 'ssl_verify')
             if str(verify).lower() == 'false':
                 verify = False
@@ -209,7 +208,7 @@ class Resource(Descriptor):
             try:
                 with open(destination, 'wb') as f:
                     while True:
-                        chunk = res.read(1048576) # 1 MB
+                        chunk = res.read(1048576)  # 1 MB
                         if not chunk:
                             break
                         f.write(chunk)
@@ -222,7 +221,7 @@ class Resource(Descriptor):
 
                 raise
         else:
-            raise CekitError("Unsupported URL scheme: %s" % (url))
+            raise CekitError("Unsupported URL scheme: {}".format(url))
 
 
 class _PathResource(Resource):
@@ -261,8 +260,7 @@ class _PathResource(Resource):
                                  "source path does not exist. "
                                  "Make sure you provided correct path" % self.name)
 
-        logger.debug("Copying repository from '%s' to '%s'." % (self.path,
-                                                                target))
+        logger.debug("Copying repository from '{}' to '{}'.".format(self.path, target))
         if os.path.isdir(self.path):
             shutil.copytree(self.path, target)
         else:
@@ -285,7 +283,7 @@ class _UrlResource(Resource):
         try:
             self._download_file(self.url, target)
         except:
-            logger.debug("Cannot hit artifact: '%s' via cacher, trying directly." % self.name)
+            logger.debug("Cannot hit artifact: '{}' via cache, trying directly.".format(self.name))
             self._download_file(self.url, target, use_cache=False)
         return target
 
@@ -311,7 +309,7 @@ class _GitResource(Resource):
     def _copy_impl(self, target):
         cmd = ['git', 'clone', '--depth', '1', self.url, target, '-b',
                self.ref]
-        logger.debug("Running '%s'" % ' '.join(cmd))
+        logger.debug("Running '{}'".format(' '.join(cmd)))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         return target
 

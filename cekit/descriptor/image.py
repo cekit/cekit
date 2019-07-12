@@ -334,13 +334,12 @@ class Image(Descriptor):
         module_overrides = self._image_overrides['modules']
         artifact_overrides = self._image_overrides['artifacts']
         for to_install in to_install_list:
-            logger.debug("Preparing module '%s' required by '%s'."
-                         % (to_install.name, source.name))
+            logger.debug("Preparing module '{}' required by '{}'.".format(to_install.name, source.name))
             override = module_overrides.get(to_install.name, None)
             if override:
                 if override.version != to_install.version:
-                    logger.debug("Module '%s:%s' being overridden with '%s:%s'."
-                                 % (to_install.name, to_install.version, override.name, override.version))
+                    logger.debug("Module '{}:{}' being overridden with '{}:{}'.".format
+                                 (to_install.name, to_install.version, override.name, override.version))
                 # apply module override
                 to_install = override
 
@@ -349,14 +348,14 @@ class Image(Descriptor):
             if existing:
                 # check for a version conflict
                 if existing.version != to_install.version:
-                    logger.warning("Module version inconsistency for %s: %s requested, but %s will be used." % (
+                    logger.warning("Module version inconsistency for {}: {} requested, but {} will be used.".format(
                         to_install.name, to_install.version, existing.version))
                 continue
 
             module = module_registry.get_module(to_install.name, to_install.version)
             if not module:
-                raise CekitError("Could not locate module %s version %s.  Please verify that it is included in one of the specified module repositories." % (
-                    to_install.name, to_install.version))
+                raise CekitError("Could not locate module %s version %s. Please verify that it is included in one of the "
+                                 "specified module repositories." % (to_install.name, to_install.version))
 
             # collect artifacts and apply overrides
             module_artifacts = Image._to_dict(module.artifacts)
