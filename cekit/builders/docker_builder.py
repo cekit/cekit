@@ -49,7 +49,7 @@ class DockerBuilder(Builder):
         super(DockerBuilder, self).__init__('docker', common_params, params)
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['python-docker'] = {
@@ -59,12 +59,13 @@ class DockerBuilder(Builder):
                 'package': 'python3-docker'}
         }
 
-        deps['docker-squash'] = {
-            'library': 'docker_squash',
-            'fedora': {
+        if params is not None and not params.no_squash:
+            deps['docker-squash'] = {
+                'library': 'docker_squash',
+                'fedora': {
                 'package': 'python3-docker-squash'
+                }
             }
-        }
 
         return deps
 

@@ -51,7 +51,7 @@ class OSBSBuilder(Builder):
             self._koji_url = 'https://koji.fedoraproject.org/koji'
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         if CONFIG.get('common', 'redhat'):

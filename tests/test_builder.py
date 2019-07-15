@@ -712,3 +712,32 @@ def test_buildah_builder_run_with_generator(mocker):
                                         '-t', 'foo:1.9',
                                         '-t', 'foo:latest',
                                         'something/image'])
+
+
+def test_docker_squashing_disabled_dependencies(mocker, tmpdir, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    result = "Required CEKit library 'docker-squash' was found as a 'docker_squash' module"
+    image_descriptor = {
+        'schema_version': 1,
+        'from': 'centos:latest',
+        'name': 'test/image',
+        'version': '1.0',
+        'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}]
+    }
+
+    builder = create_builder_object(
+        mocker, 'docker', Map
+        ({'no_squash': True, 'tags': ['foo', 'bar']}), Map({'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)}))
+    assert builder.params.no_squash is True
+    builder.prepare()
+    builder.before_build()
+    assert result not in caplog.text
+
+    builder = create_builder_object(
+        mocker, 'docker', Map
+        ({'tags': ['foo', 'bar']}), Map({'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)}))
+    assert builder.params.no_squash is None
+    builder.prepare()
+    builder.before_build()
+    assert result in caplog.text

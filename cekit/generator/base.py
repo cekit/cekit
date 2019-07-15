@@ -59,7 +59,7 @@ class Generator(object):
         LOGGER.info("Initializing image descriptor...")
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['odcs-client'] = {

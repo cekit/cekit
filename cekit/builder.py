@@ -91,7 +91,7 @@ class Builder(Command):
     def before_generate(self):
         # Handle dependencies for selected generator, if any
         LOGGER.debug("Checking CEKit generate dependencies...")
-        self.dependency_handler.handle(self.generator)
+        self.dependency_handler.handle(self.generator, self.params)
 
         self.generator.init()
 
@@ -100,4 +100,4 @@ class Builder(Command):
 
     def before_build(self):
         LOGGER.debug("Checking CEKit build dependencies...")
-        self.dependency_handler.handle(self)
+        self.dependency_handler.handle(self, self.params)

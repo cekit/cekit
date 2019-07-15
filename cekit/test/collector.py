@@ -18,7 +18,7 @@ class BehaveTestCollector(object):
         shutil.rmtree(self.test_dir, ignore_errors=True)
         os.makedirs(self.test_dir)
 
-    def dependencies(self):
+    def dependencies(self, params=None):
         deps = {}
 
         loader_file = os.path.join(self.test_dir, "loader.py")
@@ -28,7 +28,7 @@ class BehaveTestCollector(object):
                 sys.path.append(self.test_dir)
                 from loader import StepsLoader
                 sys.path.remove(self.test_dir)
-                return StepsLoader.dependencies()
+                return StepsLoader.dependencies(params)
             except Exception as e:
                 logger.warning(
                     "Fetching information about test dependencies failed, running tests may not be possible!")

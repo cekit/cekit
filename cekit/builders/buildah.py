@@ -15,7 +15,7 @@ class BuildahBuilder(Builder):
         super(BuildahBuilder, self).__init__('buildah', common_params, params)
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['buildah'] = {

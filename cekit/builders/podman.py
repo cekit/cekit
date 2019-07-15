@@ -15,7 +15,7 @@ class PodmanBuilder(Builder):
         super(PodmanBuilder, self).__init__('podman', common_params, params)
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['podman'] = {

@@ -34,7 +34,7 @@ class BehaveTester(Command):
 
         # Handle dependencies for selected generator, if any
         LOGGER.debug("Checking CEKit generate dependencies...")
-        self.dependency_handler.handle(self.generator)
+        self.dependency_handler.handle(self.generator, self.params)
 
         self.generator.init()
 
@@ -45,9 +45,9 @@ class BehaveTester(Command):
         if self.collected:
             # Handle test dependencies, if any
             LOGGER.debug("Checking CEKit test collector dependencies...")
-            self.dependency_handler.handle(self.test_collector)
+            self.dependency_handler.handle(self.test_collector, self.params)
             LOGGER.debug("Checking CEKit test runner dependencies...")
-            self.dependency_handler.handle(self.test_runner)
+            self.dependency_handler.handle(self.test_runner, self.params)
 
     def run(self):
         if not self.collected:

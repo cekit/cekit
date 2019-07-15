@@ -364,6 +364,7 @@ class DependencyHandler(object):
         """
         Handles dependencies from selected object. If the object has 'dependencies' method,
         it will be called to retrieve a set of dependencies to check for.
+        :param params:
         """
 
         if not o:
@@ -382,5 +383,5 @@ class DependencyHandler(object):
             # Check if we have a method
             if callable(dependencies):
                 # Execute that method to get list of dependencies and try to handle them
-                self._handle_dependencies(o.dependencies())
+                self._handle_dependencies(o.dependencies(params))
                 return
