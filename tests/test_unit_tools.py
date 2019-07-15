@@ -1,6 +1,7 @@
 import logging
 import pytest
 import subprocess
+import sys
 import yaml
 
 from contextlib import contextmanager
@@ -550,3 +551,25 @@ def test_dependency_handler_check_for_executable_with_executable_fail_with_packa
 
         with pytest.raises(CekitError, match=r"^CEKit dependency: 'xyz' was not found, please provide the 'xyz-aaa' executable. To satisfy this requirement you can install the 'package-xyz' package.$"):
             handler._check_for_executable('xyz', 'xyz-aaa', 'package-xyz')
+
+
+def test_handle_core_dependencies_no_certifi(mocker, caplog):
+    sys.modules['certifi'] = None
+
+    with mocked_dependency_handler(mocker) as handler:
+        handler.handle_core_dependencies()
+
+    assert "The certifi library (https://certifi.io/) was found, depending on the operating system configuration this may result in certificate validation issues" not in caplog.text
+
+
+def test_handle_core_dependencies_with_certifi(mocker, caplog):
+    mock_certifi = mocker.Mock()
+    mock_certifi.where.return_value = 'a/path.pem'
+
+    sys.modules['certifi'] = mock_certifi
+
+    with mocked_dependency_handler(mocker) as handler:
+        handler.handle_core_dependencies()
+
+    assert "The certifi library (https://certifi.io/) was found, depending on the operating system configuration this may result in certificate validation issues" in caplog.text
+    assert "Certificate Authority (CA) bundle in use: 'a/path.pem'" in caplog.text

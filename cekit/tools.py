@@ -352,6 +352,14 @@ class DependencyHandler(object):
         self._handle_dependencies(
             DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
 
+        try:
+            import certifi  # pylint: disable=unused-import
+            LOGGER.warning(("The certifi library (https://certifi.io/) was found, depending on the operating " +
+                            "system configuration this may result in certificate validation issues"))
+            LOGGER.warning("Certificate Authority (CA) bundle in use: '{}'".format(certifi.where()))
+        except ImportError:
+            pass
+
     def handle(self, o):
         """
         Handles dependencies from selected object. If the object has 'dependencies' method,
