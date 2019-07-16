@@ -28,8 +28,8 @@ CONFIG = Config()
 class OSBSBuilder(Builder):
     """Class representing OSBS builder."""
 
-    def __init__(self, common_params, params):
-        super(OSBSBuilder, self).__init__('osbs', common_params, params)
+    def __init__(self, params):
+        super(OSBSBuilder, self).__init__('osbs', params)
 
         self._rhpkg_set_url_repos = []
         self.dist_git = None

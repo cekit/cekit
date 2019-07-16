@@ -11,8 +11,8 @@ LOGGER = logging.getLogger('cekit')
 class PodmanBuilder(Builder):
     """This class represents podman builder in build mode."""
 
-    def __init__(self, common_params, params):
-        super(PodmanBuilder, self).__init__('podman', common_params, params)
+    def __init__(self, params):
+        super(PodmanBuilder, self).__init__('podman', params)
 
     @staticmethod
     def dependencies(params=None):

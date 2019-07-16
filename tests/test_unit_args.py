@@ -4,11 +4,10 @@ import pytest
 from click.testing import CliRunner
 
 from cekit.cli import cli
+from cekit.tools import merge_two_dicts
 
 
-
-
-def get_class_by_name(clazz):
+def _get_class_by_name(clazz):
     module_name, class_name = clazz.rsplit('.', 1)
 
     module = importlib.import_module(module_name)
@@ -170,10 +169,10 @@ def test_args_command(mocker, args, clazz, common_params, params):
     cekit_class.return_value = cekit_object
     CliRunner().invoke(cli, args, catch_exceptions=False)
 
-    cls = get_class_by_name(clazz)
+    cls = _get_class_by_name(clazz)
 
     cekit_class.assert_called_once_with(common_params)
-    cekit_object.run.assert_called_once_with(cls, params)
+    cekit_object.run.assert_called_once_with(cls, merge_two_dicts(params, common_params))
 
 
 def test_args_not_valid_command():

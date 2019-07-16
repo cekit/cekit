@@ -236,8 +236,7 @@ def top_context(ctx):
 def prepare_params(ctx):
     main_context = top_context(ctx)
     common_params = Map(main_context.params)
-
-    params = Map({})
+    params = Map(main_context.params)
 
     if ctx.parent:
         params.update(ctx.parent.params)
@@ -336,7 +335,7 @@ class Cekit(object):
         self.configure()
         self.cleanup()
 
-        command = clazz(self.params, params)
+        command = clazz(params)
 
         try:
             command.execute()

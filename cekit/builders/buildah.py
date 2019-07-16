@@ -11,8 +11,8 @@ LOGGER = logging.getLogger('cekit')
 class BuildahBuilder(Builder):
     """This class represents buildah builder in build-using-dockerfile mode."""
 
-    def __init__(self, common_params, params):
-        super(BuildahBuilder, self).__init__('buildah', common_params, params)
+    def __init__(self, params):
+        super(BuildahBuilder, self).__init__('buildah', params)
 
     @staticmethod
     def dependencies(params=None):

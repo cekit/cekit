@@ -45,8 +45,8 @@ ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
-    def __init__(self, common_params, params):
-        super(DockerBuilder, self).__init__('docker', common_params, params)
+    def __init__(self, params):
+        super(DockerBuilder, self).__init__('docker', params)
 
     @staticmethod
     def dependencies(params=None):
