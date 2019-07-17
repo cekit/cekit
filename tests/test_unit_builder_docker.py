@@ -9,7 +9,9 @@ import pytest
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.builders.docker_builder import DockerBuilder
-from cekit.tools import Map, merge_two_dicts
+from cekit.tools import Map
+from tests.utils import merge_two_dicts
+
 
 @pytest.fixture(autouse=True)
 def reset_config():

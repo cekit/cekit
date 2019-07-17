@@ -11,7 +11,7 @@ from cekit.descriptor import Image
 from cekit.errors import CekitError
 from cekit.generator.docker import DockerGenerator
 from cekit.tools import Map
-from cekit.tools import merge_two_dicts
+from tests.utils import merge_two_dicts
 
 try:
     from unittest.mock import call

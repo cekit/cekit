@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 
 from cekit.cli import cli
-from cekit.tools import merge_two_dicts
+from tests.utils import merge_two_dicts
 
 
 def _get_class_by_name(clazz):
