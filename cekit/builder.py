@@ -39,12 +39,11 @@ class Builder(Command):
     Class representing generic builder - if it's instantiated it returns proper builder
     """
 
-    def __init__(self, build_engine, common_params, params):
-        self.common_params = common_params
+    def __init__(self, build_engine, params):
         self.params = params
         self.build_engine = build_engine
 
-        self.target = self.common_params.target
+        self.target = self.params.target
         self.generator = None
 
         super(Builder, self).__init__(self.build_engine, Command.TYPE_BUILDER)
@@ -76,8 +75,8 @@ class Builder(Command):
         else:
             raise CekitError("Unsupported generator type: '{}'".format(self.build_engine))
 
-        self.generator = generator_impl(self.common_params.descriptor,
-                                        self.common_params.target,
+        self.generator = generator_impl(self.params.descriptor,
+                                        self.params.target,
                                         self.params.overrides)
 
         # These should always come last
@@ -91,7 +90,7 @@ class Builder(Command):
     def before_generate(self):
         # Handle dependencies for selected generator, if any
         LOGGER.debug("Checking CEKit generate dependencies...")
-        self.dependency_handler.handle(self.generator)
+        self.dependency_handler.handle(self.generator, self.params)
 
         self.generator.init()
 
@@ -100,4 +99,4 @@ class Builder(Command):
 
     def before_build(self):
         LOGGER.debug("Checking CEKit build dependencies...")
-        self.dependency_handler.handle(self)
+        self.dependency_handler.handle(self, self.params)

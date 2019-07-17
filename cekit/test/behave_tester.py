@@ -14,27 +14,25 @@ class BehaveTester(Command):
     Tester implementation for the Behave framework
     """
 
-    def __init__(self, common_params, params):
+    def __init__(self, params):
         super(BehaveTester, self).__init__('behave', Command.TYPE_TESTER)
 
-        self.common_params = common_params
         self.params = params
         self.collected = False
 
-        self.test_collector = BehaveTestCollector(os.path.dirname(self.common_params.descriptor),
-                                            self.common_params.target)
-        self.test_runner = BehaveTestRunner(self.common_params.target)
+        self.test_collector = BehaveTestCollector(os.path.dirname(self.params.descriptor), self.params.target)
+        self.test_runner = BehaveTestRunner(self.params.target)
 
         self.generator = None
 
     def prepare(self):
-        self.generator = Generator(self.common_params.descriptor,
-                                   self.common_params.target,
+        self.generator = Generator(self.params.descriptor,
+                                   self.params.target,
                                    self.params.overrides)
 
         # Handle dependencies for selected generator, if any
         LOGGER.debug("Checking CEKit generate dependencies...")
-        self.dependency_handler.handle(self.generator)
+        self.dependency_handler.handle(self.generator, self.params)
 
         self.generator.init()
 
@@ -45,9 +43,9 @@ class BehaveTester(Command):
         if self.collected:
             # Handle test dependencies, if any
             LOGGER.debug("Checking CEKit test collector dependencies...")
-            self.dependency_handler.handle(self.test_collector)
+            self.dependency_handler.handle(self.test_collector, self.params)
             LOGGER.debug("Checking CEKit test runner dependencies...")
-            self.dependency_handler.handle(self.test_runner)
+            self.dependency_handler.handle(self.test_runner, self.params)
 
     def run(self):
         if not self.collected:

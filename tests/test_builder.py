@@ -11,6 +11,7 @@ from cekit.descriptor import Image
 from cekit.errors import CekitError
 from cekit.generator.docker import DockerGenerator
 from cekit.tools import Map
+from tests.utils import merge_two_dicts
 
 try:
     from unittest.mock import call
@@ -19,9 +20,6 @@ except ImportError:
 
 from cekit.builders.docker_builder import DockerBuilder
 from cekit.config import Config
-
-
-config = Config()
 
 
 @pytest.fixture(autouse=True)
@@ -167,7 +165,7 @@ def create_builder_object(mocker, builder, params, common_params={'target': 'som
 
     mocker.patch('cekit.tools.decision')
 
-    builder = BuilderImpl(Map(common_params), Map(params))
+    builder = BuilderImpl(Map(merge_two_dicts(common_params, params)))
     builder.dist_git_dir = '/tmp'
     builder.dist_git = DistGitMock()
     builder.artifacts = []
@@ -458,7 +456,7 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
 
 def test_docker_builder_defaults():
-    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     assert builder.params.tags == ['foo', 'bar']
 
@@ -526,7 +524,7 @@ def test_osbs_dist_git_sync_NOT_called_when_dry_run_set(mocker, tmpdir):
 
 
 def test_docker_build_default_tags(mocker):
-    builder = DockerBuilder(Map({'target': 'something'}), Map())
+    builder = DockerBuilder(Map({'target': 'something'}))
 
     docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
     docker_client = docker_client_class.return_value
@@ -547,7 +545,7 @@ def test_docker_build_default_tags(mocker):
 
 
 def test_docker_squashing_enabled(mocker):
-    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash == None
@@ -566,8 +564,7 @@ def test_docker_squashing_enabled(mocker):
 
 
 def test_docker_squashing_disabled(mocker):
-    builder = DockerBuilder(Map({'target': 'something'}), Map(
-        {'no_squash': True, 'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'no_squash': True, 'tags': ['foo', 'bar']})))
 
     assert builder.params.no_squash == True
 
@@ -585,7 +582,7 @@ def test_docker_squashing_disabled(mocker):
 
 
 def test_docker_squashing_parameters(mocker):
-    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash == None
@@ -712,3 +709,32 @@ def test_buildah_builder_run_with_generator(mocker):
                                         '-t', 'foo:1.9',
                                         '-t', 'foo:latest',
                                         'something/image'])
+
+
+def test_docker_squashing_disabled_dependencies(mocker, tmpdir, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    result = "Required CEKit library 'docker-squash' was found as a 'docker_squash' module"
+    image_descriptor = {
+        'schema_version': 1,
+        'from': 'centos:latest',
+        'name': 'test/image',
+        'version': '1.0',
+        'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}]
+    }
+
+    builder = create_builder_object(
+        mocker, 'docker', Map
+        ({'no_squash': True, 'tags': ['foo', 'bar']}), Map({'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)}))
+    assert builder.params.no_squash is True
+    builder.prepare()
+    builder.before_build()
+    assert result not in caplog.text
+
+    builder = create_builder_object(
+        mocker, 'docker', Map
+        ({'tags': ['foo', 'bar']}), Map({'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)}))
+    assert builder.params.no_squash is None
+    builder.prepare()
+    builder.before_build()
+    assert result in caplog.text

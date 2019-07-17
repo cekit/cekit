@@ -18,7 +18,7 @@ class BehaveTestRunner(object):
         self.target = os.path.abspath(target)
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['python-behave'] = {

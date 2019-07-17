@@ -3,9 +3,6 @@
 # pylint: disable=protected-access
 
 import logging
-import os
-
-from contextlib import contextmanager
 
 import pytest
 
@@ -13,8 +10,7 @@ from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.builders.docker_builder import DockerBuilder
 from cekit.tools import Map
-
-config = Config()
+from tests.utils import merge_two_dicts
 
 
 @pytest.fixture(autouse=True)
@@ -97,7 +93,7 @@ def test_docker_client_build(mocker, caplog):
     docker_client_build = mocker.patch.object(
         docker_client, 'build', return_value=docker_success_output)
 
-    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
     builder.generator = Map({'image': {'from': 'FROM'}})
     builder.run()
 
@@ -113,7 +109,7 @@ def test_docker_client_build(mocker, caplog):
 def test_docker_client_build_with_failure(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
     squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
@@ -139,7 +135,7 @@ def test_docker_client_build_with_failure(mocker, caplog):
 
 # https://github.com/cekit/cekit/issues/508
 def test_docker_tag(mocker):
-    builder = DockerBuilder(Map({'target': 'something'}), Map({'tags': ['foo', 'bar']}))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     docker_client_mock = mocker.Mock()
 

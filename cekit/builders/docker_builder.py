@@ -45,11 +45,11 @@ ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
-    def __init__(self, common_params, params):
-        super(DockerBuilder, self).__init__('docker', common_params, params)
+    def __init__(self, params):
+        super(DockerBuilder, self).__init__('docker', params)
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['python-docker'] = {
@@ -59,12 +59,13 @@ class DockerBuilder(Builder):
                 'package': 'python3-docker'}
         }
 
-        deps['docker-squash'] = {
-            'library': 'docker_squash',
-            'fedora': {
-                'package': 'python3-docker-squash'
+        if params is not None and not params.no_squash:
+            deps['docker-squash'] = {
+                'library': 'docker_squash',
+                'fedora': {
+                    'package': 'python3-docker-squash'
+                }
             }
-        }
 
         return deps
 

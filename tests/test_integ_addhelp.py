@@ -11,7 +11,6 @@ from click.testing import CliRunner
 from cekit.tools import Chdir
 from cekit.cli import cli
 
-
 image_descriptor = {
     'schema_version': 1,
     'from': 'centos:latest',
@@ -28,8 +27,6 @@ template_teststr = "This string does not occur in the default help.md template."
 def check_file_text(image_dir, match, filename="Dockerfile"):
     with open(os.path.join(image_dir, 'target', 'image', filename), 'r') as fd:
         file_content = fd.read()
-       # print("MATCH:\n{}".format(match))
-       # print("FILE:\n{}".format(file_content))
         if match in file_content:
             return True
     return False
@@ -49,13 +46,6 @@ def run_cekit(image_dir, args=None, descriptor=None):
         result = CliRunner().invoke(cli, args, catch_exceptions=False)
         assert result.exit_code == 0
         return result
-
-
-def setup_config(tmpdir, contents):
-    p = str(tmpdir.join("config"))
-    with open(p, 'w') as fd:
-        fd.write(contents)
-    return p
 
 
 @pytest.mark.parametrize('path_type', [
