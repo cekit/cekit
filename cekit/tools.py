@@ -360,7 +360,7 @@ class DependencyHandler(object):
         except ImportError:
             pass
 
-    def handle(self, o):
+    def handle(self, o, params):
         """
         Handles dependencies from selected object. If the object has 'dependencies' method,
         it will be called to retrieve a set of dependencies to check for.
