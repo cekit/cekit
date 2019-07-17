@@ -226,29 +226,22 @@ def test_behave(ctx, steps_url, wip, names):  # pylint: disable=unused-argument
     run_test(ctx, 'behave')
 
 
-def top_context(ctx):
-    if ctx.parent:
-        return top_context(ctx.parent)
+def prepare_params(ctx, params=None):
 
-    return ctx
-
-
-def prepare_params(ctx):
-    main_context = top_context(ctx)
-    common_params = Map(main_context.params)
-    params = Map(main_context.params)
+    if params is None:
+        params = Map({})
 
     if ctx.parent:
-        params.update(ctx.parent.params)
+        prepare_params(ctx.parent, params)
 
     params.update(ctx.params)
 
-    return (common_params, params)
+    return params
 
 
 def run_command(ctx, clazz):
-    common_params, params = prepare_params(ctx)
-    Cekit(common_params).run(clazz, params)
+    params = prepare_params(ctx)
+    Cekit(params).run(clazz)
 
 
 def run_test(ctx, tester):
@@ -328,14 +321,14 @@ class Cekit(object):
                 except:
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
-    def run(self, clazz, params):
+    def run(self, clazz):
         """ Main application entry """
 
         self.init()
         self.configure()
         self.cleanup()
 
-        command = clazz(params)
+        command = clazz(self.params)
 
         try:
             command.execute()

@@ -385,5 +385,3 @@ class DependencyHandler(object):
                 # Execute that method to get list of dependencies and try to handle them
                 self._handle_dependencies(o.dependencies(params))
                 return
-
-

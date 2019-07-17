@@ -20,8 +20,7 @@ class BehaveTester(Command):
         self.params = params
         self.collected = False
 
-        self.test_collector = BehaveTestCollector(os.path.dirname(self.params.descriptor),
-                                            self.params.target)
+        self.test_collector = BehaveTestCollector(os.path.dirname(self.params.descriptor), self.params.target)
         self.test_runner = BehaveTestRunner(self.params.target)
 
         self.generator = None
