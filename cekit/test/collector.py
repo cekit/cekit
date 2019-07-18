@@ -18,7 +18,7 @@ class BehaveTestCollector(object):
         shutil.rmtree(self.test_dir, ignore_errors=True)
         os.makedirs(self.test_dir)
 
-    def dependencies(self):
+    def dependencies(self, params=None):
         deps = {}
 
         loader_file = os.path.join(self.test_dir, "loader.py")
@@ -28,7 +28,7 @@ class BehaveTestCollector(object):
                 sys.path.append(self.test_dir)
                 from loader import StepsLoader
                 sys.path.remove(self.test_dir)
-                return StepsLoader.dependencies()
+                return StepsLoader.dependencies(params)
             except Exception as e:
                 logger.warning(
                     "Fetching information about test dependencies failed, running tests may not be possible!")
@@ -38,7 +38,7 @@ class BehaveTestCollector(object):
 
     def _fetch_steps(self, version, url):
         """ Method fetches common steps """
-        logger.info("Fetching common steps from '%s'." % url)
+        logger.info("Fetching common steps from '{}'.".format(url))
         cmd = ['git',
                'clone',
                '--depth',
@@ -47,7 +47,7 @@ class BehaveTestCollector(object):
                self.test_dir,
                '-b',
                'v%s' % version]
-        logger.debug("Running '%s'" % ' '.join(cmd))
+        logger.debug("Running '{}'".format(' '.join(cmd)))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
     def collect(self, version, url):
@@ -83,8 +83,7 @@ class BehaveTestCollector(object):
                                       obj_name,
                                       name,
                                       target_dir)
-                logger.debug("Collecting tests from '%s' into '%s'" % (obj_path,
-                                                                       target))
+                logger.debug("Collecting tests from '{}' into '{}'".format(obj_path, target))
                 if obj_name == 'features':
                     self.collected = True
                 shutil.copytree(obj_path, target)

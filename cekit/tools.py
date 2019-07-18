@@ -124,8 +124,8 @@ def get_brew_url(md5):
             group_id.replace('.', '/') + '/' + \
             artifact_id + '/' + version + '/' + filename
     except subprocess.CalledProcessError as ex:
-        LOGGER.error("Can't fetch artifacts details from brew: '%s'." %
-                     ex.output)
+        LOGGER.error("Can't fetch artifacts details from brew: '{}'.".format(
+                     ex.output))
         raise ex
     return url
 
@@ -352,10 +352,19 @@ class DependencyHandler(object):
         self._handle_dependencies(
             DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
 
-    def handle(self, o):
+        try:
+            import certifi  # pylint: disable=unused-import
+            LOGGER.warning(("The certifi library (https://certifi.io/) was found, depending on the operating " +
+                            "system configuration this may result in certificate validation issues"))
+            LOGGER.warning("Certificate Authority (CA) bundle in use: '{}'".format(certifi.where()))
+        except ImportError:
+            pass
+
+    def handle(self, o, params):
         """
         Handles dependencies from selected object. If the object has 'dependencies' method,
         it will be called to retrieve a set of dependencies to check for.
+        :param params:
         """
 
         if not o:
@@ -374,5 +383,5 @@ class DependencyHandler(object):
             # Check if we have a method
             if callable(dependencies):
                 # Execute that method to get list of dependencies and try to handle them
-                self._handle_dependencies(o.dependencies())
+                self._handle_dependencies(o.dependencies(params))
                 return

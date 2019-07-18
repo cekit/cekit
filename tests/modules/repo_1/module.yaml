@@ -1,4 +1,5 @@
 schema_version: 1
 name: foo
+version: 1.0
 execute:
   - script: script

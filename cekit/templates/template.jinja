@@ -19,6 +19,9 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {% macro pkg_install(pkg_manager, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
+    {% if pkg_manager == 'microdnf' %}
+    && {{ pkg_manager }} clean all \
+    {% endif %}
     && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
 {%- endmacro %}
@@ -27,24 +30,41 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {{ pkg_manager }} clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum
     {% endif %}
 {%- endmacro %}
-{% macro process_module(module) %}
-# begin {{ module.name }}:{{ module.version }}
-{% if module.packages and module.packages.install %}
+{%- macro process_image(image) %}
+{{ process_module(image, image=true) }}
+{%- endmacro %}
+{% macro process_module(module, image=false) %}
+# START module {{ module.name }}:{{ module.version }}
 
-# Install required RPMs and ensure that the packages were installed
+{% if module.artifacts|length > 0 %}
+# Copy module {{ module.name }} artifacts
+COPY \
+{% for artifact in module.artifacts %}
+    {{ artifact['target'] }} \
+    {% endfor %}
+    /tmp/artifacts/
+{% endif %}
+
+{%- if not image %}
+# Copy module {{ module.name }} content
+COPY modules/{{ module.name }} /tmp/scripts/{{ module.name }}
+{% endif %}
+
+{% if module.packages and module.packages.install %}
 USER root
+
 RUN {{ pkg_install(packages.manager, module.packages.install) }}
 {% endif %}
-{% if helper.envs(module.envs)|length > 0 %}
+{% if module.envs|rejectattr("value", "none")|list|length > 0 %}
 
 # Environment variables
 ENV \
-    {% for env in helper.envs(module.envs)|sort(attribute='name') %}
+    {% for env in module.envs|sort(attribute='name')|rejectattr("value", "none")|list %}
     {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
 
     {% endfor %}
 {% endif %}
-{% if module.labels|length > 0 %}
+{% if module.labels|count > 0 %}
 
 # Labels
 LABEL \
@@ -74,7 +94,7 @@ VOLUME ["{{ volume['path'] }}"]
 {% endfor %}
 {% endif %}
 
-# end {{ module.name }}:{{ module.version }}
+# END module {{ module.name }}:{{ module.version }}
 {%- endmacro %}
 
 # Copyright 2019 Red Hat
@@ -112,24 +132,10 @@ RUN {{ repo_install(packages.manager, repo.rpm) }}
 {% endfor %}
 {% endif %}
 
-{% if image.modules.install|length > 0 %}
-# Add scripts used to configure the image
-COPY modules /tmp/scripts/
-{% endif %}
-
-{% if image.all_artifacts|length > 0 %}
-# Add all artifacts to the /tmp/artifacts directory
-COPY \
-{% for artifact in image.all_artifacts %}
-    {{ artifact['target'] }} \
-    {% endfor %}
-    /tmp/artifacts/
-{% endif %}
-
 {% for to_install in image.modules.install %}
 {{ process_module(helper.module(to_install)) }}
 {% endfor %}
-{{ process_module(image) }}
+{{ process_image(image) }}
 
 USER root
 RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts

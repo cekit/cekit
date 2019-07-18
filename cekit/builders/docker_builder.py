@@ -45,11 +45,11 @@ ANSI_ESCAPE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 class DockerBuilder(Builder):
     """This class wraps docker build command to build and image"""
 
-    def __init__(self, common_params, params):
-        super(DockerBuilder, self).__init__('docker', common_params, params)
+    def __init__(self, params):
+        super(DockerBuilder, self).__init__('docker', params)
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['python-docker'] = {
@@ -59,12 +59,13 @@ class DockerBuilder(Builder):
                 'package': 'python3-docker'}
         }
 
-        deps['docker-squash'] = {
-            'library': 'docker_squash',
-            'fedora': {
-                'package': 'python3-docker-squash'
+        if params is not None and not params.no_squash:
+            deps['docker-squash'] = {
+                'library': 'docker_squash',
+                'fedora': {
+                    'package': 'python3-docker-squash'
+                }
             }
-        }
 
         return deps
 
@@ -151,7 +152,7 @@ class DockerBuilder(Builder):
         return docker_layer_ids[-1]
 
     def _squash(self, docker_client, image_id):
-        LOGGER.info("Squashing image %s..." % image_id)
+        LOGGER.info("Squashing image {}...".format(image_id))
 
         squash = Squash(docker=docker_client,
                         log=LOGGER,
@@ -233,7 +234,7 @@ class DockerBuilder(Builder):
             tags = self.generator.get_tags()
 
         LOGGER.info("Building container image using Docker...")
-        LOGGER.debug("Building image with tags: '%s'" % "', '".join(tags))
+        LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
 
         docker_client = self._docker_client()
 
@@ -247,5 +248,4 @@ class DockerBuilder(Builder):
         # Tag the image
         self._tag(docker_client, image_id, tags)
 
-        LOGGER.info("Image built and available under following tags: %s" %
-                    ", ".join(tags))
+        LOGGER.info("Image built and available under following tags: {}".format(", ".join(tags)))

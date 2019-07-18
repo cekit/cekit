@@ -9,6 +9,7 @@ import shutil
 import yaml
 
 from jinja2 import Environment, FileSystemLoader
+from packaging.version import LegacyVersion, parse as parse_version
 
 from cekit import tools
 from cekit.config import Config
@@ -53,14 +54,14 @@ class Generator(object):
         if overrides:
             for override in overrides:
                 # TODO: If the overrides is provided as text, why do we try to get path to it?
-                LOGGER.debug("Loading override '%s'" % (override))
+                LOGGER.debug("Loading override '{}'".format(override))
                 self._overrides.append(Overrides(tools.load_descriptor(
                     override), os.path.dirname(os.path.abspath(override))))
 
         LOGGER.info("Initializing image descriptor...")
 
     @staticmethod
-    def dependencies():
+    def dependencies(params=None):
         deps = {}
 
         deps['odcs-client'] = {
@@ -102,16 +103,18 @@ class Generator(object):
         self.apply_module_overrides()
         self.image.process_defaults()
 
-    def generate(self, builder):
+    def generate(self, builder):  # pylint: disable=unused-argument
         self.copy_modules()
         self.prepare_artifacts()
-        self.prepare_repositories(builder)
+        self.prepare_repositories()
         self.image.remove_none_keys()
         self.image.write(os.path.join(self.target, 'image.yaml'))
         self.render_dockerfile()
         self.render_help()
 
+    # TODO: Remove in 3.5
     def add_tech_preview_overrides(self):
+        LOGGER.warning("The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5")
         self._overrides.append(self.get_tech_preview_overrides())
 
     def add_redhat_overrides(self):
@@ -151,7 +154,7 @@ class Generator(object):
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
         for repo in self.image.modules.repositories:
-            LOGGER.debug("Downloading module repository: '%s'" % (repo.name))
+            LOGGER.debug("Downloading module repository: '{}'".format(repo.name))
             repo.copy(base_dir)
             self.load_repository(os.path.join(base_dir, repo.target_file_name()))
 
@@ -165,7 +168,7 @@ class Generator(object):
                 module = Module(tools.load_descriptor(module_descriptor_path),
                                 modules_dir,
                                 os.path.dirname(module_descriptor_path))
-                LOGGER.debug("Adding module '%s', path: '%s'" % (module.name, module.path))
+                LOGGER.debug("Adding module '{}', path: '{}'".format(module.name, module.path))
                 self._module_registry.add_module(module)
 
     def get_tags(self):
@@ -181,14 +184,14 @@ class Generator(object):
         """
         target = os.path.join(self.target, 'image', 'modules')
         for module in self.image.modules.install:
-            module = self._module_registry.get_module(module.name, module.version)
-            LOGGER.debug("Copying module '%s' required by '%s'."
-                         % (module.name, self.image.name))
+            module = self._module_registry.get_module(module.name, module.version, suppress_warnings=True)
+            LOGGER.debug("Copying module '{}' required by '{}'.".format(
+                module.name, self.image.name))
 
             dest = os.path.join(target, module.name)
 
             if not os.path.exists(dest):
-                LOGGER.debug("Copying module '%s' to: '%s'" % (module.name, dest))
+                LOGGER.debug("Copying module '{}' to: '{}'".format(module.name, dest))
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
@@ -295,6 +298,7 @@ class Generator(object):
         loader = FileSystemLoader(help_dirname)
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
+        env.globals['image'] = self.image
         help_template = env.get_template(help_basename)
 
         helpfile = os.path.join(self.target, 'image', 'help.md')
@@ -304,7 +308,7 @@ class Generator(object):
 
         LOGGER.debug("help.md rendered")
 
-    def prepare_repositories(self, builder):
+    def prepare_repositories(self):
         """ Prepare repositories for build time injection. """
         if 'packages' not in self.image:
             return
@@ -373,8 +377,8 @@ class Generator(object):
             compose = odcs.new_compose(repos, 'pulp', flags=flags)
         except requests.exceptions.HTTPError as ex:
             if ex.response.status_code == 401:
-                LOGGER.error("You are not authorized to use {} ODCS service. Are you sure you have a valid Kerberos session?".format(
-                    odcs_service_type))
+                LOGGER.error(("You are not authorized to use {} ODCS service. "
+                              "Are you sure you have a valid Kerberos session?").format(odcs_service_type))
             raise CekitError("Could not create ODCS compose", ex)
 
         compose_id = compose.get('id', None)
@@ -418,9 +422,8 @@ class Generator(object):
             "Loading configuration for repository: '{}' from 'repositories'.".format(repo['name']))
 
         if 'id' in repo:
-            LOGGER.warning("Repository '%s' is defined as plain. It must be available "
-                           "inside the image as Cekit will not inject it."
-                           % repo['name'])
+            LOGGER.warning("Repository '{}' is defined as plain. It must be available "
+                           "inside the image as Cekit will not inject it.".format(repo['name']))
             return False
 
         if 'content_sets' in repo:
@@ -446,30 +449,120 @@ class Generator(object):
 class ModuleRegistry(object):
     def __init__(self):
         self._modules = {}
+        self._defaults = {}
 
-    def get_module(self, name, version=None):
-        versions = self._modules.get(name, {})
-        if version == None:
-            default = versions.get('default')
-            if len(versions) > 2:  # we always add the first seen as 'default'
-                LOGGER.warning("Module version not specified for %s, using %s version." %
-                               (name, default.version))
-            return default
-        return versions.get(version, None)
+    def get_module(self, name, version=None, suppress_warnings=False):
+        """
+        Returns the module available in registry based on the name and version requested.
+
+        If no modules are found for the requested name, an error is thrown. If version
+        requirement could not be satisfied, an error is thrown too.
+
+        If there is a version mismatch, default version is returned. See 'add_module'
+        for more information how default versions are defined.
+
+        Args:
+            name (str): module name
+            version (float or str): module version
+
+        Returns:
+            Module object.
+
+        Raises:
+            CekitError: If a module is not found or version requirement is not satisfied
+        """
+
+        # Get all modules for specied nam
+        modules = self._modules.get(name, {})
+
+        # If there are no modules with the requested name, fail
+        if not modules:
+            raise CekitError("There are no modules with '{}' name available".format(name))
+
+        # If there is no module version requested, get default one
+        if version is None:
+            default_version = self._defaults.get(name)
+
+            if not default_version:
+                raise CekitError(
+                    "Internal error: default version for module '{}' could not be found, please report it".format(name))
+
+            default_module = self.get_module(name, default_version)
+
+            if not suppress_warnings:
+                LOGGER.warning("Module version not specified for '{}' module, using '{}' default version".format(
+                    name, default_version))
+
+            return default_module
+
+        # Finally, get the module for specified version
+        module = modules.get(version)
+
+        # If there is no such module, fail
+        if not module:
+            raise CekitError("Module '{}' with version '{}' could not be found, available versions: {}".format(
+                name, version, ", ".join(list(modules.keys()))))
+
+        return module
 
     def add_module(self, module):
-        versions = self._modules.get(module.name)
-        if not versions:
-            versions = {}
-            self._modules[module.name] = versions
-        version = module.version
-        if not version:
-            version = 'None'
-        existing = versions.get(version, None)
-        if existing:
-            raise CekitError("Duplicate module (%s:%s) found while processing module repository"
-                             % (module.name, module.version))
-        if len(versions) == 0:
-            # for better or worse...
-            versions['default'] = module
-        versions[version] = module
+        """
+        Adds provided module to registry.
+
+        If module of the same name and version already exists in registry,
+        an error is raised.
+
+        Module registry tracks default version for a particular module name.
+        For this purpose the current version is compared with what is currently defined as
+        the default version. If this newer, then the default version is replaced by the
+        module we currently add to registry. For version comparison the package module
+        (https://packaging.pypa.io/en/latest/) is used.
+
+        Args:
+            module (Module): module object to be added to registry
+
+        Raises:
+            CekitError: when module version is not provided or when a module with the same
+                name and version already exists in registry.
+        """
+
+        # If module version is not provided, fail because it is required
+        if not module.version:
+            raise CekitError((
+                "Internal error: module '{}' does not have version specified, "
+                "we cannot add it to registry, please report it").format(module.name))
+
+        # Convert version to string, it can be float or int, or anything actually
+        version = str(module.version)
+
+        # Get all modules from registry with the name of the module we want to add
+        # There can be multiple versions of the same module
+        modules = self._modules.get(module.name)
+
+        # If there are no modules for the specified name this means
+        # that this is the first one, add it and set it as default
+        if not modules:
+            # Set it to be the default module version
+            self._defaults[module.name] = version
+            self._modules[module.name] = {version: module}
+            return
+
+        # If a module of specified name and version already exists in the registry - fail
+        if version in modules:
+            raise CekitError("Module '{}' with version '{}' already exists in module registry".format(
+                module.name, version))
+
+        default_version = parse_version(self._defaults.get(module.name))
+        current_version = parse_version(version)
+
+        if isinstance(current_version, LegacyVersion):
+            LOGGER.warning(("Module's '{}' version '{}' does not follow PEP 440 versioning scheme "
+                            "(https://www.python.org/dev/peps/pep-0440), "
+                            "we suggest follow this versioning scheme in modules").format(module.name, version))
+
+        # If current module version is never, we need to make it the new default
+        if current_version > default_version:
+            self._defaults[module.name] = version
+
+        # Finally add the module to registry
+        modules[version] = module

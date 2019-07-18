@@ -201,7 +201,7 @@ def test_path_resource_relative():
 def test_path_local_existing_resource_no_cacher_use(mocker):
     config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
     mocker.patch('os.path.exists', return_value=True)
-    shutil_mock = mocker.patch('shutil.copy')
+    shutil_mock = mocker.patch('shutil.copy2')
 
     res = Resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')

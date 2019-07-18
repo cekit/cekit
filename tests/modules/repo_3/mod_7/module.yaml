@@ -1,5 +1,6 @@
 schema_version: 1
 name: child_3
+version: 1.0
 modules:
   install:
     - name: child_of_child3

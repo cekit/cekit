@@ -154,7 +154,7 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
             mocker.call(['git', 'push', '-q', 'origin', 'branch'])
         ])
 
-    assert "Commiting with message: 'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb'" in caplog.text
+    assert "Committing with message: 'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb'" in caplog.text
     assert "Image was built successfully in OSBS!" in caplog.text
 
 
@@ -317,7 +317,6 @@ def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
 def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, mocker, caplog):
     mocker.patch.object(subprocess, 'call')
     mock_check_call = mocker.patch.object(subprocess, 'check_call')
-    #mock_check_output = mocker.patch.object(subprocess, 'check_output')
 
     res = mocker.Mock()
     res.getcode.return_value = 200

@@ -1,5 +1,6 @@
 schema_version: 1
 name: packages_module
+version: 1.0
 packages:
   install:
     - kernel

@@ -1,3 +1,4 @@
+import logging
 import yaml
 
 import cekit
@@ -13,6 +14,8 @@ container_schemas = [yaml.safe_load("""
         seq:
           - {type: any}""")]
 
+logger = logging.getLogger('cekit')
+
 
 class Execute(Descriptor):
     def __init__(self, descriptor, module_name):
@@ -20,12 +23,14 @@ class Execute(Descriptor):
         super(Execute, self).__init__(descriptor)
 
         descriptor['directory'] = module_name
-
         descriptor['module_name'] = module_name
 
         if 'name' not in descriptor:
-            descriptor['name'] = "%s/%s" % (module_name,
-                                            descriptor['script'])
+            # Generated name
+            descriptor['name'] = "{}/{}".format(module_name, descriptor['script'])
+
+            logger.debug("No value found for 'name' key in the execute section of the '{}' module; using auto-generated value: '{}'".format(
+                module_name, descriptor['name']))
 
     @property
     def name(self):

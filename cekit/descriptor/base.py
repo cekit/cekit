@@ -50,9 +50,9 @@ class Descriptor(collectionsAbc.MutableMapping):
                 return
             except Exception as ex:
                 # We log this as debug, because we support multiple schemas
-                logger.debug("Schema validation failed: %s" % ex)
+                logger.debug("Schema validation failed: {}".format(ex))
 
-        raise CekitError("Cannot validate schema: %s" % (self.__class__.__name__))
+        raise CekitError("Cannot validate schema: {}".format(self.__class__.__name__))
 
     @classmethod
     def to_yaml(cls, representer, node):

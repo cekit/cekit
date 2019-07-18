@@ -1,5 +1,6 @@
 schema_version: 1
 name: mod_2
+version: 1.0
 envs:
   - name: foo
     value: mod_2

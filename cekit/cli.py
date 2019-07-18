@@ -55,10 +55,11 @@ def cli(descriptor, verbose, work_dir, config, redhat, target):  # pylint: disab
 
 
 @cli.group(short_help="Build container image")
+@click.option('--validate', help="Do not execute the build nor generate files, just validate image and module descriptors.", is_flag=True)
 @click.option('--dry-run', help="Do not execute the build, just generate required files.", is_flag=True)
 @click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
 @click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
-def build(dry_run, overrides):  # pylint: disable=unused-argument
+def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -138,7 +139,7 @@ def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
 @click.option('--release', help="Execute a release build.", is_flag=True)
-# TODO: Ensure this still makes sense
+# TODO: Remove in 3.5
 @click.option('--tech-preview', help="Execute a tech preview build.", is_flag=True)
 @click.option('--user', metavar="USER", help="User used to kick the build as.")
 @click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
@@ -225,30 +226,22 @@ def test_behave(ctx, steps_url, wip, names):  # pylint: disable=unused-argument
     run_test(ctx, 'behave')
 
 
-def top_context(ctx):
-    if ctx.parent:
-        return top_context(ctx.parent)
+def prepare_params(ctx, params=None):
 
-    return ctx
-
-
-def prepare_params(ctx):
-    main_context = top_context(ctx)
-    common_params = Map(main_context.params)
-
-    params = Map({})
+    if params is None:
+        params = Map({})
 
     if ctx.parent:
-        params.update(ctx.parent.params)
+        prepare_params(ctx.parent, params)
 
     params.update(ctx.params)
 
-    return (common_params, params)
+    return params
 
 
 def run_command(ctx, clazz):
-    common_params, params = prepare_params(ctx)
-    Cekit(common_params).run(clazz, params)
+    params = prepare_params(ctx)
+    Cekit(params).run(clazz)
 
 
 def run_test(ctx, tester):
@@ -328,14 +321,14 @@ class Cekit(object):
                 except:
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
-    def run(self, clazz, params):
+    def run(self, clazz):
         """ Main application entry """
 
         self.init()
         self.configure()
         self.cleanup()
 
-        command = clazz(self.params, params)
+        command = clazz(self.params)
 
         try:
             command.execute()

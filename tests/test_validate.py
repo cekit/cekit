@@ -462,6 +462,40 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
     assert check_dockerfile_text(image_dir, 'COPY \\\n    test \\\n    /tmp/artifacts/')
 
 
+# Test work of workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1700341
+def test_microdnf_clean_all_cmd_present(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'packages': {'manager': 'microdnf'}
+    }
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
+               'docker'])
+
+    required_matches = [
+        'RUN microdnf --setopt=tsflags=nodocs install -y package1 package2 \\',
+        '&& microdnf clean all \\',
+        '&& rpm -q package1 package2'
+    ]
+
+    for match in required_matches:
+        assert check_dockerfile(image_dir, match)
+
+
 def check_dockerfile(image_dir, match):
     with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as fd:
         for line in fd.readlines():
@@ -620,7 +654,11 @@ def test_execution_order(tmpdir):
     run_cekit(image_dir)
 
     expected_modules_order = """
-# begin child_of_child:None
+# START module child_of_child:1.0
+
+# Copy module child_of_child content
+COPY modules/child_of_child /tmp/scripts/child_of_child
+
 
 # Environment variables
 ENV \\
@@ -630,22 +668,34 @@ ENV \\
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
 
-# end child_of_child:None
-# begin child2_of_child:None
+# END module child_of_child:1.0
+# START module child2_of_child:1.0
+
+# Copy module child2_of_child content
+COPY modules/child2_of_child /tmp/scripts/child2_of_child
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
 
-# end child2_of_child:None
-# begin child3_of_child:None
+# END module child2_of_child:1.0
+# START module child3_of_child:1.0
+
+# Copy module child3_of_child content
+COPY modules/child3_of_child /tmp/scripts/child3_of_child
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
 
-# end child3_of_child:None
-# begin child:None
+# END module child3_of_child:1.0
+# START module child:1.0
+
+# Copy module child content
+COPY modules/child /tmp/scripts/child
+
 
 # Environment variables
 ENV \\
@@ -655,32 +705,52 @@ ENV \\
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
 
-# end child:None
-# begin child_2:None
+# END module child:1.0
+# START module child_2:1.0
+
+# Copy module child_2 content
+COPY modules/child_2 /tmp/scripts/child_2
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
 
-# end child_2:None
-# begin child_of_child3:None
+# END module child_2:1.0
+# START module child_of_child3:1.0
+
+# Copy module child_of_child3 content
+COPY modules/child_of_child3 /tmp/scripts/child_of_child3
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
 
-# end child_of_child3:None
-# begin child2_of_child3:None
+# END module child_of_child3:1.0
+# START module child2_of_child3:1.0
+
+# Copy module child2_of_child3 content
+COPY modules/child2_of_child3 /tmp/scripts/child2_of_child3
+
 
 # Custom scripts
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
 
-# end child2_of_child3:None
-# begin child_3:None
+# END module child2_of_child3:1.0
+# START module child_3:1.0
 
-# end child_3:None
-# begin master:None
+# Copy module child_3 content
+COPY modules/child_3 /tmp/scripts/child_3
+
+
+# END module child_3:1.0
+# START module master:1.0
+
+# Copy module master content
+COPY modules/master /tmp/scripts/master
+
 
 # Environment variables
 ENV \\
@@ -690,7 +760,7 @@ ENV \\
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]
 
-# end master:None
+# END module master:1.0
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
@@ -750,7 +820,11 @@ def test_execution_order_flat(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_modules_order = """
-# begin mod_1:None
+# START module mod_1:1.0
+
+# Copy module mod_1 content
+COPY modules/mod_1 /tmp/scripts/mod_1
+
 
 # Environment variables
 ENV \\
@@ -764,8 +838,12 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_1/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
 
-# end mod_1:None
-# begin mod_2:None
+# END module mod_1:1.0
+# START module mod_2:1.0
+
+# Copy module mod_2 content
+COPY modules/mod_2 /tmp/scripts/mod_2
+
 
 # Environment variables
 ENV \\
@@ -779,8 +857,12 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_2/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
 
-# end mod_2:None
-# begin mod_3:None
+# END module mod_2:1.0
+# START module mod_3:1.0
+
+# Copy module mod_3 content
+COPY modules/mod_3 /tmp/scripts/mod_3
+
 
 # Custom scripts
 USER root
@@ -790,8 +872,12 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_3/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
 
-# end mod_3:None
-# begin mod_4:None
+# END module mod_3:1.0
+# START module mod_4:1.0
+
+# Copy module mod_4 content
+COPY modules/mod_4 /tmp/scripts/mod_4
+
 
 # Custom scripts
 USER root
@@ -801,7 +887,7 @@ RUN [ "bash", "-x", "/tmp/scripts/mod_4/b" ]
 USER root
 RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
 
-# end mod_4:None
+# END module mod_4:1.0
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
@@ -822,22 +908,28 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_order_install = """
-# begin packages_module:None
+# START module packages_module:1.0
 
-# Install required RPMs and ensure that the packages were installed
+# Copy module packages_module content
+COPY modules/packages_module /tmp/scripts/packages_module
+
 USER root
+
 RUN yum --setopt=tsflags=nodocs install -y kernel java \\
     && rpm -q kernel java
 
-# end packages_module:None
-# begin packages_module_1:None
+# END module packages_module:1.0
+# START module packages_module_1:1.0
 
-# Install required RPMs and ensure that the packages were installed
+# Copy module packages_module_1 content
+COPY modules/packages_module_1 /tmp/scripts/packages_module_1
+
 USER root
+
 RUN yum --setopt=tsflags=nodocs install -y wget mc \\
     && rpm -q wget mc
 
-# end packages_module_1:None
+# END module packages_module_1:1.0
 """
 
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
@@ -858,8 +950,8 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_install = """
-# Install required RPMs and ensure that the packages were installed
 USER root
+
 RUN yum --setopt=tsflags=nodocs install -y wget mc \\
     && rpm -q wget mc
 """
@@ -1019,6 +1111,61 @@ def test_disabling_content_sets(tmpdir, caplog, parameter):
     assert "Finished!" in caplog.text
 
 
+# https://github.com/cekit/cekit/issues/551
+def test_validation_of_image_and_module_descriptors(tmpdir, mocker, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir, ['-v',
+                          'build',
+                          '--validate',
+                          'docker'])
+
+    assert "The --validate parameter was specified, generation will not be performed, exiting" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/551
+def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descriptor(tmpdir, mocker, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    descriptor = image_descriptor.copy()
+
+    del descriptor['name']
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(descriptor, fd, default_flow_style=False)
+
+    run_cekit_exception(image_dir, ['-v',
+                                    'build',
+                                    '--validate',
+                                    'docker'])
+
+    assert "Cannot validate schema: Image" in caplog.text
+    assert "Cannot find required key 'name'" in caplog.text
+
+
+# https://github.com/cekit/cekit/issues/559
+def test_osbs_builder_tech_preview_deprecation(tmpdir, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir, ['-v',
+                          'build',
+                          '--dry-run',
+                          'osbs',
+                          '--tech-preview'
+                          ])
+
+    assert "The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5" in caplog.text
+
+
 def run_cekit(cwd,
               parameters=['build', '--dry-run', 'docker'],
               message=None):
@@ -1033,7 +1180,7 @@ def run_cekit(cwd,
 
 
 def run_cekit_exception(cwd,
-                        parameters=['build', '--dry-run', 'docker'],
+                        parameters=['-v', 'build', '--dry-run', 'docker'],
                         exit_code=1,
                         exception=SystemExit,
                         message=None):

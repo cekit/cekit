@@ -1,4 +1,5 @@
 schema_version: 1
 name: child3_of_child
+version: 1.0
 execute:
   - script: script_f

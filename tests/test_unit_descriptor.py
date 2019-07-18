@@ -2,13 +2,13 @@ import pytest
 import yaml
 
 from cekit.config import Config
+from cekit.log import setup_logging
 from cekit.errors import CekitError
-from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs, \
-    Repository
-
+from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
 
 config = Config()
 config.configure('/dev/null', {'redhat': True})
+setup_logging()
 
 
 def test_label():
@@ -48,12 +48,14 @@ def test_volume():
     assert volume['path'] == '/tmp/a'
 
 
-def test_volume_name():
+def test_volume_name(caplog):
     volume = Volume(yaml.safe_load("""
     path: /tmp/a
 """))
     assert volume['name'] == 'a'
     assert volume['path'] == '/tmp/a'
+    assert "No value found for 'name' in 'volume'; using auto-generated value of 'a'" \
+           in caplog.text
 
 
 def test_osbs():
@@ -170,3 +172,68 @@ def test_remove_none_key():
 
     assert 'envs' in image
     assert 'value' not in image['envs'][0]
+
+
+def test_image_artifacts(caplog):
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: test
+        value: val1
+      - name: label2
+        value: val2
+    artifacts:
+      - url: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
+        md5: 080075877a66adf52b7f6d0013fa9730
+      - path: /foo/bar
+        md5: 080075877a66adf52b7f6d0013fa9730
+    envs:
+      - name: env1
+        value: env1val
+    """), 'foo')
+
+    assert image['name'] == 'test/foo'
+    assert type(image['labels'][0]) == Label
+    assert image['labels'][0]['name'] == 'test'
+    assert "No value found for 'name' in '[artifacts][url]'; using auto-generated value of 'apache-tomcat-8.5.24.tar.gz'" \
+           in caplog.text
+    assert "No value found for 'name' in '[artifacts][path]'; using auto-generated value of 'bar'" \
+           in caplog.text
+
+
+def test_image_plain_artifacts(caplog):
+    with pytest.raises(CekitError) as excinfo:
+            Image(yaml.safe_load("""
+            from: foo
+            name: test/foo
+            version: 1.9
+            artifacts:
+              - target: jolokia.jar
+                md5: 080075877a66adf52b7f6d0013fa9730
+            """), 'foo')
+    assert "Missing name attribute for plain artifact" in excinfo.value.message
+
+
+def test_image_modules_git_repo(caplog):
+    image = Image(yaml.safe_load("""
+    from: foo
+    name: test/foo
+    version: 1.9
+    modules:
+        repositories:
+            - git:
+                url: "https://github.com/company/foobar-project-modules"
+                ref: "release-3.1.0"
+            - name: "another-module"
+              git:
+                url: "https://github.com/company/another-git-module"
+                ref: "release-1.1"
+        install:
+            - name: "org.company.project.feature"
+    """), 'foo')
+
+    assert image['name'] == 'test/foo'
+    assert "No value found for 'name' in '[repositories][git]'; using auto-generated value of 'foobar-project-modules'" \
+           in caplog.text
