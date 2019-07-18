@@ -9,7 +9,7 @@ class TemplateHelper(object):
         self._module_registry = module_registry
 
     def module(self, to_install):
-        return self._module_registry.get_module(to_install.name, to_install.version)
+        return self._module_registry.get_module(to_install.name, to_install.version, suppress_warnings=True)
 
     def packages_to_install(self, image):
         """
