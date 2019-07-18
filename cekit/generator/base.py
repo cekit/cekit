@@ -182,8 +182,9 @@ class Generator(object):
         """
         target = os.path.join(self.target, 'image', 'modules')
         for module in self.image.modules.install:
-            module = self._module_registry.get_module(module.name, module.version)
-            LOGGER.debug("Copying module '{}' required by '{}'.".format(module.name, self.image.name))
+            module = self._module_registry.get_module(module.name, module.version, suppress_warnings=True)
+            LOGGER.debug("Copying module '{}' required by '{}'.".format(
+                module.name, self.image.name))
 
             dest = os.path.join(target, module.name)
 
@@ -448,7 +449,7 @@ class ModuleRegistry(object):
         self._modules = {}
         self._defaults = {}
 
-    def get_module(self, name, version=None):
+    def get_module(self, name, version=None, suppress_warnings=False):
         """
         Returns the module available in registry based on the name and version requested.
 
@@ -486,8 +487,9 @@ class ModuleRegistry(object):
 
             default_module = self.get_module(name, default_version)
 
-            LOGGER.warning("Module version not specified for '{}' module, using '{}' default version".format(
-                name, default_version))
+            if not suppress_warnings:
+                LOGGER.warning("Module version not specified for '{}' module, using '{}' default version".format(
+                    name, default_version))
 
             return default_module
 

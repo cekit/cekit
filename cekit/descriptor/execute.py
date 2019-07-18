@@ -23,13 +23,14 @@ class Execute(Descriptor):
         super(Execute, self).__init__(descriptor)
 
         descriptor['directory'] = module_name
-
         descriptor['module_name'] = module_name
 
         if 'name' not in descriptor:
-            logger.warning("No value found for 'name'; using auto-generated value of {}/{}".
-                           format(module_name, descriptor['script']))
-            descriptor['name'] = "%s/%s" % (module_name, descriptor['script'])
+            # Generated name
+            descriptor['name'] = "{}/{}".format(module_name, descriptor['script'])
+
+            logger.debug("No value found for 'name' key in the execute section of the '{}' module; using auto-generated value: '{}'".format(
+                module_name, descriptor['name']))
 
     @property
     def name(self):
