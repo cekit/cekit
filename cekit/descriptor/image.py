@@ -41,7 +41,7 @@ class Image(Descriptor):
     def __init__(self, descriptor, artifact_dir):
         self._artifact_dir = artifact_dir
         self.path = artifact_dir
-        self.schemas = [_image_schema.copy()]
+        self.schema = _image_schema.copy()
         super(Image, self).__init__(descriptor)
         self.skip_merging = ['description',
                              'version',

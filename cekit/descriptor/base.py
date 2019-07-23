@@ -42,9 +42,9 @@ class Descriptor(collectionsAbc.MutableMapping):
         self.__validate()
 
     def __validate(self):
-        for schema in self.schemas:
+        if self.schema is not None:
             core = Core(source_data=self._descriptor,
-                        schema_data=schema, allow_assertions=True)
+                        schema_data=self.schema, allow_assertions=True)
             try:
                 core.validate(raise_exception=True)
                 return

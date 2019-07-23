@@ -4,22 +4,22 @@ import yaml
 import cekit
 from cekit.descriptor import Descriptor
 
-execute_schemas = [yaml.safe_load("""
+execute_schemas = yaml.safe_load("""
         map:
           name: {type: str}
           script: {type: str}
-          user: {type: text}""")]
+          user: {type: text}""")
 
-container_schemas = [yaml.safe_load("""
+container_schemas = yaml.safe_load("""
         seq:
-          - {type: any}""")]
+          - {type: any}""")
 
 logger = logging.getLogger('cekit')
 
 
 class Execute(Descriptor):
     def __init__(self, descriptor, module_name):
-        self.schemas = execute_schemas
+        self.schema = execute_schemas
         super(Execute, self).__init__(descriptor)
 
         descriptor['directory'] = module_name

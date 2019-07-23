@@ -51,7 +51,7 @@ REDHAT_SUPPORT_PRODUCT_VERSION="8.0"'''
 
 class MockedDescriptor(Descriptor):
     def __init__(self, descriptor):
-        self.schemas = [yaml.safe_load("""type: any""")]
+        self.schema = yaml.safe_load("""type: any""")
         super(MockedDescriptor, self).__init__(descriptor)
 
         for key, val in descriptor.items():

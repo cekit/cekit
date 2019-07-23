@@ -5,7 +5,7 @@ import yaml
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
 
-osbs_schema = [yaml.safe_load("""
+osbs_schema = yaml.safe_load("""
 map:
   repository:
     map:
@@ -14,13 +14,13 @@ map:
   configuration: {type: any}
   extra_dir: {type: str}
 
-""")]
+""")
 
-configuration_schema = [yaml.safe_load("""
+configuration_schema = yaml.safe_load("""
     map:
       container: {type: any}
       container_file: {type: str}
-""")]
+""")
 
 
 class Osbs(Descriptor):
@@ -33,7 +33,7 @@ class Osbs(Descriptor):
     """
 
     def __init__(self, descriptor, descriptor_path):
-        self.schemas = osbs_schema
+        self.schema = osbs_schema
         self.descriptor_path = descriptor_path
         super(Osbs, self).__init__(descriptor)
 
@@ -76,7 +76,7 @@ class Configuration(Descriptor):
       descriptor - yaml contianing OSBS configuration"""
 
     def __init__(self, descriptor, descriptor_path):
-        self.schemas = configuration_schema
+        self.schema = configuration_schema
         self.descriptor_path = descriptor_path
         super(Configuration, self).__init__(descriptor)
         self.skip_merging = ['container', 'container_file']

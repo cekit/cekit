@@ -41,7 +41,7 @@ class Resource(Descriptor):
             raise CekitError("Resource type is not supported: %s" % resource)
 
     def __init__(self, descriptor):
-        self.schemas = [yaml.safe_load("""
+        self.schema = yaml.safe_load("""
         map:
           name: {type: str}
           git:
@@ -57,7 +57,7 @@ class Resource(Descriptor):
           sha512: {type: str}
           description: {type: str}
           target: {type: str}
-        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None or val['md5'] is not None\"""")]
+        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None or val['md5'] is not None\"""")
         super(Resource, self).__init__(descriptor)
         self.skip_merging = ['md5', 'sha1', 'sha256', 'sha512']
 
