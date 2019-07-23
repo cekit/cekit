@@ -11,7 +11,7 @@ class Overrides(Image):
         self._artifact_dir = artifact_dir
         self.path = artifact_dir
         schema = overrides_schema.copy()
-        self.schemas = [schema]
+        self.schema = schema
         # calling Descriptor constructor only here (we dont wat Image() to mess with schema)
         super(Image, self).__init__(descriptor)
 

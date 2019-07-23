@@ -10,7 +10,7 @@ from cekit.errors import CekitError
 logger = logging.getLogger('cekit')
 config = Config()
 
-packages_schema = [yaml.safe_load("""
+packages_schema = yaml.safe_load("""
 map:
   content_sets: {type: any}
   content_sets_file: {type: str}
@@ -20,7 +20,7 @@ map:
   install:
     seq:
       - {type: any}
-  manager: {type: str, enum: ['yum', 'dnf', 'microdnf']}""")]
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf']}""")
 
 
 repository_schema = yaml.safe_load("""
@@ -50,7 +50,7 @@ class Packages(Descriptor):
     """
 
     def __init__(self, descriptor, descriptor_path):
-        self.schemas = packages_schema
+        self.schema = packages_schema
         self.descriptor_path = descriptor_path
         super(Packages, self).__init__(descriptor)
 
@@ -119,7 +119,7 @@ class Repository(Descriptor):
     """
 
     def __init__(self, descriptor):
-        self.schemas = [repository_schema]
+        self.schema = repository_schema
         super(Repository, self).__init__(descriptor)
 
         if not (('url' in descriptor) ^
