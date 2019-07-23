@@ -1,101 +1,178 @@
-{% macro repo_create(pkg_manager, repositories) -%}
+{#
+ # Creates a package repository definition from the system.
+ #
+ # Works only when the package manager is supported.
+ #}
+ {%- macro repo_create(pkg_manager, repositories) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
         {% for repo in repositories %}
 repos/{{ repo.filename }} \
         {% endfor %}
     /etc/yum.repos.d/
     {% endif %}
-{%- endmacro %}
-{% macro repo_remove(pkg_manager, repositories) -%}
+{%- endmacro -%}
+
+{#
+ # Removes specified package repository from the system.
+ #
+ # Works only when the package manager is supported.
+ #}
+{%- macro repo_remove(pkg_manager, repositories) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %}
     {% endif %}
-{%- endmacro %}
-{% macro repo_install(pkg_manager, rpm) -%}
+{%- endmacro -%}
+
+{#
+ # Installs a repository RPM using specified package manager.
+ #
+ # Works only when the package manager is supported.
+ #}
+{%- macro repo_install(pkg_manager, rpm) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {{ rpm }}
     {% endif %}
-{%- endmacro %}
-{% macro pkg_install(pkg_manager, packages) -%}
+{%- endmacro -%}
+
+{#
+ # Installs packages using specified package manager.
+ #}
+{%- macro pkg_install(pkg_manager, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
     {% if pkg_manager == 'microdnf' %}
-    && {{ pkg_manager }} clean all \
+        && {{ pkg_manager }} clean all \
     {% endif %}
-    && rpm -q{% for package in packages %} {{ package }}{% endfor %}
+        && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
-{%- endmacro %}
-{% macro repo_clear_cache(pkg_manager) -%}
+{%- endmacro -%}
+
+{#
+ # Clears repository cache using the specified package manager.
+ #}
+{%- macro repo_clear_cache(pkg_manager) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum
     {% endif %}
-{%- endmacro %}
-{%- macro process_image(image) %}
-{{ process_module(image, image=true) }}
-{%- endmacro %}
-{% macro process_module(module, image=false) %}
-# START module {{ module.name }}:{{ module.version }}
+{%- endmacro -%}
 
-{% if module.artifacts|length > 0 %}
-# Copy module {{ module.name }} artifacts
-COPY \
-{% for artifact in module.artifacts %}
-    {{ artifact['target'] }} \
+{#
+ # Macro for processing content of a module (or image). 
+ #
+ # 1. Copies any defined general artifacts
+ # 2. Copies any defined stage artifacts (built in previous stages as part of multi-stage builds)
+ # 3. Copies module content (if a module is processed, skipped on image)
+ # 4. Installs any defined packages
+ # 5. Sets environment variables
+ # 6. Sets labels
+ # 7. Exposes ports
+ # 8. Executes any defined scripts
+ # 9. Exposes any defined volumes
+ #}
+{%- macro process_module(module, is_image=false) %}
+{% set module_type = 'module' %}
+{% if is_image %}
+{% set module_type = 'image' %}
+{% endif %}
+###### START {{ module_type }} '{{ module.name }}:{{ module.version }}'
+###### \
+        {% if module.artifacts|rejectattr("from")|list|length > 0 %}
+        # Copy '{{ module.name }}' {{ module_type }} general artifacts
+        COPY \
+        {% for artifact in module.artifacts|rejectattr("from")|list %}
+            {{ artifact['target'] }} \
+            {% endfor %}
+            /tmp/artifacts/
+        {% endif -%}
+
+        {% if module.artifacts|selectattr("from")|list|length > 0 %}
+        # Copy '{{ module.name }}' {{ module_type }} stage artifacts
+        {% for artifact in module.artifacts|selectattr("from")|list %}
+        COPY --from={{ artifact['from'] }} {{ artifact['path'] }} /tmp/artifacts/{{ artifact['target'] }}
+        {% endfor %}
+        {% endif -%}
+
+        {% if not is_image %}
+        # Copy '{{ module.name }}' {{ module_type }} content
+        COPY modules/{{ module.name }} /tmp/scripts/{{ module.name }}
+        {% endif -%}
+
+        {% if module.packages and module.packages.install %}
+        # Switch to 'root' user to install '{{ module.name }}' {{ module_type }} defined packages
+        USER root
+        # Install packages defined in the '{{ module.name }}' {{ module_type }}
+        RUN {{ pkg_install(image.packages.manager, module.packages.install) }}
+        {% endif -%}
+
+        {% if module.envs|selectattr("value")|list|length > 0 %}
+        # Set '{{ module.name }}' {{ module_type }} defined environment variables
+        ENV \
+            {% for env in module.envs|sort(attribute='name')|selectattr("value")|list %}
+            {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
+
+            {% endfor %}
+        {% endif -%}
+
+        {% if module.labels|count > 0 %}
+        # Set '{{ module.name }}' {{ module_type }} defined labels
+        LABEL \
+            {% for label in module.labels|sort(attribute='name') %}
+            {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
+
+            {% endfor %}
+        {% endif -%}
+
+        {% if helper.ports(module.ports)|length > 0 %}
+        # Exposed ports in '{{ module.name }}' {{ module_type }}
+        EXPOSE {%- for port in helper.ports(module.ports) %} {{ port }}{% endfor %}
+        {% endif -%}
+
+        {% if module.execute|length > 0 %}
+        # Custom scripts from '{{ module.name }}' {{ module_type }}
+        {% for exec in module.execute %}
+        USER {{ exec.user }}
+        RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
+        {% endfor %}
+        {% endif -%}
+
+        {% if module.volumes|length > 0 %}
+        # Volumes defined in the '{{ module.name }}' {{ module_type }}
+        {% for volume in module.volumes %}
+        VOLUME ["{{ volume['path'] }}"]
+        {% endfor %}
+        {% endif -%}
+###### /
+###### END {{ module_type }} '{{ module.name }}:{{ module.version }}'
+{% endmacro -%}
+
+{#
+ # Macro for main image generation.
+ #
+ # 1. Sets user to 'root'
+ # 2. Adds any custom repositories
+ # TODO XXX
+ #}
+{%- macro process_image(animage) %}
+    USER root
+    {% if animage.packages.repositories_injected %}
+
+    # Add custom repo files
+    COPY {{ repo_create(animage.packages.manager, animage.packages.repositories_injected) }}
+    {% endif %}
+    {% if animage.packages.repositories %}
+    {% for repo in animage.packages.repositories %}
+    {% if repo.present and repo.rpm %}
+
+    RUN {{ repo_install(animage.packages.manager, repo.rpm) }}
+    {% endif %}
     {% endfor %}
-    /tmp/artifacts/
-{% endif %}
+    {% endif %}
 
-{%- if not image %}
-# Copy module {{ module.name }} content
-COPY modules/{{ module.name }} /tmp/scripts/{{ module.name }}
-{% endif %}
-
-{% if module.packages and module.packages.install %}
-USER root
-
-RUN {{ pkg_install(packages.manager, module.packages.install) }}
-{% endif %}
-{% if module.envs|rejectattr("value", "none")|list|length > 0 %}
-
-# Environment variables
-ENV \
-    {% for env in module.envs|sort(attribute='name')|rejectattr("value", "none")|list %}
-    {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
-
+    {% for to_install in animage.modules.install %}
+{{ process_module(helper.module(to_install)) }}
     {% endfor %}
-{% endif %}
-{% if module.labels|count > 0 %}
-
-# Labels
-LABEL \
-      {% for label in module.labels|sort(attribute='name') %}
-      {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
-
-      {% endfor %}
-{% endif %}
-{% if helper.ports(module.ports)|length > 0 %}
-
-# Exposed ports
-EXPOSE {%- for port in helper.ports(module.ports) %} {{ port }}{% endfor %}
-{% endif %}
-{%- if module.execute|length > 0 %}
-
-# Custom scripts
-{% for exec in module.execute %}
-USER {{ exec.user }}
-RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
-{% endfor %}
-{% endif %}
-{%- if module.volumes|length > 0 %}
-
-# Volumes
-{% for volume in module.volumes %}
-VOLUME ["{{ volume['path'] }}"]
-{% endfor %}
-{% endif %}
-
-# END module {{ module.name }}:{{ module.version }}
-{%- endmacro %}
+{{ process_module(animage, true) }}
+{%- endmacro -%}
 
 # Copyright 2019 Red Hat
 #
@@ -115,60 +192,59 @@ VOLUME ["{{ volume['path'] }}"]
 #
 # This is a Dockerfile for the {{ name }}:{{ version }} image.
 
-FROM {{ from }}
+{% for builder_image in builders %}
+## START builder image {{ builder_image.name }}:{{ builder_image.version }}
+## \  
+    FROM {{ builder_image.from }} AS {{ builder_image.name }}
 
-USER root
-{% if packages.repositories_injected %}
-
-# Add custom repo files
-COPY {{ repo_create(packages.manager, packages.repositories_injected) }}
-{% endif %}
-{% if packages.repositories %}
-{% for repo in packages.repositories %}
-{% if repo.present and repo.rpm %}
-
-RUN {{ repo_install(packages.manager, repo.rpm) }}
-{% endif %}
+{{ process_image(builder_image) }}
+## /
+## END builder image
 {% endfor %}
-{% endif %}
 
-{% for to_install in image.modules.install %}
-{{ process_module(helper.module(to_install)) }}
-{% endfor %}
+## START target image {{ image.name }}:{{ image.version }}
+## \
+    FROM {{ image.from }}
+
 {{ process_image(image) }}
 
-USER root
-RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
-RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    # Switch to 'root' user and remove artifacts and modules
+    USER root
+    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
+    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
 
-{% if helper.packages_to_install(image) %}
-# Clear package manager metadata
-RUN {{ repo_clear_cache(packages.manager) }}
-{% endif %}
+    {% if helper.packages_to_install(image) %}
+    # Clear package manager metadata
+    RUN {{ repo_clear_cache(image.packages.manager) }}
+    {% endif -%}
 
-{% if packages.repositories_injected %}
-# Remove custom repo files
-RUN {{ repo_remove(packages.manager, packages.repositories_injected) }}
-{% endif %}
+    {% if image.packages.repositories_injected %}
+    # Remove custom repo files
+    RUN {{ repo_remove(image.packages.manager, image.packages.repositories_injected) }}
+    {% endif -%}
 
-# Run user
-USER {{ run['user'] }}
-{% if 'workdir' in run %}
+    {% if 'user' in run %}
+    # Define the user
+    USER {{ run['user'] }}
+    {% endif -%}
 
-# Specify the working directory
-WORKDIR {{ run['workdir'] }}
-{% endif %}
-{% if 'entrypoint' in run %}
+    {% if 'workdir' in run %}
+    # Define the working directory
+    WORKDIR {{ run['workdir'] }}
+    {% endif -%}
 
-# Specify entrypoint
-ENTRYPOINT {{ helper.cmd(run['entrypoint']) }}
-{% endif %}
-{% if 'cmd' in run %}
+    {% if 'entrypoint' in run %}
+    # Define entrypoint
+    ENTRYPOINT {{ helper.cmd(run['entrypoint']) }}
+    {% endif -%}
 
-# Specify run cmd
-CMD {{ helper.cmd(run['cmd']) }}
-{% endif %}
-{% if image.help.add %}
+    {% if 'cmd' in run %}
+    # Define run cmd
+    CMD {{ helper.cmd(run['cmd']) }}
+    {% endif -%}
 
-ADD help.md /
-{% endif %}
+    {% if image.help.add %}
+    ADD help.md /
+    {% endif -%}
+## /
+## END target image

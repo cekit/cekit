@@ -28,7 +28,9 @@ class Resource(Descriptor):
 
     def __new__(cls, resource, **kwargs):
         if cls is Resource:
-            if 'path' in resource:
+            if 'image' in resource:
+                return super(Resource, cls).__new__(_ImageContentResource)
+            elif 'path' in resource:
                 return super(Resource, cls).__new__(_PathResource)
             elif 'url' in resource:
                 return super(Resource, cls).__new__(_UrlResource)
@@ -46,8 +48,9 @@ class Resource(Descriptor):
             map:
               url: {type: str, required: True}
               ref: {type: str}
-          path: {type: str, required: False}
-          url: {type: str, required: False}
+          path: {type: str}
+          url: {type: str}
+          image: {type: str}
           md5: {type: str}
           sha1: {type: str}
           sha256: {type: str}
@@ -352,3 +355,38 @@ class _PlainResource(Resource):
                 logger.warning("Could not download artifact '{}' from Brew".format(self.name))
 
         raise CekitError("Artifact {} could not be found".format(self.name))
+
+
+class _ImageContentResource(Resource):
+    """
+    Class to cover artifacts that should be fetched from images.
+
+    Main purpose of this type of resources are artifacts built as
+    part of multi-stage builds. Other use case is where the artifact
+    should be fetched from an already built image.
+
+    Such a resource is represented in Dockerfile as:
+
+        COPY --from=[IMAGE] [PATH] /tmp/artifacts/[NAME]
+    """
+
+    def __init__(self, descriptor, **kwargs):
+        if 'path' not in descriptor:
+            raise CekitError("Missing 'path' attribute for stage artifact")
+
+        if 'name' not in descriptor:
+            descriptor['name'] = os.path.basename(descriptor['path'])
+            logger.warning("No value found for 'name' in '{}' stage artifact; using auto-generated value of '{}'".
+                           format(descriptor['path'], descriptor['name']))
+
+        super(_ImageContentResource, self).__init__(descriptor)
+
+        self.path = descriptor['path']
+        self.image = descriptor['image']
+
+    def _copy_impl(self, target):
+        """
+        For stage artifacts, there is nothing to copy, because the artifact is located
+        in an image that should be built in earlier stage of the image build process.
+        """
+        return target
