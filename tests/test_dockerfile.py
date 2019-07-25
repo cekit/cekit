@@ -282,7 +282,7 @@ def test_unsupported_package_manager(tmpdir, caplog):
              exit_code=1)
 
     assert "Cannot validate schema: Packages" in caplog.text
-    assert "Enum 'something' does not exist. Path: '/manager'.: Path: '/'" in caplog.text
+    assert "Enum 'something' does not exist. Path: '/manager'" in caplog.text
 
 
 # https://github.com/cekit/cekit/issues/400

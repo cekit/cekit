@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -145,7 +146,7 @@ class Resource(Descriptor):
                  "please report it: https://github.com/cekit/cekit/issues").format(descriptor))
 
         logger.warning("No value found for 'name' in '{}' artifact; using auto-generated value of '{}'".
-                       format(descriptor, default))
+                       format(json.dumps(descriptor, sort_keys=True), default))
 
         descriptor['name'] = default
 
