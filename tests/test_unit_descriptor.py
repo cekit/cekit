@@ -197,9 +197,9 @@ def test_image_artifacts(caplog):
     assert image['name'] == 'test/foo'
     assert type(image['labels'][0]) == Label
     assert image['labels'][0]['name'] == 'test'
-    assert "No value found for 'name' in '[artifacts][url]'; using auto-generated value of 'apache-tomcat-8.5.24.tar.gz'" \
+    assert "No value found for 'name' in '{'url': 'https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz', 'md5': '080075877a66adf52b7f6d0013fa9730'}' artifact; using auto-generated value of 'apache-tomcat-8.5.24.tar.gz'" \
            in caplog.text
-    assert "No value found for 'name' in '[artifacts][path]'; using auto-generated value of 'bar'" \
+    assert "No value found for 'name' in '{'path': '/foo/bar', 'md5': '080075877a66adf52b7f6d0013fa9730'}' artifact; using auto-generated value of 'bar'" \
            in caplog.text
 
 
@@ -213,7 +213,8 @@ def test_image_plain_artifacts(caplog):
               - target: jolokia.jar
                 md5: 080075877a66adf52b7f6d0013fa9730
             """), 'foo')
-    assert "Missing name attribute for plain artifact" in excinfo.value.message
+    assert "Cannot validate schema: _PlainResource" in excinfo.value.message
+    assert "Cannot find required key 'name'" in caplog.text
 
 
 def test_image_modules_git_repo(caplog):
@@ -235,5 +236,5 @@ def test_image_modules_git_repo(caplog):
     """), 'foo')
 
     assert image['name'] == 'test/foo'
-    assert "No value found for 'name' in '[repositories][git]'; using auto-generated value of 'foobar-project-modules'" \
+    assert "No value found for 'name' in '{'git': {'url': 'https://github.com/company/foobar-project-modules', 'ref': 'release-3.1.0'}}' artifact; using auto-generated value of 'foobar-project-modules'" \
            in caplog.text

@@ -7,7 +7,7 @@ import click
 from cekit.cache.artifact import ArtifactCache
 from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
-from cekit.descriptor import Resource
+from cekit.descriptor.resource import create_resource
 from cekit.log import setup_logging
 from cekit.tools import Map
 from cekit.version import version
@@ -89,7 +89,7 @@ class CacheCli:
         if sha512:
             resource['sha512'] = sha512
 
-        artifact = Resource(resource)
+        artifact = create_resource(resource)
 
         cached = artifact_cache.cached(artifact)
 

@@ -190,8 +190,9 @@ class Generator(object):
         for module in self._modules():
             for repo in module.repositories:
                 if repo in repositories:
-                    LOGGER.warning(
-                        "Module repository '{0}' already added, please check your image configuration, skipping module repository '{0}'".format(repo.name))
+                    LOGGER.warning((
+                        "Module repository '{0}' already added, please check your image configuration, " +
+                        "skipping module repository '{0}'").format(repo.name))
                     continue
                 # If the repository already exists, skip it
                 repositories.append(repo)
@@ -205,7 +206,7 @@ class Generator(object):
         for repo in self._module_repositories():
             LOGGER.debug("Downloading module repository: '{}'".format(repo.name))
             repo.copy(base_dir)
-            self.load_repository(os.path.join(base_dir, repo.target_file_name()))
+            self.load_repository(os.path.join(base_dir, repo.target))
 
     def load_repository(self, repo_dir):
         for modules_dir, _, files in os.walk(repo_dir):
@@ -241,7 +242,6 @@ class Generator(object):
         target = os.path.join(self.target, 'image', 'modules')
 
         for module in modules_to_install:
-            #print(module)
             module = self._module_registry.get_module(
                 module.name, module.version, suppress_warnings=True)
             LOGGER.debug("Copying module '{}' required by '{}'.".format(
