@@ -120,11 +120,11 @@ class OSBSBuilder(Builder):
         self.dist_git.clean()
 
         # First get all artifacts that are not plain artifacts
-        self.artifacts = [a.target_file_name()
+        self.artifacts = [a.target
                           for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource)]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
-        self.artifacts += [a.target_file_name()
+        self.artifacts += [a.target
                            for a in self.generator.image.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
         if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:

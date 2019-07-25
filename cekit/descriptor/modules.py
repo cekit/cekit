@@ -1,6 +1,7 @@
 import yaml
 
-from cekit.descriptor import Descriptor, Resource
+from cekit.descriptor import Descriptor
+from cekit.descriptor.resource import create_resource
 
 modules_schema = yaml.safe_load("""
 map:
@@ -21,7 +22,7 @@ class Modules(Descriptor):
     def __init__(self, descriptor, path):
         self.schema = modules_schema
         super(Modules, self).__init__(descriptor)
-        self._descriptor['repositories'] = [Resource(r, directory=path)
+        self._descriptor['repositories'] = [create_resource(r, directory=path)
                                             for r in self._descriptor.get('repositories', [])]
         self._descriptor['install'] = [Install(x) for x in self._descriptor.get('install', [])]
 

@@ -4,7 +4,8 @@ import os
 import yaml
 
 from cekit.config import Config
-from cekit.descriptor import Descriptor, Resource
+from cekit.descriptor import Descriptor
+from cekit.descriptor.resource import create_resource
 from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
@@ -149,7 +150,7 @@ class Repository(Descriptor):
             raise CekitError("Repository not defined for '{}'.".format(self.name))
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
-        Resource({'url': self._descriptor['url']['repository']}) \
+        create_resource({'url': self._descriptor['url']['repository']}) \
             .copy(os.path.join(target_dir, self._descriptor['filename']))
 
     @property

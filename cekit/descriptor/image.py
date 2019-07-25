@@ -4,8 +4,8 @@ from collections import OrderedDict
 import yaml
 
 import cekit
-from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, \
-    Packages, Osbs, Volume, Resource
+from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, Packages, Osbs, Volume
+from cekit.descriptor.resource import create_resource
 from cekit.descriptor.base import logger, _merge_descriptors
 from cekit.errors import CekitError
 
@@ -55,7 +55,7 @@ class Image(Descriptor):
         self._descriptor['ports'] = [Port(x) for x in self._descriptor.get('ports', [])]
         if 'run' in self._descriptor:
             self._descriptor['run'] = Run(self._descriptor['run'])
-        self._descriptor['artifacts'] = [Resource(a, directory=self._artifact_dir)
+        self._descriptor['artifacts'] = [create_resource(a, directory=self._artifact_dir)
                                          for a in self._descriptor.get('artifacts', [])]
         self._descriptor['modules'] = Modules(self._descriptor.get('modules', {}), self.path)
         self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}), self.path)
@@ -334,7 +334,8 @@ class Image(Descriptor):
         module_overrides = self._image_overrides['modules']
         artifact_overrides = self._image_overrides['artifacts']
         for to_install in to_install_list:
-            logger.debug("Preparing module '{}' required by '{}'.".format(to_install.name, source.name))
+            logger.debug("Preparing module '{}' required by '{}'.".format(
+                to_install.name, source.name))
             override = module_overrides.get(to_install.name, None)
             if override:
                 if override.version != to_install.version:
