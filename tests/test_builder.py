@@ -412,6 +412,7 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
 def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     os.makedirs(os.path.join(str(tmpdir), 'image'))
 
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.tools.DependencyHandler.handle')
     mocker.patch('cekit.descriptor.resource.Resource.copy')
     copy_mock = mocker.patch('cekit.builders.osbs.shutil.copy2')
@@ -481,8 +482,8 @@ def test_osbs_dist_git_sync_called(mocker, tmpdir):
     builder = create_builder_object(
         mocker, 'osbs', {}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
 
-    prepare_dist_git = mocker.patch.object(builder, 'prepare_dist_git')
-    copy_to_dist_git = mocker.patch.object(builder, 'copy_to_dist_git')
+    prepare_dist_git = mocker.patch.object(builder, '_prepare_dist_git')
+    copy_to_dist_git = mocker.patch.object(builder, '_copy_to_dist_git')
     run = mocker.patch.object(builder, 'run')
 
     builder.execute()
@@ -512,14 +513,16 @@ def test_osbs_dist_git_sync_NOT_called_when_dry_run_set(mocker, tmpdir):
     builder = create_builder_object(
         mocker, 'osbs', {'dry_run': True}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
 
-    prepare_dist_git = mocker.patch.object(builder, 'prepare_dist_git')
-    copy_to_dist_git = mocker.patch.object(builder, 'copy_to_dist_git')
+    prepare_dist_git = mocker.patch.object(builder, '_prepare_dist_git')
+    copy_to_dist_git = mocker.patch.object(builder, '_copy_to_dist_git')
+    sync_with_dist_git = mocker.patch.object(builder, '_sync_with_dist_git')
     run = mocker.patch.object(builder, 'run')
 
     builder.execute()
 
     prepare_dist_git.assert_not_called()
     copy_to_dist_git.assert_not_called()
+    sync_with_dist_git.assert_not_called()
     run.assert_not_called()
 
 

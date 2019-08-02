@@ -144,9 +144,10 @@ def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
 @click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
 @click.option('--stage', help="Use stage environmen.", is_flag=True)
 @click.option('--koji-target', metavar="TARGET", help="Override the default Koji target.")
+@click.option('--sync-only', help="Generate files and sync with dist-git, but do not execute build.", is_flag=True)
 @click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
 @click.pass_context
-def build_osbs(ctx, release, tech_preview, user, nowait, stage, koji_target, commit_message):  # pylint: disable=unused-argument
+def build_osbs(ctx, release, tech_preview, user, nowait, stage, koji_target, sync_only, commit_message):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
