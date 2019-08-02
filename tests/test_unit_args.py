@@ -84,7 +84,7 @@ def _get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
             'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None,
-            'sync_only': False
+            'sync_only': False, 'assume_yes': False
         }
     ),
     # Test setting user for OSBS
@@ -95,7 +95,7 @@ def _get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
             'release': False, 'tech_preview': False, 'user': 'SOMEUSER', 'stage': False, 'koji_target': None,
-            'commit_message': None, 'sync_only': False
+            'commit_message': None, 'sync_only': False, 'assume_yes': False
         }
     ),
     # Test setting stage environment for OSBS
@@ -106,7 +106,7 @@ def _get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
             'release': False, 'tech_preview': False, 'user': None, 'stage': True, 'koji_target': None, 'commit_message': None,
-            'sync_only': False, 'sync_only': False
+            'sync_only': False, 'sync_only': False, 'assume_yes': False
         }
     ),
     # Test setting nowait for OSBS
@@ -117,7 +117,7 @@ def _get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': True,
             'release': False, 'tech_preview': False, 'user': None, 'stage': False, 'koji_target': None, 'commit_message': None,
-            'sync_only': False
+            'sync_only': False, 'assume_yes': False
         }
     ),
     (
@@ -145,7 +145,7 @@ def _get_class_by_name(clazz):
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'release': False,
             'tech_preview': False, 'user': None, 'nowait': False, 'stage': False, 'koji_target': None, 'commit_message': None,
-            'sync_only': False
+            'sync_only': False, 'assume_yes': False
         }),
     (
         ['build', 'docker'],

@@ -68,7 +68,6 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
     mocker.patch('cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task')
     mocker.patch('cekit.builders.osbs.DistGit.clean')
     mocker.patch('cekit.builders.osbs.DistGit.prepare')
-    mocker.patch('cekit.tools.decision', return_value=True)
 
     mocker_check_output = mocker.patch.object(subprocess, 'check_output', side_effect=[
         b"true",  # git rev-parse --is-inside-work-tree
@@ -96,6 +95,35 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
                      return_code=return_code)
 
 
+def test_osbs_builder_with_asume_yes(tmpdir, mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    # Specifically set the decision result to False, to fail any build
+    # that depends on the decision. But in case the --assume-yes switch is used
+    # we should not get to this point at all. If we get, the test should fail.
+    mock_decision = mocker.patch('cekit.tools.decision', return_value=False)
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+    mocker.patch.object(subprocess, 'call', return_value=1)
+
+    source_dir = tmpdir.mkdir('source')
+    source_dir.mkdir('osbs').mkdir('repo')
+
+    run_osbs(image_descriptor.copy(), str(source_dir), mocker, 0, ['build', 'osbs', '--assume-yes'])
+
+    mock_decision.assert_not_called()
+
+    mock_check_call.assert_has_calls(
+        [
+            mocker.call(['git', 'add', '--all', 'Dockerfile']),
+            mocker.call(['git', 'commit', '-q', '-m',
+                         'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb']),
+            mocker.call(['git', 'push', '-q', 'origin', 'branch'])
+        ])
+
+    assert "Committing with message: 'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb'" in caplog.text
+    assert "Image was built successfully in OSBS!" in caplog.text
+
+
 def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
     """
     Should sync with dist-git repository without kicking the build
@@ -106,6 +134,7 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
 
+    mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'call', return_value=1)
 
     mock_check_call = mocker.patch.object(subprocess, 'check_call')
@@ -136,6 +165,7 @@ def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
 
     caplog.set_level(logging.DEBUG, logger="cekit")
 
+    mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'call', return_value=0)
 
     source_dir = tmpdir.mkdir('source')
@@ -169,6 +199,7 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
 
+    mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'call', return_value=1)
 
     mock_check_call = mocker.patch.object(subprocess, 'check_call')
@@ -198,6 +229,8 @@ def test_osbs_builder_add_help_file(tmpdir, mocker, caplog):
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
 
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
@@ -231,6 +264,8 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
 
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
@@ -277,6 +312,8 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
 
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
@@ -348,6 +385,7 @@ def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
 
 
 def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, mocker, caplog):
+    mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'call')
     mock_check_call = mocker.patch.object(subprocess, 'check_call')
 
@@ -373,6 +411,6 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
         mocker.call(['git', 'add', '--all', 'Dockerfile'])
     ]
 
-    assert len(mock_check_call.mock_calls) == len(calls)
     mock_check_call.assert_has_calls(calls, any_order=True)
+    assert len(mock_check_call.mock_calls) == len(calls)
     assert "Skipping '.git' directory" in caplog.text
