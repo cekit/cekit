@@ -59,7 +59,10 @@ def run_cekit(cwd,
         return result
 
 
-def run_osbs(descriptor, image_dir, mocker, return_code=0):
+def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
+    if build_command is None:
+        build_command = ['build', 'osbs']
+
     # We are mocking it, so do not require it at test time
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies', return_value={})
     mocker.patch('cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task')
@@ -89,10 +92,40 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0):
 
     return run_cekit(image_dir, ['-v',
                                  '--work-dir', image_dir,
-                                 '--config', 'config',
-                                 'build',
-                                 'osbs'],
+                                 '--config', 'config'] + build_command,
                      return_code=return_code)
+
+
+def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
+    """
+    Should sync with dist-git repository without kicking the build
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    source_dir = tmpdir.mkdir('source')
+    repo_dir = source_dir.mkdir('osbs').mkdir('repo')
+
+    mocker.patch.object(subprocess, 'call', return_value=1)
+
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    descriptor = image_descriptor.copy()
+
+    run_osbs(descriptor, str(source_dir), mocker, 0, ['build', 'osbs', '--sync-only'])
+
+    assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
+
+    mock_check_call.assert_has_calls(
+        [
+            mocker.call(['git', 'add', '--all', 'Dockerfile']),
+            mocker.call(['git', 'commit', '-q', '-m',
+                         'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb']),
+            mocker.call(['git', 'push', '-q', 'origin', 'branch'])
+        ])
+
+    assert "Committing with message: 'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb'" in caplog.text
+    assert "The --sync-only parameter was specified, build will not be executed, exiting" in caplog.text
 
 
 def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
