@@ -1,0 +1,6 @@
+name: python
+version: 1.0
+
+packages:
+   install:
+      - python

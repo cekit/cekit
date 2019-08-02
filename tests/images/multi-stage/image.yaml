@@ -1,0 +1,29 @@
+- name: builder
+  version: 1.0.0
+  from: centos:7
+  description: Some base image
+
+  modules:
+    repositories:
+      - path: modules
+
+    install:
+      # Module providing environment required to build the application
+      - name: python
+      # Module required to build the application
+      - name: build
+
+- name: some/app
+  version: 12
+  from: centos:7
+  description: Our application
+
+  modules:
+    repositories:
+      - path: modules
+
+    # Install selected modules (in order)
+    install:
+      - name: setuptools
+      # This module is responsible for fetching application built in previous stage
+      - name: app
