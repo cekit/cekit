@@ -1,0 +1,5 @@
+name: build
+version: 1.0
+
+execute:
+    - script: build.sh

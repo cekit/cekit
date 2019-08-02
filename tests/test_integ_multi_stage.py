@@ -6,6 +6,7 @@ import os
 import shutil
 import yaml
 import pytest
+import platform
 
 from click.testing import CliRunner
 
@@ -43,6 +44,7 @@ def run_cekit(image_dir, args=None):
         return result
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
 def test_multi_stage_single_image_in_list(tmpdir):
     """
     Build simple image which is a regular image, but the
@@ -55,15 +57,15 @@ def test_multi_stage_single_image_in_list(tmpdir):
         yaml.dump([image_descriptor], fd, default_flow_style=False)
 
     run_cekit(tmpdir, ['-v', 'build', 'docker'])
-    
+
     assert os.path.exists(os.path.join(tmpdir, 'target', 'image', 'Dockerfile')) is True
     assert check_file_text(tmpdir, 'ADD help.md /') is False
 
+
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
 def test_multi_stage_proper_image(tmpdir):
     """
-    Build simple image which is a regular image, but the
-    difference is that it is defined in an array in image
-    descriptor
+    Build multi-stage image.
     """
     tmpdir = str(tmpdir)
 
