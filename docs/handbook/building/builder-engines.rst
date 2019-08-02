@@ -19,9 +19,12 @@ This builder uses Docker daemon as the build engine. Interaction with Docker dae
 Input format
     Dockerfile
 Parameters
-    * ``--pull`` -- ask a builder engine to check and fetch latest base image
-    * ``--tag`` -- an image tag used to build image (can be specified multiple times)
-    * ``--no-squash`` -- do not squash the image after build is done.
+    ``--pull``
+        Ask a builder engine to check and fetch latest base image
+    ``--tag``
+        An image tag used to build image (can be specified multiple times)
+    ``--no-squash``
+        Do not squash the image after build is done.
 
 Example
     Building Docker image
@@ -74,14 +77,26 @@ it performs **scratch build**. If you need a proper build you need to specify ``
 Input format
     Dockerfile
 Parameters
-    * ``--release`` -- perform an OSBS release build
-    * ``--tech-preview`` -- updates image descriptor ``name`` key to contain ``--tech-preview`` suffix in family part of the image name
-    * ``--user`` -- alternative user passed to build task
-    * ``--nowait`` -- do not wait for the task to finish
-    * ``--stage`` -- use stage environment
-    * ``--koji-target`` -- overrides the default ``koji`` target
-    * ``--commit-message`` -- custom commit message for dist-git
-    * ``--sync-only`` -- generate files and sync with dist-git, but do not execute build
+    ``--release``
+        Perform an OSBS release build
+    ``--tech-preview``
+        Build tech preview image, see
+        :ref:`below for more information <handbook/building/builder-engines:Tech preview images>`
+    ``--user``
+        Alternative user passed to build task
+    ``--nowait``
+        Do not wait for the task to finish
+    ``--stage``
+        Use stage environment
+    ``--koji-target``
+        Overrides the default ``koji`` target
+    ``--commit-message``
+        Custom commit message for dist-git
+    ``--sync-only``
+        Generate files and sync with dist-git, but do not execute build
+    ``--assume-yes``
+        Run build in non-interactive mode answering all questions with 'Yes',
+        useful for automation purposes
 
 Example
     Performing scratch build
@@ -107,8 +122,10 @@ This build engine is using `Buildah <https://buildah.io>`_.
 Input format
     Dockerfile
 Parameters
-    * ``--pull`` -- ask a builder engine to check and fetch latest base image
-    * ``--tag`` -- an image tag used to build image (can be specified multiple times)
+    ``--pull``
+        Ask a builder engine to check and fetch latest base image
+    ``--tag``
+        An image tag used to build image (can be specified multiple times)
 
 Example
     Build image using Buildah
@@ -132,8 +149,10 @@ no special configuration is required.
 Input format
     Dockerfile
 Parameters
-    * ``--pull`` -- ask a builder engine to check and fetch latest base image
-    * ``--tag`` -- an image tag used to build image (can be specified multiple times)
+    ``--pull``
+        Ask a builder engine to check and fetch latest base image
+    ``--tag``
+        An image tag used to build image (can be specified multiple times)
 
 Example
     Build image using Podman
