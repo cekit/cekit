@@ -441,14 +441,14 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     }
 
     builder = create_builder_object(
-        mocker, 'osbs', {}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
+        mocker, 'osbs', {'assume_yes': False}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
 
     with mocker.patch('cekit.tools.get_brew_url', side_effect=subprocess.CalledProcessError(1, 'command')):
         builder.prepare()
         builder.before_run()
 
     dist_git_class.assert_called_once_with(os.path.join(
-        str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch')
+        str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch', False)
 
     copy_mock.assert_has_calls([
         mocker.call(os.path.join(str(tmpdir), 'image', 'Dockerfile'),
