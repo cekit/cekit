@@ -1,0 +1,6 @@
+name: setuptools
+version: 1.0
+
+packages:
+   install:
+      - python-setuptools

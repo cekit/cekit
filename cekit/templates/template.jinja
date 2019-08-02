@@ -76,19 +76,19 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {% endif %}
 ###### START {{ module_type }} '{{ module.name }}:{{ module.version }}'
 ###### \
-        {% if module.artifacts|rejectattr("from")|list|length > 0 %}
+        {% if module.artifacts|rejectattr("image")|list|length > 0 %}
         # Copy '{{ module.name }}' {{ module_type }} general artifacts
         COPY \
-        {% for artifact in module.artifacts|rejectattr("from")|list %}
+        {% for artifact in module.artifacts|rejectattr("image")|list %}
             {{ artifact['target'] }} \
             {% endfor %}
             /tmp/artifacts/
         {% endif -%}
 
-        {% if module.artifacts|selectattr("from")|list|length > 0 %}
+        {% if module.artifacts|selectattr("image")|list|length > 0 %}
         # Copy '{{ module.name }}' {{ module_type }} stage artifacts
-        {% for artifact in module.artifacts|selectattr("from")|list %}
-        COPY --from={{ artifact['from'] }} {{ artifact['path'] }} /tmp/artifacts/{{ artifact['target'] }}
+        {% for artifact in module.artifacts|selectattr("image")|list %}
+        COPY --from={{ artifact['image'] }} {{ artifact['path'] }} /tmp/artifacts/{{ artifact['target'] }}
         {% endfor %}
         {% endif -%}
 
