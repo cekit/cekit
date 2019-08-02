@@ -123,6 +123,7 @@ Parameters
     * ``--stage`` -- use stage environment
     * ``--koji-target`` -- overrides the default ``koji`` target
     * ``--commit-message`` -- custom commit message for dist-git
+    * ``--sync-only`` -- generate files and sync with dist-git, but do not execute build
 
 Example
     Performing scratch build
