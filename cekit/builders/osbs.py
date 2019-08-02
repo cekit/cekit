@@ -113,7 +113,8 @@ class OSBSBuilder(Builder):
         self.dist_git = DistGit(self.dist_git_dir,
                                 self.target,
                                 repository,
-                                branch)
+                                branch,
+                                self.params.assume_yes)
 
         self.dist_git.prepare(self.params.stage, self.params.user)
         self.dist_git.clean()
@@ -267,7 +268,7 @@ class OSBSBuilder(Builder):
 
             LOGGER.info("About to execute '{}'.".format(' '.join(cmd)))
 
-            if tools.decision("Do you want to build the image in OSBS?"):
+            if self.params.assume_yes or tools.decision("Do you want to build the image in OSBS?"):
                 build_type = "scratch" if scratch else "release"
                 LOGGER.info("Executing {} container build in OSBS...".format(build_type))
 
