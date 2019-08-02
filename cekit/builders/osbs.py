@@ -85,10 +85,11 @@ class OSBSBuilder(Builder):
 
         super(OSBSBuilder, self).before_build()
 
-        self.prepare_dist_git()
-        self.copy_to_dist_git()
+        self._prepare_dist_git()
+        self._copy_to_dist_git()
+        self._sync_with_dist_git()
 
-    def prepare_dist_git(self):
+    def _prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
 
         repository = repository_key.get('name')
@@ -129,9 +130,20 @@ class OSBSBuilder(Builder):
             self._rhpkg_set_url_repos = [x['url']['repository']
                                          for x in self.generator.image['packages']['set_url']]
 
-    def copy_to_dist_git(self):
+    def _copy_to_dist_git(self):
         LOGGER.debug("Copying files to dist-git '{}' directory".format(self.dist_git_dir))
         copy_recursively(os.path.join(self.target, 'image'), self.dist_git_dir)
+
+    def _sync_with_dist_git(self):
+        with Chdir(self.dist_git_dir):
+            self.dist_git.add(self.artifacts)
+            self.update_lookaside_cache()
+
+            if self.dist_git.stage_modified():
+                self.dist_git.commit(self.params.commit_message)
+                self.dist_git.push()
+            else:
+                LOGGER.info("No changes made to the code, committing skipped")
 
     def _merge_container_yaml(self, src, dest):
         # FIXME - this is temporary needs to be refactored to proper merging
@@ -216,6 +228,10 @@ class OSBSBuilder(Builder):
         LOGGER.info("Update finished.")
 
     def run(self):
+        if self.params.sync_only:
+            LOGGER.info("The --sync-only parameter was specified, build will not be executed, exiting")
+            return
+
         cmd = [self._koji]
 
         if self.params.user:
@@ -224,15 +240,6 @@ class OSBSBuilder(Builder):
         cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
         with Chdir(self.dist_git_dir):
-            self.dist_git.add(self.artifacts)
-            self.update_lookaside_cache()
-
-            if self.dist_git.stage_modified():
-                self.dist_git.commit(self.params.commit_message)
-                self.dist_git.push()
-            else:
-                LOGGER.info("No changes made to the code, committing skipped")
-
             # Get the url of the repository
             url = subprocess.check_output(
                 ["git", "config", "--get", "remote.origin.url"]).strip().decode("utf8")
