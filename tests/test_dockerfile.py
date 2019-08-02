@@ -88,8 +88,9 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
                          ],
                          ids=print_test_name)
 def test_dockerfile_rendering_tech_preview(tmpdir, mocker, desc_part, exp_regex):
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     target = str(tmpdir.mkdir('target'))
 
@@ -102,7 +103,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
                  'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'content_sets': {
@@ -119,8 +120,9 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
                  'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
 
     target = str(tmpdir.mkdir('target'))
@@ -156,8 +158,9 @@ def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
                  'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     config.cfg['common'] = {'redhat': True}
 
@@ -182,8 +185,9 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
                  'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     config.cfg['common'] = {'redhat': False}
 
@@ -207,8 +211,9 @@ def test_dockerfile_osbs_id_redhat_false(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
                  'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
@@ -227,8 +232,9 @@ def test_dockerfile_osbs_url_only(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
                  'state': 2, 'result_repofile': 'url'})
     mocker.patch.object(Repository, 'fetch')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
+    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     target = str(tmpdir.mkdir('target'))
     desc_part = {'packages': {'repositories': [{'name': 'foo',
