@@ -3,16 +3,35 @@ jobs:
   test:
     parallelism: 4
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-1604:201903-01
     steps:
-      - run: sudo apt-get install libkrb5-dev
+      - run:
+          name: "Prepare host for installation"
+          command: |
+            sudo killall apt-get || true
+            for service in apt-daily.service apt-daily-upgrade.service unattended-upgrades.service apt-daily.timer apt-daily-upgrade.timer; do
+              sudo systemctl stop ${service}
+              sudo systemctl kill --kill-who=all ${service} || true
+              sudo systemctl disable ${service}
+              sudo systemctl mask ${service}
+            done
+            sudo systemctl daemon-reload
+      - run:
+          name: "Install required packages"
+          command: |
+            sudo add-apt-repository -y ppa:projectatomic/ppa
+            sudo apt-get update
+            sudo apt-get install libkrb5-dev software-properties-common uidmap podman docker-ce
       - checkout
       - run: docker version
       - run: docker info
+      - run: podman version
+      - run: podman info
       - run: pip install tox --user
       - run: echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
       - run: cd ~/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
       - run: pyenv local 2.7.12 3.5.2 3.6.5 3.7.0
+      - run: echo -e "[registries.search]\nregistries = ['docker.io', 'registry.fedoraproject.org', 'registry.access.redhat.com']" | sudo tee -a /etc/containers/registries.conf
       - run: |
           if [[ "${CIRCLE_NODE_INDEX}" == 0 ]]; then
              make test-py27
@@ -32,10 +51,25 @@ jobs:
 
   docs-build:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-1604:201903-01
     steps:
+      - run:
+          name: "Prepare host for installation"
+          command: |
+            sudo killall apt-get || true
+            for service in apt-daily.service apt-daily-upgrade.service unattended-upgrades.service apt-daily.timer apt-daily-upgrade.timer; do
+              sudo systemctl stop ${service}
+              sudo systemctl kill --kill-who=all ${service} || true
+              sudo systemctl disable ${service}
+              sudo systemctl mask ${service}
+            done
+            sudo systemctl daemon-reload
+      - run:
+          name: "Install required packages"
+          command: |
+            sudo apt-get update
+            sudo apt install -y graphviz
       - checkout
-      - run: sudo apt install -y graphviz
       - run:
           name: Install docs dependencies
           command: |

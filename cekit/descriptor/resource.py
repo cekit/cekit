@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -17,56 +18,98 @@ from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-from cekit.tools import get_brew_url
+from cekit.tools import get_brew_url, Map
 
 logger = logging.getLogger('cekit')
 config = Config()
 
 
+def create_resource(descriptor, **kwargs):
+    """
+    Module method responsible for instantiating proper resource object
+    based on the provided descriptor.
+
+    In most cases, only descriptor is required to create the object from descriptor.
+    In case additional data is required, the kwargs 'dictionary' will be checked
+    if the required key exists and will be used in the object constructor.
+    """
+
+    if 'image' in descriptor:
+        return _ImageContentResource(descriptor)
+
+    if 'path' in descriptor:
+        directory = kwargs.pop('directory')
+
+        if not directory:
+            raise CekitError(("Internal error: cannot instantiate PathResource: {}, directory was not provided, " +
+                              "please report it: https://github.com/cekit/cekit/issues").format(descriptor))
+
+        return _PathResource(descriptor, directory)
+
+    if 'url' in descriptor:
+        return _UrlResource(descriptor)
+
+    if 'git' in descriptor:
+        return _GitResource(descriptor)
+
+    if 'md5' in descriptor:
+        return _PlainResource(descriptor)
+
+    raise CekitError("Resource '{}' is not supported".format(descriptor))
+
+
 class Resource(Descriptor):
+    """
+    Base class for handling resources.
+
+    In most cases resources are synonym to artifacts.
+    """
+
     CHECK_INTEGRITY = True
 
-    def __new__(cls, resource, **kwargs):
-        if cls is Resource:
-            if 'path' in resource:
-                return super(Resource, cls).__new__(_PathResource)
-            elif 'url' in resource:
-                return super(Resource, cls).__new__(_UrlResource)
-            elif 'git' in resource:
-                return super(Resource, cls).__new__(_GitResource)
-            elif 'md5' in resource:
-                return super(Resource, cls).__new__(_PlainResource)
-            raise CekitError("Resource type is not supported: %s" % resource)
-
     def __init__(self, descriptor):
-        self.schemas = [yaml.safe_load("""
-        map:
-          name: {type: str}
-          git:
-            map:
-              url: {type: str, required: True}
-              ref: {type: str}
-          path: {type: str, required: False}
-          url: {type: str, required: False}
-          md5: {type: str}
-          sha1: {type: str}
-          sha256: {type: str}
-          sha512: {type: str}
-          description: {type: str}
-          target: {type: str}
-        assert: \"val['git'] is not None or val['path'] is not None or val['url] is not None or val['md5'] is not None\"""")]
+        # Schema must be provided by the implementing class
+        if not self.schema:
+            raise CekitError("Resource '{}' has no schema defined".format(type(self).__name__))
+
+        # Includes validation
         super(Resource, self).__init__(descriptor)
+
+        # Make sure the we have 'name' set
+        self._ensure_name(descriptor)
+        # Make sure the we have 'target' set
+        self._ensure_target(descriptor)
+        # Convert the dictionary into a Map object for easier access
+        self._descriptor = self.__to_map(descriptor)
+
         self.skip_merging = ['md5', 'sha1', 'sha256', 'sha512']
 
         # forwarded import to prevent circular imports
         from cekit.cache.artifact import ArtifactCache
         self.cache = ArtifactCache()
 
-        self.name = descriptor['name']
+    def __to_map(self, dictionary):
+        """
+        Convert provided dictionary, recursively, into a Map object.
 
-        self.description = None
-        if 'description' in descriptor:
-            self.description = descriptor['description']
+        This will make it possible to access nested elements
+        via properties:
+
+                res.git.url
+
+        instead of:
+
+                res.git['url]
+        """
+        if not isinstance(dictionary, dict):
+            return dictionary
+
+        converted = Map()
+
+        for key in dictionary:
+            converted[key] = self.__to_map(dictionary[key])
+
+        return converted
 
     def __eq__(self, other):
         # All subclasses of Resource are considered same object type
@@ -80,20 +123,61 @@ class Resource(Descriptor):
             return not self['name'] == other['name']
         return NotImplemented
 
+    def _ensure_name(self, descriptor):
+        """
+        Makes sure the 'name' attribute exists.
+
+        If it does not, a default value will be computed based on the implementation
+        type of the resource class.
+        """
+
+        # If the 'name' key is present and there is a value, we have nothing to do
+        if descriptor.get('name') is not None:
+            return
+
+        # Get the default value set for particular resource type
+        default = self._get_default_name_value(descriptor)  # pylint: disable=assignment-from-none
+
+        # If there is still no default, we need to fail, because 'name' is required.
+        # If we ever get here, it is a bug and should be reported.
+        if not default:
+            raise CekitError(
+                ("Internal error: no value found for 'name' in '{}' artifact; unable to generate default value, " +
+                 "please report it: https://github.com/cekit/cekit/issues").format(descriptor))
+
+        logger.warning("No value found for 'name' in '{}' artifact; using auto-generated value of '{}'".
+                       format(json.dumps(descriptor, sort_keys=True), default))
+
+        descriptor['name'] = default
+
+    def _ensure_target(self, descriptor):
+        if descriptor.get('target') is not None:
+            return
+
+        descriptor['target'] = self._get_default_target_value(descriptor)
+
+    def _get_default_name_value(self, descriptor):  # pylint: disable=unused-argument
+        """
+        Returns default identifier value for particular class.
+
+        This method must be overridden in classes extending Resource.
+        Returned should be a string that will be be a unique identifier
+        of the resource across thw whole image.
+        """
+        return None
+
+    def _get_default_target_value(self, descriptor):  # pylint: disable=unused-argument
+        return os.path.basename(descriptor.get('name'))
+
     def _copy_impl(self, target):
         raise NotImplementedError("Implement _copy_impl() for Resource: " +
                                   self.__module__ + "." +
                                   type(self).__name__)
 
-    def target_file_name(self):
-        if 'target' not in self:
-            self['target'] = os.path.basename(self.name)
-        return self['target']
-
     def copy(self, target=os.getcwd()):
 
         if os.path.isdir(target):
-            target = os.path.join(target, self.target_file_name())
+            target = os.path.join(target, self.target)
 
         logger.info("Preparing resource '{}'".format(self.name))
 
@@ -225,21 +309,37 @@ class Resource(Descriptor):
 
 
 class _PathResource(Resource):
+    """
+    Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#path-artifacts
+    """
 
-    def __init__(self, descriptor, directory, **kwargs):
-        # if the path is relative its considered relative to the directory parameter
-        # it defaults to CWD, but should be set for a descriptor dir if used for artifacts
-        if not os.path.isabs(descriptor['path']):
-            descriptor['path'] = os.path.join(directory,
-                                              descriptor['path'])
-
-        if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['path'])
-            logger.warning("No value found for 'name' in '[artifacts][path]'; using auto-generated value of '{}'".
-                           format(descriptor['name']))
+    def __init__(self, descriptor, directory):
+        self.schema = {
+            'map': {
+                'name': {'type': 'str'},
+                'target': {'type': 'str'},
+                'description': {'type': 'str'},
+                'path': {'type': 'str', 'required': True},
+                'md5': {'type': 'str'},
+                'sha1': {'type': 'str'},
+                'sha256': {'type': 'str'},
+                'sha512': {'type': 'str'}
+            }
+        }
 
         super(_PathResource, self).__init__(descriptor)
-        self.path = descriptor['path']
+
+        path = descriptor.get('path')
+
+        # If the path is relative it's considered relative to the directory parameter
+        if not os.path.isabs(path):
+            self['path'] = os.path.join(directory, path)
+
+    def _get_default_name_value(self, descriptor):
+        """
+        Default identifier is the last part (most probably file name) of the URL.
+        """
+        return os.path.basename(descriptor.get('path'))
 
     def _copy_impl(self, target):
         if not os.path.exists(self.path):
@@ -269,15 +369,34 @@ class _PathResource(Resource):
 
 
 class _UrlResource(Resource):
+    """
+    Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#url-artifacts
+    """
 
-    def __init__(self, descriptor, **kwargs):
-        if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['url'])
-            logger.warning("No value found for 'name' in '[artifacts][url]'; using auto-generated value of '{}'".
-                           format(descriptor['name']))
+    def __init__(self, descriptor):
+        self.schema = {
+            'map': {
+                'name': {'type': 'str'},
+                'target': {'type': 'str'},
+                'description': {'type': 'str'},
+                'url': {'type': 'str', 'required': True},
+                'md5': {'type': 'str'},
+                'sha1': {'type': 'str'},
+                'sha256': {'type': 'str'},
+                'sha512': {'type': 'str'}
+            }
+        }
 
         super(_UrlResource, self).__init__(descriptor)
-        self.url = descriptor['url'].strip()
+
+        # Normalize the URL
+        self['url'] = descriptor.get('url').strip()
+
+    def _get_default_name_value(self, descriptor):
+        """
+        Default identifier is the last part (most probably file name) of the URL.
+        """
+        return os.path.basename(descriptor.get('url'))
 
     def _copy_impl(self, target):
         try:
@@ -290,39 +409,57 @@ class _UrlResource(Resource):
 
 class _GitResource(Resource):
 
-    def __init__(self, descriptor, **kwargs):
-        if 'name' not in descriptor:
-            descriptor['name'] = os.path.basename(descriptor['git']['url'])
-            logger.warning("No value found for 'name' in '[repositories][git]'; using auto-generated value of '{}'".
-                           format(descriptor['name']))
+    def __init__(self, descriptor):
+        self.schema = {
+            'map': {
+                'name': {'type': 'str'},
+                'target': {'type': 'str'},
+                'description': {'type': 'str'},
+                'git': {
+                    'required': True,
+                    'map': {
+                        'url': {'type': 'str', 'required': True},
+                        'ref': {'type': 'str', 'required': True},
+                    }
+                }
+            }
+        }
+
         super(_GitResource, self).__init__(descriptor)
-        self.url = descriptor['git']['url']
-        self.ref = descriptor['git']['ref']
 
-    def target_file_name(self):
-        if 'target' not in self:
-            # XXX: We could make a case for using name instead of repo-ref
-            self['target'] = "%s-%s" % (os.path.basename(self.url), self.ref)
+    def _get_default_name_value(self, descriptor):
+        return os.path.basename(descriptor.get('git', {}).get('url'))
 
-        return self['target']
+    def _get_default_target_value(self, descriptor):
+        return "{}-{}".format(os.path.basename(descriptor.get('git').get('url')), descriptor.get('git').get('ref'))
 
     def _copy_impl(self, target):
-        cmd = ['git', 'clone', '--depth', '1', self.url, target, '-b',
-               self.ref]
+        cmd = ['git', 'clone', '--depth', '1', self.git.url, target, '-b',
+               self.git.ref]
         logger.debug("Running '{}'".format(' '.join(cmd)))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         return target
 
 
 class _PlainResource(Resource):
+    """
+    Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#plain-artifacts
+    """
 
-    def __init__(self, descriptor, **kwargs):
-        if 'name' not in descriptor:
-            raise CekitError("Missing name attribute for plain artifact")
+    def __init__(self, descriptor):
+        self.schema = {
+            'map': {
+                'name': {'type': 'str', 'required': True},
+                'target': {'type': 'str'},
+                'description': {'type': 'str'},
+                'md5': {'type': 'str', 'required': True},
+                'sha1': {'type': 'str'},
+                'sha256': {'type': 'str'},
+                'sha512': {'type': 'str'}
+            }
+        }
+
         super(_PlainResource, self).__init__(descriptor)
-
-        # Set target based on name
-        self.target = self.target_file_name()
 
     def _copy_impl(self, target):
         # First of all try to download the file using cacher if specified
@@ -334,16 +471,14 @@ class _PlainResource(Resource):
                 logger.debug(str(e))
                 logger.warning("Could not download '{}' artifact using cacher".format(self.name))
 
-        md5 = self.get('md5')
-
         # Next option is to download it from Brew directly but only if the md5 checkum
         # is provided and we are running with the --redhat switch
-        if md5 and config.get('common', 'redhat'):
+        if self.md5 and config.get('common', 'redhat'):
             logger.debug("Trying to download artifact '{}' from Brew directly".format(self.name))
 
             try:
                 # Generate the URL
-                url = get_brew_url(md5)
+                url = get_brew_url(self.md5)
                 # Use the URL to download the file
                 self._download_file(url, target, use_cache=False)
                 return target
@@ -352,3 +487,46 @@ class _PlainResource(Resource):
                 logger.warning("Could not download artifact '{}' from Brew".format(self.name))
 
         raise CekitError("Artifact {} could not be found".format(self.name))
+
+
+class _ImageContentResource(Resource):
+    """
+    Class to cover artifacts that should be fetched from images.
+
+    Main purpose of this type of resources are artifacts built as
+    part of multi-stage builds. Other use case is where the artifact
+    should be fetched from an already built image.
+
+    Such a resource is represented in Dockerfile as:
+
+        COPY --from=[IMAGE] [PATH] /tmp/artifacts/[NAME]
+
+    Due to the nature of such resources, we're not able to validate
+    checksums of such resources.
+    """
+
+    def __init__(self, descriptor):
+        self.schema = {
+            'map': {
+                'name': {'type': 'str'},
+                'target': {'type': 'str'},
+                'description': {'type': 'str'},
+                'image': {'type': 'str', 'required': True},
+                'path': {'type': 'str', 'required': True}
+            }
+        }
+
+        super(_ImageContentResource, self).__init__(descriptor)
+
+    def _get_default_name_value(self, descriptor):
+        """
+        Default identifier is the file name of the resource inside of the image.
+        """
+        return os.path.basename(descriptor.get('path'))
+
+    def _copy_impl(self, target):
+        """
+        For stage artifacts, there is nothing to copy, because the artifact is located
+        in an image that should be built in earlier stage of the image build process.
+        """
+        return target

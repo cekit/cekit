@@ -12,8 +12,7 @@ class Module(Image):
     def __init__(self, descriptor, path, artifact_dir):
         self._artifact_dir = artifact_dir
         self.path = path
-        schema = get_image_schema().copy()
-        self.schemas = [schema]
+        self.schema = get_image_schema().copy()
         # calling Descriptor constructor only here (we don't want Image() to mess with schema)
         super(Image, self).__init__(descriptor)
         self.skip_merging = ['description',

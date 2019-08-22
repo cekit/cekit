@@ -1,0 +1,17 @@
+name: app
+version: 1.0
+
+packages:
+   install:
+      - python-requests
+
+artifacts:
+    - name: application
+      image: builder
+      path: /path/to/application/inside/the/builder/image.jar
+
+    - image: builder
+      path: /path/to/lib.jar
+
+execute:
+    - script: install.sh

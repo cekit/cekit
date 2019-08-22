@@ -50,6 +50,7 @@ class Generator(object):
         self._fetch_repos = False
         self._module_registry = ModuleRegistry()
         self.image = None
+        self.builder_images = []
 
         if overrides:
             for override in overrides:
@@ -91,16 +92,34 @@ class Generator(object):
 
         # Read the main image descriptor and create an Image object from it
         descriptor = tools.load_descriptor(self._descriptor_path)
+
+        if isinstance(descriptor, list):
+            LOGGER.info("Descriptor contains multiple elements, assuming multi-stage image")
+            LOGGER.info("Found {} builder image(s) and one target image".format(
+                len(descriptor[:-1])))
+
+            # Iterate over images defined in image descriptor and
+            # create Image objects out of them
+            for image_descriptor in descriptor[:-1]:
+                self.builder_images.append(
+                    Image(image_descriptor, os.path.dirname(os.path.abspath(self._descriptor_path))))
+
+            descriptor = descriptor[-1]
+
         self.image = Image(descriptor, os.path.dirname(os.path.abspath(self._descriptor_path)))
 
         # apply overrides to the image definition
         self.image.apply_image_overrides(self._overrides)
+
+        for builder in self.builder_images:
+            builder.apply_image_overrides(self._overrides)
+
         # add build labels
         self.add_build_labels()
         # load the definitions of the modules
         self.build_module_registry()
         # process included modules
-        self.apply_module_overrides()
+        self.image.apply_module_overrides(self._module_registry)
         self.image.process_defaults()
 
     def generate(self, builder):  # pylint: disable=unused-argument
@@ -146,17 +165,50 @@ class Generator(object):
         if not self.image.label('summary') and description:
             image_labels.append(Label({'name': 'summary', 'value': description['value']}))
 
-    def apply_module_overrides(self):
-        self.image.apply_module_overrides(self._module_registry)
+    def _modules(self):
+        """
+        Returns list of modules used in all builder images as well
+        as the target image.
+        """
+
+        modules = []
+
+        for builder in self.builder_images:
+            if builder.modules:
+                modules += [builder.modules]
+
+        if self.image.modules:
+            modules += [self.image.modules]
+
+        return modules
+
+    def _module_repositories(self):
+        """
+        Prepares list of all module repositories. This includes repositories
+        defined in builder images as well as target image.
+        """
+        repositories = []
+
+        for module in self._modules():
+            for repo in module.repositories:
+                if repo in repositories:
+                    LOGGER.warning((
+                        "Module repository '{0}' already added, please check your image configuration, " +
+                        "skipping module repository '{0}'").format(repo.name))
+                    continue
+                # If the repository already exists, skip it
+                repositories.append(repo)
+
+        return repositories
 
     def build_module_registry(self):
         base_dir = os.path.join(self.target, 'repo')
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
-        for repo in self.image.modules.repositories:
+        for repo in self._module_repositories():
             LOGGER.debug("Downloading module repository: '{}'".format(repo.name))
             repo.copy(base_dir)
-            self.load_repository(os.path.join(base_dir, repo.target_file_name()))
+            self.load_repository(os.path.join(base_dir, repo.target))
 
     def load_repository(self, repo_dir):
         for modules_dir, _, files in os.walk(repo_dir):
@@ -182,9 +234,18 @@ class Generator(object):
         1. Place module to args.target/image/modules/ directory
 
         """
+
+        modules_to_install = []
+
+        for module in self._modules():
+            if module.install:
+                modules_to_install += module.install
+
         target = os.path.join(self.target, 'image', 'modules')
-        for module in self.image.modules.install:
-            module = self._module_registry.get_module(module.name, module.version, suppress_warnings=True)
+
+        for module in modules_to_install:
+            module = self._module_registry.get_module(
+                module.name, module.version, suppress_warnings=True)
             LOGGER.debug("Copying module '{}' required by '{}'.".format(
                 module.name, self.image.name))
 
@@ -251,6 +312,7 @@ class Generator(object):
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
         env.globals['image'] = self.image
+        env.globals['builders'] = self.builder_images
 
         template = env.get_template(os.path.basename(template_file))
 

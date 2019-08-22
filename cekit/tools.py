@@ -5,7 +5,9 @@ import subprocess
 import sys
 
 import click
+
 import yaml
+from yaml.representer import SafeRepresenter
 
 from cekit.errors import CekitError
 
@@ -25,6 +27,10 @@ class Map(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
+
+# Make sure YAML can understand how to represent the Map object
+SafeRepresenter.add_representer(Map, SafeRepresenter.represent_dict)
 
 
 def load_descriptor(descriptor):

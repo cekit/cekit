@@ -3,7 +3,8 @@ import pytest
 import os
 import yaml
 
-from cekit.descriptor import Resource, Image, Overrides
+from cekit.descriptor import Image, Overrides
+from cekit.descriptor.resource import create_resource
 from cekit.config import Config
 from cekit.errors import CekitError
 
@@ -20,14 +21,14 @@ def setup_function(function):
 def test_repository_dir_is_constructed_properly(mocker):
     mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
-    res = Resource({'git': {'url': 'url/repo', 'ref': 'ref'}})
+    res = create_resource({'git': {'url': 'url/repo', 'ref': 'ref'}})
     assert res.copy('dir') == 'dir/repo-ref'
 
 
 def test_git_clone(mocker):
     mock = mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
-    res = Resource({'git': {'url': 'url', 'ref': 'ref'}})
+    res = create_resource({'git': {'url': 'url', 'ref': 'ref'}})
     res.copy('dir')
     mock.assert_called_with(['git',
                              'clone',
@@ -69,7 +70,7 @@ def test_fetching_with_ssl_verify(mocker):
     get_mock_ssl(mocker, ctx)
     mock_urlopen = get_mock_urlopen(mocker)
 
-    res = Resource({'name': 'file', 'url': 'https:///dummy'})
+    res = create_resource({'name': 'file', 'url': 'https:///dummy'})
 
     try:
         res.copy()
@@ -88,7 +89,7 @@ def test_fetching_disable_ssl_verify(mocker):
     ctx = get_ctx(mocker)
     get_mock_ssl(mocker, ctx)
 
-    res = Resource({'name': 'file', 'url': 'https:///dummy'})
+    res = create_resource({'name': 'file', 'url': 'https:///dummy'})
 
     try:
         res.copy()
@@ -102,7 +103,7 @@ def test_fetching_disable_ssl_verify(mocker):
 
 
 def test_fetching_bad_status_code():
-    res = Resource(
+    res = create_resource(
         {'name': 'file', 'url': 'http:///dummy'})
     with pytest.raises(CekitError):
         res.copy()
@@ -117,7 +118,7 @@ def test_fetching_file_exists_but_used_as_is(mocker):
     with open('file', 'w') as f:  # noqa: F841
         pass
     mock_urlopen = get_mock_urlopen(mocker)
-    res = Resource({'name': 'file',
+    res = create_resource({'name': 'file',
                     'url': 'http:///dummy',
                     'md5': 'd41d8cd98f00b204e9800998ecf8427e'})
     res.copy()
@@ -135,7 +136,7 @@ def test_fetching_file_exists_fetched_again(mocker):
 
     with open('file', 'w') as f:  # noqa: F841
         pass
-    res = Resource({'name': 'file', 'url': 'http:///dummy', 'md5': '123456'})
+    res = create_resource({'name': 'file', 'url': 'http:///dummy', 'md5': '123456'})
     with pytest.raises(CekitError):
         # Checksum will fail, because the "downloaded" file
         # will not have md5 equal to 123456. We need investigate
@@ -156,7 +157,7 @@ def test_fetching_file_exists_no_hash_fetched_again(mocker):
     with open('file', 'w') as f:  # noqa: F841
         pass
 
-    res = Resource({'name': 'file', 'url': 'http:///dummy'})
+    res = create_resource({'name': 'file', 'url': 'http:///dummy'})
 
     with pytest.raises(CekitError):
         # url is not valid so we get error, but we are not interested
@@ -166,13 +167,13 @@ def test_fetching_file_exists_no_hash_fetched_again(mocker):
 
 
 def test_generated_url_without_cacher():
-    res = Resource({'url': 'url'})
+    res = create_resource({'url': 'url'})
     assert res._Resource__substitute_cache_url('url') == 'url'
 
 
 def test_resource_verify(mocker):
     mock = mocker.patch('cekit.descriptor.resource.check_sum')
-    res = Resource({'url': 'dummy',
+    res = create_resource({'url': 'dummy',
                     'sha256': 'justamocksum'})
     res._Resource__verify('dummy')
     mock.assert_called_with('dummy', 'sha256', 'justamocksum', 'dummy')
@@ -180,20 +181,20 @@ def test_resource_verify(mocker):
 
 def test_generated_url_with_cacher():
     config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
-    res = Resource({'url': 'dummy',
+    res = create_resource({'url': 'dummy',
                     'sha256': 'justamocksum'})
     res.name = 'file'
     assert res._Resource__substitute_cache_url('file') == 'file,sha256,justamocksum'
 
 
 def test_path_resource_absolute():
-    res = Resource({'name': 'foo',
+    res = create_resource({'name': 'foo',
                     'path': '/bar'}, directory='/foo')
     assert res.path == '/bar'
 
 
 def test_path_resource_relative():
-    res = Resource({'name': 'foo',
+    res = create_resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')
     assert res.path == '/foo/bar'
 
@@ -203,7 +204,7 @@ def test_path_local_existing_resource_no_cacher_use(mocker):
     mocker.patch('os.path.exists', return_value=True)
     shutil_mock = mocker.patch('shutil.copy2')
 
-    res = Resource({'name': 'foo',
+    res = create_resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')
 
     mocker.spy(res, '_download_file')
@@ -219,7 +220,7 @@ def test_path_local_non_existing_resource_with_cacher_use(mocker):
     mocker.patch('os.path.exists', return_value=False)
     mocker.patch('os.makedirs')
 
-    res = Resource({'name': 'foo',
+    res = create_resource({'name': 'foo',
                     'path': 'bar'}, directory='/foo')
 
     mocker.spy(res, '_download_file')
@@ -242,7 +243,7 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
     urlopen_mock.getcode.return_value = 200
     urlopen_mock.read.side_effect = Exception
 
-    res = Resource({'url': 'http://server.org/dummy',
+    res = create_resource({'url': 'http://server.org/dummy',
                     'sha256': 'justamocksum'})
 
     targetfile = os.path.join(str(tmpdir), 'targetfile')
@@ -272,7 +273,7 @@ def test_copy_plain_resource_with_cacher(mocker, tmpdir):
     with open('file', 'w') as f:  # noqa: F841
         pass
 
-    res = Resource({'name': 'foo',
+    res = create_resource({'name': 'foo',
                     'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
 
     substitute_cache_url_mock = mocker.patch.object(
@@ -299,7 +300,7 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
     with open('file', 'w') as f:  # noqa: F841
         pass
 
-    res = Resource({'name': 'foo',
+    res = create_resource({'name': 'foo',
                     'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
 
     mocker.spy(res, '_Resource__substitute_cache_url')

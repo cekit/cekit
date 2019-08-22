@@ -85,10 +85,11 @@ class OSBSBuilder(Builder):
 
         super(OSBSBuilder, self).before_build()
 
-        self.prepare_dist_git()
-        self.copy_to_dist_git()
+        self._prepare_dist_git()
+        self._copy_to_dist_git()
+        self._sync_with_dist_git()
 
-    def prepare_dist_git(self):
+    def _prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
 
         repository = repository_key.get('name')
@@ -112,26 +113,38 @@ class OSBSBuilder(Builder):
         self.dist_git = DistGit(self.dist_git_dir,
                                 self.target,
                                 repository,
-                                branch)
+                                branch,
+                                self.params.assume_yes)
 
         self.dist_git.prepare(self.params.stage, self.params.user)
         self.dist_git.clean()
 
         # First get all artifacts that are not plain artifacts
-        self.artifacts = [a.target_file_name()
+        self.artifacts = [a.target
                           for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource)]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
-        self.artifacts += [a.target_file_name()
+        self.artifacts += [a.target
                            for a in self.generator.image.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
         if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository']
                                          for x in self.generator.image['packages']['set_url']]
 
-    def copy_to_dist_git(self):
+    def _copy_to_dist_git(self):
         LOGGER.debug("Copying files to dist-git '{}' directory".format(self.dist_git_dir))
         copy_recursively(os.path.join(self.target, 'image'), self.dist_git_dir)
+
+    def _sync_with_dist_git(self):
+        with Chdir(self.dist_git_dir):
+            self.dist_git.add(self.artifacts)
+            self.update_lookaside_cache()
+
+            if self.dist_git.stage_modified():
+                self.dist_git.commit(self.params.commit_message)
+                self.dist_git.push()
+            else:
+                LOGGER.info("No changes made to the code, committing skipped")
 
     def _merge_container_yaml(self, src, dest):
         # FIXME - this is temporary needs to be refactored to proper merging
@@ -216,6 +229,10 @@ class OSBSBuilder(Builder):
         LOGGER.info("Update finished.")
 
     def run(self):
+        if self.params.sync_only:
+            LOGGER.info("The --sync-only parameter was specified, build will not be executed, exiting")
+            return
+
         cmd = [self._koji]
 
         if self.params.user:
@@ -224,15 +241,6 @@ class OSBSBuilder(Builder):
         cmd += ['call', '--python', 'buildContainer', '--kwargs']
 
         with Chdir(self.dist_git_dir):
-            self.dist_git.add(self.artifacts)
-            self.update_lookaside_cache()
-
-            if self.dist_git.stage_modified():
-                self.dist_git.commit(self.params.commit_message)
-                self.dist_git.push()
-            else:
-                LOGGER.info("No changes made to the code, committing skipped")
-
             # Get the url of the repository
             url = subprocess.check_output(
                 ["git", "config", "--get", "remote.origin.url"]).strip().decode("utf8")
@@ -260,7 +268,7 @@ class OSBSBuilder(Builder):
 
             LOGGER.info("About to execute '{}'.".format(' '.join(cmd)))
 
-            if tools.decision("Do you want to build the image in OSBS?"):
+            if self.params.assume_yes or tools.decision("Do you want to build the image in OSBS?"):
                 build_type = "scratch" if scratch else "release"
                 LOGGER.info("Executing {} container build in OSBS...".format(build_type))
 

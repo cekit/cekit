@@ -1,17 +1,18 @@
 import collections
+import logging
+import os
+import yaml
+
+from pykwalify.core import Core
+from pykwalify.errors import SchemaError
+
+from cekit.errors import CekitError
 
 try:
     collectionsAbc = collections.abc
 except AttributeError:
     collectionsAbc = collections
 
-import logging
-import os
-
-import yaml
-from pykwalify.core import Core
-
-from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
 
@@ -42,17 +43,19 @@ class Descriptor(collectionsAbc.MutableMapping):
         self.__validate()
 
     def __validate(self):
-        for schema in self.schemas:
-            core = Core(source_data=self._descriptor,
-                        schema_data=schema, allow_assertions=True)
-            try:
-                core.validate(raise_exception=True)
-                return
-            except Exception as ex:
-                # We log this as debug, because we support multiple schemas
-                logger.debug("Schema validation failed: {}".format(ex))
+        if not self.schema:
+            return
 
-        raise CekitError("Cannot validate schema: {}".format(self.__class__.__name__))
+        try:
+            core = Core(
+                source_data=self._descriptor,
+                schema_data=self.schema,
+                allow_assertions=True
+            )
+
+            core.validate(raise_exception=True)
+        except SchemaError as ex:
+            raise CekitError("Cannot validate schema: {}".format(self.__class__.__name__), ex)
 
     @classmethod
     def to_yaml(cls, representer, node):
@@ -94,6 +97,27 @@ class Descriptor(collectionsAbc.MutableMapping):
         if isinstance(other, self.__class__):
             return not self['name'] == other['name']
         return NotImplemented
+
+    def __getattr__(self, name):
+        """
+        Make it possible to access the descriptor map as
+        a property:
+
+            o.name instead of o['name']
+
+        If an attribute is assigned to the object and to the
+        descriptor, object attribute wins and is returned.
+        """
+
+        try:
+            return super(Descriptor, self).__getattr__(name)
+        except AttributeError:
+            pass
+
+        if name in self._descriptor:
+            return self._descriptor[name]
+
+        return None
 
     def __getitem__(self, key):
         return self._descriptor[key]

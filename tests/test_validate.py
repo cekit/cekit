@@ -459,7 +459,7 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
     assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]')
-    assert check_dockerfile_text(image_dir, 'COPY \\\n    test \\\n    /tmp/artifacts/')
+    assert check_dockerfile_text(image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
 
 
 # Test work of workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1700341
@@ -654,113 +654,101 @@ def test_execution_order(tmpdir):
     run_cekit(image_dir)
 
     expected_modules_order = """
-# START module child_of_child:1.0
+###### START module 'child_of_child:1.0'
+###### \\
+        # Copy 'child_of_child' module content
+        COPY modules/child_of_child /tmp/scripts/child_of_child
+        # Set 'child_of_child' module defined environment variables
+        ENV \\
+            foo="child_of_child" 
+        # Custom scripts from 'child_of_child' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
+###### /
+###### END module 'child_of_child:1.0'
 
-# Copy module child_of_child content
-COPY modules/child_of_child /tmp/scripts/child_of_child
+###### START module 'child2_of_child:1.0'
+###### \\
+        # Copy 'child2_of_child' module content
+        COPY modules/child2_of_child /tmp/scripts/child2_of_child
+        # Custom scripts from 'child2_of_child' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
+###### /
+###### END module 'child2_of_child:1.0'
 
+###### START module 'child3_of_child:1.0'
+###### \\
+        # Copy 'child3_of_child' module content
+        COPY modules/child3_of_child /tmp/scripts/child3_of_child
+        # Custom scripts from 'child3_of_child' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
+###### /
+###### END module 'child3_of_child:1.0'
 
-# Environment variables
-ENV \\
-    foo="child_of_child" 
+###### START module 'child:1.0'
+###### \\
+        # Copy 'child' module content
+        COPY modules/child /tmp/scripts/child
+        # Set 'child' module defined environment variables
+        ENV \\
+            foo="child" 
+        # Custom scripts from 'child' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
+###### /
+###### END module 'child:1.0'
 
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
+###### START module 'child_2:1.0'
+###### \\
+        # Copy 'child_2' module content
+        COPY modules/child_2 /tmp/scripts/child_2
+        # Custom scripts from 'child_2' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
+###### /
+###### END module 'child_2:1.0'
 
-# END module child_of_child:1.0
-# START module child2_of_child:1.0
+###### START module 'child_of_child3:1.0'
+###### \\
+        # Copy 'child_of_child3' module content
+        COPY modules/child_of_child3 /tmp/scripts/child_of_child3
+        # Custom scripts from 'child_of_child3' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
+###### /
+###### END module 'child_of_child3:1.0'
 
-# Copy module child2_of_child content
-COPY modules/child2_of_child /tmp/scripts/child2_of_child
+###### START module 'child2_of_child3:1.0'
+###### \\
+        # Copy 'child2_of_child3' module content
+        COPY modules/child2_of_child3 /tmp/scripts/child2_of_child3
+        # Custom scripts from 'child2_of_child3' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
+###### /
+###### END module 'child2_of_child3:1.0'
 
+###### START module 'child_3:1.0'
+###### \\
+        # Copy 'child_3' module content
+        COPY modules/child_3 /tmp/scripts/child_3
+###### /
+###### END module 'child_3:1.0'
 
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
-
-# END module child2_of_child:1.0
-# START module child3_of_child:1.0
-
-# Copy module child3_of_child content
-COPY modules/child3_of_child /tmp/scripts/child3_of_child
-
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
-
-# END module child3_of_child:1.0
-# START module child:1.0
-
-# Copy module child content
-COPY modules/child /tmp/scripts/child
-
-
-# Environment variables
-ENV \\
-    foo="child" 
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
-
-# END module child:1.0
-# START module child_2:1.0
-
-# Copy module child_2 content
-COPY modules/child_2 /tmp/scripts/child_2
-
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
-
-# END module child_2:1.0
-# START module child_of_child3:1.0
-
-# Copy module child_of_child3 content
-COPY modules/child_of_child3 /tmp/scripts/child_of_child3
-
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
-
-# END module child_of_child3:1.0
-# START module child2_of_child3:1.0
-
-# Copy module child2_of_child3 content
-COPY modules/child2_of_child3 /tmp/scripts/child2_of_child3
-
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
-
-# END module child2_of_child3:1.0
-# START module child_3:1.0
-
-# Copy module child_3 content
-COPY modules/child_3 /tmp/scripts/child_3
-
-
-# END module child_3:1.0
-# START module master:1.0
-
-# Copy module master content
-COPY modules/master /tmp/scripts/master
-
-
-# Environment variables
-ENV \\
-    foo="master" 
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]
-
-# END module master:1.0
+###### START module 'master:1.0'
+###### \\
+        # Copy 'master' module content
+        COPY modules/master /tmp/scripts/master
+        # Set 'master' module defined environment variables
+        ENV \\
+            foo="master" 
+        # Custom scripts from 'master' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]
+###### /
+###### END module 'master:1.0'
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
@@ -820,74 +808,67 @@ def test_execution_order_flat(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_modules_order = """
-# START module mod_1:1.0
+###### START module 'mod_1:1.0'
+###### \\
+        # Copy 'mod_1' module content
+        COPY modules/mod_1 /tmp/scripts/mod_1
+        # Set 'mod_1' module defined environment variables
+        ENV \\
+            foo="mod_1" 
+        # Custom scripts from 'mod_1' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_1/a" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_1/b" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
+###### /
+###### END module 'mod_1:1.0'
 
-# Copy module mod_1 content
-COPY modules/mod_1 /tmp/scripts/mod_1
+###### START module 'mod_2:1.0'
+###### \\
+        # Copy 'mod_2' module content
+        COPY modules/mod_2 /tmp/scripts/mod_2
+        # Set 'mod_2' module defined environment variables
+        ENV \\
+            foo="mod_2" 
+        # Custom scripts from 'mod_2' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_2/a" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_2/b" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
+###### /
+###### END module 'mod_2:1.0'
 
+###### START module 'mod_3:1.0'
+###### \\
+        # Copy 'mod_3' module content
+        COPY modules/mod_3 /tmp/scripts/mod_3
+        # Custom scripts from 'mod_3' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_3/a" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_3/b" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
+###### /
+###### END module 'mod_3:1.0'
 
-# Environment variables
-ENV \\
-    foo="mod_1" 
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_1/a" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_1/b" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
-
-# END module mod_1:1.0
-# START module mod_2:1.0
-
-# Copy module mod_2 content
-COPY modules/mod_2 /tmp/scripts/mod_2
-
-
-# Environment variables
-ENV \\
-    foo="mod_2" 
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_2/a" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_2/b" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
-
-# END module mod_2:1.0
-# START module mod_3:1.0
-
-# Copy module mod_3 content
-COPY modules/mod_3 /tmp/scripts/mod_3
-
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_3/a" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_3/b" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
-
-# END module mod_3:1.0
-# START module mod_4:1.0
-
-# Copy module mod_4 content
-COPY modules/mod_4 /tmp/scripts/mod_4
-
-
-# Custom scripts
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_4/a" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_4/b" ]
-USER root
-RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
-
-# END module mod_4:1.0
+###### START module 'mod_4:1.0'
+###### \\
+        # Copy 'mod_4' module content
+        COPY modules/mod_4 /tmp/scripts/mod_4
+        # Custom scripts from 'mod_4' module
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_4/a" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_4/b" ]
+        USER root
+        RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
+###### /
+###### END module 'mod_4:1.0'
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
     assert not check_dockerfile_text(image_dir, "RUN yum clean all")
@@ -908,28 +889,29 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_order_install = """
-# START module packages_module:1.0
+###### START module 'packages_module:1.0'
+###### \\
+        # Copy 'packages_module' module content
+        COPY modules/packages_module /tmp/scripts/packages_module
+        # Switch to 'root' user to install 'packages_module' module defined packages
+        USER root
+        # Install packages defined in the 'packages_module' module
+        RUN yum --setopt=tsflags=nodocs install -y kernel java \\
+            && rpm -q kernel java
+###### /
+###### END module 'packages_module:1.0'
 
-# Copy module packages_module content
-COPY modules/packages_module /tmp/scripts/packages_module
-
-USER root
-
-RUN yum --setopt=tsflags=nodocs install -y kernel java \\
-    && rpm -q kernel java
-
-# END module packages_module:1.0
-# START module packages_module_1:1.0
-
-# Copy module packages_module_1 content
-COPY modules/packages_module_1 /tmp/scripts/packages_module_1
-
-USER root
-
-RUN yum --setopt=tsflags=nodocs install -y wget mc \\
-    && rpm -q wget mc
-
-# END module packages_module_1:1.0
+###### START module 'packages_module_1:1.0'
+###### \\
+        # Copy 'packages_module_1' module content
+        COPY modules/packages_module_1 /tmp/scripts/packages_module_1
+        # Switch to 'root' user to install 'packages_module_1' module defined packages
+        USER root
+        # Install packages defined in the 'packages_module_1' module
+        RUN yum --setopt=tsflags=nodocs install -y wget mc \\
+            && rpm -q wget mc
+###### /
+###### END module 'packages_module_1:1.0'
 """
 
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
@@ -950,10 +932,11 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_install = """
-USER root
-
-RUN yum --setopt=tsflags=nodocs install -y wget mc \\
-    && rpm -q wget mc
+        # Switch to 'root' user to install 'test/image' image defined packages
+        USER root
+        # Install packages defined in the 'test/image' image
+        RUN yum --setopt=tsflags=nodocs install -y wget mc \\
+            && rpm -q wget mc
 """
 
     assert check_dockerfile_text(image_dir, expected_packages_install)
