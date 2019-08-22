@@ -10,6 +10,7 @@ This chapter will guide you through the CEKit usage covering all important topic
     building/index
     testing/index
     modules/index
+    multi-stage
     caching
     overrides
     configuration
