@@ -20,7 +20,7 @@ Checksums
     the downloaded file and comparing it with the desired value. Currently supported algorithms
     are: ``md5``, ``sha1``, ``sha256`` and ``sha512``.
 
-    You can define multiple checksums for a single artifact. All specfied checksums will
+    You can define multiple checksums for a single artifact. All specified checksums will
     be validated.
 
     If no algorithm is provided, artifacts will be fetched **every time**.
@@ -30,7 +30,8 @@ Checksums
     development. We advice that you define checksum when your content becomes stable.
 
 Caching
-    All artifacts are automatically cached during an image build. To learn more about caching please take a look at :doc:`/handbook//caching` chapter.
+    All artifacts are automatically cached during an image build. To learn more about caching please
+    take a look at :doc:`/handbook//caching` chapter.
 
 
 Common artifact keys
@@ -111,6 +112,7 @@ CEKit supports following artifact types:
 * Plain artifacts
 * URL artifacts
 * Path artifacts
+* Image source artifacts
 
 Plain artifacts
 ******************
@@ -153,8 +155,8 @@ artifact should be fetched from.
 Path artifacts
 ******************
 
-This way of defining artifacts is mostly used in development :doc:`overrides </handbook/overrides>` and enables you to inject
-artifacts from a local filesystem.
+This way of defining artifacts is mostly used in development :doc:`overrides </handbook/overrides>`
+and enables you to inject artifacts from a local filesystem.
 
 .. code-block:: yaml
 
@@ -167,12 +169,23 @@ artifacts from a local filesystem.
 
     If you are using relative ``path`` to define an artifact, path is considered relative to an
     image descriptor which introduced that artifact.
-   
+
     Example
         If an artifact is defined inside ``/foo/bar/image.yaml`` with a path: ``baz/1.zip``
         the artifact will be resolved as ``/foo/bar/baz/1.zip``
 
+Image source artifacts
+************************
 
+Image source artifacts are used in multi-stage builds. With image source artifacts you can define
+files built in previous stages of the multi-stage builds.
 
+.. code-block:: yaml
 
+    artifacts:
+        - name: application
+          image: builder
+          path: /path/to/application/inside/the/builder/image.jar
 
+.. note::
+   Please note that image source artifacts do not allow for defining checksums due to the nature of this type of artifact.
