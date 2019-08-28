@@ -12,6 +12,7 @@ map:
       name: {type: str}
       branch: {type: str}
   configuration: {type: any}
+  koji_target: {type: str}
   extra_dir: {type: str}
 
 """)
@@ -67,6 +68,14 @@ class Osbs(Descriptor):
     @extra_dir.setter
     def extra_dir(self, value):
         self._descriptor['extra_dir'] = value
+
+    @property
+    def koji_target(self):
+        return self.get('koji_target')
+
+    @koji_target.setter
+    def koji_target(self, value):
+        self._descriptor['koji_target'] = value
 
 
 class Configuration(Descriptor):
