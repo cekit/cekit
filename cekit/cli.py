@@ -141,8 +141,6 @@ def build_podman(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
 @click.option('--release', help="Execute a release build.", is_flag=True)
-# TODO: Remove in 3.5
-@click.option('--tech-preview', help="Execute a tech preview build.", is_flag=True)
 @click.option('--user', metavar="USER", help="User used to kick the build as.")
 @click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
 @click.option('--stage', help="Use stage environmen.", is_flag=True)
@@ -152,7 +150,7 @@ def build_podman(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
 @click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
 @click.option('--assume-yes', '-y', help="Execute build in non-interactive mode.", is_flag=True)
 @click.pass_context
-def build_osbs(ctx, release, tech_preview, user, nowait, stage, koji_target, sync_only, commit_message, assume_yes):  # pylint: disable=unused-argument
+def build_osbs(ctx, release, user, nowait, stage, koji_target, sync_only, commit_message, assume_yes):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 

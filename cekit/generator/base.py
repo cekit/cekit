@@ -129,11 +129,6 @@ class Generator(object):
         self.render_dockerfile()
         self.render_help()
 
-    # TODO: Remove in 3.5
-    def add_tech_preview_overrides(self):
-        LOGGER.warning("The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5")
-        self._overrides.append(self.get_tech_preview_overrides())
-
     def add_redhat_overrides(self):
         self._overrides.append(self.get_redhat_overrides())
 
@@ -254,24 +249,6 @@ class Generator(object):
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
-
-    def get_tech_preview_overrides(self):
-        class TechPreviewOverrides(Overrides):
-            def __init__(self, generator):
-                super(TechPreviewOverrides, self).__init__({}, None)
-                self._generator = generator
-
-            @property
-            def name(self):
-                new_name = self._generator.image.name
-                if '/' in new_name:
-                    family, new_name = new_name.split('/')
-                    new_name = "%s-tech-preview/%s" % (family, new_name)
-                else:
-                    new_name = "%s-tech-preview" % new_name
-                return new_name
-
-        return TechPreviewOverrides(self)
 
     def get_redhat_overrides(self):
         class RedHatOverrides(Overrides):

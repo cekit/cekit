@@ -459,7 +459,8 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
     assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]')
-    assert check_dockerfile_text(image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
+    assert check_dockerfile_text(
+        image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
 
 
 # Test work of workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1700341
@@ -1129,24 +1130,6 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
 
     assert "Cannot validate schema: Image" in caplog.text
     assert "Cannot find required key 'name'" in caplog.text
-
-
-# https://github.com/cekit/cekit/issues/559
-def test_osbs_builder_tech_preview_deprecation(tmpdir, caplog):
-    image_dir = str(tmpdir.mkdir('source'))
-    copy_repos(image_dir)
-
-    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
-        yaml.dump(image_descriptor, fd, default_flow_style=False)
-
-    run_cekit(image_dir, ['-v',
-                          'build',
-                          '--dry-run',
-                          'osbs',
-                          '--tech-preview'
-                          ])
-
-    assert "The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5" in caplog.text
 
 
 def run_cekit(cwd,
