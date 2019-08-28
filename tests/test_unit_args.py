@@ -157,7 +157,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.buildah.BuildahBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': ()
+            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': (), 'no_squash': False
         }
     )
 ])

@@ -567,7 +567,8 @@ def test_docker_squashing_enabled(mocker):
 
 
 def test_docker_squashing_disabled(mocker):
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'no_squash': True, 'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {
+                            'no_squash': True, 'tags': ['foo', 'bar']})))
 
     assert builder.params.no_squash == True
 
@@ -615,6 +616,7 @@ def test_buildah_builder_run(mocker):
     check_call.assert_called_once_with([
         '/usr/bin/buildah',
         'build-using-dockerfile',
+        '--squash',
         '-t', 'foo',
         '-t', 'bar',
         'something/image'])
@@ -629,6 +631,7 @@ def test_buildah_builder_run_pull(mocker):
     check_call.assert_called_once_with([
         '/usr/bin/buildah',
         'build-using-dockerfile',
+        '--squash',
         '--pull-always',
         '-t', 'foo',
         '-t', 'bar',
@@ -643,6 +646,7 @@ def test_podman_builder_run(mocker):
 
     check_call.assert_called_once_with(['/usr/bin/podman',
                                         'build',
+                                        '--squash',
                                         '-t', 'foo',
                                         '-t', 'bar',
                                         'something/image'])
@@ -657,6 +661,7 @@ def test_podman_builder_run_pull(mocker):
     check_call.assert_called_once_with(['/usr/bin/podman',
                                         'build',
                                         '--pull-always',
+                                        '--squash',
                                         '-t', 'foo',
                                         '-t', 'bar',
                                         'something/image'])
@@ -683,6 +688,7 @@ def test_podman_builder_run_with_generator(mocker):
 
     check_call.assert_called_once_with(['/usr/bin/podman',
                                         'build',
+                                        '--squash',
                                         '-t', 'foo:1.9',
                                         '-t', 'foo:latest',
                                         'something/image'])
@@ -709,8 +715,35 @@ def test_buildah_builder_run_with_generator(mocker):
 
     check_call.assert_called_once_with(['/usr/bin/buildah',
                                         'build-using-dockerfile',
+                                        '--squash',
                                         '-t', 'foo:1.9',
                                         '-t', 'foo:latest',
+                                        'something/image'])
+
+
+def test_buildah_builder_with_squashing_disabled(mocker):
+    params = {'tags': ['foo', 'bar'], 'no_squash': True}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'buildah', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/buildah',
+                                        'build-using-dockerfile',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'something/image'])
+
+
+def test_podman_builder_with_squashing_disabled(mocker):
+    params = {'tags': ['foo', 'bar'], 'no_squash': True}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'podman', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/podman',
+                                        'build',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
                                         'something/image'])
 
 
