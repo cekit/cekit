@@ -7,10 +7,7 @@ from cekit.errors import CekitError
 
 osbs_schema = yaml.safe_load("""
 map:
-  repository:
-    map:
-      name: {type: str}
-      branch: {type: str}
+  repository: {type: any}
   configuration: {type: any}
   koji_target: {type: str}
   extra_dir: {type: str}
@@ -21,6 +18,12 @@ configuration_schema = yaml.safe_load("""
     map:
       container: {type: any}
       container_file: {type: str}
+""")
+
+repository_schema = yaml.safe_load("""
+    map:
+      name: {type: str}
+      branch: {type: str}
 """)
 
 
@@ -38,8 +41,11 @@ class Osbs(Descriptor):
         self.descriptor_path = descriptor_path
         super(Osbs, self).__init__(descriptor)
 
-        if 'configuration' in self:
-            self['configuration'] = Configuration(self['configuration'], self.descriptor_path)
+        self['configuration'] = Configuration(
+            self._descriptor.get('configuration', {}), self.descriptor_path)
+
+        self['repository'] = Repository(self._descriptor.get(
+            'repository', {}), self.descriptor_path)
 
     @property
     def name(self):
@@ -77,6 +83,10 @@ class Osbs(Descriptor):
     def koji_target(self, value):
         self._descriptor['koji_target'] = value
 
+    @property
+    def repository(self):
+        return self.get('repository')
+
 
 class Configuration(Descriptor):
     """Internal object represeting OSBS configuration subObject
@@ -100,3 +110,10 @@ class Configuration(Descriptor):
             with open(container_file, 'r') as file_:
                 self['container'] = yaml.safe_load(file_)
             del self['container_file']
+
+
+class Repository(Descriptor):
+    def __init__(self, descriptor, descriptor_path):
+        self.schema = repository_schema
+        self.descriptor_path = descriptor_path
+        super(Repository, self).__init__(descriptor)
