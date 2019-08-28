@@ -85,10 +85,6 @@ class Builder(Command):
                            "(http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the koji " +
                            "target, '--koji-target' will be removed in version 3.6")
 
-        # These should always come last
-        if self.params.get('tech_preview', False):
-            # Modify the image name, after all other overrides have been processed
-            self.generator.add_tech_preview_overrides()
         if CONFIG.get('common', 'redhat'):
             # Add the redhat specific stuff after everything else
             self.generator.add_redhat_overrides()

@@ -127,9 +127,6 @@ Input format
 Parameters
     ``--release``
         Perform an OSBS release build
-    ``--tech-preview``
-        Build tech preview image, see
-        :ref:`below for more information <handbook/building/builder-engines:Tech preview images>`
     ``--user``
         Alternative user passed to build task
     ``--nowait``
@@ -164,32 +161,6 @@ Example
     .. code-block:: bash
 
         $ cekit build osbs --release
-
-Tech preview images
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. deprecated:: 3.3
-    Use the :ref:`overrides feature <handbook/overrides:Overrides>` instead:
-
-    .. code-block:: bash
-
-        $ cekit build --overrides '{"name": "custom-family-tech-preview/project-8-centos7"}' osbs
-
-The OSBS builder has support for building a tech preview image without modifying the image source.
-The only difference between a regular image and the tech preview image is the resulting
-name of the image. Tech preview images contain the ``-tech-preview`` suffix in the image family
-of the name.
-
-.. code-block:: bash
-
-    $ cekit build osbs --tech-preview
-
-.. note::
-    You can combine the ``--tech-preview`` preview switch with ``--release`` switch.
-
-Example
-    The ``custom-family/project-8-centos7`` image built with the ``--tech-preview`` switch will become
-    ``custom-family-tech-preview/project-8-centos7``.
 
 Buildah builder
 ---------------------------
