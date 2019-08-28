@@ -34,12 +34,15 @@ def check_file_text(image_dir, match, filename="Dockerfile"):
     return False
 
 
-def run_cekit(image_dir, args=None):
+def run_cekit(image_dir, args=None, env=None):
     if args is None:
         args = ['build', '--dry-run', 'docker']
 
+    if env is None:
+        env = {}
+
     with Chdir(image_dir):
-        result = CliRunner().invoke(cli, args, catch_exceptions=False)
+        result = CliRunner(env=env).invoke(cli, args, catch_exceptions=False)
         assert result.exit_code == 0
         return result
 
@@ -74,4 +77,7 @@ def test_multi_stage_proper_image(tmpdir):
         os.path.join(tmpdir, 'multi-stage')
     )
 
-    run_cekit(os.path.join(tmpdir, 'multi-stage'), ['-v', 'build', 'podman'])
+    # The 'BUILDAH_LAYERS' environment variable is required to not cache intermediate layers
+    # See: https://bugzilla.redhat.com/show_bug.cgi?id=1746022
+    run_cekit(os.path.join(tmpdir, 'multi-stage'),
+              args=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})

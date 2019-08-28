@@ -109,9 +109,10 @@ def build_docker(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
 
 @build.command(name="buildah", short_help="Build using Buildah engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 @click.pass_context
-def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
+def build_buildah(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -124,9 +125,10 @@ def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
 
 @build.command(name="podman", short_help="Build using Podman engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 @click.pass_context
-def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
+def build_podman(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
