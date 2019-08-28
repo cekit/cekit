@@ -67,6 +67,30 @@ This key serves as a hint which DistGit repository and its branch we use to push
             name: containers/redhat-openjdk-18
             branch: jb-openjdk-1.8-openshift-rhel-7
 
+OSBS Koji target
+^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``koji_target``
+Required
+    No
+
+To execute a build in OSBS the Koji target parameter needs to be provided. By default it is
+constructed based on the branch name (see above), like this:
+
+.. code-block::
+
+    [BRANCH_NAME]-containers-candidate
+
+In most cases this is what is expected, but sometimes you want to change this. An example of such
+situation is when you use a custom, private branch to execute a scratch build. Target can be
+overridden by specifying the ``koji_target`` key.
+
+.. code-block:: yaml
+
+    osbs:
+        koji_target: rhaos-middleware-rhel-7-containers-candidate
+
 OSBS configuration
 ^^^^^^^^^^^^^^^^^^^
 

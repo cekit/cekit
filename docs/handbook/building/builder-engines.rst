@@ -137,6 +137,8 @@ Parameters
     ``--stage``
         Use stage environment
     ``--koji-target``
+        .. deprecated:: 3.5
+
         Overrides the default ``koji`` target
     ``--commit-message``
         Custom commit message for dist-git
