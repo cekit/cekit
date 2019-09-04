@@ -4,7 +4,7 @@ Artifacts
 It's common for images to require external artifacts like jar files, installers, etc.
 In most cases you will want to add some files into the image and use them during image build process.
 
-Artifacts section is meant exactly for this. CEKit will *automatically*
+Artifacts section is meant exactly for this. CEKit will try to *automatically*
 fetch any artifacts specified in this section.
 
 If for some reason automatic fetching of artifacts is not an option for you,
@@ -16,8 +16,8 @@ Artifact features
 ^^^^^^^^^^^^^^^^^^^^
 
 Checksums
-    All artifacts will be checked for consistency by computing checksum of
-    the downloaded file and comparing it with the desired value. Currently supported algorithms
+    Almost all artifacts will be checked for consistency by computing checksum of
+    the fetched file and comparing it with the desired value. Currently supported algorithms
     are: ``md5``, ``sha1``, ``sha256`` and ``sha512``.
 
     You can define multiple checksums for a single artifact. All specified checksums will
@@ -80,12 +80,6 @@ Common artifact keys
 
         Target file name: ``jboss-eap-6.4.0.zip``.
 
-``md5``, ``sha1``, ``sha256``, ``sha512``
-    Checksum algorithms. These keys can be provided to make sure the fetched artifact
-    is valid.
-
-    See section above about checksums.
-
 ``description``
    Describes the artifact. This is an optional key that can be used to add more information
    about the artifact.
@@ -117,40 +111,59 @@ CEKit supports following artifact types:
 Plain artifacts
 ******************
 
-This is an abstract way of defining artifacts. The only required keys are ``name`` and checksum.
+This is an abstract way of defining artifacts. The only required keys are ``name`` and the ``md5`` checksum.
 This type of artifacts is used to define artifacts that are not available publicly and instead
 provided by some (internal) systems.
 
-This approach relies on :doc:`/handbook//caching` to provide the artifact.
+.. schema:: cekit.descriptor.resource._PlainResource
+    :name: plain-artifact-schema
 
-.. code-block:: yaml 
+.. code-block:: yaml
+    :name: plain-artifact-examples
+    :caption: Examples
 
     artifacts:
-        - name: jolokia-1.3.6-bin.tar.gz
+        - name: jolokia
           md5: 75e5b5ba0b804cd9def9f20a70af649f
-          target: jolokia.jar
+          target: jolokia.tar.gz
+
+As you can see, the definition does not define from where the artifact should be fetched.
+This approach relies on :doc:`/handbook/caching` to provide the artifact.
 
 .. note::
 
    See :doc:`/handbook/redhat` for description how plain artifacts are used in the
    Red Hat environment.
 
-          
 URL artifacts
 ******************
 
 This is the simplest way of defining artifacts. You need to provide the ``url`` key which is the URL from where the
 artifact should be fetched from.
 
+.. schema:: cekit.descriptor.resource._UrlResource
+    :name: url-artifact-schema
+
 .. tip::
-    You should always specify checksums to make sure the downloaded artifact is correct.
+    You should always specify at least one checksum to make sure the downloaded artifact is correct.
 
 .. code-block:: yaml
+    :name: url-artifact-examples
+    :caption: Examples
 
     artifacts:
-        - name: jolokia-1.3.6-bin.tar.gz
-          url: https://github.com/rhuss/jolokia/releases/download/v1.3.6/jolokia-1.3.6-bin.tar.gz
-          md5: 75e5b5ba0b804cd9def9f20a70af649f
+        - name: "jolokia"
+          url: "https://github.com/rhuss/jolokia/releases/download/v1.3.6/jolokia-1.3.6-bin.tar.gz"
+          # The md5 checksum of the artifact
+          md5: "75e5b5ba0b804cd9def9f20a70af649f"
+
+        - name: "jolokia"
+          url: "https://github.com/rhuss/jolokia/releases/download/v1.3.6/jolokia-1.3.6-bin.tar.gz"
+          # Free text description of the artifact
+          description: "Library required to access server data via JMX"
+          md5: "75e5b5ba0b804cd9def9f20a70af649f"
+          # Final name of the downloaded artifact
+          target: "jolokia.tar.gz"
 
 Path artifacts
 ******************
@@ -158,7 +171,15 @@ Path artifacts
 This way of defining artifacts is mostly used in development :doc:`overrides </handbook/overrides>`
 and enables you to inject artifacts from a local filesystem.
 
+.. schema:: cekit.descriptor.resource._PathResource
+    :name: path-artifact-schema
+
+.. tip::
+    You should always specify at least one checksum to make sure the artifact is correct.
+
 .. code-block:: yaml
+    :name: path-artifact-examples
+    :caption: Examples
 
     artifacts:
         - name: jolokia-1.3.6-bin.tar.gz
@@ -177,15 +198,24 @@ and enables you to inject artifacts from a local filesystem.
 Image source artifacts
 ************************
 
-Image source artifacts are used in multi-stage builds. With image source artifacts you can define
-files built in previous stages of the multi-stage builds.
+Image source artifacts are used in :doc:`multi-stage builds </handbook/multi-stage>`.
+With image source artifacts you can define files built in previous stages of the
+multi-stage builds.
 
-.. code-block:: yaml
-
-    artifacts:
-        - name: application
-          image: builder
-          path: /path/to/application/inside/the/builder/image.jar
+.. schema:: cekit.descriptor.resource._ImageContentResource
+    :name: image-source-artifact-schema
 
 .. note::
    Please note that image source artifacts do not allow for defining checksums due to the nature of this type of artifact.
+
+.. code-block:: yaml
+    :name: image-source-artifact-examples
+    :caption: Examples
+
+    artifacts:
+        - name: application
+          # Name of the image (stage) from where we will fetch the artifact
+          image: builder
+          # Path to the artifact within the image
+          path: /path/to/application/inside/the/builder/image.jar
+

@@ -313,19 +313,21 @@ class _PathResource(Resource):
     Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#path-artifacts
     """
 
-    def __init__(self, descriptor, directory):
-        self.schema = {
-            'map': {
-                'name': {'type': 'str'},
-                'target': {'type': 'str'},
-                'description': {'type': 'str'},
-                'path': {'type': 'str', 'required': True},
-                'md5': {'type': 'str'},
-                'sha1': {'type': 'str'},
-                'sha256': {'type': 'str'},
-                'sha512': {'type': 'str'}
-            }
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'path': {'type': 'str', 'required': True, 'desc': 'Relative (suggested) or absolute path to the resource'},
+            'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
+            'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
+            'sha256': {'type': 'str', 'desc': 'The sha256 checksum of the resource'},
+            'sha512': {'type': 'str', 'desc': 'The sha512 checksum of the resource'}
         }
+    }
+
+    def __init__(self, descriptor, directory):
+        self.schema = _PathResource.SCHEMA
 
         super(_PathResource, self).__init__(descriptor)
 
@@ -373,19 +375,21 @@ class _UrlResource(Resource):
     Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#url-artifacts
     """
 
-    def __init__(self, descriptor):
-        self.schema = {
-            'map': {
-                'name': {'type': 'str'},
-                'target': {'type': 'str'},
-                'description': {'type': 'str'},
-                'url': {'type': 'str', 'required': True},
-                'md5': {'type': 'str'},
-                'sha1': {'type': 'str'},
-                'sha256': {'type': 'str'},
-                'sha512': {'type': 'str'}
-            }
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'url': {'type': 'str', 'required': True, 'desc': 'URL where the resource can be found'},
+            'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
+            'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
+            'sha256': {'type': 'str', 'desc': 'The sha256 checksum of the resource'},
+            'sha512': {'type': 'str', 'desc': 'The sha512 checksum of the resource'}
         }
+    }
+
+    def __init__(self, descriptor):
+        self.schema = _UrlResource.SCHEMA
 
         super(_UrlResource, self).__init__(descriptor)
 
@@ -409,21 +413,23 @@ class _UrlResource(Resource):
 
 class _GitResource(Resource):
 
-    def __init__(self, descriptor):
-        self.schema = {
-            'map': {
-                'name': {'type': 'str'},
-                'target': {'type': 'str'},
-                'description': {'type': 'str'},
-                'git': {
-                    'required': True,
-                    'map': {
-                        'url': {'type': 'str', 'required': True},
-                        'ref': {'type': 'str', 'required': True},
-                    }
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'git': {
+                'required': True,
+                'map': {
+                    'url': {'type': 'str', 'required': True, 'desc': 'URL of the repository'},
+                    'ref': {'type': 'str', 'required': True, 'desc': 'Reference to check out; could be branch, tag, etc'},
                 }
             }
         }
+    }
+
+    def __init__(self, descriptor):
+        self.schema = _GitResource.SCHEMA
 
         super(_GitResource, self).__init__(descriptor)
 
@@ -446,18 +452,20 @@ class _PlainResource(Resource):
     Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#plain-artifacts
     """
 
-    def __init__(self, descriptor):
-        self.schema = {
-            'map': {
-                'name': {'type': 'str', 'required': True},
-                'target': {'type': 'str'},
-                'description': {'type': 'str'},
-                'md5': {'type': 'str', 'required': True},
-                'sha1': {'type': 'str'},
-                'sha256': {'type': 'str'},
-                'sha512': {'type': 'str'}
-            }
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'required': True, 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'md5': {'type': 'str', 'required': True, 'desc': 'The md5 checksum of the resource'},
+            'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
+            'sha256': {'type': 'str', 'desc': 'The sha256 checksum of the resource'},
+            'sha512': {'type': 'str', 'desc': 'The sha512 checksum of the resource'}
         }
+    }
+
+    def __init__(self, descriptor):
+        self.schema = _PlainResource.SCHEMA
 
         super(_PlainResource, self).__init__(descriptor)
 
@@ -505,16 +513,18 @@ class _ImageContentResource(Resource):
     checksums of such resources.
     """
 
-    def __init__(self, descriptor):
-        self.schema = {
-            'map': {
-                'name': {'type': 'str'},
-                'target': {'type': 'str'},
-                'description': {'type': 'str'},
-                'image': {'type': 'str', 'required': True},
-                'path': {'type': 'str', 'required': True}
-            }
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'image': {'type': 'str', 'required': True, 'desc': 'Name of the image which holds the resource'},
+            'path': {'type': 'str', 'required': True, 'desc': 'Path in the image under which the resource can be found'}
         }
+    }
+
+    def __init__(self, descriptor):
+        self.schema = _ImageContentResource.SCHEMA
 
         super(_ImageContentResource, self).__init__(descriptor)
 
