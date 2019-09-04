@@ -329,7 +329,7 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
 
 
 # https://github.com/cekit/cekit/issues/400
-@pytest.mark.parametrize('manager', TemplateHelper.SUPPORTED_PACKAGE_MANAGERS)
+@pytest.mark.parametrize('manager', ['yum', 'dnf', 'microdnf'])
 def test_supported_package_managers(tmpdir, manager):
     target = str(tmpdir.mkdir('target'))
 
@@ -344,6 +344,25 @@ def test_supported_package_managers(tmpdir, manager):
         target, "RUN {} --setopt=tsflags=nodocs install -y foo-repo.rpm".format(manager))
     regex_dockerfile(target, "RUN {} --setopt=tsflags=nodocs install -y a".format(manager))
     regex_dockerfile(target, 'rpm -q a')
+
+
+def test_supported_package_managers_apk(tmpdir, caplog):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(
+        target,
+        ['-v', 'build', '--dry-run', 'docker'],
+        descriptor={
+            'packages': {
+                'manager': 'apk',
+                'install': ['a'],
+                'repositories': [{'name': 'foo',
+                                  'rpm': 'foo-repo.rpm'}]
+            }
+        })
+    regex_dockerfile(target, "RUN apk add a")
+    regex_dockerfile(target, "apk info -e a")
+    assert "Package manager apk does not support defining repositories, skipping all repositories" in caplog.text
 
 
 # https://github.com/cekit/cekit/issues/406

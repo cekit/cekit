@@ -39,12 +39,17 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  #}
 {%- macro pkg_install(pkg_manager, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
+        {% if pkg_manager == 'apk' %}
+{{ pkg_manager }} add {%- for package in packages %} {{ package }}{% endfor %} \
+        && apk info -e {%- for package in packages %} {{ package }}{% endfor %}
+        {% else %}
 {{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
     {% if pkg_manager == 'microdnf' %}
             && {{ pkg_manager }} clean all \
     {% endif %}
             && rpm -q{% for package in packages %} {{ package }}{% endfor %}
     {% endif %}
+        {% endif %}
 {%- endmacro -%}
 
 {#
@@ -134,7 +139,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Custom scripts from '{{ module.name }}' {{ module_type }}
         {% for exec in module.execute %}
         USER {{ exec.user }}
-        RUN [ "bash", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
+        RUN [ "sh", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
         {% endfor %}
         {% endif -%}
 
@@ -216,7 +221,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
     RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
 
-    {% if helper.packages_to_install(image) %}
+    {% if helper.packages_to_install(image) and image.packages.manager in ['yum', 'dnf', 'microdnf'] %}
     # Clear package manager metadata
     RUN {{ repo_clear_cache(image.packages.manager) }}
     {% endif -%}

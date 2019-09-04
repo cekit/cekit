@@ -420,7 +420,7 @@ def test_module_override(tmpdir):
     assert not os.path.exists(os.path.join(module_dir,
                                            'original'))
 
-    assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/foo/script" ]')
+    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/foo/script" ]')
 
 
 # https://github.com/cekit/cekit/issues/489
@@ -458,7 +458,7 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
 
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
-    assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]')
+    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/master/script_a" ]')
     assert check_dockerfile_text(
         image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
 
@@ -640,6 +640,28 @@ def test_run_path_artifact_target(tmpdir):
     assert check_dockerfile_uniq(image_dir, 'target_foo \\')
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
+def test_run_alpine(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['from'] = 'alpine:3.10'
+    img_desc['packages'] = {
+        'install': ['python3'],
+        'manager': 'apk'
+    }
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir, parameters=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
+
+
 def test_execution_order(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -664,7 +686,7 @@ def test_execution_order(tmpdir):
             foo="child_of_child" 
         # Custom scripts from 'child_of_child' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child_of_child/script_d" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child_of_child/script_d" ]
 ###### /
 ###### END module 'child_of_child:1.0'
 
@@ -674,7 +696,7 @@ def test_execution_order(tmpdir):
         COPY modules/child2_of_child /tmp/scripts/child2_of_child
         # Custom scripts from 'child2_of_child' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child2_of_child/scripti_e" ]
 ###### /
 ###### END module 'child2_of_child:1.0'
 
@@ -684,7 +706,7 @@ def test_execution_order(tmpdir):
         COPY modules/child3_of_child /tmp/scripts/child3_of_child
         # Custom scripts from 'child3_of_child' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child3_of_child/script_f" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child3_of_child/script_f" ]
 ###### /
 ###### END module 'child3_of_child:1.0'
 
@@ -697,7 +719,7 @@ def test_execution_order(tmpdir):
             foo="child" 
         # Custom scripts from 'child' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child/script_b" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child/script_b" ]
 ###### /
 ###### END module 'child:1.0'
 
@@ -707,7 +729,7 @@ def test_execution_order(tmpdir):
         COPY modules/child_2 /tmp/scripts/child_2
         # Custom scripts from 'child_2' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child_2/script_c" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child_2/script_c" ]
 ###### /
 ###### END module 'child_2:1.0'
 
@@ -717,7 +739,7 @@ def test_execution_order(tmpdir):
         COPY modules/child_of_child3 /tmp/scripts/child_of_child3
         # Custom scripts from 'child_of_child3' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child_of_child3/script_g" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child_of_child3/script_g" ]
 ###### /
 ###### END module 'child_of_child3:1.0'
 
@@ -727,7 +749,7 @@ def test_execution_order(tmpdir):
         COPY modules/child2_of_child3 /tmp/scripts/child2_of_child3
         # Custom scripts from 'child2_of_child3' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
+        RUN [ "sh", "-x", "/tmp/scripts/child2_of_child3/script_h" ]
 ###### /
 ###### END module 'child2_of_child3:1.0'
 
@@ -745,7 +767,7 @@ def test_execution_order(tmpdir):
             foo="master" 
         # Custom scripts from 'master' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/master/script_a" ]
 ###### /
 ###### END module 'master:1.0'
 """
@@ -816,11 +838,11 @@ def test_execution_order_flat(tmpdir, mocker):
             foo="mod_1" 
         # Custom scripts from 'mod_1' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_1/a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_1/a" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_1/b" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_1/b" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_1/c" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_1/c" ]
 ###### /
 ###### END module 'mod_1:1.0'
 
@@ -833,11 +855,11 @@ def test_execution_order_flat(tmpdir, mocker):
             foo="mod_2" 
         # Custom scripts from 'mod_2' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_2/a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_2/a" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_2/b" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_2/b" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_2/c" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_2/c" ]
 ###### /
 ###### END module 'mod_2:1.0'
 
@@ -847,11 +869,11 @@ def test_execution_order_flat(tmpdir, mocker):
         COPY modules/mod_3 /tmp/scripts/mod_3
         # Custom scripts from 'mod_3' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_3/a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_3/a" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_3/b" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_3/b" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_3/c" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_3/c" ]
 ###### /
 ###### END module 'mod_3:1.0'
 
@@ -861,11 +883,11 @@ def test_execution_order_flat(tmpdir, mocker):
         COPY modules/mod_4 /tmp/scripts/mod_4
         # Custom scripts from 'mod_4' module
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_4/a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_4/a" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_4/b" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_4/b" ]
         USER root
-        RUN [ "bash", "-x", "/tmp/scripts/mod_4/c" ]
+        RUN [ "sh", "-x", "/tmp/scripts/mod_4/c" ]
 ###### /
 ###### END module 'mod_4:1.0'
 """
@@ -1127,11 +1149,16 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
     assert "Cannot find required key 'name'" in caplog.text
 
 
-def run_cekit(cwd,
-              parameters=['build', '--dry-run', 'docker'],
-              message=None):
+def run_cekit(cwd, parameters=None, message=None, env=None):
+
+    if parameters is None:
+        parameters = ['build', '--dry-run', 'docker']
+
+    if env is None:
+        env = {}
+
     with Chdir(cwd):
-        result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+        result = CliRunner(env=env).invoke(cli, parameters, catch_exceptions=False)
         assert result.exit_code == 0
 
         if message:
