@@ -65,7 +65,7 @@ def test_multi_stage_single_image_in_list(tmpdir):
     assert check_file_text(tmpdir, 'ADD help.md /') is False
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
 def test_multi_stage_proper_image(tmpdir):
     """
     Build multi-stage image.
