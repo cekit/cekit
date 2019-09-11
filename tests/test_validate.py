@@ -609,7 +609,7 @@ def test_run_path_artifact_brew(tmpdir, caplog):
 
     img_desc = image_descriptor.copy()
     img_desc['artifacts'] = [{'name': 'aaa',
-                              'md5': 'd41d8cd98f00b204e9800998ecf8427e',
+                              'md5': 'd41d8cd98f00b204e9800998ecf84271',
                               'target': 'target_foo'}]
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
@@ -733,8 +733,6 @@ def test_execution_order(tmpdir):
 
 ###### START module 'child_3:1.0'
 ###### \\
-        # Copy 'child_3' module content
-        COPY modules/child_3 /tmp/scripts/child_3
 ###### /
 ###### END module 'child_3:1.0'
 
@@ -880,6 +878,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
+    img_desc['execute'] = [{'script': 'configure.sh', 'user': 'someuser'}]
     img_desc['modules']['install'] = [{'name': 'packages_module'}, {'name': 'packages_module_1'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_packages'}]
@@ -892,8 +891,6 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     expected_packages_order_install = """
 ###### START module 'packages_module:1.0'
 ###### \\
-        # Copy 'packages_module' module content
-        COPY modules/packages_module /tmp/scripts/packages_module
         # Switch to 'root' user to install 'packages_module' module defined packages
         USER root
         # Install packages defined in the 'packages_module' module
@@ -904,8 +901,6 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 
 ###### START module 'packages_module_1:1.0'
 ###### \\
-        # Copy 'packages_module_1' module content
-        COPY modules/packages_module_1 /tmp/scripts/packages_module_1
         # Switch to 'root' user to install 'packages_module_1' module defined packages
         USER root
         # Install packages defined in the 'packages_module_1' module
