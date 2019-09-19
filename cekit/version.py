@@ -1,2 +1,2 @@
-version = "3.5.dev0"
+version = "3.6.dev0"
 schema_version = 2
