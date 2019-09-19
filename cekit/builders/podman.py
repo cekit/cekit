@@ -36,6 +36,9 @@ class PodmanBuilder(Builder):
         if self.params.pull:
             cmd.append('--pull-always')
 
+        if not self.params.no_squash:
+            cmd.append('--squash')
+
         # Custom tags for the container image
         LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
 

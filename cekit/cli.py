@@ -109,9 +109,10 @@ def build_docker(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
 
 @build.command(name="buildah", short_help="Build using Buildah engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 @click.pass_context
-def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
+def build_buildah(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -124,9 +125,10 @@ def build_buildah(ctx, pull, tags):  # pylint: disable=unused-argument
 
 @build.command(name="podman", short_help="Build using Podman engine")
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
+@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
 @click.pass_context
-def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
+def build_podman(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -139,17 +141,16 @@ def build_podman(ctx, pull, tags):  # pylint: disable=unused-argument
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
 @click.option('--release', help="Execute a release build.", is_flag=True)
-# TODO: Remove in 3.5
-@click.option('--tech-preview', help="Execute a tech preview build.", is_flag=True)
 @click.option('--user', metavar="USER", help="User used to kick the build as.")
 @click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
 @click.option('--stage', help="Use stage environmen.", is_flag=True)
+# TODO: Remove in 3.6
 @click.option('--koji-target', metavar="TARGET", help="Override the default Koji target.")
 @click.option('--sync-only', help="Generate files and sync with dist-git, but do not execute build.", is_flag=True)
 @click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
 @click.option('--assume-yes', '-y', help="Execute build in non-interactive mode.", is_flag=True)
 @click.pass_context
-def build_osbs(ctx, release, tech_preview, user, nowait, stage, koji_target, sync_only, commit_message, assume_yes):  # pylint: disable=unused-argument
+def build_osbs(ctx, release, user, nowait, stage, koji_target, sync_only, commit_message, assume_yes):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 

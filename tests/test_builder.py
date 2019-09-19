@@ -179,6 +179,7 @@ def test_osbs_builder_run_brew_stage(mocker):
     check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
                                        b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
     builder = create_builder_object(mocker, 'osbs', params)
+    builder.generator = Map({'image': Map({})})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
     builder.run()
@@ -199,6 +200,7 @@ def test_osbs_builder_run_brew(mocker):
     check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
                                        b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
     builder = create_builder_object(mocker, 'osbs', {})
+    builder.generator = Map({'image': Map({})})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
     builder.run()
@@ -217,6 +219,7 @@ def test_osbs_builder_run_koji(mocker):
     check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
                                        b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
     builder = create_builder_object(mocker, 'osbs', {}, {'redhat': False, 'target': 'something'})
+    builder.generator = Map({'image': Map({})})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
     builder.run()
@@ -237,6 +240,7 @@ def test_osbs_builder_run_brew_nowait(mocker):
     check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
                                        b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
     builder = create_builder_object(mocker, 'osbs', params)
+    builder.generator = Map({'image': Map({})})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
     builder.run()
@@ -251,6 +255,7 @@ def test_osbs_builder_run_brew_user(mocker):
     check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
                                        b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
     builder = create_builder_object(mocker, 'osbs', params)
+    builder.generator = Map({'image': Map({})})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
     builder.run()
@@ -259,19 +264,35 @@ def test_osbs_builder_run_brew_user(mocker):
                                      "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
 
 
-def test_osbs_builder_run_brew_target(mocker):
+def test_osbs_builder_run_brew_target_defined_on_cli(mocker):
     config.cfg['common'] = {'redhat': True}
     params = {'koji_target': 'Foo'}
 
     check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
                                        b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
     builder = create_builder_object(mocker, 'osbs', params)
+    builder.generator = Map({'image': Map({})})
     mocker.patch.object(builder, '_wait_for_osbs_task')
     builder.dist_git.branch = "some-branch"
     builder.run()
 
     check_output.assert_called_with(['/usr/bin/brew', 'call', '--python', 'buildContainer', '--kwargs',
                                      "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'Foo', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
+
+
+def test_osbs_builder_run_brew_target_defined_in_descriptor(mocker):
+    config.cfg['common'] = {'redhat': True}
+
+    check_output = mocker.patch.object(subprocess, 'check_output', autospec=True, side_effect=[
+                                       b'ssh://user:password@something.redhat.com/containers/openjdk', b'c5a0731b558c8a247dd7f85b5f54462cd5b68b23', b'12345'])
+    builder = create_builder_object(mocker, 'osbs', {})
+    builder.generator = Map({'image': Map({'osbs': Map({'koji_target': 'some-target'})})})
+    mocker.patch.object(builder, '_wait_for_osbs_task')
+    builder.dist_git.branch = "some-branch"
+    builder.run()
+
+    check_output.assert_called_with(['/usr/bin/brew', 'call', '--python', 'buildContainer', '--kwargs',
+                                     "{'src': 'git://something.redhat.com/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}"])
 
 
 def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
@@ -567,7 +588,8 @@ def test_docker_squashing_enabled(mocker):
 
 
 def test_docker_squashing_disabled(mocker):
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'no_squash': True, 'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {
+                            'no_squash': True, 'tags': ['foo', 'bar']})))
 
     assert builder.params.no_squash == True
 
@@ -615,6 +637,7 @@ def test_buildah_builder_run(mocker):
     check_call.assert_called_once_with([
         '/usr/bin/buildah',
         'build-using-dockerfile',
+        '--squash',
         '-t', 'foo',
         '-t', 'bar',
         'something/image'])
@@ -629,6 +652,7 @@ def test_buildah_builder_run_pull(mocker):
     check_call.assert_called_once_with([
         '/usr/bin/buildah',
         'build-using-dockerfile',
+        '--squash',
         '--pull-always',
         '-t', 'foo',
         '-t', 'bar',
@@ -643,6 +667,7 @@ def test_podman_builder_run(mocker):
 
     check_call.assert_called_once_with(['/usr/bin/podman',
                                         'build',
+                                        '--squash',
                                         '-t', 'foo',
                                         '-t', 'bar',
                                         'something/image'])
@@ -657,6 +682,7 @@ def test_podman_builder_run_pull(mocker):
     check_call.assert_called_once_with(['/usr/bin/podman',
                                         'build',
                                         '--pull-always',
+                                        '--squash',
                                         '-t', 'foo',
                                         '-t', 'bar',
                                         'something/image'])
@@ -683,6 +709,7 @@ def test_podman_builder_run_with_generator(mocker):
 
     check_call.assert_called_once_with(['/usr/bin/podman',
                                         'build',
+                                        '--squash',
                                         '-t', 'foo:1.9',
                                         '-t', 'foo:latest',
                                         'something/image'])
@@ -709,8 +736,35 @@ def test_buildah_builder_run_with_generator(mocker):
 
     check_call.assert_called_once_with(['/usr/bin/buildah',
                                         'build-using-dockerfile',
+                                        '--squash',
                                         '-t', 'foo:1.9',
                                         '-t', 'foo:latest',
+                                        'something/image'])
+
+
+def test_buildah_builder_with_squashing_disabled(mocker):
+    params = {'tags': ['foo', 'bar'], 'no_squash': True}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'buildah', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/buildah',
+                                        'build-using-dockerfile',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'something/image'])
+
+
+def test_podman_builder_with_squashing_disabled(mocker):
+    params = {'tags': ['foo', 'bar'], 'no_squash': True}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'podman', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/podman',
+                                        'build',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
                                         'something/image'])
 
 

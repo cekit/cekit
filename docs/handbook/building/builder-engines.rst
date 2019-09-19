@@ -16,6 +16,9 @@ Docker builder
 
 This builder uses Docker daemon as the build engine. Interaction with Docker daemon is done via Python binding.
 
+By default every image is squashed at the end of the build. This means that all layers above the base image
+will be squashed into a single layer. You can disable it by using the ``--no-squash`` switch.
+
 Input format
     Dockerfile
 Parameters
@@ -116,14 +119,14 @@ OSBS builder
 This build engine is using ``rhpkg`` or ``fedpkg`` tool to build the image using OSBS service. By default
 it performs **scratch build**. If you need a proper build you need to specify ``--release`` parameter.
 
+By default every image is squashed at the end of the build. This means that all layers above the base image
+will be squashed into a single layer.
+
 Input format
     Dockerfile
 Parameters
     ``--release``
         Perform an OSBS release build
-    ``--tech-preview``
-        Build tech preview image, see
-        :ref:`below for more information <handbook/building/builder-engines:Tech preview images>`
     ``--user``
         Alternative user passed to build task
     ``--nowait``
@@ -131,6 +134,8 @@ Parameters
     ``--stage``
         Use stage environment
     ``--koji-target``
+        .. deprecated:: 3.5
+
         Overrides the default ``koji`` target
     ``--commit-message``
         Custom commit message for dist-git
@@ -143,8 +148,6 @@ Parameters
 
         Run build in non-interactive mode answering all questions with 'Yes',
         useful for automation purposes
-      
-      
 
 Example
     Performing scratch build
@@ -159,36 +162,13 @@ Example
 
         $ cekit build osbs --release
 
-Tech preview images
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. deprecated:: 3.3
-    Use the :ref:`overrides feature <handbook/overrides:Overrides>` instead:
-
-    .. code-block:: bash
-
-        $ cekit build --overrides '{"name": "custom-family-tech-preview/project-8-centos7"}' osbs
-
-The OSBS builder has support for building a tech preview image without modifying the image source.
-The only difference between a regular image and the tech preview image is the resulting
-name of the image. Tech preview images contain the ``-tech-preview`` suffix in the image family
-of the name.
-
-.. code-block:: bash
-
-    $ cekit build osbs --tech-preview
-
-.. note::
-    You can combine the ``--tech-preview`` preview switch with ``--release`` switch.
-
-Example
-    The ``custom-family/project-8-centos7`` image built with the ``--tech-preview`` switch will become
-    ``custom-family-tech-preview/project-8-centos7``.
-
 Buildah builder
 ---------------------------
 
 This build engine is using `Buildah <https://buildah.io>`_.
+
+By default every image is squashed at the end of the build. This means that all layers (**including the base image**)
+will be squashed into a single layer. You can disable it by using the ``--no-squash`` switch.
 
 .. note::
    If you need to use any non default registry, please update ``/etc/containers/registry.conf`` file.
@@ -200,6 +180,8 @@ Parameters
         Ask a builder engine to check and fetch latest base image
     ``--tag``
         An image tag used to build image (can be specified multiple times)
+    ``--no-squash``
+        Do not squash the image after build is done.
 
 Example
     Build image using Buildah
@@ -214,11 +196,38 @@ Example
 
         $ cekit build buildah --tag example/image:1.0
 
+Buildah environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``BUILDAH_LAYERS``
+    The ``BUILDAH_LAYERS`` environment variable allows you to control whether the builder engine
+    will cache intermediate layers during build.
+
+    By default it is set to ``false``.
+
+    You can enable it by setting the environment variable to ``true``. The initial build process will take
+    longer because result of every command will need to be stored on the disk (commited), but
+    subsequent builds (without any code change) should be faster because the layer cache will be
+    reused.
+
+    .. code-block:: bash
+
+        $ BUILDAH_LAYERS="true" cekit build buildah
+
+    .. warning::
+        Caching layers conflicts with :doc:`multi-stage builds </handbook/multi-stage>`.
+        A ticket was opened: https://bugzilla.redhat.com/show_bug.cgi?id=1746022. If you
+        use multi-stage builds, make sure the ``BUILDAH_LAYERS`` environment variable
+        is set to ``false``.
+
 Podman builder
 ---------------------------
 
 This build engine is using `Podman <https://podman.io>`_. Podman will perform non-privileged builds so
 no special configuration is required.
+
+By default every image is squashed at the end of the build. This means that all layers (**including the base image**)
+will be squashed into a single layer. You can disable it by using the ``--no-squash`` switch.
 
 Input format
     Dockerfile
@@ -227,6 +236,8 @@ Parameters
         Ask a builder engine to check and fetch latest base image
     ``--tag``
         An image tag used to build image (can be specified multiple times)
+    ``--no-squash``
+        Do not squash the image after build is done.
 
 Example
     Build image using Podman
@@ -240,3 +251,30 @@ Example
     .. code-block:: bash
 
         $ cekit build podman --pull
+
+Podman environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``BUILDAH_LAYERS``
+    .. note::
+        Yes, the environment variable is called ``BUILDAH_LAYERS``, there is no typo. Podman uses
+        Buildah code underneath.
+
+    The ``BUILDAH_LAYERS`` environment variable allows you to control whether the builder engine
+    will cache intermediate layers during build.
+
+    By default it is set to ``true``.
+
+    You can disable it by setting the environment variable to ``false``. This will make the build faster
+    because there will be no need to commit result of every command. The downside of this setting
+    is that you will not be able to leverage layer cache in subsequent builds.
+
+    .. code-block:: bash
+
+        $ BUILDAH_LAYERS="false" cekit build podman
+
+    .. warning::
+        Caching layers conflicts with :doc:`multi-stage builds </handbook/multi-stage>`.
+        A ticket was opened: https://bugzilla.redhat.com/show_bug.cgi?id=1746022. If you
+        use multi-stage builds, make sure the ``BUILDAH_LAYERS`` environment variable
+        is set to ``false``.

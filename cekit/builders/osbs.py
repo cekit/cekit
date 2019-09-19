@@ -251,8 +251,15 @@ class OSBSBuilder(Builder):
             # Construct the url again, with a hash and removed username and password, if any
             src = "git://{}{}#{}".format(url.hostname, url.path, commit)
 
-            target = "{}-containers-candidate".format(self.dist_git.branch)
+            target = self.generator.image.get('osbs', {}).get('koji_target')
 
+            # If target was not specified in the image descriptor
+            if not target:
+                # Default to computed target based on branch
+                target = "{}-containers-candidate".format(self.dist_git.branch)
+
+            # Check if it was specified on command line
+            # TODO: Remove in 3.6
             if self.params.koji_target:
                 target = self.params.koji_target
 

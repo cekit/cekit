@@ -53,7 +53,8 @@ class Builder(Command):
         self.before_generate()
 
         if self.params.validate:
-            LOGGER.info("The --validate parameter was specified, generation will not be performed, exiting")
+            LOGGER.info(
+                "The --validate parameter was specified, generation will not be performed, exiting")
             return
 
         self.generate()
@@ -79,10 +80,11 @@ class Builder(Command):
                                         self.params.target,
                                         self.params.overrides)
 
-        # These should always come last
-        if self.params.get('tech_preview', False):
-            # Modify the image name, after all other overrides have been processed
-            self.generator.add_tech_preview_overrides()
+        if self.params.get('koji_target', False):
+            LOGGER.warning("The '--koji-target' switch is deprecated, please use overrides " +
+                           "(http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the koji " +
+                           "target, '--koji-target' will be removed in version 3.6")
+
         if CONFIG.get('common', 'redhat'):
             # Add the redhat specific stuff after everything else
             self.generator.add_redhat_overrides()

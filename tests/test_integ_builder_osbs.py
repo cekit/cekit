@@ -66,7 +66,6 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
     # We are mocking it, so do not require it at test time
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies', return_value={})
     mocker.patch('cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task')
-    mocker.patch('cekit.builders.osbs.DistGit.clean')
     mocker.patch('cekit.builders.osbs.DistGit.prepare')
 
     mocker_check_output = mocker.patch.object(subprocess, 'check_output', side_effect=[
@@ -79,7 +78,8 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
         b"",  # git diff-files --name-only
         b"ssh://someuser@somehost.com/containers/somerepo",  # git config --get remote.origin.url
         b"3b9283cb26b35511517ff5c0c3e11f490cba8feb",  # git rev-parse HEAD
-        b"1234"  # brew call --python...
+        b"1234",  # brew call --python...
+        b"UUU"
     ])
 
     with open(os.path.join(image_dir, 'config'), 'w') as fd:
@@ -414,3 +414,58 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
     mock_check_call.assert_has_calls(calls, any_order=True)
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Skipping '.git' directory" in caplog.text
+
+
+def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'call')
+    mocker.patch.object(subprocess, 'check_call')
+
+    tmpdir.mkdir('osbs').mkdir('repo').mkdir(
+        '.git').join('other').write_text(u'Some content', 'utf8')
+
+    descriptor = image_descriptor.copy()
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text
+
+
+def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'call')
+    mocker.patch.object(subprocess, 'check_call')
+
+    tmpdir.mkdir('osbs').mkdir('repo').mkdir(
+        '.git').join('other').write_text(u'Some content', 'utf8')
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['osbs']['koji_target'] = 'some-target'
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text
+
+
+# TODO: Remove in 3.6
+def test_osbs_builder_with_koji_target_in_descriptor_and_overriden_in_cli(tmpdir, mocker, caplog):
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'call')
+    mocker.patch.object(subprocess, 'check_call')
+
+    tmpdir.mkdir('osbs').mkdir('repo').mkdir(
+        '.git').join('other').write_text(u'Some content', 'utf8')
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['osbs']['koji_target'] = 'some-target'
+
+    run_osbs(descriptor, str(tmpdir), mocker, build_command=[
+             'build', 'osbs', '--koji-target', 'custom-target'])
+
+    assert "The '--koji-target' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the koji target, '--koji-target' will be removed in version 3.6" in caplog.text
+    assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'custom-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text

@@ -92,9 +92,11 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         {% endfor %}
         {% endif -%}
 
+        {% if module.execute %}
         {% if not is_image %}
         # Copy '{{ module.name }}' {{ module_type }} content
         COPY modules/{{ module.name }} /tmp/scripts/{{ module.name }}
+        {% endif -%}
         {% endif -%}
 
         {% if module.packages and module.packages.install %}

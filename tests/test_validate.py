@@ -459,7 +459,8 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
     assert check_dockerfile(image_dir, 'RUN [ "bash", "-x", "/tmp/scripts/master/script_a" ]')
-    assert check_dockerfile_text(image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
+    assert check_dockerfile_text(
+        image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
 
 
 # Test work of workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1700341
@@ -608,7 +609,7 @@ def test_run_path_artifact_brew(tmpdir, caplog):
 
     img_desc = image_descriptor.copy()
     img_desc['artifacts'] = [{'name': 'aaa',
-                              'md5': 'd41d8cd98f00b204e9800998ecf8427e',
+                              'md5': 'd41d8cd98f00b204e9800998ecf84271',
                               'target': 'target_foo'}]
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
@@ -732,8 +733,6 @@ def test_execution_order(tmpdir):
 
 ###### START module 'child_3:1.0'
 ###### \\
-        # Copy 'child_3' module content
-        COPY modules/child_3 /tmp/scripts/child_3
 ###### /
 ###### END module 'child_3:1.0'
 
@@ -879,6 +878,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
+    img_desc['execute'] = [{'script': 'configure.sh', 'user': 'someuser'}]
     img_desc['modules']['install'] = [{'name': 'packages_module'}, {'name': 'packages_module_1'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_packages'}]
@@ -891,8 +891,6 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     expected_packages_order_install = """
 ###### START module 'packages_module:1.0'
 ###### \\
-        # Copy 'packages_module' module content
-        COPY modules/packages_module /tmp/scripts/packages_module
         # Switch to 'root' user to install 'packages_module' module defined packages
         USER root
         # Install packages defined in the 'packages_module' module
@@ -903,8 +901,6 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 
 ###### START module 'packages_module_1:1.0'
 ###### \\
-        # Copy 'packages_module_1' module content
-        COPY modules/packages_module_1 /tmp/scripts/packages_module_1
         # Switch to 'root' user to install 'packages_module_1' module defined packages
         USER root
         # Install packages defined in the 'packages_module_1' module
@@ -1129,24 +1125,6 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
 
     assert "Cannot validate schema: Image" in caplog.text
     assert "Cannot find required key 'name'" in caplog.text
-
-
-# https://github.com/cekit/cekit/issues/559
-def test_osbs_builder_tech_preview_deprecation(tmpdir, caplog):
-    image_dir = str(tmpdir.mkdir('source'))
-    copy_repos(image_dir)
-
-    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
-        yaml.dump(image_descriptor, fd, default_flow_style=False)
-
-    run_cekit(image_dir, ['-v',
-                          'build',
-                          '--dry-run',
-                          'osbs',
-                          '--tech-preview'
-                          ])
-
-    assert "The '--tech-preview' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the image name, '--tech-preview' will be removed in version 3.5" in caplog.text
 
 
 def run_cekit(cwd,

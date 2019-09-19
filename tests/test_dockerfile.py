@@ -74,30 +74,6 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
     regex_dockerfile(target, exp_regex)
 
 
-@pytest.mark.parametrize('desc_part, exp_regex',
-                         [
-                             (
-                                 {'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}},
-                                 r'JBOSS_IMAGE_NAME=\"testimage-tech-preview\"'
-                             ),
-                             (
-                                 {'name': 'testimage/test',
-                                     'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}},
-                                 r'JBOSS_IMAGE_NAME=\"testimage-tech-preview/test\"'
-                             )
-                         ],
-                         ids=print_test_name)
-def test_dockerfile_rendering_tech_preview(tmpdir, mocker, desc_part, exp_regex):
-    mocker.patch('cekit.builders.osbs.OSBSBuilder._prepare_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder._copy_to_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder._sync_with_dist_git')
-    mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
-    target = str(tmpdir.mkdir('target'))
-
-    generate(target, ['--redhat', 'build', '--dry-run', 'osbs', '--tech-preview'], desc_part)
-    regex_dockerfile(target, exp_regex)
-
-
 def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
@@ -386,7 +362,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     os.makedirs(module_dir)
 
     with open(module_yaml_path, 'w') as outfile:
-        yaml.dump({'name': 'foo', 'version': '1.0'}, outfile, default_flow_style=False)
+        yaml.dump({'name': 'foo', 'version': '1.0', 'execute': [{'script': 'configure.sh'}]}, outfile, default_flow_style=False)
 
     generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'docker'],
              descriptor={'modules': {'repositories': [{'name': 'modules',

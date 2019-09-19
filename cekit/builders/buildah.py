@@ -33,12 +33,14 @@ class BuildahBuilder(Builder):
         if not tags:
             tags = self.generator.get_tags()
 
+        if not self.params.no_squash:
+            cmd.append('--squash')
+
         if self.params.pull:
             cmd.append('--pull-always')
 
         # Custom tags for the container image
-        LOGGER.debug("Building image with tags: '{}'",
-                     "', '".join(tags))
+        LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
 
         for tag in tags:
             cmd.extend(["-t", tag])

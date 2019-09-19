@@ -5,6 +5,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.append(os.path.abspath("./_ext"))
 
 from cekit import version as cekit_version
 
@@ -16,7 +17,7 @@ def setup(app):
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.graphviz', 'sphinx.ext.autosectionlabel', 'sphinx.ext.todo']
+extensions = ['sphinx.ext.graphviz', 'sphinx.ext.autosectionlabel', 'sphinx.ext.todo', 'schema']
 # http://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html#confval-autosectionlabel_prefix_document
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 4
