@@ -448,24 +448,3 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(tmpdir), mocker)
 
     assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text
-
-
-# TODO: Remove in 3.6
-def test_osbs_builder_with_koji_target_in_descriptor_and_overriden_in_cli(tmpdir, mocker, caplog):
-    mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
-    mocker.patch.object(subprocess, 'call')
-    mocker.patch.object(subprocess, 'check_call')
-
-    tmpdir.mkdir('osbs').mkdir('repo').mkdir(
-        '.git').join('other').write_text(u'Some content', 'utf8')
-
-    descriptor = image_descriptor.copy()
-
-    descriptor['osbs']['koji_target'] = 'some-target'
-
-    run_osbs(descriptor, str(tmpdir), mocker, build_command=[
-             'build', 'osbs', '--koji-target', 'custom-target'])
-
-    assert "The '--koji-target' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the koji target, '--koji-target' will be removed in version 3.6" in caplog.text
-    assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'custom-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text

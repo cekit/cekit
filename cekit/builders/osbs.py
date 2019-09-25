@@ -258,11 +258,6 @@ class OSBSBuilder(Builder):
                 # Default to computed target based on branch
                 target = "{}-containers-candidate".format(self.dist_git.branch)
 
-            # Check if it was specified on command line
-            # TODO: Remove in 3.6
-            if self.params.koji_target:
-                target = self.params.koji_target
-
             scratch = True
 
             if self.params.release:
