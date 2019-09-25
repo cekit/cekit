@@ -434,10 +434,7 @@ class _GitResource(Resource):
         super(_GitResource, self).__init__(descriptor)
 
     def _get_default_name_value(self, descriptor):
-        return os.path.basename(descriptor.get('git', {}).get('url'))
-
-    def _get_default_target_value(self, descriptor):
-        return "{}-{}".format(os.path.basename(descriptor.get('git').get('url')), descriptor.get('git').get('ref'))
+        return os.path.basename(descriptor.get('git', {}).get('url')).split(".", 1)[0]
 
     def _copy_impl(self, target):
         cmd = ['git', 'clone', '--depth', '1', self.git.url, target, '-b',
