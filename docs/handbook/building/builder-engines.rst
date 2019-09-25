@@ -133,10 +133,6 @@ Parameters
         Do not wait for the task to finish
     ``--stage``
         Use stage environment
-    ``--koji-target``
-        .. deprecated:: 3.5
-
-        Overrides the default ``koji`` target
     ``--commit-message``
         Custom commit message for dist-git
     ``--sync-only``
