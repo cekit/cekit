@@ -1,0 +1,16 @@
+# Here are listed optional Cekit dependencies that are needed for
+# specific Cekit workflows used in Red Hat.
+
+# for docker build back-end
+docker       >=4.0.2
+docker-squash>=1.0.7
+
+# for content sets
+odcs         >=0.2.35
+
+# for unit tests
+behave       >=1.2.6
+lxml         >=4.4.1
+
+# for koji builds
+koji         >=1.18.0
