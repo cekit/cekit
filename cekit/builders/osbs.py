@@ -360,12 +360,17 @@ class DistGit(object):
         with Chdir(self.output):
             git_files = subprocess.check_output(
                 ["git", "ls-files", "."]).strip().decode("utf8").splitlines()
+
             for d in ["repos", "modules"]:
                 LOGGER.info("Removing old '{}' directory".format(d))
                 shutil.rmtree(d, ignore_errors=True)
 
                 if d in git_files:
                     subprocess.check_call(["git", "rm", "-rf", d])
+
+            if os.path.exists("fetch-artifacts-url.yaml"):
+                LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")
+                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-url.yaml"])
 
     def add(self, artifacts):
         LOGGER.debug("Adding files to git stage...")
