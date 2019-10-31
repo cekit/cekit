@@ -266,6 +266,10 @@ class Generator(object):
                 ]
 
             @property
+            def osbs(self):
+                return None
+
+            @property
             def labels(self):
                 labels = [
                     Label({'name': 'name', 'value': '%s' % self._generator.image['name']}),
