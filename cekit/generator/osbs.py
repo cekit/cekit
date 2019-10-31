@@ -82,7 +82,7 @@ class OSBSGenerator(Generator):
                                                 'url': get_brew_url(artifact['md5']),
                                                 'target': os.path.join(artifact['target'])})
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
-                    logger.debug("Artifact added to fetch-artifacts-url.yaml")
+                    logger.debug("Artifact '{}' added to fetch-artifacts-url.yaml".format(artifact['name']))
                 except:
                     logger.warning("Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".
                                    format(artifact['name']))
@@ -93,8 +93,10 @@ class OSBSGenerator(Generator):
             else:
                 artifact.copy(target_dir)
 
+        fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
+
         if fetch_artifacts_url:
-            with open(os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml'), 'w') as _file:
+            with open(fetch_artifacts_file, 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
 
         logger.debug("Artifacts handled")

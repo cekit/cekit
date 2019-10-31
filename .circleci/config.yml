@@ -32,6 +32,7 @@ jobs:
       - run: cd ~/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
       - run: pyenv local 2.7.12 3.5.2 3.6.5 3.7.0
       - run: echo -e "[registries.search]\nregistries = ['docker.io', 'registry.fedoraproject.org', 'registry.access.redhat.com']" | sudo tee -a /etc/containers/registries.conf
+      - run: git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
       - run: |
           if [[ "${CIRCLE_NODE_INDEX}" == 0 ]]; then
              make test-py27
