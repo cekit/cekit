@@ -7,6 +7,12 @@ from cekit.descriptor import Image, Overrides
 from cekit.descriptor.resource import create_resource
 from cekit.config import Config
 from cekit.errors import CekitError
+from cekit.tools import Chdir
+
+try:
+    from unittest.mock import call
+except ImportError:
+    from mock import call
 
 config = Config()
 
@@ -21,13 +27,18 @@ def setup_function(function):
 def test_repository_dir_is_constructed_properly(mocker):
     mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
     res = create_resource({'git': {'url': 'http://host.com/url/repo.git', 'ref': 'ref'}})
+
     assert res.copy('dir') == 'dir/repo'
 
 
 def test_repository_dir_uses_name_if_defined(mocker):
     mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
     res = create_resource(
         {'name': 'some-id', 'git': {'url': 'http://host.com/url/repo.git', 'ref': 'ref'}})
     assert res.copy('dir') == 'dir/some-id'
@@ -36,6 +47,8 @@ def test_repository_dir_uses_name_if_defined(mocker):
 def test_repository_dir_uses_target_if_defined(mocker):
     mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
     res = create_resource(
         {'target': 'some-name', 'git': {'url': 'http://host.com/url/repo.git', 'ref': 'ref'}})
     assert res.copy('dir') == 'dir/some-name'
@@ -44,17 +57,14 @@ def test_repository_dir_uses_target_if_defined(mocker):
 def test_git_clone(mocker):
     mock = mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
     res = create_resource({'git': {'url': 'http://host.com/url/path.git', 'ref': 'ref'}})
     res.copy('dir')
-    mock.assert_called_with(['git',
-                             'clone',
-                             '--depth',
-                             '1',
-                             'http://host.com/url/path.git',
-                             'dir/path',
-                             '-b',
-                             'ref'],
-                            stderr=-2)
+    mock.assert_has_calls([
+        call(['git', 'clone', 'http://host.com/url/path.git', 'dir/path'], stderr=-2),
+        call(['git', 'checkout', 'ref'], stderr=-2)
+    ])
 
 
 def get_res(mocker):
