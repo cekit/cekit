@@ -228,40 +228,17 @@ class Image(Descriptor):
                     module_repositories[name] = repository
             self.modules._descriptor['repositories'] = list(module_repositories.values())
 
-            package_repositories = Image._to_dict(self.packages.repositories)
-            for repository in override.packages.repositories:
-                name = repository.name
-                if name in package_repositories:
-                    package_repositories[name] = repository.merge(package_repositories[name])
-                else:
-                    package_repositories[name] = repository
-            self.packages._descriptor['repositories'] = list(package_repositories.values())
+            self.packages._descriptor = override.packages.merge(self.packages)
 
-            if override.packages.manager:
-                self.packages._descriptor['manager'] = override.packages.manager
-
-            # If the key is set (value could be None!)
-            if 'content_sets' in override.packages:
-                # If value is different than None, merge it
-                if override.packages.content_sets:
-                    self.packages.content_sets = _merge_descriptors(
-                        override.packages.content_sets, self.packages.content_sets)
-                else:
-                    # If key exists and value is None - remove it from the main packages section
+            # In case content sets are provided as null values
+            # Remove the key entirely.
+            # TODO: This should be handled probably at general level, for every key
+            for flag in ['content_sets', 'content_sets_file']:
+                if flag in override.packages and override.packages[flag] is None:
                     self.packages._descriptor.pop('content_sets', None)
-
-            # If the key is set (value could be None!)
-            if 'content_sets_file' in override.packages:
-                # If value is different than None, set it
-                if override.packages.content_sets_file:
-                    self.packages.content_sets_file = override.packages.content_sets_file
-                else:
-                    # If key exists and value is None - remove it from the main packages section
-                    # Remove 'content_sets' too, because this is where it should already be translated into
                     self.packages._descriptor.pop('content_sets_file', None)
-                    self.packages._descriptor.pop('content_sets', None)
 
-            if override.osbs != None:
+            if override.osbs is not None:
                 self.osbs = override.osbs.merge(self.osbs)
 
             for package in override.packages.install:
