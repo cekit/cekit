@@ -192,6 +192,45 @@ def test_module_processing_modules_with_multiple_versions(caplog):
     assert "Module version not specified for 'org.test.module.b' module, using '1.1' default version" in caplog.text
 
 
+# https://github.com/cekit/cekit/issues/617
+def test_module_processing_modules_with_single_versions(caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    image = Image(yaml.safe_load("""
+        from: foo
+        name: test/foo
+        version: 1.9
+        """), 'foo')
+
+    module_a = Module(yaml.safe_load("""
+        name: org.test.module.a
+        version: 1.0
+        """), 'path', 'artifact_path')
+
+    module_b = Module(yaml.safe_load("""
+        name: org.test.module.b
+        version: 1.0
+        """), 'path', 'artifact_path')
+
+    module_registry = ModuleRegistry()
+    module_registry.add_module(module_a)
+    module_registry.add_module(module_b)
+
+    resulting_install_list = OrderedDict()
+
+    to_install_list = [
+        Map({'name': 'org.test.module.a', 'version': '1.0'}),
+        Map({'name': 'org.test.module.b'})
+    ]
+
+    image.process_install_list(image, to_install_list, resulting_install_list, module_registry)
+
+    assert resulting_install_list == OrderedDict(
+        [('org.test.module.a', {'name': 'org.test.module.a', 'version': '1.0'}), ('org.test.module.b', {'name': 'org.test.module.b'})])
+
+    assert "Module version not specified for" not in caplog.text
+
+
 def test_module_processing_fail_when_a_module_aready_exists_in_registry():
     module_a = Module(yaml.safe_load("""
         name: org.test.module.a
