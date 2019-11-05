@@ -98,7 +98,6 @@ class Configuration(Descriptor):
         self.schema = configuration_schema
         self.descriptor_path = descriptor_path
         super(Configuration, self).__init__(descriptor)
-        self.skip_merging = ['container', 'container_file']
 
         if 'container' in self and 'container_file' in self:
             raise CekitError('You cannot specify container and container_file together!')
