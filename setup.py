@@ -20,7 +20,7 @@ setup(
     download_url="https://github.com/cekit/cekit/archive/%s.tar.gz" % version,
     author='CEKit team',
     author_email='cekit@cekit.io',
-    description='Containers creator',
+    description='Container image creation tool',
     long_description=codecs.open('README.rst', encoding="utf8").read(),
     license='MIT',
     entry_points={

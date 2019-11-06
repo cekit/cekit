@@ -1,7 +1,7 @@
 CEKit
 =====
 
-.. image:: docs/_static/logo-wide.png
+.. image:: https://github.com/cekit/cekit/raw/develop/docs/_static/logo-wide.png
 
 About
 -----
