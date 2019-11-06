@@ -21,7 +21,7 @@ map:
   install:
     seq:
       - {type: any}
-  manager: {type: str, enum: ['yum', 'dnf', 'microdnf']}""")
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk']}""")
 
 
 repository_schema = yaml.safe_load("""
@@ -76,8 +76,16 @@ class Packages(Descriptor):
         self._prepare()
 
     def _prepare(self):
-        self._descriptor['repositories'] = [Repository(x)
-                                            for x in self._descriptor.get('repositories', [])]
+        package_manager = self._descriptor.get('manager')
+        repositories = self._descriptor.get('repositories', [])
+
+        if repositories and package_manager and package_manager not in ['yum', 'dnf', 'microdnf']:
+            logger.warning(
+                "Package manager {} does not support defining repositories, skipping all repositories".format(package_manager))
+            self._descriptor['repositories'] = []
+        else:
+            self._descriptor['repositories'] = [Repository(x)
+                                                for x in repositories]
 
         self._descriptor['install'] = self._descriptor.get('install', [])
 

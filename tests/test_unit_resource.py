@@ -7,6 +7,12 @@ from cekit.descriptor import Image, Overrides
 from cekit.descriptor.resource import create_resource
 from cekit.config import Config
 from cekit.errors import CekitError
+from cekit.tools import Chdir
+
+try:
+    from unittest.mock import call
+except ImportError:
+    from mock import call
 
 config = Config()
 
@@ -21,24 +27,44 @@ def setup_function(function):
 def test_repository_dir_is_constructed_properly(mocker):
     mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
-    res = create_resource({'git': {'url': 'url/repo', 'ref': 'ref'}})
-    assert res.copy('dir') == 'dir/repo-ref'
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
+    res = create_resource({'git': {'url': 'http://host.com/url/repo.git', 'ref': 'ref'}})
+
+    assert res.copy('dir') == 'dir/repo'
+
+
+def test_repository_dir_uses_name_if_defined(mocker):
+    mocker.patch('subprocess.check_output')
+    mocker.patch('os.path.isdir', ret='True')
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
+    res = create_resource(
+        {'name': 'some-id', 'git': {'url': 'http://host.com/url/repo.git', 'ref': 'ref'}})
+    assert res.copy('dir') == 'dir/some-id'
+
+
+def test_repository_dir_uses_target_if_defined(mocker):
+    mocker.patch('subprocess.check_output')
+    mocker.patch('os.path.isdir', ret='True')
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
+    res = create_resource(
+        {'target': 'some-name', 'git': {'url': 'http://host.com/url/repo.git', 'ref': 'ref'}})
+    assert res.copy('dir') == 'dir/some-name'
 
 
 def test_git_clone(mocker):
     mock = mocker.patch('subprocess.check_output')
     mocker.patch('os.path.isdir', ret='True')
-    res = create_resource({'git': {'url': 'url', 'ref': 'ref'}})
+    mocker.patch('cekit.descriptor.resource.Chdir', autospec=True)
+
+    res = create_resource({'git': {'url': 'http://host.com/url/path.git', 'ref': 'ref'}})
     res.copy('dir')
-    mock.assert_called_with(['git',
-                             'clone',
-                             '--depth',
-                             '1',
-                             'url',
-                             'dir/url-ref',
-                             '-b',
-                             'ref'],
-                            stderr=-2)
+    mock.assert_has_calls([
+        call(['git', 'clone', 'http://host.com/url/path.git', 'dir/path'], stderr=-2),
+        call(['git', 'checkout', 'ref'], stderr=-2)
+    ])
 
 
 def get_res(mocker):
@@ -119,8 +145,8 @@ def test_fetching_file_exists_but_used_as_is(mocker):
         pass
     mock_urlopen = get_mock_urlopen(mocker)
     res = create_resource({'name': 'file',
-                    'url': 'http:///dummy',
-                    'md5': 'd41d8cd98f00b204e9800998ecf8427e'})
+                           'url': 'http:///dummy',
+                           'md5': 'd41d8cd98f00b204e9800998ecf8427e'})
     res.copy()
     mock_urlopen.assert_not_called()
 
@@ -174,7 +200,7 @@ def test_generated_url_without_cacher():
 def test_resource_verify(mocker):
     mock = mocker.patch('cekit.descriptor.resource.check_sum')
     res = create_resource({'url': 'dummy',
-                    'sha256': 'justamocksum'})
+                           'sha256': 'justamocksum'})
     res._Resource__verify('dummy')
     mock.assert_called_with('dummy', 'sha256', 'justamocksum', 'dummy')
 
@@ -182,20 +208,20 @@ def test_resource_verify(mocker):
 def test_generated_url_with_cacher():
     config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
     res = create_resource({'url': 'dummy',
-                    'sha256': 'justamocksum'})
+                           'sha256': 'justamocksum'})
     res.name = 'file'
     assert res._Resource__substitute_cache_url('file') == 'file,sha256,justamocksum'
 
 
 def test_path_resource_absolute():
     res = create_resource({'name': 'foo',
-                    'path': '/bar'}, directory='/foo')
+                           'path': '/bar'}, directory='/foo')
     assert res.path == '/bar'
 
 
 def test_path_resource_relative():
     res = create_resource({'name': 'foo',
-                    'path': 'bar'}, directory='/foo')
+                           'path': 'bar'}, directory='/foo')
     assert res.path == '/foo/bar'
 
 
@@ -205,7 +231,7 @@ def test_path_local_existing_resource_no_cacher_use(mocker):
     shutil_mock = mocker.patch('shutil.copy2')
 
     res = create_resource({'name': 'foo',
-                    'path': 'bar'}, directory='/foo')
+                           'path': 'bar'}, directory='/foo')
 
     mocker.spy(res, '_download_file')
 
@@ -221,7 +247,7 @@ def test_path_local_non_existing_resource_with_cacher_use(mocker):
     mocker.patch('os.makedirs')
 
     res = create_resource({'name': 'foo',
-                    'path': 'bar'}, directory='/foo')
+                           'path': 'bar'}, directory='/foo')
 
     mocker.spy(res, '_download_file')
     download_file_mock = mocker.patch.object(res, '_download_file')
@@ -244,7 +270,7 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
     urlopen_mock.read.side_effect = Exception
 
     res = create_resource({'url': 'http://server.org/dummy',
-                    'sha256': 'justamocksum'})
+                           'sha256': 'justamocksum'})
 
     targetfile = os.path.join(str(tmpdir), 'targetfile')
 
@@ -274,7 +300,7 @@ def test_copy_plain_resource_with_cacher(mocker, tmpdir):
         pass
 
     res = create_resource({'name': 'foo',
-                    'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
+                           'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
 
     substitute_cache_url_mock = mocker.patch.object(
         res, '_Resource__substitute_cache_url', return_value='http://cache/abc')
@@ -301,7 +327,7 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
         pass
 
     res = create_resource({'name': 'foo',
-                    'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
+                           'md5': '5b9164ad6f496d9dee12ec7634ce253f'})
 
     mocker.spy(res, '_Resource__substitute_cache_url')
 

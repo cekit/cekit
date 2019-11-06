@@ -59,9 +59,12 @@ def run_cekit(cwd,
         return result
 
 
-def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
+def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None, general_command=None):
     if build_command is None:
         build_command = ['build', 'osbs']
+
+    if general_command is None:
+        general_command = ['--redhat']
 
     # We are mocking it, so do not require it at test time
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies', return_value={})
@@ -82,14 +85,10 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None):
         b"UUU"
     ])
 
-    with open(os.path.join(image_dir, 'config'), 'w') as fd:
-        fd.write("[common]\n")
-        fd.write("redhat = True")
-
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(descriptor, fd, default_flow_style=False)
 
-    return run_cekit(image_dir, ['-v',
+    return run_cekit(image_dir, general_command + ['-v',
                                  '--work-dir', image_dir,
                                  '--config', 'config'] + build_command,
                      return_code=return_code)
@@ -450,22 +449,108 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text
 
 
-# TODO: Remove in 3.6
-def test_osbs_builder_with_koji_target_in_descriptor_and_overriden_in_cli(tmpdir, mocker, caplog):
+def test_osbs_builder_with_fetch_artifacts_file_creation(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generatored.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch('cekit.descriptor.resource.urlopen')
-    mocker.patch.object(subprocess, 'call')
-    mocker.patch.object(subprocess, 'check_call')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
 
-    tmpdir.mkdir('osbs').mkdir('repo').mkdir(
-        '.git').join('other').write_text(u'Some content', 'utf8')
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
-    descriptor['osbs']['koji_target'] = 'some-target'
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'md5': '123456'}
+    ]
 
-    run_osbs(descriptor, str(tmpdir), mocker, build_command=[
-             'build', 'osbs', '--koji-target', 'custom-target'])
+    run_osbs(descriptor, str(tmpdir), mocker)
 
-    assert "The '--koji-target' switch is deprecated, please use overrides (http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the koji target, '--koji-target' will be removed in version 3.6" in caplog.text
-    assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'custom-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'md5': '123456',
+                                  'target': 'artifact_name', 'url': 'http://random.url/path'}
+
+    assert "Artifact 'artifact_name' added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_file_removal(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is removed if exists
+    and is not used anymore.
+
+    https://github.com/cekit/cekit/issues/629
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    run_osbs(image_descriptor, str(tmpdir), mocker)
+
+    assert not os.path.exists(os.path.join(str(tmpdir), 'osbs', 'repo', 'fetch-artifacts-url.yaml'))
+    assert "Removing old 'fetch-artifacts-url.yaml' file" in caplog.text
+
+
+@pytest.mark.parametrize('flag', [[], ['--redhat']])
+def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
+    """
+    Make sure that the osbs section is properly merged.
+    The evidence is that the container.yaml file is generated.
+
+    https://github.com/cekit/cekit/issues/631
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["touch", "file"])
+        subprocess.call(["git", "add", "file"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor["osbs"]["configuration"] = {'container': {'compose': {'pulp_repos': True}}}
+
+    run_osbs(descriptor, str(tmpdir), mocker, general_command=flag)
+
+    assert os.path.exists(os.path.join(str(tmpdir), 'osbs', 'repo', 'container.yaml'))

@@ -18,7 +18,7 @@ from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-from cekit.tools import get_brew_url, Map
+from cekit.tools import get_brew_url, Map, Chdir
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -434,16 +434,18 @@ class _GitResource(Resource):
         super(_GitResource, self).__init__(descriptor)
 
     def _get_default_name_value(self, descriptor):
-        return os.path.basename(descriptor.get('git', {}).get('url'))
-
-    def _get_default_target_value(self, descriptor):
-        return "{}-{}".format(os.path.basename(descriptor.get('git').get('url')), descriptor.get('git').get('ref'))
+        return os.path.basename(descriptor.get('git', {}).get('url')).split(".", 1)[0]
 
     def _copy_impl(self, target):
-        cmd = ['git', 'clone', '--depth', '1', self.git.url, target, '-b',
-               self.git.ref]
-        logger.debug("Running '{}'".format(' '.join(cmd)))
+        cmd = ['git', 'clone', self.git.url, target]
+        logger.debug("Cloning Git repository: '{}'".format(' '.join(cmd)))
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
+        with Chdir(target):
+            cmd = ['git', 'checkout', self.git.ref]
+            logger.debug("Checking out '{}' ref: '{}'".format(self.git.ref, ' '.join(cmd)))
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
         return target
 
 

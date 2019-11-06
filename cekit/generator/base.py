@@ -528,7 +528,7 @@ class ModuleRegistry(object):
 
             default_module = self.get_module(name, default_version)
 
-            if not suppress_warnings:
+            if not suppress_warnings and len(modules) > 1:
                 LOGGER.warning("Module version not specified for '{}' module, using '{}' default version".format(
                     name, default_version))
 

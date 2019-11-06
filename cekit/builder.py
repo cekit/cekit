@@ -80,11 +80,6 @@ class Builder(Command):
                                         self.params.target,
                                         self.params.overrides)
 
-        if self.params.get('koji_target', False):
-            LOGGER.warning("The '--koji-target' switch is deprecated, please use overrides " +
-                           "(http://docs.cekit.io/en/latest/handbook/overrides.html) to adjust the koji " +
-                           "target, '--koji-target' will be removed in version 3.6")
-
         if CONFIG.get('common', 'redhat'):
             # Add the redhat specific stuff after everything else
             self.generator.add_redhat_overrides()

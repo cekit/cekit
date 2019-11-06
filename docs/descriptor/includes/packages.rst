@@ -7,11 +7,12 @@ Required
     No
 
 
-To install additional RPM packages you can use the ``packages``
+To install additional packages you can use the ``packages``
 section where you specify package names and repositories to be used, as well
 as the package manager that is used to manage packages in this image.
 
 .. code-block:: yaml
+    :caption: Example package section for RPM-based distro
 
     packages:
         repositories:
@@ -24,6 +25,14 @@ as the package manager that is used to manage packages in this image.
             - mysql-connector-java
             - maven
             - hostname
+
+.. code-block:: yaml
+    :caption: Example package section for Alpine Linux
+
+    packages:
+        manager: apk
+        install:
+            - python3
 
 Packages to install
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -53,13 +62,14 @@ Required
 It is possible to define package manager used in the image
 used to install packages as part of the build process.
 
-Currently available options are ``yum``, ``dnf``, and ``microdnf``.
+Currently available options are ``yum``, ``dnf``, ``microdnf`` and ``apk``.
 
 .. note::
     If you do not specify this key the default value is ``yum``.
-    
-    It will work fine on Fedora and RHEL images because OS maintains
-    a symlink to the proper package manager. 
+    If your image requires different package manager you need to specify it.
+
+    The default ``yum`` value will work fine on Fedora and RHEL images because
+    OS maintains a symlink to the proper package manager.
 
 .. code-block:: yaml
 
@@ -75,6 +85,10 @@ Key
     ``repositories``
 Required
     No
+
+.. warning::
+    Some package repositories are supported only on specific distributions and package manager
+    combinations. Please refer to documentation below!
 
 CEKit uses all repositories configured inside the image. You can also specify additional
 repositories using repositories subsection. CEKit currently supports following ways of defining
@@ -103,6 +117,9 @@ additional repositories:
 Plain repository
 *******************
 
+.. note::
+    Available only on RPM-based distributions.
+
 With this approach you specify repository ``id`` and CEKit will not perform any action
 and expect the repository definition exists inside the image. This is useful as a hint which
 repository must be present for particular image to be buildable. The definition can be overridden
@@ -118,6 +135,9 @@ by your preferred way of injecting repositories inside the image.
 
 RPM repository
 *******************
+
+.. note::
+    Available only on RPM-based distributions.
 
 This ways is using repository configuration files and related keys packaged as an RPM.
 
@@ -144,6 +164,9 @@ image you should define repository in a following way:
 URL repository
 *******************
 
+.. note::
+    Available only on RPM-based distributions.
+
 This approach enables you to download a yum repository file and corresponding GPG key. To do it, define
 repositories section in a way of:
 
@@ -158,6 +181,8 @@ repositories section in a way of:
 Content sets
 **************************
 
+.. note::
+    Available only on RPM-based distributions.
 
 Content sets are tightly integrated to OSBS style of defining repositories in ``content_sets.yml`` file.
 If this kind of repository is present in the image descriptor it overrides all other repositories types.

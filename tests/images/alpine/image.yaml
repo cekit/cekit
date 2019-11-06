@@ -1,0 +1,14 @@
+name: "cekit-alpine"
+version: "1.0.0"
+from: "alpine:3.10"
+description: Some Alpine image
+
+packages:
+    manager: apk
+
+modules:
+  repositories:
+    - path: modules
+
+  install:
+    - name: app

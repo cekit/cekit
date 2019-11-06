@@ -1,0 +1,9 @@
+name: app
+version: 1.0
+
+packages:
+   install:
+      - python3
+
+execute:
+    - script: install.sh
