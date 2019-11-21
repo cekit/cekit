@@ -5,3 +5,5 @@ echo "This is an application built in builder image" > /path/to/application/insi
 
 mkdir -p /path/to
 echo "This is a library built in builder image" > /path/to/lib.jar
+
+stat /tmp/artifacts/ant.tar.gz

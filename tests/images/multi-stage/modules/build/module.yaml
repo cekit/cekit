@@ -1,5 +1,10 @@
 name: build
 version: 1.0
 
+artifacts:
+  - name: ant.tar.gz
+    url: https://downloads.apache.org//ant/binaries/apache-ant-1.10.8-bin.zip
+    sha512: 24a49f9efd19d1202700192ba811e4a0a714b2e16a37ca8124309ddec6754a22fa12c7e5a07d35a41a104c6b6bb514d5c99a2438b758e5b6c75cc583a2b2385f
+
 execute:
     - script: build.sh
