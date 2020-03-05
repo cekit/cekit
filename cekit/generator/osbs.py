@@ -4,7 +4,7 @@ import os
 import yaml
 
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource
+from cekit.descriptor.resource import _PlainResource, _UrlResource
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
 
@@ -88,6 +88,13 @@ class OSBSGenerator(Generator):
                                    format(artifact['name']))
                     artifact.copy(target_dir)
                     # TODO: This is ugly, rewrite this!
+                    artifact['lookaside'] = True
+            elif isinstance(artifact, _UrlResource):
+                    fetch_artifacts_url.append({'md5': artifact['md5'],
+                                                'url': artifact['url'],
+                                                'target': os.path.join(artifact['target'])})
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
+                    logger.debug("Artifact '{}' added to fetch-artifacts-url.yaml".format(artifact['name']))
                     artifact['lookaside'] = True
 
             else:

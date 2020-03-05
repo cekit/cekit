@@ -17,7 +17,7 @@ except ImportError:
 from cekit import tools
 from cekit.config import Config
 from cekit.builder import Builder
-from cekit.descriptor.resource import _PlainResource
+from cekit.descriptor.resource import _PlainResource, _UrlResource
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively
 
@@ -121,7 +121,7 @@ class OSBSBuilder(Builder):
 
         # First get all artifacts that are not plain artifacts
         self.artifacts = [a.target
-                          for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource)]
+                          for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource) and not isinstance(a, _UrlResource)]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
         self.artifacts += [a.target
