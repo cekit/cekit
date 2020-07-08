@@ -15,7 +15,7 @@ from cekit.cli import cli
 
 image_descriptor = {
     'schema_version': 1,
-    'from': 'centos:latest',
+    'from': 'centos:7',
     'name': 'test/image',
     'version': '1.0',
     'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],

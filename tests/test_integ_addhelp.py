@@ -13,7 +13,7 @@ from cekit.cli import cli
 
 image_descriptor = {
     'schema_version': 1,
-    'from': 'centos:latest',
+    'from': 'centos:7',
     'name': 'test/image',
     'version': '1.0',
     'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
@@ -96,5 +96,5 @@ def test_should_generate_help_if_enabled_in_descriptor(tmpdir):
     assert check_file_text(tmpdir, "Container will run as `root` user.", 'help.md') is True
     assert check_file_text(tmpdir, "There are no defined ports.", 'help.md') is True
     assert check_file_text(tmpdir, "There are no volumes defined.", 'help.md') is True
-    assert check_file_text(tmpdir, "This image is based on the `centos:latest` image.", 'help.md') is True
+    assert check_file_text(tmpdir, "This image is based on the `centos:7` image.", 'help.md') is True
     assert check_file_text(tmpdir, "There is no entrypoint specified for the container.", 'help.md') is True
