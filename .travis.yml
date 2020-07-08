@@ -6,4 +6,4 @@ before_script:
 
 script:
   - make test-py27
-  - make test-py36
+  - make test-py37

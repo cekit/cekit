@@ -70,7 +70,7 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     target = str(tmpdir.mkdir('target'))
-    generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['--redhat', 'build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, exp_regex)
 
 
@@ -87,7 +87,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
         'install': ['a']},
         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['--redhat', 'build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, 'repos/content_sets_odcs.repo')
 
 
@@ -123,7 +123,7 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
                                                 'rpm': 'foo-repo.rpm'}],
                               'install': ['a', 'b']}}
 
-    generate(target, ['build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
@@ -234,7 +234,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['build', '--dry-run', 'docker'],
+    generate(target, ['build', '--dry-run', 'podman'],
              descriptor={'packages': {'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
                                       'install': ['a']},
@@ -248,7 +248,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
 def test_unsupported_package_manager(tmpdir, caplog):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'something',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -265,7 +265,7 @@ def test_unsupported_package_manager(tmpdir, caplog):
 def test_default_package_manager(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {
                  'repositories': [{'name': 'foo',
                                    'rpm': 'foo-repo.rpm'}],
@@ -282,7 +282,7 @@ def test_default_package_manager(tmpdir):
 def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--overrides', '{"packages": {"install": ["b"]}}', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--overrides', '{"packages": {"install": ["b"]}}', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'microdnf',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -299,7 +299,7 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
 def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--overrides', '{"packages": {"manager": "dnf", "install": ["b"]}}', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--overrides', '{"packages": {"manager": "dnf", "install": ["b"]}}', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'microdnf',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -316,7 +316,7 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
 def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'microdnf',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -333,7 +333,7 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
 def test_supported_package_managers(tmpdir, manager):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': manager,
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -351,7 +351,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
 
     generate(
         target,
-        ['-v', 'build', '--dry-run', 'docker'],
+        ['-v', 'build', '--dry-run', 'podman'],
         descriptor={
             'packages': {
                 'manager': 'apk',
@@ -368,7 +368,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
 # https://github.com/cekit/cekit/issues/406
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir('target'))
-    generate(target, ['build', '--dry-run', 'docker'])
+    generate(target, ['build', '--dry-run', 'podman'])
     regex_dockerfile(target, '^((?!COPY modules /tmp/scripts/))')
 
 
@@ -381,9 +381,10 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     os.makedirs(module_dir)
 
     with open(module_yaml_path, 'w') as outfile:
-        yaml.dump({'name': 'foo', 'version': '1.0', 'execute': [{'script': 'configure.sh'}]}, outfile, default_flow_style=False)
+        yaml.dump({'name': 'foo', 'version': '1.0', 'execute': [
+                  {'script': 'configure.sh'}]}, outfile, default_flow_style=False)
 
-    generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'podman'],
              descriptor={'modules': {'repositories': [{'name': 'modules',
                                                        'path': 'modules'}],
                                      'install': [{'name': 'foo'}]}})

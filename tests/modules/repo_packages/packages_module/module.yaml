@@ -4,4 +4,4 @@ version: 1.0
 packages:
   install:
     - kernel
-    - java
+    - java-1.8.0-openjdk
