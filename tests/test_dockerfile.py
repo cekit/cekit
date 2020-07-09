@@ -16,7 +16,7 @@ from click.testing import CliRunner
 
 basic_config = {'release': 1,
                 'version': 1,
-                'from': 'scratch',
+                'from': 'fromimage',
                 'name': 'testimage'}
 
 config = Config()
@@ -390,6 +390,42 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
                                      'install': [{'name': 'foo'}]}})
 
     regex_dockerfile(target, 'COPY modules/foo /tmp/scripts/foo')
+
+
+def test_dockerfile_destination_of_artifact(mocker, tmpdir):
+    mocker.patch('cekit.descriptor.resource.Resource.copy')
+
+    target = str(tmpdir.mkdir('target'))
+    generate(target, ['-v', 'build', '--dry-run', 'podman'], descriptor={
+        'artifacts': [
+            # URL artifact, default destination
+            {'name': 'abc', 'url': 'https://asdasd/one.jar'},
+            # URL artifact, custom destination
+            {'name': 'def', 'url': 'https://asdasd/two.jar', 'dest': '/tmp/custom////'},
+            # Path artifact, default destination
+            {'name': 'one', 'path': 'some/path/one'},
+            # Path artifact, custom destination
+            {'name': 'two', 'path': 'some/path/two', 'dest': '/tmp/custom'},
+            # Image artifact, default destination
+            {'name': 'aaa', 'image': 'image-name', 'path': '/some/path.jar'},
+            # Image artifact, custom destination
+            {'name': 'bbb', 'image': 'image-name', 'path': '/some/other-path.jar', 'dest': '/tmp/custom/'},
+            # Plain artifact, default destination
+            {'name': '111', 'md5': 'md5md5md5'},
+            # Plain artifact, custom destination
+            {'name': '222', 'md5': 'md5md5md5', 'dest': '/tmp/custom/'},
+        ]
+    })
+    regex_dockerfile(
+        target, '''# Copy 'testimage' image general artifacts to '/tmp/artifacts/' destination''')
+    regex_dockerfile(target, r'^\s+COPY \\\s+abc \\\s+one \\\s+111 \\\s+/tmp/artifacts/$')
+    regex_dockerfile(
+        target, '''# Copy 'testimage' image general artifacts to '/tmp/custom/' destination''')
+    regex_dockerfile(target, r'^\s+COPY \\\s+def \\\s+two \\\s+222 \\\s+/tmp/custom/$')
+    regex_dockerfile(
+        target, '''# Copy 'testimage' image stage artifacts''')
+    regex_dockerfile(target, r'^\s+COPY --from=image-name /some/path.jar /tmp/artifacts/aaa$')
+    regex_dockerfile(target, r'^\s+COPY --from=image-name /some/other-path.jar /tmp/custom/bbb$')
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):

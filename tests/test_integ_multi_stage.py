@@ -47,7 +47,7 @@ def run_cekit(image_dir, args=None, env=None):
         return result
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
 def test_multi_stage_single_image_in_list(tmpdir):
     """
     Build simple image which is a regular image, but the
@@ -59,7 +59,7 @@ def test_multi_stage_single_image_in_list(tmpdir):
     with open(os.path.join(tmpdir, 'image.yaml'), 'w') as fd:
         yaml.dump([image_descriptor], fd, default_flow_style=False)
 
-    run_cekit(tmpdir, ['-v', 'build', 'docker'])
+    run_cekit(tmpdir, ['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
 
     assert os.path.exists(os.path.join(tmpdir, 'target', 'image', 'Dockerfile')) is True
     assert check_file_text(tmpdir, 'ADD help.md /') is False
@@ -80,4 +80,23 @@ def test_multi_stage_proper_image(tmpdir):
     # The 'BUILDAH_LAYERS' environment variable is required to not cache intermediate layers
     # See: https://bugzilla.redhat.com/show_bug.cgi?id=1746022
     run_cekit(os.path.join(tmpdir, 'multi-stage'),
+              args=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
+
+
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
+def test_multi_stage_with_scratch_target_image(tmpdir):
+    """
+    Build multi-stage image. Resulting image uses a "scratch" base image and
+    artifact from the builder image.
+    """
+    tmpdir = str(tmpdir)
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'multi-stage-scratch'),
+        os.path.join(tmpdir, 'multi-stage-scratch')
+    )
+
+    # The 'BUILDAH_LAYERS' environment variable is required to not cache intermediate layers
+    # See: https://bugzilla.redhat.com/show_bug.cgi?id=1746022
+    run_cekit(os.path.join(tmpdir, 'multi-stage-scratch'),
               args=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})

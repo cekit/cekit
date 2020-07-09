@@ -82,18 +82,20 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 ###### START {{ module_type }} '{{ module.name }}:{{ module.version }}'
 ###### \
         {% if module.artifacts|rejectattr("image")|list|length > 0 %}
-        # Copy '{{ module.name }}' {{ module_type }} general artifacts
+        {% for dest, artifacts in module.artifacts|rejectattr("image")|list|groupby("dest") %}
+        # Copy '{{ module.name }}' {{ module_type }} general artifacts to '{{ dest }}' destination
         COPY \
-        {% for artifact in module.artifacts|rejectattr("image")|list %}
+            {% for artifact in artifacts %}
             {{ artifact['target'] }} \
             {% endfor %}
-            /tmp/artifacts/
+            {{ dest }}
+            {% endfor %}
         {% endif -%}
 
         {% if module.artifacts|selectattr("image")|list|length > 0 %}
         # Copy '{{ module.name }}' {{ module_type }} stage artifacts
         {% for artifact in module.artifacts|selectattr("image")|list %}
-        COPY --from={{ artifact['image'] }} {{ artifact['path'] }} /tmp/artifacts/{{ artifact['target'] }}
+        COPY --from={{ artifact['image'] }} {{ artifact['path'] }} {{ artifact['dest'] }}{{ artifact['target'] }}
         {% endfor %}
         {% endif -%}
 
@@ -161,7 +163,9 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  # TODO XXX
  #}
 {%- macro process_image(animage) %}
+    {% if animage.from != 'scratch' %}
     USER root
+    {% endif -%}
     {% if animage.packages.repositories_injected %}
 
     # Add custom repo files
@@ -216,10 +220,12 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 
 {{ process_image(image) }}
 
+    {% if image.from != 'scratch' %}
     # Switch to 'root' user and remove artifacts and modules
     USER root
     RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
     RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    {% endif -%}
 
     {% if helper.packages_to_install(image) and image.packages.manager in ['yum', 'dnf', 'microdnf'] %}
     # Clear package manager metadata
@@ -231,7 +237,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     RUN {{ repo_remove(image.packages.manager, image.packages.repositories_injected) }}
     {% endif -%}
 
-    {% if 'user' in run %}
+    {% if 'user' in run and image.from != 'scratch' %}
     # Define the user
     USER {{ run['user'] }}
     {% endif -%}

@@ -80,6 +80,41 @@ Common artifact keys
 
         Target file name: ``jboss-eap-6.4.0.zip``.
 
+``dest``
+    The ``dest`` key defines the destination directory where the particular artifact will be placed within
+    the container image. By default it is set to ``/tmp/artifacts/``.
+
+    The ``dest`` key specifies the **directory** path, to control **file name**, use ``target`` key
+    as explained above. In order to get maximum control over the target artifact naming,
+    you should use both ``dest`` and ``target`` together.
+
+    Examples:
+
+        .. code-block:: yaml
+
+            artifacts:
+                - name: jboss-eap-distribution
+                    path: jboss-eap-6.4.0.zip
+                    target: jboss-eap.zip
+
+        Target file path is: ``/tmp/artifacts/jboss-eap.zip``.
+
+        .. code-block:: yaml
+
+            artifacts:
+                - name: jboss-eap-distribution
+                    path: jboss-eap-6.4.0.zip
+                    target: jboss-eap.zip
+                    dest: /opt
+
+        Target file path is: ``/opt/jboss-eap.zip``.
+
+    .. note::
+        The default temporary directory (``/tmp/artifacts/``) will be cleaned up automatically
+        after the build process is done meaning that artifacts are available only at the build time.
+
+        Artifacts using custom ``dest`` values are not affected.
+
 ``description``
    Describes the artifact. This is an optional key that can be used to add more information
    about the artifact.
