@@ -1,0 +1,26 @@
+- name: builder
+  version: 1.0.0
+  from: golang:1.7.3
+
+  modules:
+    repositories:
+      - path: modules
+
+    install:
+      # Module required to build the application
+      - name: build
+
+- name: some/app
+  version: 12
+  from: scratch
+  description: Our application
+
+  artifacts:
+    - name: application
+      target: entrypoint
+      dest: /bin
+      image: builder
+      path: /tmp/scripts/build/hello-world
+
+  run:
+    entrypoint: ["/bin/entrypoint"]

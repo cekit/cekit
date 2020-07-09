@@ -11,6 +11,7 @@ This chapter will guide you through the CEKit usage covering all important topic
     testing/index
     modules/index
     multi-stage
+    scratch
     caching
     overrides
     configuration

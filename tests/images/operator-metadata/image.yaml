@@ -1,0 +1,21 @@
+name: "amq7/amq-streams-rhel7-operator-metadata"
+version: "1.5.0"
+from: "scratch"
+description: "AMQ Streams image containing the operator metadata"
+
+labels:
+  - name: "com.redhat.component"
+    value: "amqstreams-bundle-container"
+  - name: "io.k8s.description"
+    value: "Operator metadata"
+  - name: "io.k8s.display-name"
+    value: "io.k8s.display-name"
+  - name: "io.openshift.tags"
+    value: "messaging,amq,jboss"
+
+artifacts:
+  - path: "manifests"
+    dest: "/manifests"
+
+  - path: "metadata"
+    dest: /metadata

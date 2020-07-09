@@ -5,8 +5,6 @@ import shutil
 import ssl
 import subprocess
 
-import yaml
-
 try:
     from urllib.parse import urlparse
     from urllib.request import urlopen
@@ -79,6 +77,8 @@ class Resource(Descriptor):
         self._ensure_name(descriptor)
         # Make sure the we have 'target' set
         self._ensure_target(descriptor)
+        # Add a single slash at the end of the 'dest' value
+        self._normalize_dest(descriptor)
         # Convert the dictionary into a Map object for easier access
         self._descriptor = self.__to_map(descriptor)
 
@@ -155,6 +155,14 @@ class Resource(Descriptor):
             return
 
         descriptor['target'] = self._get_default_target_value(descriptor)
+
+    def _normalize_dest(self, descriptor):
+        """
+        Make sure that the 'dest' value, if provided, does end with a single slash.
+        """
+
+        if descriptor.get('dest') is not None:
+            descriptor['dest'] = os.path.normpath(descriptor.get('dest')) + '/'
 
     def _get_default_name_value(self, descriptor):  # pylint: disable=unused-argument
         """
@@ -317,6 +325,7 @@ class _PathResource(Resource):
         'map': {
             'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'path': {'type': 'str', 'required': True, 'desc': 'Relative (suggested) or absolute path to the resource'},
             'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
@@ -379,6 +388,7 @@ class _UrlResource(Resource):
         'map': {
             'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'url': {'type': 'str', 'required': True, 'desc': 'URL where the resource can be found'},
             'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
@@ -458,6 +468,7 @@ class _PlainResource(Resource):
         'map': {
             'name': {'type': 'str', 'required': True, 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'md5': {'type': 'str', 'required': True, 'desc': 'The md5 checksum of the resource'},
             'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
@@ -519,6 +530,7 @@ class _ImageContentResource(Resource):
         'map': {
             'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'image': {'type': 'str', 'required': True, 'desc': 'Name of the image which holds the resource'},
             'path': {'type': 'str', 'required': True, 'desc': 'Path in the image under which the resource can be found'}
