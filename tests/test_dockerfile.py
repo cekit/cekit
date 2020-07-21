@@ -428,11 +428,41 @@ def test_dockerfile_destination_of_artifact(mocker, tmpdir):
     regex_dockerfile(target, r'^\s+COPY --from=image-name /some/other-path.jar /tmp/custom/bbb$')
 
 
+# https://github.com/cekit/cekit/issues/648
+def test_overrides_applied_to_all_multi_stage_images(tmpdir):
+    target = str(tmpdir.mkdir('target'))
+
+    descriptor = [
+        {
+            'release': 1,
+            'version': 1,
+            'from': 'fromimage',
+            'name': 'builderimage'
+        },
+        {
+            'release': 1,
+            'version': 1,
+            'from': 'fromimage',
+            'name': 'targetimage'
+        }
+    ]
+
+    generate(target, ['-v', 'build', '--overrides',
+                      '{"version": "SNAPSHOT"}', '--dry-run', 'podman'], descriptor)
+    regex_dockerfile(target, "^###### START image 'builderimage:SNAPSHOT'$")
+    regex_dockerfile(target, "^###### END image 'builderimage:SNAPSHOT'$")
+    regex_dockerfile(target, "^###### START image 'targetimage:SNAPSHOT'$")
+    regex_dockerfile(target, "^###### END image 'targetimage:SNAPSHOT'$")
+
+
 def generate(image_dir, command, descriptor=None, exit_code=0):
     desc = basic_config.copy()
 
     if descriptor:
-        desc.update(descriptor)
+        if isinstance(descriptor, list):
+            desc = descriptor
+        else:
+            desc.update(descriptor)
 
     tmp_image_file = os.path.join(image_dir, 'image.yaml')
 
