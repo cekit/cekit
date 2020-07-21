@@ -3,7 +3,7 @@ version: 1.0
 
 packages:
    install:
-      - python-requests
+      - py3-requests
 
 artifacts:
     - name: application

@@ -15,8 +15,11 @@
 
 - name: some/app
   version: 12
-  from: centos:7
+  from: alpine:3.12
   description: Our application
+
+  packages:
+    manager: apk
 
   modules:
     repositories:

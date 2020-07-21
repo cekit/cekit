@@ -29,9 +29,6 @@ def run_cekit(image_dir, args=None, env=None):
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
 def test_podman_builder_with_alpine_image(tmpdir):
-    """
-    Build multi-stage image.
-    """
     tmpdir = str(tmpdir)
 
     shutil.copytree(
@@ -46,9 +43,6 @@ def test_podman_builder_with_alpine_image(tmpdir):
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
 def test_podman_from_scratch(tmpdir):
-    """
-    Build multi-stage image.
-    """
     tmpdir = str(tmpdir)
 
     shutil.copytree(
@@ -63,9 +57,6 @@ def test_podman_from_scratch(tmpdir):
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
 def test_podman_operator_metadata(tmpdir):
-    """
-    Build multi-stage image.
-    """
     tmpdir = str(tmpdir)
 
     shutil.copytree(
