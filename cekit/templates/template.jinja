@@ -74,10 +74,11 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  # 8. Executes any defined scripts
  # 9. Exposes any defined volumes
  #}
-{%- macro process_module(module, is_image=false) %}
+{%- macro process_module(module, parent_image=None) %}
 {% set module_type = 'module' %}
-{% if is_image %}
+{% if not parent_image %}
 {% set module_type = 'image' %}
+{% set parent_image = module %}
 {% endif %}
 ###### START {{ module_type }} '{{ module.name }}:{{ module.version }}'
 ###### \
@@ -100,7 +101,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         {% endif -%}
 
         {% if module.execute %}
-        {% if not is_image %}
+        {% if module_type == 'module' %}
         # Copy '{{ module.name }}' {{ module_type }} content
         COPY modules/{{ module.name }} /tmp/scripts/{{ module.name }}
         {% endif -%}
@@ -110,7 +111,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Switch to 'root' user to install '{{ module.name }}' {{ module_type }} defined packages
         USER root
         # Install packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_install(image.packages.manager, module.packages.install) }}
+        RUN {{ pkg_install(parent_image.packages.manager, module.packages.install) }}
         {% endif -%}
 
         {% if module.envs|selectattr("value")|list|length > 0 %}
@@ -181,9 +182,9 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endif %}
 
     {% for to_install in animage.modules.install %}
-{{ process_module(helper.module(to_install)) }}
+{{ process_module(helper.module(to_install), animage) }}
     {% endfor %}
-{{ process_module(animage, true) }}
+{{ process_module(animage) }}
 {%- endmacro -%}
 
 # Copyright 2019 Red Hat
