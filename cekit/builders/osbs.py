@@ -17,7 +17,7 @@ except ImportError:
 from cekit import tools
 from cekit.config import Config
 from cekit.builder import Builder
-from cekit.descriptor.resource import _PlainResource
+from cekit.descriptor.resource import _PlainResource, _ImageContentResource
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively
 
@@ -119,13 +119,20 @@ class OSBSBuilder(Builder):
         self.dist_git.prepare(self.params.stage, self.params.user)
         self.dist_git.clean()
 
+        # We need to prepare a list of all artifacts in every image (in case
+        # of multi-stage builds) and in every module.
+        all_artifacts = []
+
+        for image in self.generator.images:
+            all_artifacts += image.all_artifacts
+
         # First get all artifacts that are not plain artifacts
         self.artifacts = [a.target
-                          for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource)]
+                          for a in all_artifacts if not isinstance(a, (_PlainResource, _ImageContentResource))]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
         self.artifacts += [a.target
-                           for a in self.generator.image.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
+                           for a in all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
         if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository']
@@ -333,12 +340,16 @@ class DistGit(object):
     def prepare(self, stage, user=None):
         if os.path.exists(self.output):
             with Chdir(self.output):
-                LOGGER.info("Pulling latest changes in repo {}...".format(self.repo))
+                LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
                 subprocess.check_call(["git", "fetch"])
+                LOGGER.debug("Checking out {} branch...".format(self.branch))
                 subprocess.check_call(
                     ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
+                LOGGER.debug("Resetting branch...")
                 subprocess.check_call(
                     ["git", "reset", "--hard", "origin/%s" % self.branch])
+                LOGGER.debug("Removing any untracked files or directories...")
+                subprocess.check_call(["git", "clean", "-fdx"])
             LOGGER.debug("Changes pulled")
         else:
             LOGGER.info("Cloning {} git repository ({} branch)...".format(self.repo, self.branch))
