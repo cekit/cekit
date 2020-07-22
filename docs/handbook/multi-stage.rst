@@ -77,6 +77,17 @@ We have two images defined: ``builder`` and ``some/app``. As the name suggest,
 the first one is the builder (intermediate) image which will contain the build-time dependencies
 and where the actual artifact will be built.
 
+.. note::
+    Although it is possible to use all keys available to use in an
+    :doc:`image descriptor </descriptor/image>` when defining builder images,
+    some of them does not have any effect. A few examples of such keys can be found below:
+
+    * ``ports``
+    * ``volumes``
+    * ``run``
+    * ``help``
+    * ``osbs``
+
 The second image is the final image where we will place the built artifact. But how to do it? Let's take
 a look at the ``app`` module which defines a special artifact.
 
@@ -110,8 +121,11 @@ It's responsibility is only to build the artifacts which can be referenced in th
 In our case we define two artifacts, both from the ``builder`` image.
 
 The first one will become available as ``/tmp/artifacts/application`` and the second one
-as ``/tmp/artifacts/lib.jar`` in the final image. See
-:ref:`how you can define the target file <descriptor/image:Common artifact keys>` name with the ``target`` key.
+as ``/tmp/artifacts/lib.jar`` in the final image.
 
-Image source artifacts can be handled and installed to the correct place, as you would normally do with other types
-of artifacts.
+.. tip::
+    You can change the destination as well as the target file name of artifacts. See
+    how it can be done using :ref:`appropriate keys in the artifact <descriptor/image:Common artifact keys>`.
+
+Image source artifacts can be handled and installed to the correct place,
+as you would normally do with other types of artifacts.

@@ -1,10 +1,11 @@
-Supporting scratch base image
+Base images
 ===============================
 
 .. contents::
     :backlinks: none
 
-This chapter discusses support creating images that extend the ``scratch`` base image.
+This chapter discusses support for creating images that extend the ``scratch`` image
+to build base images.
 
 Introduction
 ---------------------------------
@@ -15,7 +16,7 @@ Introduction
 
 The ``scratch`` image is a special type of image. It is an empty image and the ``FROM scratch``
 instruction in Dockerfile results in no-op when building the container image. There are a few
-use-cases for this image:
+use-cases for such an image:
 
 Storing native binaries
     It is very popular in the cloud-native era to use languages that produce native binaries
@@ -23,7 +24,7 @@ Storing native binaries
     popular languages is `Golang <https://golang.org/>`_.
 
     .. tip::
-        If this your use case you may be interested in :doc:`multi-stage builds </handbook/multi-stage>` as well.
+        You may be interested in :doc:`multi-stage builds </handbook/multi-stage>` as well.
 Storing shared content (for example metadata)
     Sometimes there is a requirement to store metadata (for example YAML files)
     in a container image so that it can be versioned and used elsewhere.
@@ -48,7 +49,7 @@ of the particular artifact.
 
 .. code-block:: yaml
     :caption: image.yaml
-    :emphasize-lines: 19,22,28
+    :emphasize-lines: 3,19,22,28
 
     name: "cekit-scratch"
     version: "1.0.0"
