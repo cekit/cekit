@@ -30,3 +30,8 @@
       - name: setuptools
       # This module is responsible for fetching application built in previous stage
       - name: app
+
+  osbs:
+    repository:
+      name: containers/rhpam-7-operator
+      branch: private-mgoldman-rhba-7-rhel-8
