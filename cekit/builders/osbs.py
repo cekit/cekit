@@ -104,21 +104,6 @@ class OSBSBuilder(Builder):
         else:
             osbs_dir = 'osbs'
 
-        self.dist_git_dir = os.path.join(os.path.expanduser(CONFIG.get('common', 'work_dir')),
-                                         osbs_dir,
-                                         repository)
-        if not os.path.exists(os.path.dirname(self.dist_git_dir)):
-            os.makedirs(os.path.dirname(self.dist_git_dir))
-
-        self.dist_git = DistGit(self.dist_git_dir,
-                                self.target,
-                                repository,
-                                branch,
-                                self.params.assume_yes)
-
-        self.dist_git.prepare(self.params.stage, self.params.user)
-        self.dist_git.clean()
-
         # We need to prepare a list of all artifacts in every image (in case
         # of multi-stage builds) and in every module.
         all_artifacts = []
@@ -137,6 +122,21 @@ class OSBSBuilder(Builder):
         if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository']
                                          for x in self.generator.image['packages']['set_url']]
+
+        self.dist_git_dir = os.path.join(os.path.expanduser(CONFIG.get('common', 'work_dir')),
+                                         osbs_dir,
+                                         repository)
+        if not os.path.exists(os.path.dirname(self.dist_git_dir)):
+            os.makedirs(os.path.dirname(self.dist_git_dir))
+
+        self.dist_git = DistGit(self.dist_git_dir,
+                                self.target,
+                                repository,
+                                branch,
+                                self.params.assume_yes)
+
+        self.dist_git.prepare(self.params.stage, self.params.user)
+        self.dist_git.clean(self.artifacts)
 
     def _copy_to_dist_git(self):
         LOGGER.debug("Copying files to dist-git '{}' directory".format(self.dist_git_dir))
@@ -378,13 +378,22 @@ class DistGit(object):
             subprocess.check_call(cmd)
             LOGGER.debug("Repository {} cloned".format(self.repo))
 
-    def clean(self):
-        """ Removes old generated scripts, repos and modules directories """
+    def clean(self, artifacts):
+        """
+        Removes old generated scripts, repos and modules directories
+        as well as all directories that are defined as artifacts.
+        """
+        directory_artifacts = []
+
+        for artifact in artifacts:
+            if os.path.isdir(artifact):
+                directory_artifacts.append(artifact)
+
         with Chdir(self.output):
             git_files = subprocess.check_output(
                 ["git", "ls-files", "."]).strip().decode("utf8").splitlines()
 
-            for d in ["repos", "modules"]:
+            for d in ["repos", "modules"] + directory_artifacts:
                 LOGGER.info("Removing old '{}' directory".format(d))
                 shutil.rmtree(d, ignore_errors=True)
 
