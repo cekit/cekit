@@ -71,7 +71,7 @@ class OSBSGenerator(Generator):
 
         for image in self.images:
             for artifact in image.all_artifacts:
-                logger.info("Preparing artifact {}".format(artifact['name']))
+                logger.info("Preparing artifact '{}'".format(artifact['name']))
 
                 if isinstance(artifact, _PlainResource) and \
                         config.get('common', 'redhat'):

@@ -89,8 +89,8 @@ def run_osbs(descriptor, image_dir, mocker, return_code=0, build_command=None, g
         yaml.dump(descriptor, fd, default_flow_style=False)
 
     return run_cekit(image_dir, general_command + ['-v',
-                                 '--work-dir', image_dir,
-                                 '--config', 'config'] + build_command,
+                                                   '--work-dir', image_dir,
+                                                   '--config', 'config'] + build_command,
                      return_code=return_code)
 
 
@@ -381,6 +381,46 @@ def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
 
     assert effective['osbs'] is not None
     assert effective['osbs']['extra_dir'] == 'osbs_extra'
+
+
+def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(tmpdir, mocker, caplog):
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'call')
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    #mocker.patch('cekit.builders.osbs.os.path.isdir', side_effect=[False, False, True])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [{'path': 'manifests', 'dest': '/manifests'}]
+
+    tmpdir.mkdir('osbs').mkdir('repo').mkdir(
+        '.git').join('other').write_text(u'Some content', 'utf8')
+
+    tmpdir.mkdir('manifests')
+
+    with open(os.path.join(str(tmpdir), 'manifests', 'some-manifest-file.yaml'), 'w') as _file:
+        _file.write("CONTENT")
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    calls = [
+        mocker.call(['git', 'push', '-q', 'origin', 'branch']),
+        mocker.call(['git', 'commit', '-q', '-m',
+                     'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+        mocker.call(['git', 'add', '--all', 'manifests'])
+    ]
+
+    mock_check_call.assert_has_calls(calls, any_order=True)
+    assert len(mock_check_call.mock_calls) == len(calls)
+    assert "Skipping '.git' directory" in caplog.text
+    assert "Staging 'manifests'..." in caplog.text
 
 
 def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, mocker, caplog):

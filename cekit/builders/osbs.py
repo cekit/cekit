@@ -218,12 +218,24 @@ class OSBSBuilder(Builder):
 
     def update_lookaside_cache(self):
         LOGGER.info("Updating lookaside cache...")
-        if not self.artifacts:
+
+        cache_artifacts = []
+
+        for artifact in self.artifacts:
+            # In case the artifact is a directory, we don't want to add it.
+            # Instead it will be staged.
+            if os.path.isdir(artifact):
+                continue
+
+            cache_artifacts.append(artifact)
+
+        if not cache_artifacts:
             return
+
         cmd = [self._fedpkg]
         if self.params.user:
             cmd += ['--user', self.params.user]
-        cmd += ["new-sources"] + self.artifacts
+        cmd += ["new-sources"] + cache_artifacts
 
         LOGGER.debug("Executing '{}'".format(cmd))
         with Chdir(self.dist_git_dir):
@@ -387,12 +399,13 @@ class DistGit(object):
         LOGGER.debug("Adding files to git stage...")
 
         for obj in os.listdir('.'):
-            if obj in artifacts:
-                LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
-                continue
-
             if obj == ".git":
                 LOGGER.debug("Skipping '.git' directory")
+                continue
+
+            # If the artifact to add is a directory do not skip it
+            if obj in artifacts and not os.path.isdir(obj):
+                LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
                 continue
 
             LOGGER.debug("Staging '{}'...".format(obj))
