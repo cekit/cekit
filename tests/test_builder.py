@@ -147,7 +147,7 @@ class DistGitMock(object):
     def prepare(self, stage, user=None):
         pass
 
-    def clean(self):
+    def clean(self, artifacts):
         pass
 
 
