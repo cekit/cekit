@@ -74,31 +74,34 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  # 8. Executes any defined scripts
  # 9. Exposes any defined volumes
  #}
-{%- macro process_module(module, is_image=false) %}
+{%- macro process_module(module, parent_image=None) %}
 {% set module_type = 'module' %}
-{% if is_image %}
+{% if not parent_image %}
 {% set module_type = 'image' %}
+{% set parent_image = module %}
 {% endif %}
 ###### START {{ module_type }} '{{ module.name }}:{{ module.version }}'
 ###### \
         {% if module.artifacts|rejectattr("image")|list|length > 0 %}
-        # Copy '{{ module.name }}' {{ module_type }} general artifacts
+        {% for dest, artifacts in module.artifacts|rejectattr("image")|list|groupby("dest") %}
+        # Copy '{{ module.name }}' {{ module_type }} general artifacts to '{{ dest }}' destination
         COPY \
-        {% for artifact in module.artifacts|rejectattr("image")|list %}
+            {% for artifact in artifacts %}
             {{ artifact['target'] }} \
             {% endfor %}
-            /tmp/artifacts/
+            {{ dest }}
+            {% endfor %}
         {% endif -%}
 
         {% if module.artifacts|selectattr("image")|list|length > 0 %}
         # Copy '{{ module.name }}' {{ module_type }} stage artifacts
         {% for artifact in module.artifacts|selectattr("image")|list %}
-        COPY --from={{ artifact['image'] }} {{ artifact['path'] }} /tmp/artifacts/{{ artifact['target'] }}
+        COPY --from={{ artifact['image'] }} {{ artifact['path'] }} {{ artifact['dest'] }}{{ artifact['target'] }}
         {% endfor %}
         {% endif -%}
 
         {% if module.execute %}
-        {% if not is_image %}
+        {% if module_type == 'module' %}
         # Copy '{{ module.name }}' {{ module_type }} content
         COPY modules/{{ module.name }} /tmp/scripts/{{ module.name }}
         {% endif -%}
@@ -108,7 +111,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Switch to 'root' user to install '{{ module.name }}' {{ module_type }} defined packages
         USER root
         # Install packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_install(image.packages.manager, module.packages.install) }}
+        RUN {{ pkg_install(parent_image.packages.manager, module.packages.install) }}
         {% endif -%}
 
         {% if module.envs|selectattr("value")|list|length > 0 %}
@@ -161,7 +164,9 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  # TODO XXX
  #}
 {%- macro process_image(animage) %}
+    {% if animage.from != 'scratch' %}
     USER root
+    {% endif -%}
     {% if animage.packages.repositories_injected %}
 
     # Add custom repo files
@@ -177,27 +182,11 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endif %}
 
     {% for to_install in animage.modules.install %}
-{{ process_module(helper.module(to_install)) }}
+{{ process_module(helper.module(to_install), animage) }}
     {% endfor %}
-{{ process_module(animage, true) }}
+{{ process_module(animage) }}
 {%- endmacro -%}
 
-# Copyright 2019 Red Hat
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# ------------------------------------------------------------------------
-#
 # This is a Dockerfile for the {{ name }}:{{ version }} image.
 
 {% for builder_image in builders %}
@@ -216,10 +205,12 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 
 {{ process_image(image) }}
 
+    {% if image.from != 'scratch' %}
     # Switch to 'root' user and remove artifacts and modules
     USER root
     RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
     RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    {% endif -%}
 
     {% if helper.packages_to_install(image) and image.packages.manager in ['yum', 'dnf', 'microdnf'] %}
     # Clear package manager metadata
@@ -231,7 +222,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     RUN {{ repo_remove(image.packages.manager, image.packages.repositories_injected) }}
     {% endif -%}
 
-    {% if 'user' in run %}
+    {% if 'user' in run and image.from != 'scratch' %}
     # Define the user
     USER {{ run['user'] }}
     {% endif -%}

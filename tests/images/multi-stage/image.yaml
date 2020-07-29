@@ -15,8 +15,11 @@
 
 - name: some/app
   version: 12
-  from: centos:7
+  from: alpine:3.12
   description: Our application
+
+  packages:
+    manager: apk
 
   modules:
     repositories:
@@ -27,3 +30,8 @@
       - name: setuptools
       # This module is responsible for fetching application built in previous stage
       - name: app
+
+  osbs:
+    repository:
+      name: containers/rhpam-7-operator
+      branch: private-mgoldman-rhba-7-rhel-8

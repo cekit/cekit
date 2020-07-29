@@ -51,6 +51,7 @@ class Generator(object):
         self._module_registry = ModuleRegistry()
         self.image = None
         self.builder_images = []
+        self.images = []
 
         if overrides:
             for override in overrides:
@@ -108,19 +109,27 @@ class Generator(object):
 
         self.image = Image(descriptor, os.path.dirname(os.path.abspath(self._descriptor_path)))
 
-        # apply overrides to the image definition
-        self.image.apply_image_overrides(self._overrides)
+        # Construct list of all images (builder images + main one)
+        self.images = [self.image] + self.builder_images
 
-        for builder in self.builder_images:
-            builder.apply_image_overrides(self._overrides)
+        for image in self.images:
+            # Apply overrides to all image definitions:
+            # intermediate (builder) images and target image as well
+            # It is required to build the module registry
+            image.apply_image_overrides(self._overrides)
 
-        # add build labels
-        self.add_build_labels()
-        # load the definitions of the modules
+        # Load definitions of modules
+        # We need to load it after we apply overrides so that any changes to modules
+        # will be reflected there as well
         self.build_module_registry()
-        # process included modules
-        self.image.apply_module_overrides(self._module_registry)
-        self.image.process_defaults()
+
+        for image in self.images:
+            # Process included modules
+            image.apply_module_overrides(self._module_registry)
+            image.process_defaults()
+
+        # Add build labels
+        self.add_build_labels()
 
     def generate(self, builder):  # pylint: disable=unused-argument
         self.copy_modules()
@@ -168,12 +177,9 @@ class Generator(object):
 
         modules = []
 
-        for builder in self.builder_images:
-            if builder.modules:
-                modules += [builder.modules]
-
-        if self.image.modules:
-            modules += [self.image.modules]
+        for image in self.images:
+            if image.modules:
+                modules += [image.modules]
 
         return modules
 

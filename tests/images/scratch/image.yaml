@@ -1,0 +1,27 @@
+name: "cekit-scratch"
+version: "1.0.0"
+from: "scratch"
+description: "Minimal scratch example"
+
+labels:
+  - name: "io.cekit.test"
+    value: "This is a CEKit test label"
+
+envs:
+  - name: "CEKIT_TEST"
+    value: "test"
+
+artifacts:
+    # Both files will be added to a /files/ directory in the container (which will be created)
+  - name: "file1"
+    path: metadata/test-file.txt
+    dest: /files/
+  - name: "file2"
+    path: metadata/other.txt
+    dest: /files/
+
+    # Whole 'metadata' directory (path relative to image descriptor) will be copied to
+    # the container and placed in /target
+  - name: "dir"
+    path: metadata
+    dest: /target

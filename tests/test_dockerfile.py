@@ -16,7 +16,7 @@ from click.testing import CliRunner
 
 basic_config = {'release': 1,
                 'version': 1,
-                'from': 'scratch',
+                'from': 'fromimage',
                 'name': 'testimage'}
 
 config = Config()
@@ -70,7 +70,7 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
     mocker.patch('cekit.generator.docker.DockerGenerator.dependencies')
     mocker.patch('cekit.builders.osbs.OSBSBuilder.dependencies')
     target = str(tmpdir.mkdir('target'))
-    generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['--redhat', 'build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, exp_regex)
 
 
@@ -87,7 +87,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
         'install': ['a']},
         'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}}
 
-    generate(target, ['--redhat', 'build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['--redhat', 'build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, 'repos/content_sets_odcs.repo')
 
 
@@ -123,7 +123,7 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
                                                 'rpm': 'foo-repo.rpm'}],
                               'install': ['a', 'b']}}
 
-    generate(target, ['build', '--dry-run', 'docker'], desc_part)
+    generate(target, ['build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
@@ -234,7 +234,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
     mocker.patch.object(Repository, 'fetch')
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['build', '--dry-run', 'docker'],
+    generate(target, ['build', '--dry-run', 'podman'],
              descriptor={'packages': {'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
                                       'install': ['a']},
@@ -248,7 +248,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
 def test_unsupported_package_manager(tmpdir, caplog):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'something',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -265,7 +265,7 @@ def test_unsupported_package_manager(tmpdir, caplog):
 def test_default_package_manager(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {
                  'repositories': [{'name': 'foo',
                                    'rpm': 'foo-repo.rpm'}],
@@ -282,7 +282,7 @@ def test_default_package_manager(tmpdir):
 def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--overrides', '{"packages": {"install": ["b"]}}', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--overrides', '{"packages": {"install": ["b"]}}', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'microdnf',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -299,7 +299,7 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
 def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--overrides', '{"packages": {"manager": "dnf", "install": ["b"]}}', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--overrides', '{"packages": {"manager": "dnf", "install": ["b"]}}', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'microdnf',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -316,7 +316,7 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
 def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': 'microdnf',
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -333,7 +333,7 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
 def test_supported_package_managers(tmpdir, manager):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {'manager': manager,
                                       'repositories': [{'name': 'foo',
                                                         'rpm': 'foo-repo.rpm'}],
@@ -351,7 +351,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
 
     generate(
         target,
-        ['-v', 'build', '--dry-run', 'docker'],
+        ['-v', 'build', '--dry-run', 'podman'],
         descriptor={
             'packages': {
                 'manager': 'apk',
@@ -368,7 +368,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
 # https://github.com/cekit/cekit/issues/406
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir('target'))
-    generate(target, ['build', '--dry-run', 'docker'])
+    generate(target, ['build', '--dry-run', 'podman'])
     regex_dockerfile(target, '^((?!COPY modules /tmp/scripts/))')
 
 
@@ -381,9 +381,10 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     os.makedirs(module_dir)
 
     with open(module_yaml_path, 'w') as outfile:
-        yaml.dump({'name': 'foo', 'version': '1.0', 'execute': [{'script': 'configure.sh'}]}, outfile, default_flow_style=False)
+        yaml.dump({'name': 'foo', 'version': '1.0', 'execute': [
+                  {'script': 'configure.sh'}]}, outfile, default_flow_style=False)
 
-    generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'docker'],
+    generate(target, ['-v', '--work-dir', target, 'build', '--dry-run', 'podman'],
              descriptor={'modules': {'repositories': [{'name': 'modules',
                                                        'path': 'modules'}],
                                      'install': [{'name': 'foo'}]}})
@@ -391,11 +392,77 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     regex_dockerfile(target, 'COPY modules/foo /tmp/scripts/foo')
 
 
+def test_dockerfile_destination_of_artifact(mocker, tmpdir):
+    mocker.patch('cekit.descriptor.resource.Resource.copy')
+
+    target = str(tmpdir.mkdir('target'))
+    generate(target, ['-v', 'build', '--dry-run', 'podman'], descriptor={
+        'artifacts': [
+            # URL artifact, default destination
+            {'name': 'abc', 'url': 'https://asdasd/one.jar'},
+            # URL artifact, custom destination
+            {'name': 'def', 'url': 'https://asdasd/two.jar', 'dest': '/tmp/custom////'},
+            # Path artifact, default destination
+            {'name': 'one', 'path': 'some/path/one'},
+            # Path artifact, custom destination
+            {'name': 'two', 'path': 'some/path/two', 'dest': '/tmp/custom'},
+            # Image artifact, default destination
+            {'name': 'aaa', 'image': 'image-name', 'path': '/some/path.jar'},
+            # Image artifact, custom destination
+            {'name': 'bbb', 'image': 'image-name', 'path': '/some/other-path.jar', 'dest': '/tmp/custom/'},
+            # Plain artifact, default destination
+            {'name': '111', 'md5': 'md5md5md5'},
+            # Plain artifact, custom destination
+            {'name': '222', 'md5': 'md5md5md5', 'dest': '/tmp/custom/'},
+        ]
+    })
+    regex_dockerfile(
+        target, '''# Copy 'testimage' image general artifacts to '/tmp/artifacts/' destination''')
+    regex_dockerfile(target, r'^\s+COPY \\\s+abc \\\s+one \\\s+111 \\\s+/tmp/artifacts/$')
+    regex_dockerfile(
+        target, '''# Copy 'testimage' image general artifacts to '/tmp/custom/' destination''')
+    regex_dockerfile(target, r'^\s+COPY \\\s+def \\\s+two \\\s+222 \\\s+/tmp/custom/$')
+    regex_dockerfile(
+        target, '''# Copy 'testimage' image stage artifacts''')
+    regex_dockerfile(target, r'^\s+COPY --from=image-name /some/path.jar /tmp/artifacts/aaa$')
+    regex_dockerfile(target, r'^\s+COPY --from=image-name /some/other-path.jar /tmp/custom/bbb$')
+
+
+# https://github.com/cekit/cekit/issues/648
+def test_overrides_applied_to_all_multi_stage_images(tmpdir):
+    target = str(tmpdir.mkdir('target'))
+
+    descriptor = [
+        {
+            'release': 1,
+            'version': 1,
+            'from': 'fromimage',
+            'name': 'builderimage'
+        },
+        {
+            'release': 1,
+            'version': 1,
+            'from': 'fromimage',
+            'name': 'targetimage'
+        }
+    ]
+
+    generate(target, ['-v', 'build', '--overrides',
+                      '{"version": "SNAPSHOT"}', '--dry-run', 'podman'], descriptor)
+    regex_dockerfile(target, "^###### START image 'builderimage:SNAPSHOT'$")
+    regex_dockerfile(target, "^###### END image 'builderimage:SNAPSHOT'$")
+    regex_dockerfile(target, "^###### START image 'targetimage:SNAPSHOT'$")
+    regex_dockerfile(target, "^###### END image 'targetimage:SNAPSHOT'$")
+
+
 def generate(image_dir, command, descriptor=None, exit_code=0):
     desc = basic_config.copy()
 
     if descriptor:
-        desc.update(descriptor)
+        if isinstance(descriptor, list):
+            desc = descriptor
+        else:
+            desc.update(descriptor)
 
     tmp_image_file = os.path.join(image_dir, 'image.yaml')
 

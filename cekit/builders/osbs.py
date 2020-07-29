@@ -17,7 +17,7 @@ except ImportError:
 from cekit import tools
 from cekit.config import Config
 from cekit.builder import Builder
-from cekit.descriptor.resource import _PlainResource
+from cekit.descriptor.resource import _PlainResource, _ImageContentResource
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively
 
@@ -104,6 +104,25 @@ class OSBSBuilder(Builder):
         else:
             osbs_dir = 'osbs'
 
+        # We need to prepare a list of all artifacts in every image (in case
+        # of multi-stage builds) and in every module.
+        all_artifacts = []
+
+        for image in self.generator.images:
+            all_artifacts += image.all_artifacts
+
+        # First get all artifacts that are not plain artifacts
+        self.artifacts = [a.target
+                          for a in all_artifacts if not isinstance(a, (_PlainResource, _ImageContentResource))]
+        # When plain artifact was handled using lookaside cache, we need to add it too
+        # TODO Rewrite this!
+        self.artifacts += [a.target
+                           for a in all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
+
+        if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
+            self._rhpkg_set_url_repos = [x['url']['repository']
+                                         for x in self.generator.image['packages']['set_url']]
+
         self.dist_git_dir = os.path.join(os.path.expanduser(CONFIG.get('common', 'work_dir')),
                                          osbs_dir,
                                          repository)
@@ -117,19 +136,7 @@ class OSBSBuilder(Builder):
                                 self.params.assume_yes)
 
         self.dist_git.prepare(self.params.stage, self.params.user)
-        self.dist_git.clean()
-
-        # First get all artifacts that are not plain artifacts
-        self.artifacts = [a.target
-                          for a in self.generator.image.all_artifacts if not isinstance(a, _PlainResource)]
-        # When plain artifact was handled using lookaside cache, we need to add it too
-        # TODO Rewrite this!
-        self.artifacts += [a.target
-                           for a in self.generator.image.all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
-
-        if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
-            self._rhpkg_set_url_repos = [x['url']['repository']
-                                         for x in self.generator.image['packages']['set_url']]
+        self.dist_git.clean(self.artifacts)
 
     def _copy_to_dist_git(self):
         LOGGER.debug("Copying files to dist-git '{}' directory".format(self.dist_git_dir))
@@ -211,12 +218,24 @@ class OSBSBuilder(Builder):
 
     def update_lookaside_cache(self):
         LOGGER.info("Updating lookaside cache...")
-        if not self.artifacts:
+
+        cache_artifacts = []
+
+        for artifact in self.artifacts:
+            # In case the artifact is a directory, we don't want to add it.
+            # Instead it will be staged.
+            if os.path.isdir(artifact):
+                continue
+
+            cache_artifacts.append(artifact)
+
+        if not cache_artifacts:
             return
+
         cmd = [self._fedpkg]
         if self.params.user:
             cmd += ['--user', self.params.user]
-        cmd += ["new-sources"] + self.artifacts
+        cmd += ["new-sources"] + cache_artifacts
 
         LOGGER.debug("Executing '{}'".format(cmd))
         with Chdir(self.dist_git_dir):
@@ -333,12 +352,16 @@ class DistGit(object):
     def prepare(self, stage, user=None):
         if os.path.exists(self.output):
             with Chdir(self.output):
-                LOGGER.info("Pulling latest changes in repo {}...".format(self.repo))
+                LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
                 subprocess.check_call(["git", "fetch"])
+                LOGGER.debug("Checking out {} branch...".format(self.branch))
                 subprocess.check_call(
                     ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT)
+                LOGGER.debug("Resetting branch...")
                 subprocess.check_call(
                     ["git", "reset", "--hard", "origin/%s" % self.branch])
+                LOGGER.debug("Removing any untracked files or directories...")
+                subprocess.check_call(["git", "clean", "-fdx"])
             LOGGER.debug("Changes pulled")
         else:
             LOGGER.info("Cloning {} git repository ({} branch)...".format(self.repo, self.branch))
@@ -355,13 +378,22 @@ class DistGit(object):
             subprocess.check_call(cmd)
             LOGGER.debug("Repository {} cloned".format(self.repo))
 
-    def clean(self):
-        """ Removes old generated scripts, repos and modules directories """
+    def clean(self, artifacts):
+        """
+        Removes old generated scripts, repos and modules directories
+        as well as all directories that are defined as artifacts.
+        """
+        directory_artifacts = []
+
+        for artifact in artifacts:
+            if os.path.isdir(artifact):
+                directory_artifacts.append(artifact)
+
         with Chdir(self.output):
             git_files = subprocess.check_output(
                 ["git", "ls-files", "."]).strip().decode("utf8").splitlines()
 
-            for d in ["repos", "modules"]:
+            for d in ["repos", "modules"] + directory_artifacts:
                 LOGGER.info("Removing old '{}' directory".format(d))
                 shutil.rmtree(d, ignore_errors=True)
 
@@ -376,12 +408,13 @@ class DistGit(object):
         LOGGER.debug("Adding files to git stage...")
 
         for obj in os.listdir('.'):
-            if obj in artifacts:
-                LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
-                continue
-
             if obj == ".git":
                 LOGGER.debug("Skipping '.git' directory")
+                continue
+
+            # If the artifact to add is a directory do not skip it
+            if obj in artifacts and not os.path.isdir(obj):
+                LOGGER.debug("Skipping staging '{}' in git because it is an artifact".format(obj))
                 continue
 
             LOGGER.debug("Staging '{}'...".format(obj))

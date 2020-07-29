@@ -177,7 +177,7 @@ def test_args_not_valid_command():
     result = CliRunner().invoke(cli, ['explode'], catch_exceptions=False)
 
     assert isinstance(result.exception, SystemExit)
-    assert 'No such command "explode"' in result.output
+    assert "No such command 'explode'" in result.output
     assert result.exit_code == 2
 
 
@@ -185,5 +185,5 @@ def test_args_invalid_build_engine():
     result = CliRunner().invoke(cli, ['build', 'rocketscience'], catch_exceptions=False)
 
     assert isinstance(result.exception, SystemExit)
-    assert 'No such command "rocketscience"' in result.output
+    assert "No such command 'rocketscience'" in result.output
     assert result.exit_code == 2

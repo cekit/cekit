@@ -38,7 +38,7 @@ odcs_fake_resp = b"""Result:
 
 image_descriptor = {
     'schema_version': 1,
-    'from': 'centos:latest',
+    'from': 'centos:7',
     'name': 'test/image',
     'version': '1.0',
     'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
@@ -50,7 +50,7 @@ image_descriptor = {
 
 simple_image_descriptor = {
     'schema_version': 1,
-    'from': 'centos:latest',
+    'from': 'centos:7',
     'name': 'test/image',
     'version': '1.0'
 }
@@ -103,7 +103,7 @@ def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
                                  '--dry-run',
                                  '--overrides-file',
                                  'overrides.yaml',
-                                 'docker'])
+                                 'podman'])
 
 
 def test_content_sets_file_container_file(tmpdir, mocker, caplog):
@@ -223,10 +223,11 @@ def test_simple_image_build(tmpdir):
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)
 
-    run_cekit(image_dir, ['-v', 'build', 'docker'])
+    run_cekit(image_dir, ['-v', 'build', 'podman'])
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_simple_image_test(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -272,7 +273,7 @@ def test_image_generate_with_multiple_overrides(tmpdir):
                           '--overrides',
                           override2,
                           '--dry-run',
-                          'docker'])
+                          'podman'])
 
     effective_image = {}
     with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
@@ -282,6 +283,7 @@ def test_image_generate_with_multiple_overrides(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_image_test_with_override(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -317,6 +319,7 @@ def test_image_test_with_override(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_image_test_with_multiple_overrides(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -361,6 +364,7 @@ def test_image_test_with_multiple_overrides(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_image_test_with_override_on_cmd(tmpdir):
     overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
 
@@ -406,7 +410,7 @@ def test_module_override(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
-               'docker'])
+               'podman'])
 
     module_dir = os.path.join(image_dir,
                               'target',
@@ -454,7 +458,7 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
                '--overrides', '{"modules": {"install": [{"name": "master"}, {"name": "child"}] } }',
                '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
                '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml"}] }',
-               'docker'])
+               'podman'])
 
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
@@ -485,7 +489,7 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
                '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
-               'docker'])
+               'podman'])
 
     required_matches = [
         'RUN microdnf --setopt=tsflags=nodocs install -y package1 package2 \\',
@@ -565,7 +569,7 @@ def test_run_override_user(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
-               'docker'])
+               'podman'])
 
     assert check_dockerfile(image_dir, 'USER 4321')
 
@@ -595,7 +599,7 @@ def test_run_override_artifact(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
-               'docker'])
+               'podman'])
 
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
@@ -916,8 +920,8 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
         # Switch to 'root' user to install 'packages_module' module defined packages
         USER root
         # Install packages defined in the 'packages_module' module
-        RUN yum --setopt=tsflags=nodocs install -y kernel java \\
-            && rpm -q kernel java
+        RUN yum --setopt=tsflags=nodocs install -y kernel java-1.8.0-openjdk \\
+            && rpm -q kernel java-1.8.0-openjdk
 ###### /
 ###### END module 'packages_module:1.0'
 
@@ -967,7 +971,7 @@ def test_nonexisting_image_descriptor(mocker, tmpdir, caplog):
                         ['-v',
                          '--descriptor', 'nonexisting.yaml',
                          'build',
-                         'docker'])
+                         'podman'])
 
     assert "Descriptor could not be found on the 'nonexisting.yaml' path, please check your arguments!" in caplog.text
 
@@ -984,7 +988,7 @@ def test_nonexisting_override_file(mocker, tmpdir, caplog):
                          'build',
                          '--dry-run',
                          '--overrides-file', 'nonexisting.yaml',
-                         'docker'])
+                         'podman'])
 
     assert "Loading override 'nonexisting.yaml'" in caplog.text
     assert "Descriptor could not be found on the 'nonexisting.yaml' path, please check your arguments!" in caplog.text
@@ -1002,13 +1006,14 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
                          'build',
                          '--dry-run',
                          '--overrides', '{wrong!}',
-                         'docker'])
+                         'podman'])
 
     assert "Loading override '{wrong!}'" in caplog.text
     assert "Schema validation failed" in caplog.text
     assert "Key 'wrong!' was not defined" in caplog.text
 
 
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_simple_image_build_error_local_docker_socket_permission_denied(tmpdir, mocker, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=PermissionError())
@@ -1026,6 +1031,7 @@ def test_simple_image_build_error_local_docker_socket_permission_denied(tmpdir, 
     assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
 
 
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_simple_image_build_error_local_docker_stopped(tmpdir, mocker, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=FileNotFoundError())
@@ -1044,6 +1050,7 @@ def test_simple_image_build_error_local_docker_stopped(tmpdir, mocker, caplog):
     assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
 
 
+@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
 def test_simple_image_build_error_connection_error_remote_docker_with_custom_docker_host(tmpdir, mocker, monkeypatch, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=PermissionError())
@@ -1077,7 +1084,7 @@ def test_proper_decoding(tmpdir, caplog):
     run_cekit(image_dir,
               ['-v',
                'build',
-               'docker'])
+               'podman'])
 
     assert "Finished!" in caplog.text
 
@@ -1103,7 +1110,7 @@ def test_disabling_content_sets(tmpdir, caplog, parameter):
                '--dry-run',
                # Ugly, but double braces are required for 'format to work'
                '--overrides', '{{"packages": {{"{0}": ~}}}}'.format(parameter),
-               'docker'])
+               'podman'])
 
     with open(os.path.join(image_dir, 'target', 'image.yaml'), 'r') as file_:
         effective_image = yaml.safe_load(file_)
@@ -1123,7 +1130,7 @@ def test_validation_of_image_and_module_descriptors(tmpdir, mocker, caplog):
     run_cekit(image_dir, ['-v',
                           'build',
                           '--validate',
-                          'docker'])
+                          'podman'])
 
     assert "The --validate parameter was specified, generation will not be performed, exiting" in caplog.text
 
@@ -1143,7 +1150,7 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
     run_cekit_exception(image_dir, ['-v',
                                     'build',
                                     '--validate',
-                                    'docker'])
+                                    'podman'])
 
     assert "Cannot validate schema: Image" in caplog.text
     assert "Cannot find required key 'name'" in caplog.text
@@ -1152,7 +1159,7 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
 def run_cekit(cwd, parameters=None, message=None, env=None):
 
     if parameters is None:
-        parameters = ['build', '--dry-run', 'docker']
+        parameters = ['build', '--dry-run', 'podman']
 
     if env is None:
         env = {}
@@ -1168,7 +1175,7 @@ def run_cekit(cwd, parameters=None, message=None, env=None):
 
 
 def run_cekit_exception(cwd,
-                        parameters=['-v', 'build', '--dry-run', 'docker'],
+                        parameters=['-v', 'build', '--dry-run', 'podman'],
                         exit_code=1,
                         exception=SystemExit,
                         message=None):

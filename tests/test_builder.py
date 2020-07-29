@@ -147,7 +147,7 @@ class DistGitMock(object):
     def prepare(self, stage, user=None):
         pass
 
-    def clean(self):
+    def clean(self, artifacts):
         pass
 
 
@@ -428,7 +428,7 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
     image_descriptor = {
         'schema_version': 1,
-        'from': 'centos:latest',
+        'from': 'centos:7',
         'name': 'test/image',
         'version': '1.0',
         'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
@@ -446,11 +446,12 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     builder = create_builder_object(
         mocker, 'osbs', {'assume_yes': False}, {'descriptor': yaml.dump(image_descriptor), 'target': str(tmpdir)})
 
-    with mocker.patch('cekit.tools.get_brew_url', side_effect=subprocess.CalledProcessError(1, 'command')):
-        builder.prepare()
-        builder.before_generate()
-        builder.generate()
-        builder.before_build()
+    mocker.patch('cekit.tools.get_brew_url', side_effect=subprocess.CalledProcessError(1, 'command'))
+
+    builder.prepare()
+    builder.before_generate()
+    builder.generate()
+    builder.before_build()
 
     dist_git_class.assert_called_once_with(os.path.join(
         str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch', False)
@@ -472,7 +473,7 @@ def test_osbs_dist_git_sync_called(mocker, tmpdir):
 
     image_descriptor = {
         'schema_version': 1,
-        'from': 'centos:latest',
+        'from': 'centos:7',
         'name': 'test/image',
         'version': '1.0',
         'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
@@ -503,7 +504,7 @@ def test_osbs_dist_git_sync_NOT_called_when_dry_run_set(mocker, tmpdir):
 
     image_descriptor = {
         'schema_version': 1,
-        'from': 'centos:latest',
+        'from': 'centos:7',
         'name': 'test/image',
         'version': '1.0',
         'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
@@ -758,7 +759,7 @@ def test_docker_squashing_disabled_dependencies(mocker, tmpdir, caplog):
     result = "Required CEKit library 'docker-squash' was found as a 'docker_squash' module"
     image_descriptor = {
         'schema_version': 1,
-        'from': 'centos:latest',
+        'from': 'centos:7',
         'name': 'test/image',
         'version': '1.0',
         'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}]
