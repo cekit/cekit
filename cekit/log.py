@@ -26,7 +26,7 @@ def setup_logging():
     handler_err.addFilter(SingleLevelFilter(logging.INFO, True))
 
     formatter = colorlog.ColoredFormatter(
-        '%(log_color)s%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        '%(log_color)s%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s')
 
     handler_out.setFormatter(formatter)
     handler_err.setFormatter(formatter)
