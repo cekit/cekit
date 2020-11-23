@@ -406,6 +406,9 @@ class _UrlResource(Resource):
         # Normalize the URL
         self['url'] = descriptor.get('url').strip()
 
+    def download_file(self, url, destination):
+        return self._download_file(url, destination, False)
+
     def _get_default_name_value(self, descriptor):
         """
         Default identifier is the last part (most probably file name) of the URL.

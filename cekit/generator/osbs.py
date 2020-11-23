@@ -2,9 +2,11 @@ import logging
 import os
 
 import yaml
+import hashlib
+import tempfile
 
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource
+from cekit.descriptor.resource import _PlainResource, _UrlResource
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
 
@@ -65,23 +67,47 @@ class OSBSGenerator(Generator):
         and fetches all of them
         """
 
-        logger.info("Handling artifacts...")
+        logger.info("Handling artifacts for OSBS...")
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
 
         for image in self.images:
             for artifact in image.all_artifacts:
-                logger.info("Preparing artifact '{}'".format(artifact['name']))
+                logger.info("Preparing artifact '{}' (of type {})".format(artifact['name'], type(artifact)))
 
-                if isinstance(artifact, _PlainResource) and \
-                        config.get('common', 'redhat'):
+                if isinstance(artifact, _UrlResource):
+                    if 'md5' in artifact:
+                        md5value = artifact['md5']
+                    else:
+                        logger.warning("No md5 supplied for {}, calculating from the remote artifact".format(artifact['url']))
+                        m = hashlib.md5()
+                        tmpfile = tempfile.NamedTemporaryFile()
+                        try:
+                            artifact.download_file(artifact['url'], tmpfile.name)
+                            logger.debug("Download done to {}".format(tmpfile.name))
+                            with open(tmpfile.name, "rb") as f:
+                                chunk = f.read(8192)
+                                while chunk:
+                                    m.update(chunk)
+                                    chunk = f.read(8192)
+                                md5value = m.hexdigest()
+                        finally:
+                            tmpfile.close()
+
+                    fetch_artifacts_url.append({'md5': md5value,
+                                                'url': artifact['url'],
+                                                'target': os.path.join(artifact['target'])})
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
+                    logger.debug(
+                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['name']))
+                elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
                     try:
                         fetch_artifacts_url.append({'md5': artifact['md5'],
                                                     'url': get_brew_url(artifact['md5']),
                                                     'target': os.path.join(artifact['target'])})
                         artifact['target'] = os.path.join('artifacts', artifact['target'])
                         logger.debug(
-                            "Artifact '{}' added to fetch-artifacts-url.yaml".format(artifact['name']))
+                            "Artifact '{}' (as plain) added to fetch-artifacts-url.yaml".format(artifact['name']))
                     except:
                         logger.warning("Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".
                                        format(artifact['name']))
