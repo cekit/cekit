@@ -122,6 +122,9 @@ it performs **scratch build**. If you need a proper build you need to specify ``
 By default every image is squashed at the end of the build. This means that all layers above the base image
 will be squashed into a single layer.
 
+.. note::
+   All URL based artifacts (See :ref:`here <descriptor/image:URL artifacts>`) will **not** be cached and instead will be added to ``fetch-artifacts.yaml`` to use the `OSBS integration <https://osbs.readthedocs.io/en/latest/users.html#fetch-artifacts-url-yaml>`_
+
 Input format
     Dockerfile
 Parameters
