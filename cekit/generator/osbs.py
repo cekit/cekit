@@ -76,10 +76,12 @@ class OSBSGenerator(Generator):
                 logger.info("Preparing artifact '{}' (of type {})".format(artifact['name'], type(artifact)))
 
                 if isinstance(artifact, _UrlResource):
-                    if 'md5' in artifact:
-                        md5value = artifact['md5']
+                    intersected_hash = [x for x in ['md5', 'sha1', 'sha256'] if x in artifact]
+                    if intersected_hash:
+                        md5value = artifact[intersected_hash[0]]
                     else:
                         logger.warning("No md5 supplied for {}, calculating from the remote artifact".format(artifact['url']))
+                        intersected_hash = ["md5"]
                         m = hashlib.md5()
                         tmpfile = tempfile.NamedTemporaryFile()
                         try:
@@ -94,23 +96,26 @@ class OSBSGenerator(Generator):
                         finally:
                             tmpfile.close()
 
-                    fetch_artifacts_url.append({'md5': md5value,
+                    fetch_artifacts_url.append({intersected_hash[0]: md5value,
                                                 'url': artifact['url'],
                                                 'target': os.path.join(artifact['target'])})
-                    artifact['target'] = os.path.join('artifacts', artifact['target'])
                     logger.debug(
-                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['name']))
+                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['target']))
+                    # OSBS by default downloads all artifacts to artifacts/<target_path>
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
                 elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
                     try:
                         fetch_artifacts_url.append({'md5': artifact['md5'],
                                                     'url': get_brew_url(artifact['md5']),
                                                     'target': os.path.join(artifact['target'])})
-                        artifact['target'] = os.path.join('artifacts', artifact['target'])
                         logger.debug(
-                            "Artifact '{}' (as plain) added to fetch-artifacts-url.yaml".format(artifact['name']))
+                            "Artifact '{}' (as plain) added to fetch-artifacts-url.yaml".format(artifact['target']))
+                        # OSBS by default downloads all artifacts to artifacts/<target_path>
+                        artifact['target'] = os.path.join('artifacts', artifact['target'])
                     except:
                         logger.warning("Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".
                                        format(artifact['name']))
+                        logger.debug("### plain path distgit {}".format(artifact['target']))
                         artifact.copy(target_dir)
                         # TODO: This is ugly, rewrite this!
                         artifact['lookaside'] = True
