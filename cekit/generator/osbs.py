@@ -1,10 +1,10 @@
 import logging
 import os
-
-import yaml
-import hashlib
 import tempfile
 
+import yaml
+
+from cekit import crypto
 from cekit.config import Config
 from cekit.descriptor.resource import _PlainResource, _UrlResource
 from cekit.generator.base import Generator
@@ -76,29 +76,22 @@ class OSBSGenerator(Generator):
                 logger.info("Preparing artifact '{}' (of type {})".format(artifact['name'], type(artifact)))
 
                 if isinstance(artifact, _UrlResource):
-                    intersected_hash = [x for x in ['md5', 'sha1', 'sha256'] if x in artifact]
-                    if intersected_hash:
-                        md5value = artifact[intersected_hash[0]]
-                    else:
+                    intersected_hash = [x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact]
+                    logger.debug("Found checksum markers of {}".format(intersected_hash))
+                    if not intersected_hash:
                         logger.warning("No md5 supplied for {}, calculating from the remote artifact".format(artifact['url']))
                         intersected_hash = ["md5"]
-                        m = hashlib.md5()
                         tmpfile = tempfile.NamedTemporaryFile()
                         try:
                             artifact.download_file(artifact['url'], tmpfile.name)
-                            logger.debug("Download done to {}".format(tmpfile.name))
-                            with open(tmpfile.name, "rb") as f:
-                                chunk = f.read(8192)
-                                while chunk:
-                                    m.update(chunk)
-                                    chunk = f.read(8192)
-                                md5value = m.hexdigest()
+                            artifact["md5"] = crypto.get_sum(tmpfile.name, "md5")
                         finally:
                             tmpfile.close()
 
-                    fetch_artifacts_url.append({intersected_hash[0]: md5value,
-                                                'url': artifact['url'],
+                    fetch_artifacts_url.append({'url': artifact['url'],
                                                 'target': os.path.join(artifact['target'])})
+                    for c in intersected_hash:
+                        fetch_artifacts_url[0].update({c: artifact[c]})
                     logger.debug(
                         "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['target']))
                     # OSBS by default downloads all artifacts to artifacts/<target_path>

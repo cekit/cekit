@@ -539,7 +539,7 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
 
 def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with plain artifact.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -580,7 +580,7 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
 
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with md5 checksum.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -620,7 +620,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, c
 
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with sha1 checksum.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -660,7 +660,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
 
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with sha256 checksum.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -700,7 +700,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
 
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with missing checksum.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -727,7 +727,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     descriptor = image_descriptor.copy()
 
     descriptor['artifacts'] = [
-        {'sha512': '123456', 'url': 'https://foo/bar.jar'}
+        {'url': 'https://foo/bar.jar'}
     ]
 
     run_osbs(descriptor, str(tmpdir), mocker)
@@ -742,9 +742,53 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with multiple checksums.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'sha256': '123456', 'md5': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456', 'md5': '123456',
+                                  'target': 'bar.jar', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with name specified.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -788,7 +832,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(tmpdir, mock
 
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generated.
+    Checks whether the fetch-artifacts-url.yaml file is generated with name and target specified.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -827,6 +871,54 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
     assert fetch_artifacts[0] == {'sha256': '123456',
                                   'target': 'myfile.jar', 'url': 'https://foo/bar.jar'}
 
+    assert "Artifact 'myfile.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml and dockerfile are generated with correct paths.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'an-additional-jar', 'target': 'myfile.jar', 'sha256': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'myfile.jar', 'url': 'https://foo/bar.jar'}
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "artifacts/myfile.jar" in dockerfile
     assert "Artifact 'myfile.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
