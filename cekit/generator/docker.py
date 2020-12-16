@@ -2,7 +2,6 @@ import logging
 import os
 
 from cekit.config import Config
-from cekit.errors import CekitError
 from cekit.generator.base import Generator
 
 logger = logging.getLogger('cekit')

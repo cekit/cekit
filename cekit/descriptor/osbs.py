@@ -1,3 +1,4 @@
+import logging
 import os
 
 import yaml
@@ -26,6 +27,7 @@ repository_schema = yaml.safe_load("""
       branch: {type: str}
 """)
 
+logger = logging.getLogger('cekit')
 
 class Osbs(Descriptor):
     """
@@ -89,10 +91,10 @@ class Osbs(Descriptor):
 
 
 class Configuration(Descriptor):
-    """Internal object represeting OSBS configuration subObject
+    """Internal object representing OSBS configuration subObject
 
     Args:
-      descriptor - yaml contianing OSBS configuration"""
+      descriptor - yaml containing OSBS configuration"""
 
     def __init__(self, descriptor, descriptor_path):
         self.schema = configuration_schema
@@ -110,6 +112,8 @@ class Configuration(Descriptor):
                 self['container'] = yaml.safe_load(file_)
             del self['container_file']
 
+        if self.get('container', {}).get('remote_source', {}):
+            logger.debug("Cachito definition is {}".format(self.get('container', {}).get('remote_source', {})))
 
 class Repository(Descriptor):
     def __init__(self, descriptor, descriptor_path):

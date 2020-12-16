@@ -110,6 +110,7 @@ class OSBSBuilder(Builder):
 
         for image in self.generator.images:
             all_artifacts += image.all_artifacts
+
         # First get all artifacts that are not plain/url artifacts (the latter is added to fetch-artifacts.yaml)
         self.artifacts = [a.target
                           for a in all_artifacts if not isinstance(a, (_UrlResource, _PlainResource, _ImageContentResource))]
@@ -155,6 +156,7 @@ class OSBSBuilder(Builder):
             else:
                 LOGGER.info("No changes made to the code, committing skipped")
 
+    # TODO: Only used by test code - move this?
     def _merge_container_yaml(self, src, dest):
         # FIXME - this is temporary needs to be refactored to proper merging
         with open(src, 'r') as _file:

@@ -986,3 +986,49 @@ def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
     run_osbs(descriptor, str(tmpdir), mocker, general_command=flag)
 
     assert os.path.exists(os.path.join(str(tmpdir), 'osbs', 'repo', 'container.yaml'))
+    dockerfile_path = os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" not in dockerfile
+
+
+def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
+    """
+    Checks whether the generated Dockerfile has cachito instructions if container.yaml
+    file has cachito section.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["touch", "file"])
+        subprocess.call(["git", "add", "file"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor["osbs"]["configuration"] = {'container': {
+        'remote_source': {'ref': '123456', 'repo': 'http://foo.bar.com'},
+        'compose': {'pulp_repos': True}}
+    }
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    dockerfile_path = os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" in dockerfile
+    assert "Cachito definition is {'ref': '123456', 'repo': 'http://foo.bar.com'}" in caplog.text

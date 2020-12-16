@@ -27,7 +27,7 @@ class Descriptor(collectionsAbc.MutableMapping):
     self.schemas by calling Descriptor constructor
 
     * Merging
-    Any two Descriptor childs can be merged by invoking merge() method. Easch subclass
+    Any two Descriptor childs can be merged by invoking merge() method. Each subclass
     can define its own logic for merging by overriding this method.
     If there is any key which should not be merged, it should be appended to Descriptor.skip_merging
     list.

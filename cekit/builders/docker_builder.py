@@ -93,11 +93,11 @@ class DockerBuilder(Builder):
                     # We actually expect only 'stream' here.
                     # If there is something different, we ignore it.
                     # It's safe to do so because if it would be an error, we would catch it
-                    # earlier. Ignored logs are related to fetching/pulling/extracing
+                    # earlier. Ignored logs are related to fetching/pulling/extracting
                     # of container images.
                     continue
 
-                # This prevents polluting CEKit log with dowloading/extracting messages
+                # This prevents polluting CEKit log with downloading/extracting messages
                 messages = ANSI_ESCAPE.sub('', messages).strip()
 
                 # Python 2 compatibility
