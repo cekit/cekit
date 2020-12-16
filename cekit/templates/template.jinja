@@ -187,6 +187,11 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {{ process_module(animage) }}
 {%- endmacro -%}
 
+
+{#
+ # Main Dockerfile rendering now...
+ #}
+
 # This is a Dockerfile for the {{ name }}:{{ version }} image.
 
 {% for builder_image in builders %}
@@ -198,6 +203,10 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 ## /
 ## END builder image
 {% endfor %}
+
+{%if cachito %}
+COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+{% endif %}
 
 ## START target image {{ image.name }}:{{ image.version }}
 ## \
@@ -247,3 +256,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endif -%}
 ## /
 ## END target image
+
+{%if cachito %}
+RUN rm -rf $REMOTE_SOURCE_DIR
+{% endif %}
