@@ -4,6 +4,7 @@
 
 import logging
 import os
+import re
 import shutil
 import subprocess
 import yaml
@@ -1031,4 +1032,4 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
         dockerfile = _file.read()
 
     assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" in dockerfile
-    assert "Cachito definition is {'ref': '123456', 'repo': 'http://foo.bar.com'}" in caplog.text
+    assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
