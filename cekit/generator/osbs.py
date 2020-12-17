@@ -108,7 +108,6 @@ class OSBSGenerator(Generator):
                     except:
                         logger.warning("Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".
                                        format(artifact['name']))
-                        logger.debug("### plain path distgit {}".format(artifact['target']))
                         artifact.copy(target_dir)
                         # TODO: This is ugly, rewrite this!
                         artifact['lookaside'] = True
