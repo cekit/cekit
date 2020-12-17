@@ -204,7 +204,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 ## END builder image
 {% endfor %}
 
-{%if cachito %}
+{%if helper.cachito(image) %}
 COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
 {% endif %}
 
@@ -257,6 +257,6 @@ COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
 ## /
 ## END target image
 
-{%if cachito %}
+{%if helper.cachito(image) %}
 RUN rm -rf $REMOTE_SOURCE_DIR
 {% endif %}

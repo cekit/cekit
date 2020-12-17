@@ -294,7 +294,6 @@ class Generator(object):
         env.globals['helper'] = TemplateHelper(self._module_registry)
         env.globals['image'] = self.image
         env.globals['builders'] = self.builder_images
-        env.globals['cachito'] = self.image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source', {})
 
         template = env.get_template(os.path.basename(template_file))
 
