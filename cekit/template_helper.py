@@ -83,3 +83,7 @@ class TemplateHelper(object):
                 port_list.append(p.get('value'))
 
         return port_list
+
+    def cachito(self, image):
+        if image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source'):
+            return True

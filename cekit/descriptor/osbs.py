@@ -112,8 +112,9 @@ class Configuration(Descriptor):
                 self['container'] = yaml.safe_load(file_)
             del self['container_file']
 
-        if self.get('container', {}).get('remote_source', {}):
-            logger.debug("Cachito definition is {}".format(self.get('container', {}).get('remote_source', {})))
+        remote_source = self.get('container', {}).get('remote_source', {})
+        if remote_source:
+            logger.debug("Cachito definition is {}".format(remote_source))
 
 class Repository(Descriptor):
     def __init__(self, descriptor, descriptor_path):
