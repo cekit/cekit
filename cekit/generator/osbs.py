@@ -1,5 +1,7 @@
+import fileinput
 import logging
 import os
+import sys
 import tempfile
 
 import yaml
@@ -70,6 +72,7 @@ class OSBSGenerator(Generator):
         logger.info("Handling artifacts for OSBS...")
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
+        url_description = {}
 
         for image in self.images:
             for artifact in image.all_artifacts:
@@ -92,6 +95,8 @@ class OSBSGenerator(Generator):
                                                 'target': os.path.join(artifact['target'])})
                     for c in intersected_hash:
                         fetch_artifacts_url[0].update({c: artifact[c]})
+                    if 'description' in artifact:
+                        url_description[artifact['url']] = artifact['description']
                     logger.debug(
                         "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['target']))
                     # OSBS by default downloads all artifacts to artifacts/<target_path>
@@ -120,5 +125,10 @@ class OSBSGenerator(Generator):
         if fetch_artifacts_url:
             with open(fetch_artifacts_file, 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
-
+            if config.get('common', 'redhat'):
+                for key,value in url_description.items():
+                    logger.debug("Processing to add build references for {} -> {}".format(key, value))
+                    for line in fileinput.input(fetch_artifacts_file, inplace=1):
+                        line = line.replace(key, key + ' # ' + value)
+                        sys.stdout.write(line)
         logger.debug("Artifacts handled")

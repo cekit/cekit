@@ -579,7 +579,8 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
     assert "Artifact 'artifact_name' (as plain) added to fetch-artifacts-url.yaml" in caplog.text
 
 
-def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, caplog):
+@pytest.mark.parametrize('flag', [[], ['--redhat']])
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, caplog, flag):
     """
     Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with md5 checksum.
     """
@@ -604,17 +605,21 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, c
     descriptor = image_descriptor.copy()
 
     descriptor['artifacts'] = [
-        {'name': 'artifact_name', 'md5': '123456', 'url': 'https://foo/bar.jar'}
+        {'name': 'artifact_name', 'md5': '123456', 'url': 'https://foo/bar.jar', 'description': 'http://foo.com/123456'}
     ]
 
-    run_osbs(descriptor, str(tmpdir), mocker)
+    run_osbs(descriptor, str(tmpdir), mocker, general_command=flag)
 
-    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+    fau = os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml')
+    with open(fau, 'r') as _file:
         fetch_artifacts = yaml.safe_load(_file)
 
     assert len(fetch_artifacts) == 1
     assert fetch_artifacts[0] == {'md5': '123456',
                                   'target': 'artifact_name', 'url': 'https://foo/bar.jar'}
+    if len(flag):
+        with open(fau) as myfile:
+            assert "https://foo/bar.jar # http://foo.com/123456" in myfile.read()
 
     assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
