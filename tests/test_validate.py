@@ -604,9 +604,85 @@ def test_run_override_artifact(tmpdir):
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
 
 
-def test_run_path_artifact_brew(tmpdir, caplog):
+def test_run_override_artifact_with_custom_original_destination(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'url': 'https://foo/bar.jar', 'dest': '/tmp/destination'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'artifacts': [{'path': 'bar.jar'}]}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               'podman'])
+
+    print("here")
+
+    with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    print(dockerfile)
+    assert "/tmp/artifacts/' destination" not in dockerfile
+    assert "/tmp/destination/' destination" in dockerfile
+    assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
+
+
+def test_run_override_artifact_with_custom_override_destination(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'url': 'https://foo/bar.jar'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'artifacts': [{'path': 'bar.jar', 'dest': '/tmp/new-destination'}]}
+    #        'artifacts': [{'url': 'https://another.com/not-a-bar.jar', 'name': 'bar.jar'}]}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               'podman'])
+
+    print("here")
+
+    with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    print(dockerfile)
+    assert "/tmp/artifacts/' destination" not in dockerfile
+    assert "/tmp/destination/' destination" not in dockerfile
+    assert "/tmp/new-destination/' destination" in dockerfile
+    assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
+
+
+def test_run_path_artifact_brew(tmpdir, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)\
 
     with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
         fd.write('foo')

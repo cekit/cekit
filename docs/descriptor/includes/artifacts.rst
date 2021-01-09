@@ -115,6 +115,10 @@ Common artifact keys
 
         Artifacts using custom ``dest`` values are not affected.
 
+    .. note::
+        If an override does not specify the destination then the original value is maintained.
+
+
 ``description``
    Describes the artifact. This is an optional key that can be used to add more information
    about the artifact.
