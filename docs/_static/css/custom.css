@@ -35,3 +35,8 @@ h1 {
 .sidebar-toc ul li.toctree-l4 a {
   padding: 5px 20px 5px 100px;
 }
+
+/* Alter the padding from -20px to make it have a separator */
+.code-block-caption {
+  margin-bottom: -10px;
+}
