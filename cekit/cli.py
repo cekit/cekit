@@ -18,12 +18,13 @@ setup_logging()
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
 
+default_work_dir = "~/.cekit"
 
 @click.group(context_settings=dict(max_content_width=100))
 @click.option('--descriptor', metavar="PATH", help="Path to image descriptor file.", default="image.yaml", show_default=True)
 @click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
-@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default="~/.cekit", show_default=True)
-@click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
+@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default=default_work_dir, show_default=True)
+@click.option('--config', metavar="PATH", help="Path to configuration file.", default=default_work_dir + "/config", show_default=True)
 @click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
 @click.option('--target', metavar="PATH", help="Path to directory where files should be generated", default="target", show_default=True)
 @click.version_option(message="%(version)s", version=version)
