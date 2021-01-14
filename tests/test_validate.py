@@ -3,15 +3,16 @@ import platform
 import shutil
 import subprocess
 import sys
+import uuid
+
 import pytest
 import yaml
-
+from click.testing import CliRunner
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 
 from cekit.cli import cli
 from cekit.descriptor import Repository
 from cekit.tools import Chdir
-from click.testing import CliRunner
 
 odcs_fake_resp = b"""Result:
 {u'arches': u'x86_64',
@@ -631,11 +632,8 @@ def test_run_override_artifact_with_custom_original_destination(tmpdir):
                '--overrides-file', 'overrides.yaml',
                'podman'])
 
-    print("here")
-
     with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
         dockerfile = _file.read()
-    print(dockerfile)
     assert "/tmp/artifacts/' destination" not in dockerfile
     assert "/tmp/destination/' destination" in dockerfile
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
@@ -656,8 +654,7 @@ def test_run_override_artifact_with_custom_override_destination(tmpdir):
 
     overrides_descriptor = {
         'schema_version': 1,
-        'artifacts': [{'path': 'bar.jar', 'dest': '/tmp/new-destination'}]}
-    #        'artifacts': [{'url': 'https://another.com/not-a-bar.jar', 'name': 'bar.jar'}]}
+        'artifacts': [{'path': 'bar.jar', 'dest': '/tmp/new-destination/'}]}
 
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
         yaml.dump(overrides_descriptor, fd, default_flow_style=False)
@@ -669,15 +666,132 @@ def test_run_override_artifact_with_custom_override_destination(tmpdir):
                '--overrides-file', 'overrides.yaml',
                'podman'])
 
-    print("here")
-
     with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
         dockerfile = _file.read()
-    print(dockerfile)
-    assert "/tmp/artifacts/' destination" not in dockerfile
     assert "/tmp/destination/' destination" not in dockerfile
     assert "/tmp/new-destination/' destination" in dockerfile
     assert check_dockerfile_uniq(image_dir, 'bar.jar \\')
+
+
+def test_run_override_artifact_with_custom_override_example1(tmpdir, mocker, caplog):
+    # Ignore checksum verification.
+    mocker.patch('cekit.crypto.get_sum', return_value='123456')
+    mocker.patch('cekit.cache.artifact.get_sum', return_value='123456')
+
+    cache_id = uuid.uuid4()
+    mocker.patch('uuid.uuid4', return_value=cache_id)
+
+    work_dir = str(tmpdir.mkdir('work_dir'))
+    image_dir = str(tmpdir.mkdir('source'))
+    os.makedirs(work_dir + '/cache')
+
+    with open(os.path.join(image_dir, 'bar2222.jar'), 'w') as fd:
+        fd.write('foo')
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'config'), 'w') as fd:
+        fd.write("[common]\n")
+        fd.write("cache_url = #filename#\n")
+        fd.write("work_dir = " + work_dir + "\n")
+
+    with open(os.path.join(work_dir, 'cache', str(cache_id)), 'w') as fd:
+        fd.write('jar-content')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'name': 'bar.jar',
+                              'url': 'https://dummy.com/bar-url.jar',
+                              'dest': '/tmp/destination',
+                              'target': 'original-bar.jar'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'artifacts': [{'name': 'bar.jar',
+                       'md5': '123456',
+                       'target': 'bar2222.jar'
+                       }]
+    }
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               '--config',
+               'config',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               'podman'])
+
+    with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    assert "/tmp/destination/' destination" in dockerfile
+    assert "Final (with override) artifact is [('dest', '/tmp/destination/'), ('md5', '123456'), " \
+           "('name', 'bar.jar'), ('target', 'bar2222.jar')]" in caplog.text
+
+
+def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, caplog):
+    # Ignore checksum verification.
+    mocker.patch('cekit.crypto.get_sum', return_value='123456')
+    mocker.patch('cekit.cache.artifact.get_sum', return_value='123456')
+
+    cache_id = uuid.uuid4()
+    mocker.patch('uuid.uuid4', return_value=cache_id)
+
+    work_dir = str(tmpdir.mkdir('work_dir'))
+    image_dir = str(tmpdir.mkdir('source'))
+    os.makedirs(work_dir + '/cache')
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'config'), 'w') as fd:
+        fd.write("[common]\n")
+        fd.write("cache_url = #filename#\n")
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('jar-content')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'name': 'bar.jar',
+                              'url': 'https://dummy.com/bar-url.jar',
+                              'dest': '/tmp/destination',
+                              'target': 'original-bar.jar'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+       'artifacts': [{'name': 'bar.jar',
+                       'md5': '123456'
+                      },
+                     {'name': 'foobar.jar',
+                      'url': 'https://dummy.com/foobar.jar'}]
+    }
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               '--config',
+               'config',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               'podman'])
+
+    with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    assert "/tmp/destination/' destination" in dockerfile
+    assert "Final (with override) artifact is [('dest', '/tmp/destination/'), ('md5', '123456'), " \
+           "('name', 'bar.jar'), ('target', 'original-bar.jar')]" in caplog.text
+    assert "Final (with override) artifact is [('dest', '/tmp/artifacts/'), ('name', 'foobar.jar'), " \
+           "('target', 'foobar.jar'), ('url', 'https://dummy.com/foobar.jar')]" in caplog.text
 
 
 def test_run_path_artifact_brew(tmpdir, caplog):
