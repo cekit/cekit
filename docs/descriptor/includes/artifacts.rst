@@ -116,7 +116,8 @@ Common artifact keys
         Artifacts using custom ``dest`` values are not affected.
 
     .. note::
-        If an override does not specify the destination then the original value is maintained.
+        See :ref:`scalar nodes <handbook/overrides:Artifact Overrides>` for details on special case handling with overrides
+        and common keys.
 
 
 ``description``
