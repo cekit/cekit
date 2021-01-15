@@ -2,8 +2,8 @@
 
 import logging
 import os
-import re
 import platform
+import re
 import shutil
 
 import yaml

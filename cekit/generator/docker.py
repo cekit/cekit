@@ -2,7 +2,6 @@ import logging
 import os
 
 from cekit.config import Config
-from cekit.errors import CekitError
 from cekit.generator.base import Generator
 
 logger = logging.getLogger('cekit')
@@ -24,7 +23,7 @@ class DockerGenerator(Generator):
         and fetches all of them
         """
 
-        logger.info("Handling artifacts...")
+        logger.info("Handling artifacts for docker...")
         target_dir = os.path.join(self.target, 'image')
 
         for image in self.images:

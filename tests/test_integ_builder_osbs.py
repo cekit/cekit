@@ -4,6 +4,7 @@
 
 import logging
 import os
+import re
 import shutil
 import subprocess
 import yaml
@@ -12,12 +13,9 @@ import pytest
 
 from click.testing import CliRunner
 
-from cekit.cli import Cekit, Map, cli
+from cekit.cli import cli
 from cekit.tools import Chdir
 from cekit.config import Config
-from cekit.errors import CekitError
-from cekit.builders.osbs import OSBSBuilder
-from cekit.tools import Map
 
 config = Config()
 
@@ -491,12 +489,19 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
         mocker.call(['git', 'push', '-q', 'origin', 'branch']),
         mocker.call(['git', 'commit', '-q', '-m',
                      'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb']),
-        mocker.call(['git', 'add', '--all', 'Dockerfile'])
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+        mocker.call(['git', 'add', '--all', 'fetch-artifacts-url.yaml'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Skipping '.git' directory" in caplog.text
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'md5': '098f6bcd4621d373cade4e832627b4f6',
+                                  'target': 'bar.jar', 'url': 'https://foo/bar.jar'}
+    assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
 def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
@@ -533,9 +538,9 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     assert "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'." in caplog.text
 
 
-def test_osbs_builder_with_fetch_artifacts_file_creation(tmpdir, mocker, caplog):
+def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, caplog):
     """
-    Checks whether the fetch-artifacts-url.yaml file is generatored.
+    Checks whether the fetch-artifacts-url.yaml file is generated with plain artifact.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -571,7 +576,356 @@ def test_osbs_builder_with_fetch_artifacts_file_creation(tmpdir, mocker, caplog)
     assert fetch_artifacts[0] == {'md5': '123456',
                                   'target': 'artifact_name', 'url': 'http://random.url/path'}
 
-    assert "Artifact 'artifact_name' added to fetch-artifacts-url.yaml" in caplog.text
+    assert "Artifact 'artifact_name' (as plain) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+@pytest.mark.parametrize('flag', [[], ['--redhat']])
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, caplog, flag):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with md5 checksum.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'md5': '123456', 'url': 'https://foo/bar.jar', 'description': 'http://foo.com/123456'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker, general_command=flag)
+
+    fau = os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml')
+    with open(fau, 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'md5': '123456',
+                                  'target': 'artifact_name', 'url': 'https://foo/bar.jar'}
+    if len(flag):
+        with open(fau) as myfile:
+            assert "https://foo/bar.jar # http://foo.com/123456" in myfile.read()
+
+    assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with sha1 checksum.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'sha1': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha1': '123456',
+                                  'target': 'artifact_name', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with sha256 checksum.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'sha256': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'artifact_name', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with missing checksum.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'md5': '098f6bcd4621d373cade4e832627b4f6',
+                                  'target': 'bar.jar', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with multiple checksums.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'sha256': '123456', 'md5': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456', 'md5': '123456',
+                                  'target': 'bar.jar', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with name specified.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'myfile.jar', 'sha256': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'myfile.jar', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'myfile.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with name and target specified.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'an-additional-jar', 'target': 'myfile.jar', 'sha256': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'myfile.jar', 'url': 'https://foo/bar.jar'}
+
+    assert "Artifact 'myfile.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml and dockerfile are generated with correct paths.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'an-additional-jar', 'target': 'myfile.jar', 'sha256': '123456', 'url': 'https://foo/bar.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 1
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'myfile.jar', 'url': 'https://foo/bar.jar'}
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "artifacts/myfile.jar" in dockerfile
+    assert "Artifact 'myfile.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
 def test_osbs_builder_with_fetch_artifacts_file_removal(tmpdir, mocker, caplog):
@@ -638,3 +992,49 @@ def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
     run_osbs(descriptor, str(tmpdir), mocker, general_command=flag)
 
     assert os.path.exists(os.path.join(str(tmpdir), 'osbs', 'repo', 'container.yaml'))
+    dockerfile_path = os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" not in dockerfile
+
+
+def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
+    """
+    Checks whether the generated Dockerfile has cachito instructions if container.yaml
+    file has cachito section.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["touch", "file"])
+        subprocess.call(["git", "add", "file"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor["osbs"]["configuration"] = {'container': {
+        'remote_source': {'ref': '123456', 'repo': 'http://foo.bar.com'},
+        'compose': {'pulp_repos': True}}
+    }
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    dockerfile_path = os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" in dockerfile
+    assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)

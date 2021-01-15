@@ -1,10 +1,14 @@
+import fileinput
 import logging
 import os
+import sys
+import tempfile
 
 import yaml
 
+from cekit import crypto
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource
+from cekit.descriptor.resource import _PlainResource, _UrlResource
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
 
@@ -65,23 +69,47 @@ class OSBSGenerator(Generator):
         and fetches all of them
         """
 
-        logger.info("Handling artifacts...")
+        logger.info("Handling artifacts for OSBS...")
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
+        url_description = {}
 
         for image in self.images:
             for artifact in image.all_artifacts:
-                logger.info("Preparing artifact '{}'".format(artifact['name']))
+                logger.info("Preparing artifact '{}' (of type {})".format(artifact['name'], type(artifact)))
 
-                if isinstance(artifact, _PlainResource) and \
-                        config.get('common', 'redhat'):
+                if isinstance(artifact, _UrlResource):
+                    intersected_hash = [x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact]
+                    logger.debug("Found checksum markers of {}".format(intersected_hash))
+                    if not intersected_hash:
+                        logger.warning("No md5 supplied for {}, calculating from the remote artifact".format(artifact['url']))
+                        intersected_hash = ["md5"]
+                        tmpfile = tempfile.NamedTemporaryFile()
+                        try:
+                            artifact.download_file(artifact['url'], tmpfile.name)
+                            artifact["md5"] = crypto.get_sum(tmpfile.name, "md5")
+                        finally:
+                            tmpfile.close()
+
+                    fetch_artifacts_url.append({'url': artifact['url'],
+                                                'target': os.path.join(artifact['target'])})
+                    for c in intersected_hash:
+                        fetch_artifacts_url[0].update({c: artifact[c]})
+                    if 'description' in artifact:
+                        url_description[artifact['url']] = artifact['description']
+                    logger.debug(
+                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['target']))
+                    # OSBS by default downloads all artifacts to artifacts/<target_path>
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
+                elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
                     try:
                         fetch_artifacts_url.append({'md5': artifact['md5'],
                                                     'url': get_brew_url(artifact['md5']),
                                                     'target': os.path.join(artifact['target'])})
-                        artifact['target'] = os.path.join('artifacts', artifact['target'])
                         logger.debug(
-                            "Artifact '{}' added to fetch-artifacts-url.yaml".format(artifact['name']))
+                            "Artifact '{}' (as plain) added to fetch-artifacts-url.yaml".format(artifact['target']))
+                        # OSBS by default downloads all artifacts to artifacts/<target_path>
+                        artifact['target'] = os.path.join('artifacts', artifact['target'])
                     except:
                         logger.warning("Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".
                                        format(artifact['name']))
@@ -97,5 +125,10 @@ class OSBSGenerator(Generator):
         if fetch_artifacts_url:
             with open(fetch_artifacts_file, 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
-
+            if config.get('common', 'redhat'):
+                for key,value in url_description.items():
+                    logger.debug("Processing to add build references for {} -> {}".format(key, value))
+                    for line in fileinput.input(fetch_artifacts_file, inplace=1):
+                        line = line.replace(key, key + ' # ' + value)
+                        sys.stdout.write(line)
         logger.debug("Artifacts handled")

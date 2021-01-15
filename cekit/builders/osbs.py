@@ -17,7 +17,7 @@ except ImportError:
 from cekit import tools
 from cekit.config import Config
 from cekit.builder import Builder
-from cekit.descriptor.resource import _PlainResource, _ImageContentResource
+from cekit.descriptor.resource import _PlainResource, _ImageContentResource, _UrlResource
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively
 
@@ -111,11 +111,12 @@ class OSBSBuilder(Builder):
         for image in self.generator.images:
             all_artifacts += image.all_artifacts
 
-        # First get all artifacts that are not plain artifacts
+        # First get all artifacts that are not plain/url artifacts (the latter is added to fetch-artifacts.yaml)
         self.artifacts = [a.target
-                          for a in all_artifacts if not isinstance(a, (_PlainResource, _ImageContentResource))]
+                          for a in all_artifacts if not isinstance(a, (_UrlResource, _PlainResource, _ImageContentResource))]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
+
         self.artifacts += [a.target
                            for a in all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
 
@@ -128,6 +129,8 @@ class OSBSBuilder(Builder):
                                          repository)
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
             os.makedirs(os.path.dirname(self.dist_git_dir))
+
+        LOGGER.debug("Using dist-git directory of {}".format(self.dist_git_dir))
 
         self.dist_git = DistGit(self.dist_git_dir,
                                 self.target,
@@ -153,6 +156,7 @@ class OSBSBuilder(Builder):
             else:
                 LOGGER.info("No changes made to the code, committing skipped")
 
+    # TODO: Only used by test code - move this?
     def _merge_container_yaml(self, src, dest):
         # FIXME - this is temporary needs to be refactored to proper merging
         with open(src, 'r') as _file:
