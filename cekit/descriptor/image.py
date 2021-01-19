@@ -259,7 +259,7 @@ class Image(Descriptor):
                 #      then check artifact_overrides,
                 #         otherwise use default from override.artifact
                 override_without_defaults = override.original_descriptor.get('artifacts')[i]
-                for key in ['dest', 'target']:
+                for key in ['dest', 'target', 'description']:
                     if override_without_defaults.get(key):
                         logger.debug("Key ({}) found in override as {}".format(key, override_without_defaults.get(key)))
                         artifact[key] = override_without_defaults.get(key)
