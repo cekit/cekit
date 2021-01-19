@@ -216,21 +216,21 @@ Artifact Overrides
 ------------------
 
 While artifact overrides function in general as per  :ref:`scalar nodes <handbook/overrides:Scalar Nodes>` there is some
-special case handling for merging for the common keys of ``target`` and ``dest``.
+special case handling for merging for the common keys of ``target`` and ``dest`` and ``description``.
 
 If the original definition contains a non-default destination e.g. ``/destination`` and the override does **not** specify
 a destination then the original value will be maintained rather than overwriting it with the default value of
 ``/tmp/artifacts``.
 
-If the original contains a target definition and the override does **not** specify a target then the original value will
-be maintained.
+If the original contains a target or description definition and the override does **not** specify a target/description
+then the original value will be maintained.
 
 Examples
 ^^^^^^^^
 
 1. Maintain destination with plain override with new target
 
-    .. code-block:: py
+    .. code-block:: yaml
        :caption: Original (URL artifact)
 
         name: 'bar.jar'
@@ -256,7 +256,7 @@ Examples
 
 2. Maintain destination and target with plain override:
 
-    .. code-block:: py
+    .. code-block:: yaml
        :caption: Original (URL artifact)
 
         name: 'bar.jar'

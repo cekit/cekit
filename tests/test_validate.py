@@ -702,7 +702,8 @@ def test_run_override_artifact_with_custom_override_example1(tmpdir, mocker, cap
     img_desc['artifacts'] = [{'name': 'bar.jar',
                               'url': 'https://dummy.com/bar-url.jar',
                               'dest': '/tmp/destination',
-                              'target': 'original-bar.jar'}]
+                              'target': 'original-bar.jar',
+                              'description': 'original-description'}]
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(img_desc, fd, default_flow_style=False)
@@ -730,7 +731,7 @@ def test_run_override_artifact_with_custom_override_example1(tmpdir, mocker, cap
     with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
         dockerfile = _file.read()
     assert "/tmp/destination/' destination" in dockerfile
-    assert "Final (with override) artifact is [('dest', '/tmp/destination/'), ('md5', '123456'), " \
+    assert "Final (with override) artifact is [('description', 'original-description'), ('dest', '/tmp/destination/'), ('md5', '123456'), " \
            "('name', 'bar.jar'), ('target', 'bar2222.jar')]" in caplog.text
 
 
@@ -759,18 +760,16 @@ def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, cap
     img_desc['artifacts'] = [{'name': 'bar.jar',
                               'url': 'https://dummy.com/bar-url.jar',
                               'dest': '/tmp/destination',
-                              'target': 'original-bar.jar'}]
+                              'target': 'original-bar.jar',
+                              'description': 'original-description'}]
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(img_desc, fd, default_flow_style=False)
 
     overrides_descriptor = {
         'schema_version': 1,
-       'artifacts': [{'name': 'bar.jar',
-                       'md5': '123456'
-                      },
-                     {'name': 'foobar.jar',
-                      'url': 'https://dummy.com/foobar.jar'}]
+       'artifacts': [{'name': 'bar.jar', 'md5': '123456', 'description': 'new-description'},
+                     {'name': 'foobar.jar', 'url': 'https://dummy.com/foobar.jar'}]
     }
 
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
@@ -788,8 +787,8 @@ def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, cap
     with open(os.path.join(str(tmpdir), 'source', 'target', 'image', 'Dockerfile'), 'r') as _file:
         dockerfile = _file.read()
     assert "/tmp/destination/' destination" in dockerfile
-    assert "Final (with override) artifact is [('dest', '/tmp/destination/'), ('md5', '123456'), " \
-           "('name', 'bar.jar'), ('target', 'original-bar.jar')]" in caplog.text
+    assert "Final (with override) artifact is [('description', 'new-description'), ('dest', '/tmp/destination/'), " \
+           "('md5', '123456'), ('name', 'bar.jar'), ('target', 'original-bar.jar')]" in caplog.text
     assert "Final (with override) artifact is [('dest', '/tmp/artifacts/'), ('name', 'foobar.jar'), " \
            "('target', 'foobar.jar'), ('url', 'https://dummy.com/foobar.jar')]" in caplog.text
 
