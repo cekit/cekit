@@ -71,6 +71,9 @@ Currently available options are ``yum``, ``dnf``, ``microdnf`` and ``apk``.
     The default ``yum`` value will work fine on Fedora and RHEL images because
     OS maintains a symlink to the proper package manager.
 
+.. note::
+    For ``yum``, ``dnf`` and ``microdnf`` the flag ``--setopt=tsflags=nodocs`` is automatically added. For ``microdnf``, the flag ``--setopt=install_weak_deps=0`` is also added.
+
 .. code-block:: yaml
 
     packages:
