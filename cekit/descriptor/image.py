@@ -19,7 +19,6 @@ map:
   description: {type: text}
   labels: {type: any}
   envs:  {type: any}
-  execute: {type: any}
   ports: {type: any}
   run: {type: any}
   artifacts: {type: any}

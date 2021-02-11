@@ -1093,7 +1093,6 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
-    img_desc['execute'] = [{'script': 'configure.sh', 'user': 'someuser'}]
     img_desc['modules']['install'] = [{'name': 'packages_module'}, {'name': 'packages_module_1'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_packages'}]

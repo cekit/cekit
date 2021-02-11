@@ -238,3 +238,16 @@ def test_image_modules_git_repo(caplog):
     assert image['name'] == 'test/foo'
     assert "No value found for 'name' in '{\"git\": {\"ref\": \"release-3.1.0\", \"url\": \"https://github.com/company/foobar-project-modules\"}}' artifact; using auto-generated value of 'foobar-project-modules'" \
            in caplog.text
+
+
+def test_image_descriptor_with_execute(caplog):
+    with pytest.raises(CekitError) as excinfo:
+        image = Image(yaml.safe_load("""
+        from: foo
+        name: test/foo
+        version: 1.9
+        execute:
+              - script: build.sh
+        """), 'foo')
+
+    assert "Cannot validate schema: Image" in excinfo.value.message
