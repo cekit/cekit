@@ -16,3 +16,4 @@ This chapter will guide you through the CEKit usage covering all important topic
     overrides
     configuration
     redhat
+    ci
