@@ -124,8 +124,8 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
                               'install': ['a', 'b']}}
 
     generate(target, ['build', '--dry-run', 'podman'], desc_part)
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
 
 
@@ -289,8 +289,8 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a')
     regex_dockerfile(target, 'RUN microdnf clean all')
 
@@ -323,8 +323,8 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a')
     regex_dockerfile(target, 'rpm -q a')
 
 
@@ -340,9 +340,12 @@ def test_supported_package_managers(tmpdir, manager):
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
+    flags = "--setopt=tsflags=nodocs"
+    if 'microdnf' in manager:
+        flags = "--setopt=install_weak_deps=0 " + flags
     regex_dockerfile(
-        target, "RUN {} --setopt=tsflags=nodocs install -y foo-repo.rpm".format(manager))
-    regex_dockerfile(target, "RUN {} --setopt=tsflags=nodocs install -y a".format(manager))
+        target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
+    regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
     regex_dockerfile(target, 'rpm -q a')
 
 

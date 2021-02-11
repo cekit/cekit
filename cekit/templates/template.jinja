@@ -30,7 +30,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  #}
 {%- macro repo_install(pkg_manager, rpm) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-{{ pkg_manager }} --setopt=tsflags=nodocs install -y {{ rpm }}
+{{ pkg_manager }} {{ helper.default_package_manager_flags(pkg_manager) }} install -y {{ rpm }}
     {% endif %}
 {%- endmacro -%}
 
@@ -43,7 +43,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {{ pkg_manager }} add {%- for package in packages %} {{ package }}{% endfor %} \
         && apk info -e {%- for package in packages %} {{ package }}{% endfor %}
         {% else %}
-{{ pkg_manager }} --setopt=tsflags=nodocs install -y {%- for package in packages %} {{ package }}{% endfor %} \
+{{ pkg_manager }} {{ helper.default_package_manager_flags(pkg_manager) }} install -y {%- for package in packages %} {{ package }}{% endfor %} \
     {% if pkg_manager == 'microdnf' %}
             && {{ pkg_manager }} clean all \
     {% endif %}

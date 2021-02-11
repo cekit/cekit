@@ -493,7 +493,7 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
                'podman'])
 
     required_matches = [
-        'RUN microdnf --setopt=tsflags=nodocs install -y package1 package2 \\',
+        'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y package1 package2 \\',
         '&& microdnf clean all \\',
         '&& rpm -q package1 package2'
     ]
