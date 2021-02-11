@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 
 import pytest
 import yaml
@@ -10,7 +9,6 @@ from cekit.config import Config
 from cekit.descriptor import Repository
 from cekit.version import version as cekit_version
 from cekit.tools import Chdir
-from cekit.template_helper import TemplateHelper
 
 from click.testing import CliRunner
 
@@ -55,13 +53,6 @@ def print_test_name(value):
                              'example': 'example_value',
                              'description': 'This is a description'}]},
      r' \\\s+COMBINED_ENV=\"set_value\" \\\s+JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \n'),
-    ('test_execute',
-     {'execute': [{'script': 'foo_script'}]},
-     r'.*RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
-    ('test_execute_user',
-     {'execute': [{'script': 'bar_script',
-                   'user': 'bar_user'}]},
-     r'.*USER bar_user\n\s+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
     ('test_cekit_label_version',
      {},
      r'.*io.cekit.version="%s".*' % cekit_version)],
