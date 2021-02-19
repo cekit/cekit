@@ -54,8 +54,6 @@ def test_volume_name(caplog):
 """))
     assert volume['name'] == 'a'
     assert volume['path'] == '/tmp/a'
-    assert "No value found for 'name' in 'volume'; using auto-generated value of 'a'" \
-           in caplog.text
 
 
 def test_osbs():
