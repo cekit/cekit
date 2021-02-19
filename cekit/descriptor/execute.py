@@ -26,11 +26,7 @@ class Execute(Descriptor):
         descriptor['module_name'] = module_name
 
         if 'name' not in descriptor:
-            # Generated name
             descriptor['name'] = "{}/{}".format(module_name, descriptor['script'])
-
-            logger.debug("No value found for 'name' key in the execute section of the '{}' module; using auto-generated value: '{}'".format(
-                module_name, descriptor['name']))
 
     @property
     def name(self):
