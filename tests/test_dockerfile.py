@@ -354,7 +354,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
                                   'rpm': 'foo-repo.rpm'}]
             }
         })
-    regex_dockerfile(target, "RUN apk add a")
+    regex_dockerfile(target, "RUN apk  add a")
     regex_dockerfile(target, "apk info -e a")
     assert "Package manager apk does not support defining repositories, skipping all repositories" in caplog.text
 
