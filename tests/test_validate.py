@@ -228,7 +228,7 @@ def test_simple_image_build(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_simple_image_test(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -284,7 +284,7 @@ def test_image_generate_with_multiple_overrides(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_image_test_with_override(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -320,7 +320,7 @@ def test_image_test_with_override(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_image_test_with_multiple_overrides(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -365,7 +365,7 @@ def test_image_test_with_multiple_overrides(tmpdir):
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Docker")
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_image_test_with_override_on_cmd(tmpdir):
     overrides_descriptor = "{'labels': [{'name': 'foo', 'value': 'overriden'}]}"
 
@@ -1201,7 +1201,7 @@ def test_incorrect_override_file(mocker, tmpdir, caplog):
     assert "Key 'wrong!' was not defined" in caplog.text
 
 
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_simple_image_build_error_local_docker_socket_permission_denied(tmpdir, mocker, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=PermissionError())
@@ -1219,7 +1219,7 @@ def test_simple_image_build_error_local_docker_socket_permission_denied(tmpdir, 
     assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
 
 
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_simple_image_build_error_local_docker_stopped(tmpdir, mocker, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=FileNotFoundError())
@@ -1238,7 +1238,7 @@ def test_simple_image_build_error_local_docker_stopped(tmpdir, mocker, caplog):
     assert "Could not connect to the Docker daemon at 'http+docker://localhost', please make sure the Docker daemon is running" in caplog.text
 
 
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_simple_image_build_error_connection_error_remote_docker_with_custom_docker_host(tmpdir, mocker, monkeypatch, caplog):
     mocker.patch('urllib3.connectionpool.HTTPConnectionPool.urlopen',
                  side_effect=PermissionError())
