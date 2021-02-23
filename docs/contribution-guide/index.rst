@@ -19,4 +19,5 @@ Thank you for being part of the project!
     code-style
     submitting-changes
     testing
+    releasing
     documentation
