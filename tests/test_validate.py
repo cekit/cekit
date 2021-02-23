@@ -400,6 +400,7 @@ def test_module_override(tmpdir):
 
     overrides_descriptor = {
         'schema_version': 1,
+        'envs': [{'name': 'not-there', 'description': 'my-description'}, {'name': 'foobar', 'value': 'dummy'}],
         'modules': {'repositories': [{'name': 'modules',
                                       'path': 'tests/modules/repo_2'}]}}
 
@@ -424,7 +425,8 @@ def test_module_override(tmpdir):
 
     assert not os.path.exists(os.path.join(module_dir,
                                            'original'))
-
+    assert not check_dockerfile_text(image_dir, 'not-there')
+    assert check_dockerfile(image_dir, 'foobar="dummy"')
     assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/foo/script" ]')
 
 
