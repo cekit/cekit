@@ -2,7 +2,6 @@ dist
 *.pyc
 *.swp
 target
-concreate.egg-info
 build
 setup.cfg
 build.sh
@@ -20,3 +19,6 @@ docs/_build
 Pipfile.lock
 venv
 .venv
+
+
+cekit.iml
