@@ -88,7 +88,7 @@ class TemplateHelper(object):
         if image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source'):
             return True
 
-    def default_package_manager_flags(self, pkg_mgr):
+    def package_manager_flags(self, pkg_mgr):
         default = "--setopt=tsflags=nodocs"
         if "apk" in pkg_mgr:
             return ""
@@ -97,13 +97,13 @@ class TemplateHelper(object):
         else:
             return default
 
-    def default_package_manager_install(self, pkg_mgr):
+    def package_manager_install(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "add"
         else:
             return "install -y"
 
-    def default_package_manager_query(self, pkg_mgr):
+    def package_manager_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "apk info -e"
         else:
