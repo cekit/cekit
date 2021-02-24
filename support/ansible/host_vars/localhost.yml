@@ -12,7 +12,9 @@ base_to_install:
   - source-to-image
 
 python_to_install:
+  - python3-autopep8
   - python3-behave
+  - python3-click
   - python3-colorlog
   - python3-docker
   - python3-docker-squash
@@ -24,6 +26,5 @@ python_to_install:
   - python3-pytest-mock
   - python3-pyyaml
   - python3-sphinx
-  - python3-sphinx-autobuild
   - python3-tox
   - python3-virtualenv

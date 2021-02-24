@@ -111,3 +111,8 @@ For more information about testing, please take a :doc:`look here </handbook/tes
 Test dependencies can vary. CEKit uses a plugable way of defining Behave steps. The default
 test steps are located in https://github.com/cekit/behave-test-steps repository. You can find there
 more information about the current dependencies.
+
+
+Development dependencies
+-----------------------------
+If you wish to contribute and develop CEKit itself (including running CEKit tests) then please see :doc:`Contributing</contribution-guide/environment>`
