@@ -302,6 +302,58 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     assert "Staging 'a_symlink'..." in caplog.text
 
 
+def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
+    """
+    Checks if content of the 'osbs_extra' directory content is copied to dist-git
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+
+    source_dir = tmpdir.mkdir('source')
+    repo_dir = source_dir.mkdir('osbs').mkdir('repo')
+    repo_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+
+    dist_dir = source_dir.mkdir('osbs_extra')
+
+    dist_dir.join('file_a').write_text(u'Some content', 'utf8')
+    dist_dir.join('file_b').write_text(u'Some content', 'utf8')
+    dist_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+
+    os.symlink('/etc', str(dist_dir.join('a_symlink')))
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    run_osbs(image_descriptor, str(source_dir), mocker)
+
+    assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
+    assert os.path.exists(str(repo_dir.join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('child'))) is True
+    assert os.path.exists(str(repo_dir.join('child', 'other'))) is True
+
+    calls = [
+        mocker.call(['git', 'add', '--all', 'file_b']),
+        mocker.call(['git', 'add', '--all', 'file_a']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+        mocker.call(['git', 'add', '--all', 'child']),
+        mocker.call(['git', 'add', '--all', 'a_symlink'])
+    ]
+
+    mock_check_call.assert_has_calls(calls, any_order=True)
+
+    assert len(mock_check_call.mock_calls) == len(calls)
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Copying 'target/image/file_b' to '{}'...".format(
+        os.path.join(str(repo_dir), 'file_b')) in caplog.text
+    assert "Staging 'file_a'..." in caplog.text
+    assert "Staging 'a_symlink'..." in caplog.text
+
+
+
 # https://github.com/cekit/cekit/issues/394
 def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     """
@@ -391,7 +443,6 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(tmpdir, mocke
     res.read.side_effect = [b'test', None]
 
     mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
-    #mocker.patch('cekit.builders.osbs.os.path.isdir', side_effect=[False, False, True])
 
     descriptor = image_descriptor.copy()
 
