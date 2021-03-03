@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+#    branches: master
+  pull_request:
+#    branches: develop
+
+jobs:
+  build:
+    # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idif
+    #if: github.repository == 'cekit/cekit' && github.event_name == 'pull_request'
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Install requirements
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libkrb5-dev software-properties-common containerd runc podman docker.io tox
+        # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
+        sudo systemctl unmask docker
+        sudo systemctl start docker
+        docker version
+        docker info
+        podman version
+        podman info
+        git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        mkdir -p $HOME/.local/bin
+        cd $HOME/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
+    - name: Run tests
+      run: |
+        make test-py38
