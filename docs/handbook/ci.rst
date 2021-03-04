@@ -1,7 +1,7 @@
 CI Integration
 ==============
 
-It is also possible to integrate CEKit into your continuous integration via a GitHub Action. The action is available  `here <https://github.com/manusa/actions-setup-cekit>`_.
+It is also possible to integrate CEKit into your continuous integration via a GitHub Action. The action is available  `here <https://github.com/cekit/actions-setup-cekit>`_.
 
 An example of its usage (from `jkube-images <https://github.com/jkubeio/jkube-images/blob/main/.github/workflows/build-images.yml>`_ is:
 
@@ -30,7 +30,7 @@ An example of its usage (from `jkube-images <https://github.com/jkubeio/jkube-im
           - name: Checkout
             uses: actions/checkout@v2
           - name: Install CEKit
-            uses: manusa/actions-setup-cekit@v1.1.1
+            uses: cekit/actions-setup-cekit@v1.1.1
           - name: Build java-binary-s2i
             run: |
               echo "Building quay.io/jkube/${{ matrix.image }}:${TAG}"
