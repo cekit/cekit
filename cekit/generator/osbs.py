@@ -118,6 +118,7 @@ class OSBSGenerator(Generator):
                         artifact['lookaside'] = True
 
                 else:
+                    logger.debug("Copying artifact {} to {}".format(artifact, target_dir))
                     artifact.copy(target_dir)
 
         fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
