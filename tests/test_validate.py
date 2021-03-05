@@ -460,7 +460,7 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
                '--overrides-file', 'overrides.yaml',
                '--overrides', '{"modules": {"install": [{"name": "master"}, {"name": "child"}] } }',
                '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
-               '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml"}] }',
+               '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml", "dest": "/tmp/artifacts/"}] }',
                'podman'])
 
     assert check_dockerfile(
@@ -770,8 +770,8 @@ def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, cap
 
     overrides_descriptor = {
         'schema_version': 1,
-       'artifacts': [{'name': 'bar.jar', 'md5': '123456', 'description': 'new-description'},
-                     {'name': 'foobar.jar', 'url': 'https://dummy.com/foobar.jar'}]
+        'artifacts': [{'name': 'bar.jar', 'md5': '123456', 'description': 'new-description'},
+                      {'name': 'foobar.jar', 'url': 'https://dummy.com/foobar.jar'}]
     }
 
     with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:

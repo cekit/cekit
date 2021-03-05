@@ -53,10 +53,13 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
-                # TODO: If the overrides is provided as text, why do we try to get path to it?
                 LOGGER.debug("Loading override '{}'".format(override))
+
+                override_artifact_dir = os.path.dirname(os.path.abspath(override))
+                if not os.path.exists(override):
+                    override_artifact_dir = os.path.dirname(os.path.abspath(descriptor_path))
                 self._overrides.append(Overrides(tools.load_descriptor(
-                    override), os.path.dirname(os.path.abspath(override))))
+                    override), override_artifact_dir))
 
         LOGGER.info("Initializing image descriptor...")
 
