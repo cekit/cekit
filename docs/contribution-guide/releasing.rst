@@ -11,7 +11,7 @@ GitHub
 Automated Process
 ^^^^^^^^^^^^^^^^^^
 
-The automated process uses https://pypi.org/project/zest.releaser to perform the correct steps. This is installed via Pip automatically by the Makefile.
+The automated process uses https://pypi.org/project/zest.releaser to perform the correct steps. This is installed by the Pipfile development environment.
 
 * Clone https://github.com/cekit/cekit.git
 * Run ``make release`` and follow the prompts.
