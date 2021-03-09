@@ -38,6 +38,15 @@ hook-gitter:
 	@curl -s -X POST -H "Content-Type: application/json" -d "{\"payload\":`curl -s -H "Accept: application/json" https://circleci.com/api/v1/project/goldmann/docker-scripts/${CIRCLE_BUILD_NUM}`}" ${GITTER_WEBHOOK_URL}
 
 release: clean
-	python setup.py clean
-	python setup.py sdist
-	twine upload dist/*
+	pip install zest.releaser
+	git checkout develop
+	git reset --hard upstream/develop
+	prerelease
+
+	git checkout master
+	git reset --hard upstream/master
+	git merge develop -X theirs --message "Merging develop branch"
+	release -v
+
+	git checkout develop
+	postrelease -v
