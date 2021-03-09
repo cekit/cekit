@@ -3,7 +3,6 @@ dist
 *.swp
 target
 build
-setup.cfg
 build.sh
 .tox
 .coverage

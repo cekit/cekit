@@ -4,8 +4,23 @@ Release Process
 To release a new version of CEKit a number of steps must be taken.
 
 
+
 GitHub
 ------------
+
+Automated Process
+^^^^^^^^^^^^^^^^^^
+
+The automated process uses https://pypi.org/project/zest.releaser to perform the correct steps. This is installed via Pip automatically by the Makefile.
+
+* Clone https://github.com/cekit/cekit.git
+* Run ``make release`` and follow the prompts.
+
+
+    .. note:: A ``.pypirc`` should be configured according to https://packaging.python.org/specifications/pypirc for PyPi uploads.
+
+Manual Process (reference only)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Switch to master branch
 + Ensure you are latest code: ``git reset --hard upstream/master``
