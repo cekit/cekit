@@ -39,11 +39,11 @@ hook-gitter:
 
 release: clean
 	git checkout develop
-	git reset --hard upstream/develop
+	git reset --hard origin/develop
 	prerelease
 
 	git checkout master
-	git reset --hard upstream/master
+	git reset --hard origin/master
 	git merge develop -X theirs --message "Merging develop branch"
 	release -v
 
