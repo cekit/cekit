@@ -22,7 +22,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': True,
-            'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
+            'allow_odcs': True, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
             'no_squash': False, 'tags': ()
         }
     ),
@@ -32,7 +32,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False,
-            'target': 'custom-target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
+            'allow_odcs': True, 'target': 'custom-target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
             'no_squash': False, 'tags': ()
         }
     ),
@@ -42,6 +42,26 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': 'custom-workdir', 'config': '~/.cekit/config',
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
+            'no_squash': False, 'tags': ()
+        }
+    ),
+    # Check --allow-odcs
+    (
+        ['--allow-odcs', 'build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        {
+            'allow_odcs': True, 'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
+            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
+            'no_squash': False, 'tags': ()
+        }
+    ),
+    # Check --no-allow-odcs
+    (
+        ['--no-allow-odcs', 'build', 'docker'],
+        'cekit.builders.docker_builder.DockerBuilder',
+        {
+            'allow_odcs': False, 'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
             'no_squash': False, 'tags': ()
         }
@@ -52,7 +72,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': 'custom-config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (),  'pull': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (),  'pull': False,
             'no_squash': False, 'tags': ()
         }
     ),
@@ -62,7 +82,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
             'no_squash': False, 'tags': ()
         }
     ),
@@ -72,7 +92,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': ('foo', 'bar'),
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': ('foo', 'bar'),
             'pull': False, 'no_squash': False, 'tags': ()
         }
     ),
@@ -82,7 +102,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
             'release': False, 'user': None, 'stage': False, 'sync_only': False, 'commit_message': None, 'assume_yes': False
         }
     ),
@@ -92,7 +112,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
             'release': False, 'user': 'SOMEUSER', 'stage': False, 'sync_only': False,
             'commit_message': None, 'assume_yes': False
         }
@@ -103,7 +123,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': False,
             'release': False, 'user': None, 'stage': True, 'sync_only': False, 'commit_message': None, 'assume_yes': False
         }
     ),
@@ -113,7 +133,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': True,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'nowait': True,
             'release': False, 'user': None, 'stage': False, 'sync_only': False, 'commit_message': None, 'assume_yes': False
         }
     ),
@@ -122,7 +142,7 @@ def _get_class_by_name(clazz):
         'cekit.test.behave_tester.BehaveTester',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'overrides': (), 'image': 'image:1.0',
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'overrides': (), 'image': 'image:1.0',
             'steps_url': 'https://github.com/cekit/behave-test-steps.git', 'wip': False, 'names': ()
         }
     ),
@@ -131,7 +151,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': True,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': True,
             'no_squash': False, 'tags': ()
         }
     ),
@@ -140,7 +160,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.osbs.OSBSBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'release': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'release': False,
             'user': None, 'nowait': False, 'stage': False, 'sync_only': False, 'commit_message': None, 'assume_yes': False
         }),
     (
@@ -148,7 +168,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.docker_builder.DockerBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
             'no_squash': False, 'tags': ()
         }
     ),
@@ -157,7 +177,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.buildah.BuildahBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': (), 'no_squash': False
+            'allow_odcs': True, 'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': (), 'no_squash': False
         }
     )
 ])

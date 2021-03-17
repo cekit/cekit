@@ -4,6 +4,7 @@
 
 import logging
 import os
+import re
 
 from contextlib import contextmanager
 
@@ -69,9 +70,9 @@ odcs_fake_invalid_resp = {
 
 
 @contextmanager
-def cekit_config(redhat=False):
+def cekit_config(redhat=False, allow_odcs=True):
     config = Config()
-    config.cfg.update({'common': {'redhat': redhat}})
+    config.cfg.update({'common': {'redhat': redhat, 'allow_odcs': allow_odcs}})
 
     try:
         yield config
@@ -120,6 +121,14 @@ def test_large_labels_should_break_lines(tmpdir):
         with cekit_config(redhat=True):
             generator.add_build_labels()
             assert image.labels[0].value == "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium finibus lorem vitae pellentesque. Maecenas tincidunt amet\\\n.\\\n"
+
+
+def test_prepare_content_sets_should_fail_when_allow_odcs_false(tmpdir, mocker):
+    with docker_generator(tmpdir) as generator:
+        with cekit_config(allow_odcs=False):
+            with pytest.raises(CekitError, match=re.escape("There are content_sets defined but CEKit is currently configured with allow_odcs=False (--no-allow-odcs)")):
+                assert generator._prepare_content_sets(
+                    {'invalid_platform': ['ca1', 'cs2']}) is False
 
 
 def test_prepare_content_sets_should_fail_when_cs_are_note_defined_for_current_platform(tmpdir, mocker):

@@ -67,13 +67,14 @@ class Generator(object):
     def dependencies(params=None):
         deps = {}
 
-        deps['odcs-client'] = {
-            'package': 'python3-odcs-client',
-            'library': 'odcs',
-            'rhel': {
-                'package': 'python2-odcs-client'
+        if CONFIG.get('common', 'allow_odcs'):
+            deps['odcs-client'] = {
+                'package': 'python3-odcs-client',
+                'library': 'odcs',
+                'rhel': {
+                    'package': 'python2-odcs-client'
+                }
             }
-        }
 
         if CONFIG.get('common', 'redhat'):
             deps['brew'] = {
@@ -389,6 +390,9 @@ class Generator(object):
     def _prepare_content_sets(self, content_sets):
         if not content_sets:
             return False
+
+        if not CONFIG.get('common', 'allow_odcs'):
+            raise CekitError("There are content_sets defined but CEKit is currently configured with allow_odcs=False (--no-allow-odcs)")
 
         arch = platform.machine()
 

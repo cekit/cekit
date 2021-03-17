@@ -125,3 +125,13 @@ Example
         [common]
         redhat = True
 
+Allow the use of On Demand Compose Service (ODCS) content sets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Key
+	``allow_odcs``
+Description
+	A boolean which, if True, allows the use of On Demand Compose Service 
+	content sets in CEKit descriptors. 
+Default
+	True	

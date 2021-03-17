@@ -26,9 +26,10 @@ default_work_dir = "~/.cekit"
 @click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default=default_work_dir, show_default=True)
 @click.option('--config', metavar="PATH", help="Path to configuration file.", default=default_work_dir + "/config", show_default=True)
 @click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
+@click.option('--allow-odcs/--no-allow-odcs', help="Allow ODCS content sets.", default=True)
 @click.option('--target', metavar="PATH", help="Path to directory where files should be generated", default="target", show_default=True)
 @click.version_option(message="%(version)s", version=version)
-def cli(descriptor, verbose, work_dir, config, redhat, target):  # pylint: disable=unused-argument,too-many-arguments
+def cli(descriptor, verbose, work_dir, config, redhat, allow_odcs, target):  # pylint: disable=unused-argument,too-many-arguments
     """
     ABOUT
 

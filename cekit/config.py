@@ -22,6 +22,8 @@ class Config(object):
         # Only allow command line overriding of these values if they are not the default value.
         if cmdline_args.get('redhat'):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
+        if cmdline_args.get("allow_odcs") is not None and cmdline_args.get("allow_odcs") != True:
+            cls.cfg['common']['allow_odcs'] = cmdline_args.get('allow_odcs')
         from cekit import cli
         if cmdline_args.get('work_dir') and cmdline_args.get('work_dir') != cli.default_work_dir:
             cls.cfg['common']['work_dir'] = cmdline_args.get('work_dir')
@@ -40,6 +42,8 @@ class Config(object):
         cls.cfg['common']['work_dir'] = cls.cfg.get('common').get('work_dir', '~/.cekit')
         cls.cfg['common']['redhat'] = yaml.safe_load(
             cls.cfg.get('common', {}).get('redhat', 'False'))
+        cls.cfg['common']['allow_odcs'] = yaml.safe_load(
+            cls.cfg.get('common', {}).get('allow_odcs', 'True'))
         cls.cfg['repositories'] = cls.cfg.get('repositories', {})
 
     @classmethod
