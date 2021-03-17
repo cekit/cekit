@@ -1,2 +1,2 @@
-__version__ = "3.9.dev0"
+__version__ = "3.9"
 schema_version = 2
