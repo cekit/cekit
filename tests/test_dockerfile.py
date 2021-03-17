@@ -359,6 +359,25 @@ def test_supported_package_managers_apk(tmpdir, caplog):
     assert "Package manager apk does not support defining repositories, skipping all repositories" in caplog.text
 
 
+def test_supported_package_managers_apt(tmpdir, caplog):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(
+        target,
+        ['-v', 'build', '--dry-run', 'podman'],
+        descriptor={
+            'packages': {
+                'manager': 'apt-get',
+                'install': ['a'],
+                'repositories': [{'name': 'foo',
+                                  'rpm': 'foo-repo.rpm'}]
+            }
+        })
+    regex_dockerfile(target, "RUN apt-get update && apt-get --no-install-recommends install -y a")
+    regex_dockerfile(target, "dpkg-query --list a")
+    assert "Package manager apt-get does not support defining repositories, skipping all repositories" in caplog.text
+
+
 # https://github.com/cekit/cekit/issues/406
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir('target'))
