@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.append(os.path.abspath("./_ext"))
 
-from cekit import version as cekit_version
+from cekit.version import __version__ as cekit_version
 
 
 def setup(app):

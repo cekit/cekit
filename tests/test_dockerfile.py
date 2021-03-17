@@ -7,7 +7,7 @@ import yaml
 from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
-from cekit.version import version as cekit_version
+from cekit.version import __version__ as cekit_version
 from cekit.tools import Chdir
 
 from click.testing import CliRunner

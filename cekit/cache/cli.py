@@ -10,7 +10,7 @@ from cekit.crypto import SUPPORTED_HASH_ALGORITHMS
 from cekit.descriptor.resource import create_resource
 from cekit.log import setup_logging
 from cekit.tools import Map
-from cekit.version import version
+from cekit.version import __version__
 
 setup_logging()
 LOGGER = logging.getLogger('cekit')
@@ -21,7 +21,7 @@ CONFIG = Config()
 @click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
 @click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
 @click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default="~/.cekit", show_default=True)
-@click.version_option(message="%(version)s", version=version)
+@click.version_option(message="%(version)s", version=__version__)
 def cli(config, verbose, work_dir):  # pylint: disable=unused-argument
     pass
 
