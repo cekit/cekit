@@ -13,6 +13,9 @@ test-py36: prepare
 test-py37: prepare
 	tox -e py37 -- tests
 
+test-py38: prepare
+	tox -e py38 -- tests
+
 test-unit: prepare
 	tox -- tests/test_unit*
 
@@ -35,6 +38,14 @@ hook-gitter:
 	@curl -s -X POST -H "Content-Type: application/json" -d "{\"payload\":`curl -s -H "Accept: application/json" https://circleci.com/api/v1/project/goldmann/docker-scripts/${CIRCLE_BUILD_NUM}`}" ${GITTER_WEBHOOK_URL}
 
 release: clean
-	python setup.py clean
-	python setup.py sdist
-	twine upload dist/*
+	git checkout develop
+	git reset --hard origin/develop
+	prerelease
+
+	git checkout master
+	git reset --hard origin/master
+	git merge develop -X theirs --message "Merging develop branch"
+	release -v
+
+	git checkout develop
+	postrelease -v

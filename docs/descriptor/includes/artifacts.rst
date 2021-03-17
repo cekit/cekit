@@ -115,6 +115,11 @@ Common artifact keys
 
         Artifacts using custom ``dest`` values are not affected.
 
+    .. note::
+        See :ref:`scalar nodes <handbook/overrides:Artifact Overrides>` for details on special case handling with overrides
+        and common keys.
+
+
 ``description``
    Describes the artifact. This is an optional key that can be used to add more information
    about the artifact.

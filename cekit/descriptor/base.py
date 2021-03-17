@@ -77,9 +77,9 @@ class Descriptor(collectionsAbc.MutableMapping):
 
     def merge(self, descriptor):
         """ Merges two descriptors in a way, that arrays are appended
-        and duplicit values are kept
+        and duplicate values are kept
         Args:
-          descriptor - a cekit descritor
+          descriptor - a cekit descriptor
         """
         try:
             _merge_descriptors(self, descriptor)

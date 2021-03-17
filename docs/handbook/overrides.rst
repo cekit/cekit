@@ -212,3 +212,68 @@ Example
 
     Improvement to this behavior is tracked here: https://github.com/cekit/cekit/issues/460
 
+Artifact Overrides
+------------------
+
+While artifact overrides function in general as per  :ref:`scalar nodes <handbook/overrides:Scalar Nodes>` there is some
+special case handling for merging for the common keys of ``target`` and ``dest`` and ``description``.
+
+If the original definition contains a non-default destination e.g. ``/destination`` and the override does **not** specify
+a destination then the original value will be maintained rather than overwriting it with the default value of
+``/tmp/artifacts``.
+
+If the original contains a target or description definition and the override does **not** specify a target/description
+then the original value will be maintained.
+
+Examples
+^^^^^^^^
+
+1. Maintain destination with plain override with new target
+
+    .. code-block:: yaml
+       :caption: Original (URL artifact)
+
+        name: 'bar.jar'
+        dest: '/tmp/destination/'
+        url: 'https://foo/original-bar.jar'
+        target: 'original-bar.jar'
+
+    .. code-block:: yaml
+       :caption: Overrides (Plain artifact)
+
+        name: 'bar.jar'
+        md5: 234234234234
+        target: 'bar2222.jar'
+
+    .. code-block:: yaml
+       :caption: Result
+
+        name: 'bar.jar'
+        dest: '/tmp/destination/'
+        md5: 234234234234
+        target: 'bar2222.jar'
+
+
+2. Maintain destination and target with plain override:
+
+    .. code-block:: yaml
+       :caption: Original (URL artifact)
+
+        name: 'bar.jar'
+        dest: '/tmp/destination/'
+        url: 'https://foo/original-bar.jar'
+        target: 'original-bar.jar'
+
+    .. code-block:: yaml
+       :caption: Overrides (Plain artifact)
+
+        name: 'bar.jar'
+        md5: 234234234234
+
+    .. code-block:: yaml
+       :caption: Result
+
+        name: 'bar.jar'
+        dest: '/tmp/destination/'
+        md5: 234234234234
+        target: 'original-bar.jar'

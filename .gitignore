@@ -2,9 +2,7 @@ dist
 *.pyc
 *.swp
 target
-concreate.egg-info
 build
-setup.cfg
 build.sh
 .tox
 .coverage
@@ -20,3 +18,6 @@ docs/_build
 Pipfile.lock
 venv
 .venv
+
+
+cekit.iml

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from setuptools import setup, find_packages
-from cekit.version import version
+from cekit.version import __version__
 
 import codecs
 
@@ -10,14 +10,14 @@ with open('requirements.txt') as f:
 
 setup(
     name="cekit",
-    version=version,
+    version=__version__,
     packages=find_packages(exclude=["tests"]),
     package_data={
         'cekit.templates': ['*.jinja'],
         'cekit.schema': ['*.yaml'],
     },
     url='https://github.com/cekit/cekit',
-    download_url="https://github.com/cekit/cekit/archive/%s.tar.gz" % version,
+    download_url="https://github.com/cekit/cekit/archive/%s.tar.gz" % __version__,
     author='CEKit team',
     author_email='cekit@cekit.io',
     description='Container image creation tool',

@@ -87,3 +87,24 @@ class TemplateHelper(object):
     def cachito(self, image):
         if image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source'):
             return True
+
+    def package_manager_flags(self, pkg_mgr):
+        default = "--setopt=tsflags=nodocs"
+        if "apk" in pkg_mgr:
+            return ""
+        elif "microdnf" in pkg_mgr:
+            return "--setopt=install_weak_deps=0 " + default
+        else:
+            return default
+
+    def package_manager_install(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            return "add"
+        else:
+            return "install -y"
+
+    def package_manager_query(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            return "apk info -e"
+        else:
+            return "rpm -q"

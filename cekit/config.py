@@ -19,9 +19,11 @@ class Config(object):
 
     @classmethod
     def _override_config(cls, cmdline_args):
+        # Only allow command line overriding of these values if they are not the default value.
         if cmdline_args.get('redhat'):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
-        if cmdline_args.get('work_dir'):
+        from cekit import cli
+        if cmdline_args.get('work_dir') and cmdline_args.get('work_dir') != cli.default_work_dir:
             cls.cfg['common']['work_dir'] = cmdline_args.get('work_dir')
 
     @classmethod

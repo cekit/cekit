@@ -5,8 +5,8 @@ import yaml
 
 import cekit
 from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, Packages, Osbs, Volume
+from cekit.descriptor.base import logger
 from cekit.descriptor.resource import create_resource
-from cekit.descriptor.base import logger, _merge_descriptors
 from cekit.errors import CekitError
 
 _image_schema = yaml.safe_load("""
@@ -19,7 +19,6 @@ map:
   description: {type: text}
   labels: {type: any}
   envs:  {type: any}
-  execute: {type: any}
   ports: {type: any}
   run: {type: any}
   artifacts: {type: any}
@@ -247,14 +246,35 @@ class Image(Descriptor):
 
             artifact_overrides = self._image_overrides['artifacts']
             image_artifacts = Image._to_dict(self.artifacts)
-            for artifact in override.artifacts:
+            for i, artifact in enumerate(override.artifacts):
                 name = artifact.name
+                # logger.debug("### Looking to apply override '{}' to artifact '{}'".format(artifact, artifact_overrides.get(name)))
+                # override.artifact contains override values WITH defaults.
+                # override.original_descriptor contains override value WITHOUT defaults.
+                # artifact_overrides contains original dictionary
+                #
+                # Iterating over dest / target / ...
+                #   If we have _not_ supplied a target (check original_descriptor),
+                #      then check artifact_overrides,
+                #         otherwise use default from override.artifact
+                override_without_defaults = override.original_descriptor.get('artifacts')[i]
+                for key in ['dest', 'target', 'description']:
+                    if override_without_defaults.get(key):
+                        logger.debug("Key ({}) found in override as {}".format(key, override_without_defaults.get(key)))
+                        artifact[key] = override_without_defaults.get(key)
+                    elif artifact_overrides.get(name) and artifact_overrides.get(name).get(key):
+                        new_value = artifact_overrides.get(name).get(key)
+                        logger.debug("Key ({}) found in original artifact as {}".format(key, new_value))
+                        artifact[key] = new_value
+
                 # collect override so we can apply it to modules
                 artifact_overrides[name] = artifact
                 # add it to the list of everything
                 self._all_artifacts[name] = artifact
                 # Apply override to image descriptor
                 image_artifacts[name] = artifact
+                # Sort the output as it makes it easier to view and test.
+                logger.debug("Final (with override) artifact is {}".format(sorted(artifact.items())))
             self._descriptor['artifacts'] = list(image_artifacts.values())
 
             module_overrides = self._image_overrides['modules']

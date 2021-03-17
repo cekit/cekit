@@ -50,7 +50,7 @@ def fixture_build_image():
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS")
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_execute_simple_behave_test(build_image):
     feature = """@test
 Feature: Basic tests
@@ -84,7 +84,7 @@ Feature: Basic tests
 
 
 @pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS")
-@pytest.mark.skipif(os.environ.get('NO_DOCKER') != None, reason="No Docker available")
+@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
 def test_execute_simple_behave_test_with_overrides(build_image):
     feature = """@different
 Feature: Basic tests

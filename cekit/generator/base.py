@@ -16,7 +16,7 @@ from cekit.config import Config
 from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.template_helper import TemplateHelper
-from cekit.version import version as cekit_version
+from cekit.version import __version__ as cekit_version
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
@@ -55,10 +55,13 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
-                # TODO: If the overrides is provided as text, why do we try to get path to it?
                 LOGGER.debug("Loading override '{}'".format(override))
+
+                override_artifact_dir = os.path.dirname(os.path.abspath(override))
+                if not os.path.exists(override):
+                    override_artifact_dir = os.path.dirname(os.path.abspath(descriptor_path))
                 self._overrides.append(Overrides(tools.load_descriptor(
-                    override), os.path.dirname(os.path.abspath(override))))
+                    override), override_artifact_dir))
 
         LOGGER.info("Initializing image descriptor...")
 

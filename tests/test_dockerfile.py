@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 
 import pytest
 import yaml
@@ -8,9 +7,8 @@ import yaml
 from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
-from cekit.version import version as cekit_version
+from cekit.version import __version__ as cekit_version
 from cekit.tools import Chdir
-from cekit.template_helper import TemplateHelper
 
 from click.testing import CliRunner
 
@@ -55,13 +53,6 @@ def print_test_name(value):
                              'example': 'example_value',
                              'description': 'This is a description'}]},
      r' \\\s+COMBINED_ENV=\"set_value\" \\\s+JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \n'),
-    ('test_execute',
-     {'execute': [{'script': 'foo_script'}]},
-     r'.*RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
-    ('test_execute_user',
-     {'execute': [{'script': 'bar_script',
-                   'user': 'bar_user'}]},
-     r'.*USER bar_user\n\s+RUN [ "bash", "-x", "/tmp/scripts/testimage/foo_script" ].*'),
     ('test_cekit_label_version',
      {},
      r'.*io.cekit.version="%s".*' % cekit_version)],
@@ -124,8 +115,8 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
                               'install': ['a', 'b']}}
 
     generate(target, ['build', '--dry-run', 'podman'], desc_part)
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
 
 
@@ -289,8 +280,8 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a')
     regex_dockerfile(target, 'RUN microdnf clean all')
 
@@ -323,8 +314,8 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
-    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a')
     regex_dockerfile(target, 'rpm -q a')
 
 
@@ -340,9 +331,12 @@ def test_supported_package_managers(tmpdir, manager):
                                       'install': ['a']},
                          'osbs': {'repository': {'name': 'repo_name', 'branch': 'branch_name'}}
                          })
+    flags = "--setopt=tsflags=nodocs"
+    if 'microdnf' in manager:
+        flags = "--setopt=install_weak_deps=0 " + flags
     regex_dockerfile(
-        target, "RUN {} --setopt=tsflags=nodocs install -y foo-repo.rpm".format(manager))
-    regex_dockerfile(target, "RUN {} --setopt=tsflags=nodocs install -y a".format(manager))
+        target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
+    regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
     regex_dockerfile(target, 'rpm -q a')
 
 
@@ -360,7 +354,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
                                   'rpm': 'foo-repo.rpm'}]
             }
         })
-    regex_dockerfile(target, "RUN apk add a")
+    regex_dockerfile(target, "RUN apk  add a")
     regex_dockerfile(target, "apk info -e a")
     assert "Package manager apk does not support defining repositories, skipping all repositories" in caplog.text
 

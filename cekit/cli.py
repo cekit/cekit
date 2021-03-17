@@ -11,22 +11,23 @@ from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map
-from cekit.version import version
+from cekit.version import __version__
 
 # FIXME we should try to move this to json
 setup_logging()
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
 
+default_work_dir = "~/.cekit"
 
 @click.group(context_settings=dict(max_content_width=100))
 @click.option('--descriptor', metavar="PATH", help="Path to image descriptor file.", default="image.yaml", show_default=True)
 @click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
-@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default="~/.cekit", show_default=True)
-@click.option('--config', metavar="PATH", help="Path to configuration file.", default="~/.cekit/config", show_default=True)
+@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default=default_work_dir, show_default=True)
+@click.option('--config', metavar="PATH", help="Path to configuration file.", default=default_work_dir + "/config", show_default=True)
 @click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
 @click.option('--target', metavar="PATH", help="Path to directory where files should be generated", default="target", show_default=True)
-@click.version_option(message="%(version)s", version=version)
+@click.version_option(message="%(version)s", version=__version__)
 def cli(descriptor, verbose, work_dir, config, redhat, target):  # pylint: disable=unused-argument,too-many-arguments
     """
     ABOUT
@@ -289,9 +290,9 @@ class Cekit(object):
         else:
             LOGGER.setLevel(logging.INFO)
 
-        LOGGER.debug("Running version {}".format(version))
+        LOGGER.debug("Running version {}".format(__version__))
 
-        if 'dev' in version or 'rc' in version:
+        if 'dev' in __version__ or 'rc' in __version__:
             LOGGER.warning("You are running unreleased development version of CEKit, "
                            "use it only at your own risk!")
 

@@ -8,7 +8,7 @@ import click
 
 import yaml
 from yaml.representer import SafeRepresenter
-
+from distutils import dir_util
 from cekit.errors import CekitError
 
 try:
@@ -164,7 +164,9 @@ def copy_recursively(source_directory, destination_directory):
         if os.path.islink(src):
             os.symlink(os.readlink(src), dst)
         elif os.path.isdir(src):
-            shutil.copytree(src, dst, symlinks=True)
+            # Prefer dir_util over shutil as it doesn't throw an exception for existing
+            # directories (which we can't handle on pre Python 3.8 versions)
+            dir_util.copy_tree(src, dst, preserve_symlinks=True)
         else:
             shutil.copy2(src, dst)
 

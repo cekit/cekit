@@ -18,23 +18,26 @@ Environment variables can be divided into two types:
     the image. This type of environment variables provide information to
     the image consumer. In most cases such environment variables *should not*
     be modified.
+
+    It is possible to define a ``description`` for an information variable.
+
 #.  **Configuration environment variables**
 
     This type of variables are used to define environment variables used to configure services inside
     running container.
+    These environment variables are **not** set during image build time but *can* be set at run time.
 
-These environment variables are **not** set during image build time but *can* be set at run time.
-
-Every configuration enviromnent variable should provide an example usage
-(``example``) and short description (``description``).
-
-Please note that you could have an environment variable with both: a ``value``
-and ``example`` set. This suggest that this environment variable could be redefined.
+    The primary difference to the above type is the lack of a ``value`` definition. Every configuration environment variable should provide an example usage (``example``) and short description (``description``).
 
 .. note::
 
-    Configuration environment variables (without ``value``) are not
-    generated to the build source. These can be used instead as a
+    Please note that you could have an environment variable with both a ``value`` and ``example`` set.
+    This implies that this environment variable could be redefined.
+
+.. note::
+
+    Configuration environment variables (**without** a ``value`` key) are not
+    generated to the build source (the Dockerfile). These can be used instead as a
     source for generating documentation.
 
 .. code-block:: yaml

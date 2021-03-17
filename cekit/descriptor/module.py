@@ -1,6 +1,8 @@
 from cekit.descriptor import Image, Execute
 from cekit.descriptor.image import get_image_schema
 
+overrides_schema = get_image_schema()
+overrides_schema['map']['execute'] = {'type': 'any'}
 
 class Module(Image):
     """Represents a module.
@@ -12,7 +14,7 @@ class Module(Image):
     def __init__(self, descriptor, path, artifact_dir):
         self._artifact_dir = artifact_dir
         self.path = path
-        self.schema = get_image_schema().copy()
+        self.schema = overrides_schema.copy()
         # calling Descriptor constructor only here (we don't want Image() to mess with schema)
         super(Image, self).__init__(descriptor)
         self.skip_merging = ['description',

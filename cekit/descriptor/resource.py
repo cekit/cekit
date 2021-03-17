@@ -21,6 +21,7 @@ from cekit.tools import get_brew_url, Map, Chdir
 logger = logging.getLogger('cekit')
 config = Config()
 
+artifact_dest = '/tmp/artifacts/'
 
 def create_resource(descriptor, **kwargs):
     """
@@ -325,7 +326,7 @@ class _PathResource(Resource):
         'map': {
             'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
-            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'path': {'type': 'str', 'required': True, 'desc': 'Relative (suggested) or absolute path to the resource'},
             'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
@@ -388,7 +389,7 @@ class _UrlResource(Resource):
         'map': {
             'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
-            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'url': {'type': 'str', 'required': True, 'desc': 'URL where the resource can be found'},
             'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
@@ -471,7 +472,7 @@ class _PlainResource(Resource):
         'map': {
             'name': {'type': 'str', 'required': True, 'desc': 'Key used to identify the resource'},
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
-            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': '/tmp/artifacts/'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'md5': {'type': 'str', 'required': True, 'desc': 'The md5 checksum of the resource'},
             'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
