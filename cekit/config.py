@@ -22,7 +22,7 @@ class Config(object):
         # Only allow command line overriding of these values if they are not the default value.
         if cmdline_args.get('redhat'):
             cls.cfg['common']['redhat'] = cmdline_args.get('redhat')
-        if cmdline_args.get("allow_odcs") is not None and cmdline_args.get("allow_odcs") != True:
+        if cmdline_args.get("allow_odcs") is not None:
             cls.cfg['common']['allow_odcs'] = cmdline_args.get('allow_odcs')
         from cekit import cli
         if cmdline_args.get('work_dir') and cmdline_args.get('work_dir') != cli.default_work_dir:
