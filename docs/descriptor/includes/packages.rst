@@ -34,6 +34,14 @@ as the package manager that is used to manage packages in this image.
         install:
             - python3
 
+.. code-block:: yaml
+    :caption: Example package section for APT-based distro
+
+    packages:
+        manager: apt-get
+        install:
+            - python3-minimal
+
 Packages to install
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -62,7 +70,7 @@ Required
 It is possible to define package manager used in the image
 used to install packages as part of the build process.
 
-Currently available options are ``yum``, ``dnf``, ``microdnf`` and ``apk``.
+Currently available options are ``yum``, ``dnf``, ``microdnf``, ``apt-get`` and ``apk``.
 
 .. note::
     If you do not specify this key the default value is ``yum``.
@@ -73,6 +81,9 @@ Currently available options are ``yum``, ``dnf``, ``microdnf`` and ``apk``.
 
 .. note::
     For ``yum``, ``dnf`` and ``microdnf`` the flag ``--setopt=tsflags=nodocs`` is automatically added. For ``microdnf``, the flag ``--setopt=install_weak_deps=0`` is also added.
+
+-- note::
+    For ``apt-get`` the flag ``--no-install-recommends`` is also added.
 
 .. code-block:: yaml
 

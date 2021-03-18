@@ -21,7 +21,7 @@ map:
   install:
     seq:
       - {type: any}
-  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk']}""")
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}""")
 
 
 repository_schema = yaml.safe_load("""

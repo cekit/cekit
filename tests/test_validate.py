@@ -856,6 +856,27 @@ def test_run_alpine(tmpdir):
 
     run_cekit(image_dir, parameters=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
+def test_run_debian_slim(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['from'] = 'debian:stable-slim'
+    img_desc['packages'] = {
+        'install': ['python3-minimal'],
+        'manager': 'apt-get'
+    }
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir, parameters=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
+
 
 def test_execution_order(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
