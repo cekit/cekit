@@ -82,3 +82,11 @@ If you don't want to (or cannot) use Virtualenv, the best idea is to install CEK
 .. note::
     In this case you may need to add ``~/.local/bin/`` directory to your ``$PATH`` environment variable to
     be able to run the ``cekit`` command.
+    
+.. note::
+    For Debian based distros, you *may* need to pre-install the ``libkrb5-dev`` apt package *before*
+    installing cekit using pip (either inside or outside a virtualenv). You can do this by typing:
+
+.. code-block:: bash
+
+    sudo apt install libkrb5-dev
