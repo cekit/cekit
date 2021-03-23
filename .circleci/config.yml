@@ -69,7 +69,7 @@ jobs:
           name: "Install required packages"
           command: |
             sudo apt-get update
-            sudo apt install -y graphviz
+            sudo apt install -y graphviz libkrb5-dev
       - checkout
       - run:
           name: Install docs dependencies
