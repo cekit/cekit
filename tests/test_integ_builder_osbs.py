@@ -799,6 +799,49 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with sha256 checksum.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'sha256': '123456', 'url': 'https://foo/bar.jar'},
+        {'name': 'second_artifact_name', 'md5': '654321', 'url': 'https://foo/boo.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 2
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'artifact_name', 'url': 'https://foo/bar.jar'}
+    assert fetch_artifacts[1] == {'md5': '654321',
+                                  'target': 'second_artifact_name', 'url': 'https://foo/boo.jar'}
+
+    assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(tmpdir, mocker, caplog):
     """
     Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with multiple checksums.
