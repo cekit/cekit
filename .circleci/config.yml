@@ -21,7 +21,7 @@ jobs:
           command: |
             sudo add-apt-repository -y ppa:projectatomic/ppa
             sudo apt-get update
-            sudo apt-get install libkrb5-dev software-properties-common uidmap podman docker-ce
+            sudo apt-get install libkrb5-dev software-properties-common uidmap podman docker-ce libxml2-dev libxslt1-dev
       - checkout
       - run: docker version
       - run: docker info
@@ -69,7 +69,7 @@ jobs:
           name: "Install required packages"
           command: |
             sudo apt-get update
-            sudo apt install -y graphviz
+            sudo apt install -y graphviz libkrb5-dev
       - checkout
       - run:
           name: Install docs dependencies

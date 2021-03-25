@@ -3,7 +3,7 @@ import os
 
 class TemplateHelper(object):
 
-    SUPPORTED_PACKAGE_MANAGERS = ['yum', 'dnf', 'microdnf', 'apk']
+    SUPPORTED_PACKAGE_MANAGERS = ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']
 
     def __init__(self, module_registry):
         self._module_registry = module_registry
@@ -92,6 +92,19 @@ class TemplateHelper(object):
         default = "--setopt=tsflags=nodocs"
         if "apk" in pkg_mgr:
             return ""
+        if "apt-get" in pkg_mgr:
+            #
+            # This is a HACK...
+            #
+            # Debian based apt-get needs an *update* step
+            # *before* its "install" step...
+            #
+            # We really *should* add an additional step to the
+            # main template repo_install and pkg_install macros
+            #
+            # However this works at the moment...
+            #
+            return "update && apt-get --no-install-recommends"
         elif "microdnf" in pkg_mgr:
             return "--setopt=install_weak_deps=0 " + default
         else:
@@ -106,5 +119,7 @@ class TemplateHelper(object):
     def package_manager_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "apk info -e"
+        elif "apt-get" in pkg_mgr:
+            return "dpkg-query --list"
         else:
             return "rpm -q"

@@ -94,11 +94,12 @@ class OSBSGenerator(Generator):
                     fetch_artifacts_url.append({'url': artifact['url'],
                                                 'target': os.path.join(artifact['target'])})
                     for c in intersected_hash:
-                        fetch_artifacts_url[0].update({c: artifact[c]})
+                        fetch_artifacts_url[len(fetch_artifacts_url) - 1].update({c: artifact[c]})
                     if 'description' in artifact:
                         url_description[artifact['url']] = artifact['description']
                     logger.debug(
-                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['target']))
+                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml with contents {}".format(
+                            artifact['target'], fetch_artifacts_url[len(fetch_artifacts_url) - 1]))
                     # OSBS by default downloads all artifacts to artifacts/<target_path>
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
                 elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
@@ -127,7 +128,7 @@ class OSBSGenerator(Generator):
             with open(fetch_artifacts_file, 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
             if config.get('common', 'redhat'):
-                for key,value in url_description.items():
+                for key, value in url_description.items():
                     logger.debug("Processing to add build references for {} -> {}".format(key, value))
                     for line in fileinput.input(fetch_artifacts_file, inplace=1):
                         line = line.replace(key, key + ' # ' + value)
