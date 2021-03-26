@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+
 import pytest
 
 from click.testing import CliRunner
@@ -225,6 +227,9 @@ def test_cekit_cache_clear_with_error(mocker, tmpdir):
 
 def run_cekit_cache(args, return_code=0, i=None):
     result = CliRunner().invoke(cli, args, input=i, catch_exceptions=False)
+    sys.stdout.write("\n")
+    sys.stdout.write(result.output)
+
     assert result.exit_code == return_code
 
     return result

@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 import tempfile
 import platform
 import pytest
@@ -42,6 +43,9 @@ def fixture_build_image():
         with Chdir(image_dir):
             result = CliRunner().invoke(cli, args, catch_exceptions=False)
 
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
+
         assert result.exit_code == 0
 
         return image_dir
@@ -73,7 +77,8 @@ Feature: Basic tests
     with Chdir(test_image_dir):
         result = CliRunner().invoke(cli, ["-v", "test", "behave"], catch_exceptions=False)
 
-    print(result.output)
+    sys.stdout.write("\n")
+    sys.stdout.write(result.output)
 
     assert result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in result.output
@@ -110,7 +115,8 @@ Feature: Basic tests
         result = CliRunner().invoke(
             cli, ["-v", "test", "--overrides", overrides, "behave"], catch_exceptions=False)
 
-    print(result.output)
+    sys.stdout.write("\n")
+    sys.stdout.write(result.output)
 
     assert result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in result.output

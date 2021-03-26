@@ -7,6 +7,8 @@ import os
 import re
 import shutil
 import subprocess
+import sys
+
 import yaml
 
 import pytest
@@ -24,8 +26,6 @@ config = Config()
 def reset_config():
     config.cfg['common'] = {}
 
-
-config = Config()
 config.cfg['common'] = {'redhat': True}
 
 image_descriptor = {
@@ -48,6 +48,8 @@ def run_cekit(cwd,
               message=None, return_code=0):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
 
         assert result.exit_code == return_code
 
