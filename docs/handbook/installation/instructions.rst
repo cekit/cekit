@@ -10,9 +10,6 @@ CEKit installation on other platforms is still possible via ``pip``.
 RPM packages are distributed via regular repositories in case of Fedora
 and the EPEL repository for CentOS/RHEL.
 
-.. warning::
-    Currently packaged version is a snapshot release of the upcoming CEKit 3.0.
-
 .. tip::
     You can see latest submitted package updates `submitted in Bodhi <https://bodhi.fedoraproject.org/updates/?packages=cekit>`_.
 

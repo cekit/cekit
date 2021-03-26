@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 import pytest
 import yaml
@@ -256,7 +257,7 @@ def test_unsupported_package_manager(tmpdir, caplog):
 def test_default_package_manager(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'podman'],
+    generate(target, ['--nocolor', '-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {
                  'repositories': [{'name': 'foo',
                                    'rpm': 'foo-repo.rpm'}],
@@ -484,6 +485,8 @@ def generate(image_dir, command, descriptor=None, exit_code=0):
 
     with Chdir(image_dir):
         result = CliRunner().invoke(cli, command, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
 
         assert result.exit_code == exit_code
 

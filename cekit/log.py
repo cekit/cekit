@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 import colorlog
@@ -18,15 +19,19 @@ class SingleLevelFilter(logging.Filter):
             return record.levelno <= self.passlevel
 
 
-def setup_logging():
+def setup_logging(color=True):
     handler_out = logging.StreamHandler(sys.stdout)
     handler_err = logging.StreamHandler(sys.stderr)
 
     handler_out.addFilter(SingleLevelFilter(logging.INFO, False))
     handler_err.addFilter(SingleLevelFilter(logging.INFO, True))
 
-    formatter = colorlog.ColoredFormatter(
-        '%(log_color)s%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s')
+    if not color or os.environ.get('NO_COLOR'):
+        formatter = logging.Formatter(
+            '%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s')
+    else:
+        formatter = colorlog.ColoredFormatter(
+            '%(log_color)s%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s')
 
     handler_out.setFormatter(formatter)
     handler_err.setFormatter(formatter)
