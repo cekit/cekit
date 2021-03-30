@@ -34,12 +34,11 @@ Key
 Required
     No
 
-If a directory name specified by ``extra_dir`` key will be found next to the image descriptor, the contents of this directory
-will be copied into the target directory and later to the dist-git directory.
+If a directory name specified by ``extra_dir`` key will be found next to the image descriptor, this directory **and** its contents will be copied into the target directory and later to the dist-git directory.
 
 Symbolic links are preserved (not followed).
 
-Copying files is done before generation, which means that files from the extra directory can be overridden
+Copying is done before generation, which means that files from the extra directory can be overridden
 in the :ref:`generation phase<handbook/building/build-process:Generating required files>` .
 
 .. note::
@@ -49,6 +48,75 @@ in the :ref:`generation phase<handbook/building/build-process:Generating require
 
     osbs:
         extra_dir: custom-files
+
+OSBS extra copy command
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``extra_dir_target``
+Required
+    No
+
+This optional key is used in conjunction with ``extra_dir`` above. If this key is specified, then the ``extra_dir``
+will be placed within the container image at the location denoted by ``extra_dir_target``. If this is *not* set,
+no ``COPY`` commands will be added.
+
+For example, with the value of ``/`` then the contents from dist-git will be copied to the
+root of the image filesystem
+
+.. code-block:: bash
+    :caption: Dist-git source control
+
+    osbs-extra/
+        foobar.yaml
+        manifests/
+            ...
+        metadata/
+            ...
+
+.. code-block:: yaml
+    :caption: CEKit Yaml file
+
+    osbs:
+        extra_dir: osbs-extra
+        extra_dir_target: /
+
+.. code-block:: bash
+    :caption: Container image file system
+
+    /
+        foobar.yaml
+        manifests/
+            ...
+        metadata/
+            ...
+
+With the below example both a different source directory in dist-git and a different target directory within the
+container image is used.
+
+.. code-block:: bash
+    :caption: Dist-git source control
+
+    custom-files/
+        a-directory/
+            ...
+
+.. code-block:: yaml
+    :caption: CEKit Yaml file
+
+    osbs:
+        extra_dir: custom-files
+        extra_dir_target: /image-user/tmp
+
+.. code-block:: bash
+    :caption: Container image file system
+
+    /
+        image-user/
+            tmp/
+                a-directory/
+                    ...
+
 
 OSBS repository
 ^^^^^^^^^^^^^^^^

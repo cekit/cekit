@@ -282,26 +282,146 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     run_osbs(image_descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
-    assert os.path.exists(str(repo_dir.join('file_a'))) is True
-    assert os.path.exists(str(repo_dir.join('file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_b'))) is True
 
     calls = [
-        mocker.call(['git', 'add', '--all', 'file_b']),
-        mocker.call(['git', 'add', '--all', 'file_a']),
+        mocker.call(['git', 'add', '--all', 'osbs_extra']),
         mocker.call(['git', 'add', '--all', 'Dockerfile']),
-        mocker.call(['git', 'add', '--all', 'child']),
-        mocker.call(['git', 'add', '--all', 'a_symlink'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
 
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_b'))) is True
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    assert "Copying 'target/image/file_b' to '{}'...".format(
-        os.path.join(str(repo_dir), 'file_b')) in caplog.text
-    assert "Staging 'file_a'..." in caplog.text
-    assert "Staging 'a_symlink'..." in caplog.text
+    assert "Copying 'target/image/osbs_extra' to '{}'...".format(
+        os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
+    assert "Staging 'osbs_extra'..." in caplog.text
+
+
+def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, caplog):
+    """
+    Checks if content of the 'osbs_extra' directory content is copied to dist-git and embedded in Dockerfile
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+
+    source_dir = tmpdir.mkdir('source')
+    repo_dir = source_dir.mkdir('osbs').mkdir('repo')
+    dist_dir = source_dir.mkdir('osbs_extra')
+
+    dist_dir.join('file_a').write_text(u'Some content', 'utf8')
+    dist_dir.join('file_b').write_text(u'Some content', 'utf8')
+    dist_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+
+    os.symlink('/etc', str(dist_dir.join('a_symlink')))
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'osbs': {'extra_dir_target': '/foobar'}}
+
+    with open(os.path.join(str(source_dir), 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_osbs(image_descriptor, str(source_dir), mocker, build_command=["build", "--overrides-file", "overrides.yaml", "osbs"])
+
+    assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_b'))) is True
+
+    calls = [
+        mocker.call(['git', 'add', '--all', 'osbs_extra']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+    ]
+
+    mock_check_call.assert_has_calls(calls, any_order=True)
+
+    assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_b'))) is True
+    assert len(mock_check_call.mock_calls) == len(calls)
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Copying 'target/image/osbs_extra' to '{}'...".format(
+        os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
+    assert "Staging 'osbs_extra'..." in caplog.text
+    with open(os.path.join(str(repo_dir), 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+        assert """## START target image test/image:1.0
+## \\
+    FROM centos:7
+
+
+    COPY osbs_extra /foobar
+
+    USER root
+""" in dockerfile
+
+    assert "COPY osbs_extra /foobar" in dockerfile
+
+
+def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(tmpdir, mocker, caplog):
+    """
+    Checks if content of the 'osbs_extra' directory content is copied to dist-git and embedded in Dockerfile
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+
+    source_dir = tmpdir.mkdir('source')
+    repo_dir = source_dir.mkdir('osbs').mkdir('repo')
+    dist_dir = source_dir.mkdir('foobar')
+
+    dist_dir.join('file_a').write_text(u'Some content', 'utf8')
+    dist_dir.join('file_b').write_text(u'Some content', 'utf8')
+    dist_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+
+    os.symlink('/etc', str(dist_dir.join('a_symlink')))
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'osbs': {
+            'extra_dir_target': '/',
+            'extra_dir': 'foobar'
+        }
+    }
+
+    with open(os.path.join(str(source_dir), 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_osbs(image_descriptor, str(source_dir), mocker, build_command=["build", "--overrides-file", "overrides.yaml", "osbs"])
+
+    assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
+    assert os.path.exists(str(repo_dir.join('foobar').join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('foobar').join('file_b'))) is True
+
+    calls = [
+        mocker.call(['git', 'add', '--all', 'foobar']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+    ]
+
+    mock_check_call.assert_has_calls(calls, any_order=True)
+
+    assert os.path.exists(str(repo_dir.join('foobar').join('file_b'))) is True
+    assert len(mock_check_call.mock_calls) == len(calls)
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Copying 'target/image/foobar' to '{}'...".format(
+        os.path.join(str(repo_dir), 'foobar')) in caplog.text
+    assert "Staging 'foobar'..." in caplog.text
+    with open(os.path.join(str(repo_dir), 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY foobar /" in dockerfile
 
 
 def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
@@ -315,7 +435,7 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
 
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
-    repo_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+    repo_dir.mkdir('osbs_extra').mkdir('child').join('other').write_text(u'Some content', 'utf8')
 
     dist_dir = source_dir.mkdir('osbs_extra')
 
@@ -331,17 +451,14 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     run_osbs(image_descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
-    assert os.path.exists(str(repo_dir.join('file_a'))) is True
-    assert os.path.exists(str(repo_dir.join('file_b'))) is True
-    assert os.path.exists(str(repo_dir.join('child'))) is True
-    assert os.path.exists(str(repo_dir.join('child', 'other'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'child'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'child', 'other'))) is True
 
     calls = [
-        mocker.call(['git', 'add', '--all', 'file_b']),
-        mocker.call(['git', 'add', '--all', 'file_a']),
-        mocker.call(['git', 'add', '--all', 'Dockerfile']),
-        mocker.call(['git', 'add', '--all', 'child']),
-        mocker.call(['git', 'add', '--all', 'a_symlink'])
+        mocker.call(['git', 'add', '--all', 'osbs_extra']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
@@ -349,11 +466,9 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    assert "Copying 'target/image/file_b' to '{}'...".format(
-        os.path.join(str(repo_dir), 'file_b')) in caplog.text
-    assert "Staging 'file_a'..." in caplog.text
-    assert "Staging 'a_symlink'..." in caplog.text
-
+    assert "Copying 'target/image/osbs_extra' to '{}'...".format(
+        os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
+    assert "Staging 'osbs_extra'..." in caplog.text
 
 
 # https://github.com/cekit/cekit/issues/394
@@ -386,15 +501,12 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
-    assert os.path.exists(str(repo_dir.join('file_a'))) is True
-    assert os.path.exists(str(repo_dir.join('file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('dist').join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('dist').join('file_b'))) is True
 
     calls = [
-        mocker.call(['git', 'add', '--all', 'file_b']),
-        mocker.call(['git', 'add', '--all', 'file_a']),
+        mocker.call(['git', 'add', '--all', 'dist']),
         mocker.call(['git', 'add', '--all', 'Dockerfile']),
-        mocker.call(['git', 'add', '--all', 'child']),
-        mocker.call(['git', 'add', '--all', 'a_symlink'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
@@ -402,10 +514,13 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    assert "Copying 'target/image/file_b' to '{}'...".format(
-        os.path.join(str(repo_dir), 'file_b')) in caplog.text
-    assert "Staging 'file_a'..." in caplog.text
-    assert "Staging 'a_symlink'..." in caplog.text
+    assert "Copying 'target/image/dist' to '{}'...".format(
+        os.path.join(str(repo_dir), 'dist')) in caplog.text
+    assert "Staging 'dist'..." in caplog.text
+    with open(os.path.join(str(repo_dir), 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY foobar /" not in dockerfile
 
 
 # https://github.com/cekit/cekit/issues/542
@@ -1131,6 +1246,15 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     assert os.path.exists(dockerfile_path) is True
     with open(dockerfile_path, 'r') as _file:
         dockerfile = _file.read()
+        assert """## START target image test/image:1.0
+## \\
+    FROM centos:7
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+
+
+    USER root
+""" in dockerfile
 
     assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" in dockerfile
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)

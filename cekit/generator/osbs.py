@@ -33,9 +33,8 @@ class OSBSGenerator(Generator):
         # https://github.com/cekit/cekit/issues/394
         copy_recursively(
             os.path.join(os.path.dirname(self._descriptor_path), self.image.osbs.extra_dir),
-            os.path.join(self.target, 'image')
+            os.path.join(self.target, os.path.join('image', self.image.osbs.extra_dir))
         )
-
         super(OSBSGenerator, self).generate(builder)
 
     def _prepare_content_sets(self, content_sets):
