@@ -88,6 +88,12 @@ class TemplateHelper(object):
         if image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source'):
             return True
 
+    def extra_dir(self, image):
+        return image.get('osbs', {}).extra_dir
+
+    def extra_dir_target(self, image):
+        return image.get('osbs', {}).extra_dir_target
+
     def package_manager_flags(self, pkg_mgr):
         default = "--setopt=tsflags=nodocs"
         if "apk" in pkg_mgr:
