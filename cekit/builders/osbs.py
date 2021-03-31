@@ -91,7 +91,6 @@ class OSBSBuilder(Builder):
 
     def _prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
-
         repository = repository_key.get('name')
         branch = repository_key.get('branch')
 
@@ -136,6 +135,7 @@ class OSBSBuilder(Builder):
                                 self.target,
                                 repository,
                                 branch,
+                                self.generator.image.get('osbs', {}).extra_dir,
                                 self.params.assume_yes)
 
         self.dist_git.prepare(self.params.stage, self.params.user)
@@ -334,11 +334,12 @@ class DistGit(object):
 
         return name, branch, commit
 
-    def __init__(self, output, source, repo, branch, noninteractive=False):
+    def __init__(self, output, source, repo, branch, osbs_extra, noninteractive=False):
         self.output = output
         self.source = source
         self.repo = repo
         self.branch = branch
+        self.osbs_extra = osbs_extra
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.noninteractive = noninteractive
 
@@ -403,6 +404,10 @@ class DistGit(object):
 
                 if d in git_files:
                     subprocess.check_call(["git", "rm", "-rf", d])
+
+            if os.path.exists(self.osbs_extra):
+                LOGGER.info("Removing old osbs extra directory : {}".format(self.osbs_extra))
+                subprocess.check_call(["git", "rm", "-rf", self.osbs_extra])
 
             if os.path.exists("fetch-artifacts-url.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")

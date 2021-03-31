@@ -313,6 +313,9 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
     dist_dir = source_dir.mkdir('osbs_extra')
+    repo_dir_osbs_extra = repo_dir.mkdir('osbs_extra')
+    repo_dir_osbs_extra.mkdir('foobar_original')
+    repo_dir_osbs_extra.join('config_original.yaml').write_text(u'Some content', 'utf8')
 
     dist_dir.join('file_a').write_text(u'Some content', 'utf8')
     dist_dir.join('file_b').write_text(u'Some content', 'utf8')
@@ -337,6 +340,7 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_b'))) is True
 
     calls = [
+        mocker.call(['git', 'rm', '-rf', 'osbs_extra']),
         mocker.call(['git', 'add', '--all', 'osbs_extra']),
         mocker.call(['git', 'add', '--all', 'Dockerfile']),
     ]
@@ -347,6 +351,7 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Removing old osbs extra directory : osbs_extra" in caplog.text
     assert "Copying 'target/image/osbs_extra' to '{}'...".format(
         os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
     assert "Staging 'osbs_extra'..." in caplog.text
@@ -377,6 +382,7 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(tmpdir, 
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
     dist_dir = source_dir.mkdir('foobar')
+    repo_dir.mkdir('foobar')
 
     dist_dir.join('file_a').write_text(u'Some content', 'utf8')
     dist_dir.join('file_b').write_text(u'Some content', 'utf8')
@@ -405,6 +411,7 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(tmpdir, 
     assert os.path.exists(str(repo_dir.join('foobar').join('file_b'))) is True
 
     calls = [
+        mocker.call(['git', 'rm', '-rf', 'foobar']),
         mocker.call(['git', 'add', '--all', 'foobar']),
         mocker.call(['git', 'add', '--all', 'Dockerfile']),
     ]
@@ -415,6 +422,7 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(tmpdir, 
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Removing old osbs extra directory : foobar" in caplog.text
     assert "Copying 'target/image/foobar' to '{}'...".format(
         os.path.join(str(repo_dir), 'foobar')) in caplog.text
     assert "Staging 'foobar'..." in caplog.text
@@ -457,6 +465,7 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     assert os.path.exists(str(repo_dir.join('osbs_extra', 'child', 'other'))) is True
 
     calls = [
+        mocker.call(['git', 'rm', '-rf', 'osbs_extra']),
         mocker.call(['git', 'add', '--all', 'osbs_extra']),
         mocker.call(['git', 'add', '--all', 'Dockerfile'])
     ]

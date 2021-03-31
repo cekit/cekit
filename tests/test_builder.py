@@ -454,7 +454,7 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     builder.before_build()
 
     dist_git_class.assert_called_once_with(os.path.join(
-        str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch', False)
+        str(tmpdir), 'osbs', 'repo'), str(tmpdir), 'repo', 'branch', 'osbs_extra', False)
 
     copy_mock.assert_has_calls([
         mocker.call(os.path.join(str(tmpdir), 'image', 'Dockerfile'),
