@@ -205,6 +205,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 
     {%if helper.cachito(image) %}
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
     {% endif %}
 
     {%if helper.extra_dir_target(image) %}
