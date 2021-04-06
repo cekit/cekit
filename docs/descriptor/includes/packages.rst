@@ -19,6 +19,7 @@ as the package manager that is used to manage packages in this image.
             - name: extras
                 id: rhel7-extras-rpm
         manager: dnf
+        manager_flags:
         install:
             - mongodb24-mongo-java-driver
             - postgresql-jdbc
@@ -91,6 +92,35 @@ Currently available options are ``yum``, ``dnf``, ``microdnf``, ``apt-get`` and 
         manager: dnf
         install:
             - git
+
+
+Package manager flags
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is an optional key. It is only needed to **override** the default package manager flag values. For example, with a
+package manager of ``microdnf``. the default flags are ``--setopt=tsflags=nodocs --setopt=install_weak_deps=0``.
+
+.. code-block:: yaml
+
+    packages:
+        manager: microdnf
+        manager_flags:
+
+This will override the flags meaning that *no* flags are passed to ``microdnf``.
+
+
+.. code-block:: yaml
+
+    packages:
+        manager: microdnf
+        manager_flags: --setopt=tsflags=nodocs
+
+This will also override the flags but only add the single option which is useful for older ``microdnf``
+versions (pre 3.4.0) which do not support extended ``setopt`` commands.
+
+
+
+
+
 
 Package repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

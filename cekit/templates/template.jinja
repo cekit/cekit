@@ -28,18 +28,18 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  #
  # Works only when the package manager is supported.
  #}
-{%- macro repo_install(pkg_manager, rpm) -%}
+{%- macro repo_install(pkg_manager, pkg_manager_flags, rpm) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager) }} install -y {{ rpm }}
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} install -y {{ rpm }}
     {% endif %}
 {%- endmacro -%}
 
 {#
  # Installs packages using specified package manager.
  #}
-{%- macro pkg_install(pkg_manager, packages) -%}
+{%- macro pkg_install(pkg_manager, pkg_manager_flags, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
     {% if pkg_manager == 'microdnf' %}
             && {{ pkg_manager }} clean all \
     {% endif %}
@@ -106,7 +106,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Switch to 'root' user to install '{{ module.name }}' {{ module_type }} defined packages
         USER root
         # Install packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_install(parent_image.packages.manager, module.packages.install) }}
+        RUN {{ pkg_install(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.install) }}
         {% endif -%}
 
         {% if module.envs|selectattr("value")|list|length > 0 %}
@@ -171,7 +171,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% for repo in animage.packages.repositories %}
     {% if repo.present and repo.rpm %}
 
-    RUN {{ repo_install(animage.packages.manager, repo.rpm) }}
+    RUN {{ repo_install(animage.packages.manager, animage.packages.manager_flags, repo.rpm) }}
     {% endif %}
     {% endfor %}
     {% endif %}

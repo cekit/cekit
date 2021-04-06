@@ -121,6 +121,42 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     regex_dockerfile(target, 'rpm -q a b')
 
 
+def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_1(tmpdir, mocker):
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+        'state': 2, 'result_repofile': 'url'})
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'manager': 'microdnf',
+                              'manager_flags': '',
+                              'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a', 'b']}}
+
+    generate(target, ['build', '--dry-run', 'podman'], desc_part)
+    regex_dockerfile(target, 'RUN microdnf  install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf  install -y a b')
+    regex_dockerfile(target, 'rpm -q a b')
+
+
+def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_2(tmpdir, mocker):
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+        'state': 2, 'result_repofile': 'url'})
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'manager': 'microdnf',
+                              'manager_flags': '--setopt=tsflags=nodocs',
+                              'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a', 'b']}}
+
+    generate(target, ['build', '--dry-run', 'podman'], desc_part)
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'rpm -q a b')
+
+
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
     mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
     mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
