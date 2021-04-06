@@ -21,7 +21,8 @@ map:
   install:
     seq:
       - {type: any}
-  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}""")
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}
+  manager_flags: {type: str}""")
 
 
 repository_schema = yaml.safe_load("""
@@ -92,6 +93,10 @@ class Packages(Descriptor):
     @property
     def manager(self):
         return self.get('manager')
+
+    @property
+    def manager_flags(self):
+        return self.get('manager_flags')
 
     @property
     def repositories(self):

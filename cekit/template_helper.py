@@ -94,11 +94,13 @@ class TemplateHelper(object):
     def extra_dir_target(self, image):
         return image.get('osbs', {}).extra_dir_target
 
-    def package_manager_flags(self, pkg_mgr):
-        default = "--setopt=tsflags=nodocs"
-        if "apk" in pkg_mgr:
+    def package_manager_flags(self, pkg_mgr, pkg_mgr_flags):
+        if pkg_mgr_flags is not None:
+            # Using None check to allow a definition of "manager_flags: ''" to override the default values.
+            return pkg_mgr_flags
+        elif "apk" in pkg_mgr:
             return ""
-        if "apt-get" in pkg_mgr:
+        elif "apt-get" in pkg_mgr:
             #
             # This is a HACK...
             #
@@ -111,7 +113,9 @@ class TemplateHelper(object):
             # However this works at the moment...
             #
             return "update && apt-get --no-install-recommends"
-        elif "microdnf" in pkg_mgr:
+
+        default = "--setopt=tsflags=nodocs"
+        if "microdnf" in pkg_mgr:
             return "--setopt=install_weak_deps=0 " + default
         else:
             return default
