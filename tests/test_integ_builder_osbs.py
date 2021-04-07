@@ -1260,6 +1260,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     FROM centos:7
 
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
 
 
     USER root
