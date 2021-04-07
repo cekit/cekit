@@ -28,7 +28,6 @@ def reset_config():
 
 
 config = Config()
-config.cfg['common'] = {'redhat': True}
 
 
 def test_osbs_builder_defaults(mocker):

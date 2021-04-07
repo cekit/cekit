@@ -17,16 +17,6 @@ from click.testing import CliRunner
 
 from cekit.cli import cli
 from cekit.tools import Chdir
-from cekit.config import Config
-
-config = Config()
-
-
-@pytest.fixture(autouse=True)
-def reset_config():
-    config.cfg['common'] = {}
-
-config.cfg['common'] = {'redhat': True}
 
 image_descriptor = {
     'schema_version': 1,
