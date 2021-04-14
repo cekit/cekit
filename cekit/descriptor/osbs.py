@@ -30,6 +30,7 @@ repository_schema = yaml.safe_load("""
 
 logger = logging.getLogger('cekit')
 
+
 class Osbs(Descriptor):
     """
     Object Representing OSBS configuration
