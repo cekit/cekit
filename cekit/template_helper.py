@@ -85,7 +85,7 @@ class TemplateHelper(object):
         return port_list
 
     def cachito(self, image):
-        if image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source'):
+        if image.get('osbs', {}).configuration.get('container', {}).get('remote_source'):
             return True
 
     def extra_dir(self, image):

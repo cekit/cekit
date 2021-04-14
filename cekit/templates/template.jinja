@@ -57,7 +57,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {%- endmacro -%}
 
 {#
- # Macro for processing content of a module (or image). 
+ # Macro for processing content of a module (or image).
  #
  # 1. Copies any defined general artifacts
  # 2. Copies any defined stage artifacts (built in previous stages as part of multi-stage builds)
@@ -162,6 +162,16 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if animage.from != 'scratch' %}
     USER root
     {% endif -%}
+
+    {#
+     # Add Cachito support
+     #}
+    {%if helper.cachito(animage) %}
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+    {% endif %}
+
     {% if animage.packages.repositories_injected %}
 
     # Add custom repo files
@@ -180,6 +190,10 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {{ process_module(helper.module(to_install), animage) }}
     {% endfor %}
 {{ process_module(animage) }}
+
+    {%if helper.cachito(animage) %}
+    RUN rm -rf $REMOTE_SOURCE_DIR
+    {% endif %}
 {%- endmacro -%}
 
 
@@ -191,9 +205,8 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 
 {% for builder_image in builders %}
 ## START builder image {{ builder_image.name }}:{{ builder_image.version }}
-## \  
+## \
     FROM {{ builder_image.from }} AS {{ builder_image.name }}
-
 {{ process_image(builder_image) }}
 ## /
 ## END builder image
@@ -202,11 +215,6 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 ## START target image {{ image.name }}:{{ image.version }}
 ## \
     FROM {{ image.from }}
-
-    {%if helper.cachito(image) %}
-    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
-    WORKDIR $REMOTE_SOURCE_DIR/app
-    {% endif %}
 
     {%if helper.extra_dir_target(image) %}
     COPY {{ helper.extra_dir(image) }} {{ helper.extra_dir_target(image) }}
@@ -256,7 +264,3 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endif -%}
 ## /
 ## END target image
-
-{%if helper.cachito(image) %}
-RUN rm -rf $REMOTE_SOURCE_DIR
-{% endif %}

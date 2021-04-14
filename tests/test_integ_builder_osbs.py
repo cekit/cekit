@@ -351,7 +351,6 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
 ## \\
     FROM centos:7
 
-
     COPY osbs_extra /foobar
 
     USER root
@@ -1249,12 +1248,141 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
 ## \\
     FROM centos:7
 
+
+    USER root
+
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
     WORKDIR $REMOTE_SOURCE_DIR/app
 
 
-    USER root
-""" in dockerfile
 
-    assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" in dockerfile
+###### START image 'test/image:1.0'
+###### \\
+        # Set 'test/image' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="test/image" \\
+            JBOSS_IMAGE_VERSION="1.0" 
+        # Set 'test/image' image defined labels
+        LABEL \\
+            foo="bar"  \\
+            io.cekit.version="3.11.0.dev0"  \\
+            labela="a"  \\
+            name="test/image"  \\
+            version="1.0" 
+###### /
+###### END image 'test/image:1.0'
+
+
+    RUN rm -rf $REMOTE_SOURCE_DIR
+""" in dockerfile
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
+
+
+def test_osbs_builder_with_rhpam(tmpdir, mocker, caplog):
+    """
+    Checks whether the generated Dockerfile has cachito instructions if container.yaml
+    file has cachito section.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["touch", "file"])
+        subprocess.call(["git", "add", "file"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    tmpdir = str(tmpdir)
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam'),
+        os.path.join(tmpdir, 'rhpam')
+    )
+
+    run_cekit((os.path.join(tmpdir, 'rhpam')), parameters=['--redhat', '-v', '--work-dir', str(tmpdir), '--config', 'config',
+              'build', '--dry-run', 'osbs'])
+
+    dockerfile_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+        assert """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
+
+## START builder image operator-builder:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder
+    USER root
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+
+
+###### START image 'operator-builder:7.11'
+###### \\
+        # Set 'operator-builder' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'operator-builder' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            version="7.11" 
+###### /
+###### END image 'operator-builder:7.11'
+
+
+    RUN rm -rf $REMOTE_SOURCE_DIR
+
+## /
+## END builder image
+
+## START target image rhpam-7/rhpam-kogito-operator:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+
+    USER root
+
+
+###### START image 'rhpam-7/rhpam-kogito-operator:7.11'
+###### \\
+        # Copy 'rhpam-7/rhpam-kogito-operator' image stage artifacts
+        COPY --from=operator-builder /workspace/rhpam-kogito-operator-manager /usr/local/bin/rhpam-kogito-operator-manager
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined labels
+        LABEL \\
+            com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
+            description="Runtime Image for the RHPAM Kogito Operator"  \\
+            io.cekit.version="3.11.0.dev0"  \\
+            io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
+            io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
+            io.openshift.tags="rhpam,kogito,operator"  \\
+            maintainer="bsig-cloud@redhat.com"  \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            summary="Runtime Image for the RHPAM Kogito Operator"  \\
+            version="7.11" 
+###### /
+###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
+
+
+
+
+    # Switch to 'root' user and remove artifacts and modules
+    USER root
+    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
+    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    # Define the user
+    USER 1001
+## /
+## END target image""" in dockerfile
