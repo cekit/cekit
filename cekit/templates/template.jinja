@@ -162,7 +162,6 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if animage.from != 'scratch' %}
     USER root
     {% endif -%}
-
     {#
      # Add Cachito support
      #}
@@ -171,7 +170,6 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
     WORKDIR $REMOTE_SOURCE_DIR/app
     {% endif %}
-
     {% if animage.packages.repositories_injected %}
 
     # Add custom repo files
@@ -190,7 +188,6 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {{ process_module(helper.module(to_install), animage) }}
     {% endfor %}
 {{ process_module(animage) }}
-
     {%if helper.cachito(animage) %}
     RUN rm -rf $REMOTE_SOURCE_DIR
     {% endif %}

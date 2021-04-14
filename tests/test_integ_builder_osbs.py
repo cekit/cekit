@@ -1254,8 +1254,6 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
     WORKDIR $REMOTE_SOURCE_DIR/app
 
-
-
 ###### START image 'test/image:1.0'
 ###### \\
         # Set 'test/image' image defined environment variables
@@ -1272,43 +1270,25 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
 ###### /
 ###### END image 'test/image:1.0'
 
-
     RUN rm -rf $REMOTE_SOURCE_DIR
 """ in dockerfile
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
 
 
-def test_osbs_builder_with_rhpam(tmpdir, mocker, caplog):
+def test_osbs_builder_with_rhpam(tmpdir, caplog):
     """
-    Checks whether the generated Dockerfile has cachito instructions if container.yaml
-    file has cachito section.
+    Verify that multi-stage build has Cachito instructions enabled.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
-    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
-    mocker.patch.object(subprocess, 'check_output')
-    mocker.patch('cekit.builders.osbs.DistGit.push')
-
-    tmpdir.mkdir('osbs').mkdir('repo')
-
-    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
-        subprocess.call(["git", "init"])
-        subprocess.call(["touch", "file"])
-        subprocess.call(["git", "add", "file"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
-
-    tmpdir = str(tmpdir)
-
     shutil.copytree(
         os.path.join(os.path.dirname(__file__), 'images', 'rhpam'),
-        os.path.join(tmpdir, 'rhpam')
+        os.path.join(str(tmpdir), 'rhpam')
     )
 
-    run_cekit((os.path.join(tmpdir, 'rhpam')), parameters=['--redhat', '-v', '--work-dir', str(tmpdir), '--config', 'config',
-              'build', '--dry-run', 'osbs'])
+    run_cekit((os.path.join(str(tmpdir), 'rhpam')), parameters=['--redhat', '-v', '--work-dir', str(tmpdir), '--config',
+                                                           'config', 'build', '--dry-run', 'osbs'])
 
     dockerfile_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'Dockerfile')
     assert os.path.exists(dockerfile_path) is True
@@ -1324,7 +1304,6 @@ def test_osbs_builder_with_rhpam(tmpdir, mocker, caplog):
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
     WORKDIR $REMOTE_SOURCE_DIR/app
 
-
 ###### START image 'operator-builder:7.11'
 ###### \\
         # Set 'operator-builder' image defined environment variables
@@ -1338,7 +1317,6 @@ def test_osbs_builder_with_rhpam(tmpdir, mocker, caplog):
 ###### /
 ###### END image 'operator-builder:7.11'
 
-
     RUN rm -rf $REMOTE_SOURCE_DIR
 
 ## /
@@ -1350,7 +1328,6 @@ def test_osbs_builder_with_rhpam(tmpdir, mocker, caplog):
 
 
     USER root
-
 
 ###### START image 'rhpam-7/rhpam-kogito-operator:7.11'
 ###### \\
@@ -1374,7 +1351,6 @@ def test_osbs_builder_with_rhpam(tmpdir, mocker, caplog):
             version="7.11" 
 ###### /
 ###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
-
 
 
 

@@ -23,6 +23,7 @@ config = Config()
 
 artifact_dest = '/tmp/artifacts/'
 
+
 def create_resource(descriptor, **kwargs):
     """
     Module method responsible for instantiating proper resource object

@@ -259,7 +259,6 @@ class Image(Descriptor):
             image_artifacts = Image._to_dict(self.artifacts)
             for i, artifact in enumerate(override.artifacts):
                 name = artifact.name
-                # logger.debug("### Looking to apply override '{}' to artifact '{}'".format(artifact, artifact_overrides.get(name)))
                 # override.artifact contains override values WITH defaults.
                 # override.original_descriptor contains override value WITHOUT defaults.
                 # artifact_overrides contains original dictionary
