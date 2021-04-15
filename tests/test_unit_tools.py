@@ -7,7 +7,7 @@ import yaml
 from contextlib import contextmanager
 
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
-from cekit.descriptor import Descriptor, Image, Module, Overrides, Run
+from cekit.descriptor import Descriptor, Image, Module, Overrides, Run, Osbs
 from cekit.errors import CekitError
 from cekit import tools
 
@@ -67,6 +67,55 @@ def test_merging_description_image():
 
     merged = _merge_descriptors(desc1, desc2)
     assert 'description' not in merged
+
+
+def test_merging_description_osbs():
+    desc1 = Osbs({'extra_dir_target': 'foo'}, None)
+    desc2 = Osbs({'repository': { 'name': 'repo', 'branch': 'branch'}}, None)
+
+    merged = _merge_descriptors(desc1, desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'configuration': {}, 'repository': {'name': 'repo', 'branch': 'branch'}}"
+    merged = desc1.merge(desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'configuration': {}, 'repository': {'name': 'repo', 'branch': 'branch'}}"
+
+    desc1 = Osbs({'extra_dir_target': 'foo'}, None)
+    desc2 = Osbs({}, None)
+    merged = desc1.merge(desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'configuration': {}, 'repository': {}}"
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'repository': {'name': 'repo', 'branch': 'branch'}}, None)
+    desc2 = Osbs({}, None)
+    merged = desc1.merge(desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'repository': {'name': 'repo', 'branch': 'branch'}, 'configuration': {}}"
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'repository': {'name': 'foobar', 'branch': 'foobranch'}}, None)
+    desc2 = Osbs({'repository': {'name': 'repo', 'branch': 'branch'}}, None)
+    merged = desc1.merge(desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'repository': {'name': 'repo', 'branch': 'branch'}, 'configuration': {}}"
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'configuration': {'container': {'image_build_method': 'imagebuilder'}}}, None)
+    desc2 = Osbs({}, None)
+    merged = desc1.merge(desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'configuration': {'container': {'image_build_method': 'imagebuilder'}}, 'repository': {}}"
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'configuration': {'container': {'image_build_method': 'imagebuilder'}}}, None)
+    desc2 = Osbs({'configuration': {'container': {'remote_source': {'repo': 'https://github.com/kiegroup/rhpam-kogito-operator'}}}}, None)
+    merged = desc1.merge(desc2)
+    print("\n" + repr(merged))
+    assert repr(merged) == \
+           "{'extra_dir_target': 'foo', 'configuration': {'container': {'remote_source': {'repo': 'https://github.com/kiegroup/rhpam-kogito-operator'}}}, 'repository': {}}"
 
 
 def test_merging_description_modules():

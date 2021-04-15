@@ -51,6 +51,14 @@ class Osbs(Descriptor):
         self['repository'] = Repository(self._descriptor.get(
             'repository', {}), self.descriptor_path)
 
+    def merge(self, descriptor):
+        if not descriptor:
+            return self
+        for k2, v2 in descriptor.items():
+            if v2:
+                self[k2] = v2
+        return self
+
     @property
     def name(self):
         return self.get('name')
