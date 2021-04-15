@@ -59,9 +59,6 @@ class Image(Descriptor):
         self._descriptor['modules'] = Modules(self._descriptor.get('modules', {}), self.path)
         self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}), self.path)
         self._descriptor['osbs'] = Osbs(self._descriptor.get('osbs', {}), self.path)
-        logger.info("### image::osbs::self::{}".format(id(self)))
-        logger.info("### image::osbs::self::{}".format(self))
-        logger.info("### image::osbs::{}".format(self.osbs))
         self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
 
         # make sure image declarations override any module definitions
@@ -240,16 +237,8 @@ class Image(Descriptor):
                     self.packages._descriptor.pop('content_sets', None)
                     self.packages._descriptor.pop('content_sets_file', None)
 
-            logger.warning("### merging::image::id::{}".format(id(self)))
-            logger.warning("### merging::image::override::id::{} and type override {}".format(id(override), type(override)))
-            logger.warning("###@@@ override.osbs {} \n and self.osbs {} \n {}".format(override.osbs, self.osbs, type(self.osbs)))
-
-            # Only merge if its not the default OSBS object
-#            if override.osbs != Osbs({},""):
-            if repr(override.osbs) != "{'configuration': {}, 'repository': {}}":
-                logger.warning("###@@@ MERGING")
-                self.osbs = override.osbs.merge(self.osbs)
-            logger.warning("###@@@ AFTER override.osbs {} \n\tself.osbs {} ".format(override.osbs, self.osbs))
+            # Merge override osbs items into self.
+            self.osbs = self.osbs.merge(override.osbs)
 
             for package in override.packages.install:
                 if package not in self.packages.install:

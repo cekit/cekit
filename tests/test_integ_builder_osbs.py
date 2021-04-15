@@ -1294,6 +1294,7 @@ def test_osbs_builder_with_rhpam(tmpdir, caplog):
     assert os.path.exists(dockerfile_path) is True
     with open(dockerfile_path, 'r') as _file:
         dockerfile = _file.read()
+        print("\n" + dockerfile + "\n")
         assert """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
 
 ## START builder image operator-builder:7.11
