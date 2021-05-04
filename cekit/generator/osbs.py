@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import tempfile
-
+from urllib.parse import urlparse
 import yaml
 
 from cekit import crypto
@@ -73,11 +73,32 @@ class OSBSGenerator(Generator):
         fetch_artifacts_url = []
         url_description = {}
 
+        fad = config.get('common', 'fetch_artifact_domains')
+        rh = config.get('common', 'redhat')
+
         for image in self.images:
             for artifact in image.all_artifacts:
                 logger.info("Preparing artifact '{}' (of type {})".format(artifact['name'], type(artifact)))
 
+                # We only want to use fetch-artifact-url if
+                # 1. is type _UrlResource
+                # 2. if fetch_artifact_domains configured, URL conforms to that.
+                process_fetch = False
                 if isinstance(artifact, _UrlResource):
+                    if fad is not None:
+                        # Verify if the URL can be used in fetch-artifact-url or now
+                        for d in fad.split(","):
+                            u = urlparse(d)
+                            logger.warning("#### URL {}{}".format(u.netloc, u.path))
+                            if u.netloc + u.path in artifact['url']:
+                                process_fetch = True
+                        if not process_fetch:
+                            logger.info("Ignoring {} as restricted by {}".format(artifact['url'], fad))
+                    else:
+                        # Just process all UrlResource
+                        process_fetch = True
+
+                if process_fetch:
                     intersected_hash = [x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact]
                     logger.debug("Found checksum markers of {}".format(intersected_hash))
                     if not intersected_hash:

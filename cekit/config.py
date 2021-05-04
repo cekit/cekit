@@ -7,6 +7,8 @@ try:
 except ImportError:
     import configparser
 
+default_work_dir = "~/.cekit"
+
 
 class Config(object):
     """Represents Cekit configuration - behaves as Singleton"""
@@ -41,6 +43,7 @@ class Config(object):
         cls.cfg['common']['redhat'] = yaml.safe_load(
             cls.cfg.get('common', {}).get('redhat', 'False'))
         cls.cfg['repositories'] = cls.cfg.get('repositories', {})
+        cls.cfg['common']['fetch_url_domains'] = cls.cfg.get('common').get('fetch_url_domains')
 
     @classmethod
     def get(cls, *args):
