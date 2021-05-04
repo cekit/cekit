@@ -939,7 +939,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
 
     cfgcontents = """
 [common]
-fetch_artifact_domains = https://foo.domain,http://another.domain/path/name
+fetch_artifact_domains = https://foo.domain, http://another.domain/path/name
 ssl_verify = False
     """
     cfgfile = os.path.join(str(tmpdir), "config")
@@ -956,7 +956,7 @@ ssl_verify = False
     descriptor['artifacts'] = [
         {'name': 'artifact_name', 'sha256': '123456', 'url': 'https://foo.domain/bar.jar'},
         {'name': 'another_artifact_name', 'sha256': '654321', 'url': 'http://another.domain/path/name/bar.jar'},
-        {'name': 'not_allowed_in_fetch', 'sha256': '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', 'url': 'http://another.domain/bar.jar'}
+        {'name': 'not_allowed_in_fetch', 'sha256': '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', 'url': 'http://another.domain/wrong.jar'}
     ]
 
     run_osbs(descriptor, str(tmpdir), mocker)
@@ -970,6 +970,8 @@ ssl_verify = False
     assert fetch_artifacts[1] == {'sha256': '654321',
                                   'target': 'another_artifact_name', 'url': 'http://another.domain/path/name/bar.jar'}
 
+    assert "Ignoring http://another.domain/wrong.jar as restricted by https://foo.domain, http://another.domain/path/name" in caplog.text
+    assert "Executing '['/usr/bin/rhpkg', 'new-sources', 'not_allowed_in_fetch']'" in caplog.text
     assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
