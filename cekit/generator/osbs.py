@@ -74,7 +74,6 @@ class OSBSGenerator(Generator):
         url_description = {}
 
         fad = config.get('common', 'fetch_artifact_domains')
-        rh = config.get('common', 'redhat')
 
         for image in self.images:
             for artifact in image.all_artifacts:
@@ -88,11 +87,12 @@ class OSBSGenerator(Generator):
                     if fad is not None:
                         # Verify if the URL can be used in fetch-artifact-url or now
                         for d in fad.split(","):
-                            u = urlparse(d)
-                            logger.warning("#### URL {}{}".format(u.netloc, u.path))
+                            u = urlparse(d.strip())
+                            logger.debug("Parsed URL '{}' and path '{}'".format(u.netloc, u.path))
                             if u.netloc + u.path in artifact['url']:
                                 process_fetch = True
                         if not process_fetch:
+                            artifact['lookaside'] = True
                             logger.info("Ignoring {} as restricted by {}".format(artifact['url'], fad))
                     else:
                         # Just process all UrlResource
