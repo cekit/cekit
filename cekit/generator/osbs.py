@@ -3,8 +3,12 @@ import logging
 import os
 import sys
 import tempfile
-from urllib.parse import urlparse
 import yaml
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 from cekit import crypto
 from cekit.config import Config
