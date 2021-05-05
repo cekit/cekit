@@ -970,7 +970,7 @@ ssl_verify = False
     assert fetch_artifacts[1] == {'sha256': '654321',
                                   'target': 'another_artifact_name', 'url': 'http://another.domain/path/name/bar.jar'}
 
-    assert "Ignoring http://another.domain/wrong.jar as restricted by https://foo.domain, http://another.domain/path/name" in caplog.text
+    assert "Ignoring http://another.domain/wrong.jar as restricted to ['https://foo.domain', 'http://another.domain/path/name']" in caplog.text
     assert "Executing '['/usr/bin/rhpkg', 'new-sources', 'not_allowed_in_fetch']'" in caplog.text
     assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
