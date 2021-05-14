@@ -1293,7 +1293,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
 
 
-def test_osbs_builder_with_rhpam(tmpdir, caplog):
+def test_osbs_builder_with_rhpam_1(tmpdir, caplog):
     """
     Verify that multi-stage build has Cachito instructions enabled.
     """
@@ -1301,7 +1301,7 @@ def test_osbs_builder_with_rhpam(tmpdir, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     shutil.copytree(
-        os.path.join(os.path.dirname(__file__), 'images', 'rhpam'),
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam1'),
         os.path.join(str(tmpdir), 'rhpam')
     )
 
@@ -1357,6 +1357,184 @@ redhat = True
             version="7.11" 
 ###### /
 ###### END image 'operator-builder:7.11'
+
+    RUN rm -rf $REMOTE_SOURCE_DIR
+
+## /
+## END builder image
+
+## START target image rhpam-7/rhpam-kogito-operator:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+
+    USER root
+
+###### START image 'rhpam-7/rhpam-kogito-operator:7.11'
+###### \\
+        # Copy 'rhpam-7/rhpam-kogito-operator' image stage artifacts
+        COPY --from=operator-builder /workspace/rhpam-kogito-operator-manager /usr/local/bin/rhpam-kogito-operator-manager
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined labels
+        LABEL \\
+            com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
+            description="Runtime Image for the RHPAM Kogito Operator"  \\
+            io.cekit.version="3.11.0.dev0"  \\
+            io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
+            io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
+            io.openshift.tags="rhpam,kogito,operator"  \\
+            maintainer="bsig-cloud@redhat.com"  \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            summary="Runtime Image for the RHPAM Kogito Operator"  \\
+            version="7.11" 
+###### /
+###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
+
+
+
+    # Switch to 'root' user and remove artifacts and modules
+    USER root
+    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
+    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    # Define the user
+    USER 1001
+## /
+## END target image""" in dockerfile
+    container_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'container.yaml')
+    assert os.path.exists(container_path) is True
+    with open(container_path, 'r') as _file:
+        containerfile = _file.read()
+        print("\n" + containerfile + "\n")
+        assert """image_build_method: imagebuilder
+platforms:
+  only:
+  - x86_64
+remote_source:
+  pkg_managers:
+  - gomod
+  ref: db4a5d18f5f52a64083d8f1bd1776ad60a46904c
+  repo: https://github.com/kiegroup/rhpam-kogito-operator""" in containerfile
+
+
+def test_osbs_builder_with_rhpam_2(tmpdir, caplog):
+    """
+    Verify that multi-stage build with dual configuration/container (for Cachito) will fail.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam2'),
+        os.path.join(str(tmpdir), 'rhpam')
+    )
+
+    cfgcontents = """
+[common]
+redhat = True
+    """
+    cfgfile = os.path.join(str(tmpdir), "config.cfg")
+    with open(cfgfile, 'w') as _file:
+        _file.write(cfgcontents)
+
+    with Chdir(os.path.join(str(tmpdir), 'rhpam')):
+        result = CliRunner().invoke(cli, ['--config', cfgfile, '-v', '--work-dir', str(tmpdir),
+                                          'build', '--dry-run', 'osbs'], catch_exceptions=True)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
+
+        assert result.exit_code == 1
+
+    assert "Found multiple container definitions " in caplog.text
+
+
+def test_osbs_builder_with_rhpam_3(tmpdir, caplog):
+    """
+    Verify that multi-stage build has Cachito instructions enabled.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam3'),
+        os.path.join(str(tmpdir), 'rhpam')
+    )
+
+    cfgcontents = """
+[common]
+redhat = True
+    """
+    cfgfile = os.path.join(str(tmpdir), "config.cfg")
+    with open(cfgfile, 'w') as _file:
+        _file.write(cfgcontents)
+
+    run_cekit((os.path.join(str(tmpdir), 'rhpam')), parameters=['--config', cfgfile, '-v', '--work-dir', str(tmpdir),
+                                                                'build', '--dry-run', 'osbs'])
+
+    dockerfile_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+        print("\n" + dockerfile + "\n")
+        assert """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
+
+## START builder image operator-builder-one:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder-one
+    USER root
+
+###### START module 'org.kie.kogito.builder:7.11'
+###### \\
+        # Copy 'org.kie.kogito.builder' module general artifacts to '/workspace/' destination
+        COPY \\
+            main.go \\
+            /workspace/
+        # Copy 'org.kie.kogito.builder' module content
+        COPY modules/org.kie.kogito.builder /tmp/scripts/org.kie.kogito.builder
+        # Custom scripts from 'org.kie.kogito.builder' module
+        USER root
+        RUN [ "sh", "-x", "/tmp/scripts/org.kie.kogito.builder/install.sh" ]
+###### /
+###### END module 'org.kie.kogito.builder:7.11'
+
+###### START image 'operator-builder-one:7.11'
+###### \\
+        # Set 'operator-builder-one' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'operator-builder-one' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            version="7.11" 
+###### /
+###### END image 'operator-builder-one:7.11'
+
+
+## /
+## END builder image
+## START builder image operator-builder-two:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder-two
+    USER root
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+
+###### START image 'operator-builder-two:7.11'
+###### \\
+        # Set 'operator-builder-two' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'operator-builder-two' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            version="7.11" 
+###### /
+###### END image 'operator-builder-two:7.11'
 
     RUN rm -rf $REMOTE_SOURCE_DIR
 
