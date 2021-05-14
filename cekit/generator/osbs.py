@@ -13,6 +13,7 @@ except ImportError:
 from cekit import crypto
 from cekit.config import Config
 from cekit.descriptor.resource import _PlainResource, _UrlResource
+from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
 
@@ -52,22 +53,27 @@ class OSBSGenerator(Generator):
 
     def _prepare_container_yaml(self):
         container_f = os.path.join(self.target, 'image', 'container.yaml')
-        container = self.image.get('osbs', {}).get('configuration', {}).get('container')
+        containers = []
 
-        if not container:
-            # No container definition in current image; check if one in multi-stage.
-            for i in self.builder_images:
-                container = i.get('osbs', {}).get('configuration', {}).get('container', {})
-                if container:
-                    break
-        if not container:
+        if self.image.get('osbs', {}).get('configuration', {}).get('container'):
+            containers.append(self.image.get('osbs', {}).get('configuration', {}).get('container'))
+
+        # Check all images (for multi-stage) if they contain a container definition
+        for i in self.builder_images:
+            if i.get('osbs', {}).get('configuration', {}).get('container'):
+                containers.append(i.get('osbs', {}).get('configuration', {}).get('container', {}))
+
+        if len(containers) > 1:
+            logger.error("Found multiple container definitions ({})".format(containers))
+            raise CekitError("Found multiple container definitions ({})!".format(containers))
+        elif len(containers) == 0:
             return
 
         if not os.path.exists(os.path.dirname(container_f)):
             os.makedirs(os.path.dirname(container_f))
 
         with open(container_f, 'w') as _file:
-            yaml.safe_dump(container, _file, default_flow_style=False)
+            yaml.safe_dump(containers[0], _file, default_flow_style=False)
 
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template
