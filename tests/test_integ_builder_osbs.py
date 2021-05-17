@@ -17,6 +17,7 @@ from click.testing import CliRunner
 
 from cekit.cli import cli
 from cekit.tools import Chdir
+from cekit.version import __version__
 
 image_descriptor = {
     'schema_version': 1,
@@ -1281,7 +1282,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
         # Set 'test/image' image defined labels
         LABEL \\
             foo="bar"  \\
-            io.cekit.version="3.11.0.dev0"  \\
+            io.cekit.version="VVVVV"  \\
             labela="a"  \\
             name="test/image"  \\
             version="1.0" 
@@ -1289,7 +1290,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
 ###### END image 'test/image:1.0'
 
     RUN rm -rf $REMOTE_SOURCE_DIR
-""" in dockerfile
+""".replace("VVVVV",  __version__) in dockerfile
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
 
 
@@ -1382,7 +1383,7 @@ redhat = True
         LABEL \\
             com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
             description="Runtime Image for the RHPAM Kogito Operator"  \\
-            io.cekit.version="3.11.0.dev0"  \\
+            io.cekit.version="VVVVV"  \\
             io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
             io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
             io.openshift.tags="rhpam,kogito,operator"  \\
@@ -1402,7 +1403,7 @@ redhat = True
     # Define the user
     USER 1001
 ## /
-## END target image""" in dockerfile
+## END target image""".replace("VVVVV",  __version__) in dockerfile
     container_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'container.yaml')
     assert os.path.exists(container_path) is True
     with open(container_path, 'r') as _file:
@@ -1560,7 +1561,7 @@ redhat = True
         LABEL \\
             com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
             description="Runtime Image for the RHPAM Kogito Operator"  \\
-            io.cekit.version="3.11.0.dev0"  \\
+            io.cekit.version="VVVVV"  \\
             io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
             io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
             io.openshift.tags="rhpam,kogito,operator"  \\
@@ -1580,7 +1581,7 @@ redhat = True
     # Define the user
     USER 1001
 ## /
-## END target image""" in dockerfile
+## END target image""".replace("VVVVV",  __version__) in dockerfile
     container_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'container.yaml')
     assert os.path.exists(container_path) is True
     with open(container_path, 'r') as _file:
