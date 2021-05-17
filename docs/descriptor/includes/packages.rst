@@ -19,6 +19,7 @@ as the package manager that is used to manage packages in this image.
             - name: extras
                 id: rhel7-extras-rpm
         manager: dnf
+        manager_flags:
         install:
             - mongodb24-mongo-java-driver
             - postgresql-jdbc
@@ -33,6 +34,14 @@ as the package manager that is used to manage packages in this image.
         manager: apk
         install:
             - python3
+
+.. code-block:: yaml
+    :caption: Example package section for APT-based distro
+
+    packages:
+        manager: apt-get
+        install:
+            - python3-minimal
 
 Packages to install
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -62,7 +71,7 @@ Required
 It is possible to define package manager used in the image
 used to install packages as part of the build process.
 
-Currently available options are ``yum``, ``dnf``, ``microdnf`` and ``apk``.
+Currently available options are ``yum``, ``dnf``, ``microdnf``, ``apt-get`` and ``apk``.
 
 .. note::
     If you do not specify this key the default value is ``yum``.
@@ -74,12 +83,44 @@ Currently available options are ``yum``, ``dnf``, ``microdnf`` and ``apk``.
 .. note::
     For ``yum``, ``dnf`` and ``microdnf`` the flag ``--setopt=tsflags=nodocs`` is automatically added. For ``microdnf``, the flag ``--setopt=install_weak_deps=0`` is also added.
 
+-- note::
+    For ``apt-get`` the flag ``--no-install-recommends`` is also added.
+
 .. code-block:: yaml
 
     packages:
         manager: dnf
         install:
             - git
+
+
+Package manager flags
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is an optional key. It is only needed to **override** the default package manager flag values. For example, with a
+package manager of ``microdnf``. the default flags are ``--setopt=tsflags=nodocs --setopt=install_weak_deps=0``.
+
+.. code-block:: yaml
+
+    packages:
+        manager: microdnf
+        manager_flags:
+
+This will override the flags meaning that *no* flags are passed to ``microdnf``.
+
+
+.. code-block:: yaml
+
+    packages:
+        manager: microdnf
+        manager_flags: --setopt=tsflags=nodocs
+
+This will also override the flags but only add the single option which is useful for older ``microdnf``
+versions (pre 3.4.0) which do not support extended ``setopt`` commands.
+
+
+
+
+
 
 Package repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -142,7 +183,7 @@ RPM repository
 .. note::
     Available only on RPM-based distributions.
 
-This ways is using repository configuration files and related keys packaged as an RPM.
+This way is using repository configuration files and related keys packaged as an RPM.
 
 **Example**: To enable `CentOS SCL <https://wiki.centos.org/AdditionalResources/Repositories/SCL>`_ inside the
 image you should define repository in a following way:
@@ -163,6 +204,10 @@ image you should define repository in a following way:
             repositories:
                 - name: epel
                   rpm: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+.. warning::
+    Images with `microdnf` do not not support installing from a remote URL. To work around this, the current recommended option is
+    to use a module and use ``rpm -i`` to enable the new repo.
 
 URL repository
 *******************

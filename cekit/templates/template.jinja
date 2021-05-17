@@ -28,18 +28,18 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  #
  # Works only when the package manager is supported.
  #}
-{%- macro repo_install(pkg_manager, rpm) -%}
+{%- macro repo_install(pkg_manager, pkg_manager_flags, rpm) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager) }} install -y {{ rpm }}
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} install -y {{ rpm }}
     {% endif %}
 {%- endmacro -%}
 
 {#
  # Installs packages using specified package manager.
  #}
-{%- macro pkg_install(pkg_manager, packages) -%}
+{%- macro pkg_install(pkg_manager, pkg_manager_flags, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
     {% if pkg_manager == 'microdnf' %}
             && {{ pkg_manager }} clean all \
     {% endif %}
@@ -57,7 +57,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {%- endmacro -%}
 
 {#
- # Macro for processing content of a module (or image). 
+ # Macro for processing content of a module (or image).
  #
  # 1. Copies any defined general artifacts
  # 2. Copies any defined stage artifacts (built in previous stages as part of multi-stage builds)
@@ -106,7 +106,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Switch to 'root' user to install '{{ module.name }}' {{ module_type }} defined packages
         USER root
         # Install packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_install(parent_image.packages.manager, module.packages.install) }}
+        RUN {{ pkg_install(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.install) }}
         {% endif -%}
 
         {% if module.envs|selectattr("value")|list|length > 0 %}
@@ -162,6 +162,14 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if animage.from != 'scratch' %}
     USER root
     {% endif -%}
+    {#
+     # Add Cachito support
+     #}
+    {%if helper.cachito(animage) %}
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+    {% endif %}
     {% if animage.packages.repositories_injected %}
 
     # Add custom repo files
@@ -171,7 +179,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% for repo in animage.packages.repositories %}
     {% if repo.present and repo.rpm %}
 
-    RUN {{ repo_install(animage.packages.manager, repo.rpm) }}
+    RUN {{ repo_install(animage.packages.manager, animage.packages.manager_flags, repo.rpm) }}
     {% endif %}
     {% endfor %}
     {% endif %}
@@ -180,6 +188,9 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {{ process_module(helper.module(to_install), animage) }}
     {% endfor %}
 {{ process_module(animage) }}
+    {%if helper.cachito(animage) %}
+    RUN rm -rf $REMOTE_SOURCE_DIR
+    {% endif %}
 {%- endmacro -%}
 
 
@@ -191,21 +202,20 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 
 {% for builder_image in builders %}
 ## START builder image {{ builder_image.name }}:{{ builder_image.version }}
-## \  
+## \
     FROM {{ builder_image.from }} AS {{ builder_image.name }}
-
 {{ process_image(builder_image) }}
 ## /
 ## END builder image
 {% endfor %}
 
-{%if helper.cachito(image) %}
-COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
-{% endif %}
-
 ## START target image {{ image.name }}:{{ image.version }}
 ## \
     FROM {{ image.from }}
+
+    {%if helper.extra_dir_target(image) %}
+    COPY {{ helper.extra_dir(image) }} {{ helper.extra_dir_target(image) }}
+    {% endif %}
 
 {{ process_image(image) }}
 
@@ -251,7 +261,3 @@ COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
     {% endif -%}
 ## /
 ## END target image
-
-{%if helper.cachito(image) %}
-RUN rm -rf $REMOTE_SOURCE_DIR
-{% endif %}

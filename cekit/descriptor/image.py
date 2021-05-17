@@ -237,8 +237,8 @@ class Image(Descriptor):
                     self.packages._descriptor.pop('content_sets', None)
                     self.packages._descriptor.pop('content_sets_file', None)
 
-            if override.osbs is not None:
-                self.osbs = override.osbs.merge(self.osbs)
+            # Merge override osbs items into self.
+            self.osbs = self.osbs.merge(override.osbs)
 
             for package in override.packages.install:
                 if package not in self.packages.install:
@@ -248,7 +248,6 @@ class Image(Descriptor):
             image_artifacts = Image._to_dict(self.artifacts)
             for i, artifact in enumerate(override.artifacts):
                 name = artifact.name
-                # logger.debug("### Looking to apply override '{}' to artifact '{}'".format(artifact, artifact_overrides.get(name)))
                 # override.artifact contains override values WITH defaults.
                 # override.original_descriptor contains override value WITHOUT defaults.
                 # artifact_overrides contains original dictionary

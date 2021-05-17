@@ -23,6 +23,7 @@ config = Config()
 
 artifact_dest = '/tmp/artifacts/'
 
+
 def create_resource(descriptor, **kwargs):
     """
     Module method responsible for instantiating proper resource object
@@ -407,6 +408,7 @@ class _UrlResource(Resource):
         # Normalize the URL
         self['url'] = descriptor.get('url').strip()
 
+    # Avoid protected access warning
     def download_file(self, url, destination):
         return self._download_file(url, destination, False)
 

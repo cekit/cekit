@@ -15,15 +15,15 @@ docker-squash = "*"
 click = "*"
 pylint = "*"
 autopep8 = "*"
-odcs = "*"
 "zest.releaser" = "*"
 
 [packages]
 pykwalify = ">=1.6.0,<1.8.0"
-colorlog = ">=2.10.0"
+colorlog = ">=2.10.0,<=5.1"
 PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
 click = ">=6.7"
+odcs = ">=0.2.50"
 
 [requires]
 python_version = "*"

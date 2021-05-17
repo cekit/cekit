@@ -6,20 +6,10 @@ import logging
 
 import pytest
 
-from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.builders.docker_builder import DockerBuilder
 from cekit.tools import Map
 from tests.utils import merge_two_dicts
-
-
-@pytest.fixture(autouse=True)
-def reset_config():
-    config.cfg['common'] = {}
-
-
-config = Config()
-config.cfg['common'] = {'redhat': True}
 
 docker_success_output = [
     {"stream": "Step 1/18 : FROM rhel7:7.5-released\n"},

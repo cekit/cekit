@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 import pytest
 import yaml
@@ -117,6 +118,42 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     generate(target, ['build', '--dry-run', 'podman'], desc_part)
     regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm')
     regex_dockerfile(target, 'RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b')
+    regex_dockerfile(target, 'rpm -q a b')
+
+
+def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_1(tmpdir, mocker):
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+        'state': 2, 'result_repofile': 'url'})
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'manager': 'microdnf',
+                              'manager_flags': '',
+                              'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a', 'b']}}
+
+    generate(target, ['build', '--dry-run', 'podman'], desc_part)
+    regex_dockerfile(target, 'RUN microdnf  install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf  install -y a b')
+    regex_dockerfile(target, 'rpm -q a b')
+
+
+def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_2(tmpdir, mocker):
+    mocker.patch('odcs.client.odcs.ODCS.new_compose', return_value={'id': 12})
+    mocker.patch('odcs.client.odcs.ODCS.wait_for_compose', return_value={
+        'state': 2, 'result_repofile': 'url'})
+    mocker.patch.object(Repository, 'fetch')
+    target = str(tmpdir.mkdir('target'))
+    desc_part = {'packages': {'manager': 'microdnf',
+                              'manager_flags': '--setopt=tsflags=nodocs',
+                              'repositories': [{'name': 'foo',
+                                                'rpm': 'foo-repo.rpm'}],
+                              'install': ['a', 'b']}}
+
+    generate(target, ['build', '--dry-run', 'podman'], desc_part)
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm')
+    regex_dockerfile(target, 'RUN microdnf --setopt=tsflags=nodocs install -y a b')
     regex_dockerfile(target, 'rpm -q a b')
 
 
@@ -256,7 +293,7 @@ def test_unsupported_package_manager(tmpdir, caplog):
 def test_default_package_manager(tmpdir):
     target = str(tmpdir.mkdir('target'))
 
-    generate(target, ['-v', 'build', '--dry-run', 'podman'],
+    generate(target, ['--nocolor', '-v', 'build', '--dry-run', 'podman'],
              descriptor={'packages': {
                  'repositories': [{'name': 'foo',
                                    'rpm': 'foo-repo.rpm'}],
@@ -357,6 +394,25 @@ def test_supported_package_managers_apk(tmpdir, caplog):
     regex_dockerfile(target, "RUN apk  add a")
     regex_dockerfile(target, "apk info -e a")
     assert "Package manager apk does not support defining repositories, skipping all repositories" in caplog.text
+
+
+def test_supported_package_managers_apt(tmpdir, caplog):
+    target = str(tmpdir.mkdir('target'))
+
+    generate(
+        target,
+        ['-v', 'build', '--dry-run', 'podman'],
+        descriptor={
+            'packages': {
+                'manager': 'apt-get',
+                'install': ['a'],
+                'repositories': [{'name': 'foo',
+                                  'rpm': 'foo-repo.rpm'}]
+            }
+        })
+    regex_dockerfile(target, "RUN apt-get update && apt-get --no-install-recommends install -y a")
+    regex_dockerfile(target, "dpkg-query --list a")
+    assert "Package manager apt-get does not support defining repositories, skipping all repositories" in caplog.text
 
 
 # https://github.com/cekit/cekit/issues/406
@@ -465,6 +521,8 @@ def generate(image_dir, command, descriptor=None, exit_code=0):
 
     with Chdir(image_dir):
         result = CliRunner().invoke(cli, command, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
 
         assert result.exit_code == exit_code
 

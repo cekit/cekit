@@ -12,6 +12,7 @@ map:
   configuration: {type: any}
   koji_target: {type: str}
   extra_dir: {type: str}
+  extra_dir_target: {type: str}
 
 """)
 
@@ -28,6 +29,7 @@ repository_schema = yaml.safe_load("""
 """)
 
 logger = logging.getLogger('cekit')
+
 
 class Osbs(Descriptor):
     """
@@ -48,6 +50,14 @@ class Osbs(Descriptor):
 
         self['repository'] = Repository(self._descriptor.get(
             'repository', {}), self.descriptor_path)
+
+    def merge(self, descriptor):
+        if not descriptor:
+            return self
+        for k2, v2 in descriptor.items():
+            if v2:
+                self[k2] = v2
+        return self
 
     @property
     def name(self):
@@ -76,6 +86,14 @@ class Osbs(Descriptor):
     @extra_dir.setter
     def extra_dir(self, value):
         self._descriptor['extra_dir'] = value
+
+    @property
+    def extra_dir_target(self):
+        return self.get('extra_dir_target')
+
+    @extra_dir_target.setter
+    def extra_dir_target(self, value):
+        self._descriptor['extra_dir_target'] = value
 
     @property
     def koji_target(self):
@@ -115,6 +133,7 @@ class Configuration(Descriptor):
         remote_source = self.get('container', {}).get('remote_source', {})
         if remote_source:
             logger.debug("Cachito definition is {}".format(remote_source))
+
 
 class Repository(Descriptor):
     def __init__(self, descriptor, descriptor_path):

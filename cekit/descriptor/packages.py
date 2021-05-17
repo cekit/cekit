@@ -21,7 +21,8 @@ map:
   install:
     seq:
       - {type: any}
-  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk']}""")
+  manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}
+  manager_flags: {type: str}""")
 
 
 repository_schema = yaml.safe_load("""
@@ -94,6 +95,10 @@ class Packages(Descriptor):
         return self.get('manager')
 
     @property
+    def manager_flags(self):
+        return self.get('manager_flags')
+
+    @property
     def repositories(self):
         return self.get('repositories')
 
@@ -145,7 +150,7 @@ class Repository(Descriptor):
         if 'url' not in descriptor:
             descriptor['url'] = {}
 
-        # we dont want to merge any of theese
+        # we don't want to merge any of these
         self.skip_merging = ['rpm',
                              'id',
                              'url']

@@ -3,7 +3,7 @@ import os
 
 class TemplateHelper(object):
 
-    SUPPORTED_PACKAGE_MANAGERS = ['yum', 'dnf', 'microdnf', 'apk']
+    SUPPORTED_PACKAGE_MANAGERS = ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']
 
     def __init__(self, module_registry):
         self._module_registry = module_registry
@@ -85,14 +85,37 @@ class TemplateHelper(object):
         return port_list
 
     def cachito(self, image):
-        if image.get('osbs', {}).get('configuration', {}).get('container', {}).get('remote_source'):
+        if image.get('osbs', {}).configuration.get('container', {}).get('remote_source'):
             return True
 
-    def package_manager_flags(self, pkg_mgr):
-        default = "--setopt=tsflags=nodocs"
-        if "apk" in pkg_mgr:
+    def extra_dir(self, image):
+        return image.get('osbs', {}).extra_dir
+
+    def extra_dir_target(self, image):
+        return image.get('osbs', {}).extra_dir_target
+
+    def package_manager_flags(self, pkg_mgr, pkg_mgr_flags):
+        if pkg_mgr_flags is not None:
+            # Using None check to allow a definition of "manager_flags: ''" to override the default values.
+            return pkg_mgr_flags
+        elif "apk" in pkg_mgr:
             return ""
-        elif "microdnf" in pkg_mgr:
+        elif "apt-get" in pkg_mgr:
+            #
+            # This is a HACK...
+            #
+            # Debian based apt-get needs an *update* step
+            # *before* its "install" step...
+            #
+            # We really *should* add an additional step to the
+            # main template repo_install and pkg_install macros
+            #
+            # However this works at the moment...
+            #
+            return "update && apt-get --no-install-recommends"
+
+        default = "--setopt=tsflags=nodocs"
+        if "microdnf" in pkg_mgr:
             return "--setopt=install_weak_deps=0 " + default
         else:
             return default
@@ -106,5 +129,7 @@ class TemplateHelper(object):
     def package_manager_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "apk info -e"
+        elif "apt-get" in pkg_mgr:
+            return "dpkg-query --list"
         else:
             return "rpm -q"

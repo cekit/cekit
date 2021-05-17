@@ -3,6 +3,8 @@
 from __future__ import print_function
 
 import os
+import sys
+
 import yaml
 import pytest
 
@@ -44,6 +46,9 @@ def run_cekit(image_dir, args=None, descriptor=None):
             yaml.dump(descriptor, fd, default_flow_style=False)
 
         result = CliRunner().invoke(cli, args, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
+
         assert result.exit_code == 0
         return result
 
@@ -67,7 +72,9 @@ def test_custom_help_template_path(tmpdir, path_type):
         with open('image.yaml', 'w') as fd:
             yaml.dump(my_image_descriptor, fd, default_flow_style=False)
 
-        CliRunner().invoke(cli, ['-v', 'build', '--dry-run', 'docker'], catch_exceptions=False)
+        result = CliRunner().invoke(cli, ['-v', 'build', '--dry-run', 'docker'], catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
 
         with open("target/image/help.md", "r") as fd:
             contents = fd.read()

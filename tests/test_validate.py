@@ -856,6 +856,27 @@ def test_run_alpine(tmpdir):
 
     run_cekit(image_dir, parameters=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS, cannot run Podman")
+def test_run_debian_slim(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['from'] = 'debian:stable-slim'
+    img_desc['packages'] = {
+        'install': ['python3-minimal'],
+        'manager': 'apt-get'
+    }
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    run_cekit(image_dir, parameters=['-v', 'build', 'podman'], env={'BUILDAH_LAYERS': 'false'})
+
 
 def test_execution_order(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
@@ -1325,6 +1346,37 @@ def test_validation_of_image_and_module_descriptors(tmpdir, mocker, caplog):
     assert "The --validate parameter was specified, generation will not be performed, exiting" in caplog.text
 
 
+def test_color(tmpdir, mocker, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    result = run_cekit(image_dir, ['-v',
+                                   '--nocolor',
+                                   'build',
+                                   '--validate',
+                                   'podman'])
+
+    assert "\033" not in result.output
+
+    result = run_cekit(image_dir, ['-v',
+                                   'build',
+                                   '--validate',
+                                   'podman'])
+
+    assert "\033" in result.output
+
+    result = run_cekit(image_dir, ['-v',
+                                   'build',
+                                   '--validate',
+                                   'podman'],
+                       env={'NO_COLOR': 'TRUE'})
+
+    assert "\033" not in result.output
+
+
 # https://github.com/cekit/cekit/issues/551
 def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descriptor(tmpdir, mocker, caplog):
     image_dir = str(tmpdir.mkdir('source'))
@@ -1356,6 +1408,9 @@ def run_cekit(cwd, parameters=None, message=None, env=None):
 
     with Chdir(cwd):
         result = CliRunner(env=env).invoke(cli, parameters, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
+
         assert result.exit_code == 0
 
         if message:
@@ -1371,6 +1426,8 @@ def run_cekit_exception(cwd,
                         message=None):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
 
         assert isinstance(result.exception, exception)
         assert result.exit_code == exit_code

@@ -1,0 +1,16 @@
+name: org.kie.kogito.builder
+version: "7.11"
+description: Builds the operator binary
+
+envs:
+  - name: "GOPRIVATE"
+    value: ""
+
+artifacts:
+    - name: main
+      path: "../../../../main.go"
+      target: "main.go"
+      dest: /workspace/
+
+execute:
+  - script: install.sh

@@ -91,7 +91,6 @@ class OSBSBuilder(Builder):
 
     def _prepare_dist_git(self):
         repository_key = self.generator.image.get('osbs', {}).get('repository', {})
-
         repository = repository_key.get('name')
         branch = repository_key.get('branch')
 
@@ -116,9 +115,12 @@ class OSBSBuilder(Builder):
                           for a in all_artifacts if not isinstance(a, (_UrlResource, _PlainResource, _ImageContentResource))]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
-
         self.artifacts += [a.target
                            for a in all_artifacts if isinstance(a, _PlainResource) and a.get('lookaside')]
+        # Handle lookaside cache for URL based artifacts as well. This may happen if artifacts have been constrained
+        # by fetch_artifact_domains
+        self.artifacts += [a.target
+                           for a in all_artifacts if isinstance(a, _UrlResource) and a.get('lookaside')]
 
         if 'packages' in self.generator.image and 'set_url' in self.generator.image['packages']:
             self._rhpkg_set_url_repos = [x['url']['repository']
@@ -136,6 +138,7 @@ class OSBSBuilder(Builder):
                                 self.target,
                                 repository,
                                 branch,
+                                self.generator.image.get('osbs', {}).extra_dir,
                                 self.params.assume_yes)
 
         self.dist_git.prepare(self.params.stage, self.params.user)
@@ -334,11 +337,12 @@ class DistGit(object):
 
         return name, branch, commit
 
-    def __init__(self, output, source, repo, branch, noninteractive=False):
+    def __init__(self, output, source, repo, branch, osbs_extra, noninteractive=False):
         self.output = output
         self.source = source
         self.repo = repo
         self.branch = branch
+        self.osbs_extra = osbs_extra
         self.dockerfile = os.path.join(self.output, "Dockerfile")
         self.noninteractive = noninteractive
 
@@ -403,6 +407,10 @@ class DistGit(object):
 
                 if d in git_files:
                     subprocess.check_call(["git", "rm", "-rf", d])
+
+            if os.path.exists(self.osbs_extra):
+                LOGGER.info("Removing old osbs extra directory : {}".format(self.osbs_extra))
+                subprocess.check_call(["git", "rm", "-rf", self.osbs_extra])
 
             if os.path.exists("fetch-artifacts-url.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")

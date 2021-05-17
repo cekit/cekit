@@ -1,15 +1,15 @@
 import logging
-import pytest
 import subprocess
 import sys
-import yaml
-
 from contextlib import contextmanager
 
-from cekit.descriptor.base import _merge_descriptors, _merge_lists
-from cekit.descriptor import Descriptor, Image, Module, Overrides, Run
-from cekit.errors import CekitError
+import pytest
+import yaml
+
 from cekit import tools
+from cekit.descriptor import Descriptor, Image, Module, Overrides, Run, Osbs
+from cekit.descriptor.base import _merge_descriptors, _merge_lists
+from cekit.errors import CekitError
 
 rhel_7_os_release = '''NAME="Red Hat Enterprise Linux Server"
 VERSION="7.7 (Maipo)"
@@ -67,6 +67,78 @@ def test_merging_description_image():
 
     merged = _merge_descriptors(desc1, desc2)
     assert 'description' not in merged
+
+
+def test_merging_description_osbs():
+    yaml.SafeDumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
+    desc1 = Osbs({'extra_dir_target': 'foo'}, None)
+    desc2 = Osbs({'repository': {'branch': 'branch', 'name': 'repo'}}, None)
+#    print("\n### Output is:\n" + yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper))
+
+    merged = _merge_descriptors(desc1, desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration: {}
+extra_dir_target: foo
+repository:
+  branch: branch
+  name: repo
+"""
+
+    merged = desc1.merge(desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration: {}
+extra_dir_target: foo
+repository:
+  branch: branch
+  name: repo
+"""
+
+    desc1 = Osbs({'extra_dir_target': 'foo'}, None)
+    desc2 = Osbs({}, None)
+    merged = desc1.merge(desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration: {}
+extra_dir_target: foo
+repository: {}
+"""
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'repository': {'branch': 'branch', 'name': 'repo'}}, None)
+    desc2 = Osbs({}, None)
+    merged = desc1.merge(desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration: {}
+extra_dir_target: foo
+repository:
+  branch: branch
+  name: repo
+"""
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'repository': {'name': 'foobar', 'branch': 'foobranch'}}, None)
+    desc2 = Osbs({'repository': {'branch': 'branch', 'name': 'repo'}}, None)
+    merged = desc1.merge(desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration: {}
+extra_dir_target: foo
+repository:
+  branch: branch
+  name: repo
+"""
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'configuration': {'container': {'image_build_method': 'imagebuilder'}}}, None)
+    desc2 = Osbs({}, None)
+    merged = desc1.merge(desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration:
+  container:
+    image_build_method: imagebuilder
+extra_dir_target: foo
+repository: {}
+"""
+
+    desc1 = Osbs({'extra_dir_target': 'foo', 'configuration': {'container': {'image_build_method': 'imagebuilder'}}}, None)
+    desc2 = Osbs({'configuration': {'container': {'remote_source': {'repo': 'https://github.com/kiegroup/rhpam-kogito-operator'}}}}, None)
+    merged = desc1.merge(desc2)
+    assert yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper) == """configuration:
+  container:
+    remote_source:
+      repo: https://github.com/kiegroup/rhpam-kogito-operator
+extra_dir_target: foo
+repository: {}
+"""
 
 
 def test_merging_description_modules():

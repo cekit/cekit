@@ -10,9 +10,6 @@ CEKit installation on other platforms is still possible via ``pip``.
 RPM packages are distributed via regular repositories in case of Fedora
 and the EPEL repository for CentOS/RHEL.
 
-.. warning::
-    Currently packaged version is a snapshot release of the upcoming CEKit 3.0.
-
 .. tip::
     You can see latest submitted package updates `submitted in Bodhi <https://bodhi.fedoraproject.org/updates/?packages=cekit>`_.
 
@@ -82,3 +79,11 @@ If you don't want to (or cannot) use Virtualenv, the best idea is to install CEK
 .. note::
     In this case you may need to add ``~/.local/bin/`` directory to your ``$PATH`` environment variable to
     be able to run the ``cekit`` command.
+    
+.. note::
+    For Debian based distros, you *may* need to pre-install the ``libkrb5-dev`` apt package *before*
+    installing cekit using pip (either inside or outside a virtualenv). You can do this by typing:
+
+.. code-block:: bash
+
+    sudo apt install libkrb5-dev

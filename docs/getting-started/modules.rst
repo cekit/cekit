@@ -142,7 +142,7 @@ Tomcat
    chown user:user -R /home/user
 
 .. code-block:: yaml
-   :caption: module.yml
+   :caption: module.yaml
 
    name: tomcat
    version: 1.0

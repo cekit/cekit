@@ -7,6 +7,8 @@ import os
 import re
 import shutil
 import subprocess
+import sys
+
 import yaml
 
 import pytest
@@ -15,18 +17,6 @@ from click.testing import CliRunner
 
 from cekit.cli import cli
 from cekit.tools import Chdir
-from cekit.config import Config
-
-config = Config()
-
-
-@pytest.fixture(autouse=True)
-def reset_config():
-    config.cfg['common'] = {}
-
-
-config = Config()
-config.cfg['common'] = {'redhat': True}
 
 image_descriptor = {
     'schema_version': 1,
@@ -48,6 +38,8 @@ def run_cekit(cwd,
               message=None, return_code=0):
     with Chdir(cwd):
         result = CliRunner().invoke(cli, parameters, catch_exceptions=False)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
 
         assert result.exit_code == return_code
 
@@ -280,26 +272,153 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     run_osbs(image_descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
-    assert os.path.exists(str(repo_dir.join('file_a'))) is True
-    assert os.path.exists(str(repo_dir.join('file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_b'))) is True
 
     calls = [
-        mocker.call(['git', 'add', '--all', 'file_b']),
-        mocker.call(['git', 'add', '--all', 'file_a']),
+        mocker.call(['git', 'add', '--all', 'osbs_extra']),
         mocker.call(['git', 'add', '--all', 'Dockerfile']),
-        mocker.call(['git', 'add', '--all', 'child']),
-        mocker.call(['git', 'add', '--all', 'a_symlink'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
 
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_b'))) is True
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    assert "Copying 'target/image/file_b' to '{}'...".format(
-        os.path.join(str(repo_dir), 'file_b')) in caplog.text
-    assert "Staging 'file_a'..." in caplog.text
-    assert "Staging 'a_symlink'..." in caplog.text
+    assert "Copying 'target/image/osbs_extra' to '{}'...".format(
+        os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
+    assert "Staging 'osbs_extra'..." in caplog.text
+
+
+def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, caplog):
+    """
+    Checks if content of the 'osbs_extra' directory content is copied to dist-git and embedded in Dockerfile
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+
+    source_dir = tmpdir.mkdir('source')
+    repo_dir = source_dir.mkdir('osbs').mkdir('repo')
+    dist_dir = source_dir.mkdir('osbs_extra')
+    repo_dir_osbs_extra = repo_dir.mkdir('osbs_extra')
+    repo_dir_osbs_extra.mkdir('foobar_original')
+    repo_dir_osbs_extra.join('config_original.yaml').write_text(u'Some content', 'utf8')
+
+    dist_dir.join('file_a').write_text(u'Some content', 'utf8')
+    dist_dir.join('file_b').write_text(u'Some content', 'utf8')
+    dist_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+
+    os.symlink('/etc', str(dist_dir.join('a_symlink')))
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'osbs': {'extra_dir_target': '/foobar'}}
+
+    with open(os.path.join(str(source_dir), 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_osbs(image_descriptor, str(source_dir), mocker, build_command=["build", "--overrides-file", "overrides.yaml", "osbs"])
+
+    assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_b'))) is True
+
+    calls = [
+        mocker.call(['git', 'rm', '-rf', 'osbs_extra']),
+        mocker.call(['git', 'add', '--all', 'osbs_extra']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+    ]
+
+    mock_check_call.assert_has_calls(calls, any_order=True)
+
+    assert os.path.exists(str(repo_dir.join('osbs_extra').join('file_b'))) is True
+    assert len(mock_check_call.mock_calls) == len(calls)
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Removing old osbs extra directory : osbs_extra" in caplog.text
+    assert "Copying 'target/image/osbs_extra' to '{}'...".format(
+        os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
+    assert "Staging 'osbs_extra'..." in caplog.text
+    with open(os.path.join(str(repo_dir), 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+        assert """## START target image test/image:1.0
+## \\
+    FROM centos:7
+
+    COPY osbs_extra /foobar
+
+    USER root
+""" in dockerfile
+
+    assert "COPY osbs_extra /foobar" in dockerfile
+
+
+def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(tmpdir, mocker, caplog):
+    """
+    Checks if content of the 'osbs_extra' directory content is copied to dist-git and embedded in Dockerfile
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+
+    source_dir = tmpdir.mkdir('source')
+    repo_dir = source_dir.mkdir('osbs').mkdir('repo')
+    dist_dir = source_dir.mkdir('foobar')
+    repo_dir.mkdir('foobar')
+
+    dist_dir.join('file_a').write_text(u'Some content', 'utf8')
+    dist_dir.join('file_b').write_text(u'Some content', 'utf8')
+    dist_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+
+    os.symlink('/etc', str(dist_dir.join('a_symlink')))
+
+    mocker.patch.object(subprocess, 'call', return_value=0)
+    mock_check_call = mocker.patch.object(subprocess, 'check_call')
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'osbs': {
+            'extra_dir_target': '/',
+            'extra_dir': 'foobar'
+        }
+    }
+
+    with open(os.path.join(str(source_dir), 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_osbs(image_descriptor, str(source_dir), mocker, build_command=["build", "--overrides-file", "overrides.yaml", "osbs"])
+
+    assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
+    assert os.path.exists(str(repo_dir.join('foobar').join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('foobar').join('file_b'))) is True
+
+    calls = [
+        mocker.call(['git', 'rm', '-rf', 'foobar']),
+        mocker.call(['git', 'add', '--all', 'foobar']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile']),
+    ]
+
+    mock_check_call.assert_has_calls(calls, any_order=True)
+
+    assert os.path.exists(str(repo_dir.join('foobar').join('file_b'))) is True
+    assert len(mock_check_call.mock_calls) == len(calls)
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
+    assert "Removing old osbs extra directory : foobar" in caplog.text
+    assert "Copying 'target/image/foobar' to '{}'...".format(
+        os.path.join(str(repo_dir), 'foobar')) in caplog.text
+    assert "Staging 'foobar'..." in caplog.text
+    with open(os.path.join(str(repo_dir), 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY foobar /" in dockerfile
 
 
 def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
@@ -313,7 +432,7 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
 
     source_dir = tmpdir.mkdir('source')
     repo_dir = source_dir.mkdir('osbs').mkdir('repo')
-    repo_dir.mkdir('child').join('other').write_text(u'Some content', 'utf8')
+    repo_dir.mkdir('osbs_extra').mkdir('child').join('other').write_text(u'Some content', 'utf8')
 
     dist_dir = source_dir.mkdir('osbs_extra')
 
@@ -329,17 +448,15 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     run_osbs(image_descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
-    assert os.path.exists(str(repo_dir.join('file_a'))) is True
-    assert os.path.exists(str(repo_dir.join('file_b'))) is True
-    assert os.path.exists(str(repo_dir.join('child'))) is True
-    assert os.path.exists(str(repo_dir.join('child', 'other'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'child'))) is True
+    assert os.path.exists(str(repo_dir.join('osbs_extra', 'child', 'other'))) is True
 
     calls = [
-        mocker.call(['git', 'add', '--all', 'file_b']),
-        mocker.call(['git', 'add', '--all', 'file_a']),
-        mocker.call(['git', 'add', '--all', 'Dockerfile']),
-        mocker.call(['git', 'add', '--all', 'child']),
-        mocker.call(['git', 'add', '--all', 'a_symlink'])
+        mocker.call(['git', 'rm', '-rf', 'osbs_extra']),
+        mocker.call(['git', 'add', '--all', 'osbs_extra']),
+        mocker.call(['git', 'add', '--all', 'Dockerfile'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
@@ -347,11 +464,9 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    assert "Copying 'target/image/file_b' to '{}'...".format(
-        os.path.join(str(repo_dir), 'file_b')) in caplog.text
-    assert "Staging 'file_a'..." in caplog.text
-    assert "Staging 'a_symlink'..." in caplog.text
-
+    assert "Copying 'target/image/osbs_extra' to '{}'...".format(
+        os.path.join(str(repo_dir), 'osbs_extra')) in caplog.text
+    assert "Staging 'osbs_extra'..." in caplog.text
 
 
 # https://github.com/cekit/cekit/issues/394
@@ -384,15 +499,12 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join('Dockerfile'))) is True
-    assert os.path.exists(str(repo_dir.join('file_a'))) is True
-    assert os.path.exists(str(repo_dir.join('file_b'))) is True
+    assert os.path.exists(str(repo_dir.join('dist').join('file_a'))) is True
+    assert os.path.exists(str(repo_dir.join('dist').join('file_b'))) is True
 
     calls = [
-        mocker.call(['git', 'add', '--all', 'file_b']),
-        mocker.call(['git', 'add', '--all', 'file_a']),
+        mocker.call(['git', 'add', '--all', 'dist']),
         mocker.call(['git', 'add', '--all', 'Dockerfile']),
-        mocker.call(['git', 'add', '--all', 'child']),
-        mocker.call(['git', 'add', '--all', 'a_symlink'])
     ]
 
     mock_check_call.assert_has_calls(calls, any_order=True)
@@ -400,10 +512,13 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     assert len(mock_check_call.mock_calls) == len(calls)
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    assert "Copying 'target/image/file_b' to '{}'...".format(
-        os.path.join(str(repo_dir), 'file_b')) in caplog.text
-    assert "Staging 'file_a'..." in caplog.text
-    assert "Staging 'a_symlink'..." in caplog.text
+    assert "Copying 'target/image/dist' to '{}'...".format(
+        os.path.join(str(repo_dir), 'dist')) in caplog.text
+    assert "Staging 'dist'..." in caplog.text
+    with open(os.path.join(str(repo_dir), 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+
+    assert "COPY foobar /" not in dockerfile
 
 
 # https://github.com/cekit/cekit/issues/542
@@ -799,6 +914,67 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     assert "Artifact 'bar.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
+def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with sha256 checksum.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b'test', None]
+
+    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+
+    cfgcontents = """
+[common]
+fetch_artifact_domains = https://foo.domain, http://another.domain/path/name
+ssl_verify = False
+    """
+    cfgfile = os.path.join(str(tmpdir), "config")
+    with open(cfgfile, 'w') as _file:
+        _file.write(cfgcontents)
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'sha256': '123456', 'url': 'https://foo.domain/bar.jar'},
+        {'name': 'another_artifact_name', 'sha256': '654321', 'url': 'http://another.domain/path/name/bar.jar'},
+        {'name': 'not_allowed_in_fetch', 'sha256': '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', 'url': 'http://another.domain/wrong.jar'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-url.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 2
+    assert fetch_artifacts[0] == {'sha256': '123456',
+                                  'target': 'artifact_name', 'url': 'https://foo.domain/bar.jar'}
+    assert fetch_artifacts[1] == {'sha256': '654321',
+                                  'target': 'another_artifact_name', 'url': 'http://another.domain/path/name/bar.jar'}
+
+    assert "Ignoring http://another.domain/wrong.jar as restricted to ['https://foo.domain', 'http://another.domain/path/name']" in caplog.text
+    assert "Executing '['/usr/bin/rhpkg', 'new-sources', 'not_allowed_in_fetch']'" in caplog.text
+    assert "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
+
+
 def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(tmpdir, mocker, caplog):
     """
     Checks whether the fetch-artifacts-url.yaml file is generated with URL artifact with multiple checksums.
@@ -1086,6 +1262,336 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     assert os.path.exists(dockerfile_path) is True
     with open(dockerfile_path, 'r') as _file:
         dockerfile = _file.read()
+        assert """## START target image test/image:1.0
+## \\
+    FROM centos:7
 
-    assert "COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR" in dockerfile
+
+    USER root
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+
+###### START image 'test/image:1.0'
+###### \\
+        # Set 'test/image' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="test/image" \\
+            JBOSS_IMAGE_VERSION="1.0" 
+        # Set 'test/image' image defined labels
+        LABEL \\
+            foo="bar"  \\
+            io.cekit.version="3.11.0.dev0"  \\
+            labela="a"  \\
+            name="test/image"  \\
+            version="1.0" 
+###### /
+###### END image 'test/image:1.0'
+
+    RUN rm -rf $REMOTE_SOURCE_DIR
+""" in dockerfile
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
+
+
+def test_osbs_builder_with_rhpam_1(tmpdir, caplog):
+    """
+    Verify that multi-stage build has Cachito instructions enabled.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam1'),
+        os.path.join(str(tmpdir), 'rhpam')
+    )
+
+    cfgcontents = """
+[common]
+redhat = True
+    """
+    cfgfile = os.path.join(str(tmpdir), "config.cfg")
+    with open(cfgfile, 'w') as _file:
+        _file.write(cfgcontents)
+
+    run_cekit((os.path.join(str(tmpdir), 'rhpam')), parameters=['--config', cfgfile, '-v', '--work-dir', str(tmpdir),
+                                                                'build', '--dry-run', 'osbs'])
+
+    dockerfile_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+        print("\n" + dockerfile + "\n")
+        assert """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
+
+## START builder image operator-builder:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder
+    USER root
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+
+###### START module 'org.kie.kogito.builder:7.11'
+###### \\
+        # Copy 'org.kie.kogito.builder' module general artifacts to '/workspace/' destination
+        COPY \\
+            main.go \\
+            /workspace/
+        # Copy 'org.kie.kogito.builder' module content
+        COPY modules/org.kie.kogito.builder /tmp/scripts/org.kie.kogito.builder
+        # Custom scripts from 'org.kie.kogito.builder' module
+        USER root
+        RUN [ "sh", "-x", "/tmp/scripts/org.kie.kogito.builder/install.sh" ]
+###### /
+###### END module 'org.kie.kogito.builder:7.11'
+
+###### START image 'operator-builder:7.11'
+###### \\
+        # Set 'operator-builder' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'operator-builder' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            version="7.11" 
+###### /
+###### END image 'operator-builder:7.11'
+
+    RUN rm -rf $REMOTE_SOURCE_DIR
+
+## /
+## END builder image
+
+## START target image rhpam-7/rhpam-kogito-operator:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+
+    USER root
+
+###### START image 'rhpam-7/rhpam-kogito-operator:7.11'
+###### \\
+        # Copy 'rhpam-7/rhpam-kogito-operator' image stage artifacts
+        COPY --from=operator-builder /workspace/rhpam-kogito-operator-manager /usr/local/bin/rhpam-kogito-operator-manager
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined labels
+        LABEL \\
+            com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
+            description="Runtime Image for the RHPAM Kogito Operator"  \\
+            io.cekit.version="3.11.0.dev0"  \\
+            io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
+            io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
+            io.openshift.tags="rhpam,kogito,operator"  \\
+            maintainer="bsig-cloud@redhat.com"  \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            summary="Runtime Image for the RHPAM Kogito Operator"  \\
+            version="7.11" 
+###### /
+###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
+
+
+
+    # Switch to 'root' user and remove artifacts and modules
+    USER root
+    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
+    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    # Define the user
+    USER 1001
+## /
+## END target image""" in dockerfile
+    container_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'container.yaml')
+    assert os.path.exists(container_path) is True
+    with open(container_path, 'r') as _file:
+        containerfile = _file.read()
+        print("\n" + containerfile + "\n")
+        assert """image_build_method: imagebuilder
+platforms:
+  only:
+  - x86_64
+remote_source:
+  pkg_managers:
+  - gomod
+  ref: db4a5d18f5f52a64083d8f1bd1776ad60a46904c
+  repo: https://github.com/kiegroup/rhpam-kogito-operator""" in containerfile
+
+
+def test_osbs_builder_with_rhpam_2(tmpdir, caplog):
+    """
+    Verify that multi-stage build with dual configuration/container (for Cachito) will fail.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam2'),
+        os.path.join(str(tmpdir), 'rhpam')
+    )
+
+    cfgcontents = """
+[common]
+redhat = True
+    """
+    cfgfile = os.path.join(str(tmpdir), "config.cfg")
+    with open(cfgfile, 'w') as _file:
+        _file.write(cfgcontents)
+
+    with Chdir(os.path.join(str(tmpdir), 'rhpam')):
+        result = CliRunner().invoke(cli, ['--config', cfgfile, '-v', '--work-dir', str(tmpdir),
+                                          'build', '--dry-run', 'osbs'], catch_exceptions=True)
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
+
+        assert result.exit_code == 1
+
+    assert "Found multiple container definitions " in caplog.text
+
+
+def test_osbs_builder_with_rhpam_3(tmpdir, caplog):
+    """
+    Verify that multi-stage build has Cachito instructions enabled.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'images', 'rhpam3'),
+        os.path.join(str(tmpdir), 'rhpam')
+    )
+
+    cfgcontents = """
+[common]
+redhat = True
+    """
+    cfgfile = os.path.join(str(tmpdir), "config.cfg")
+    with open(cfgfile, 'w') as _file:
+        _file.write(cfgcontents)
+
+    run_cekit((os.path.join(str(tmpdir), 'rhpam')), parameters=['--config', cfgfile, '-v', '--work-dir', str(tmpdir),
+                                                                'build', '--dry-run', 'osbs'])
+
+    dockerfile_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'Dockerfile')
+    assert os.path.exists(dockerfile_path) is True
+    with open(dockerfile_path, 'r') as _file:
+        dockerfile = _file.read()
+        print("\n" + dockerfile + "\n")
+        assert """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
+
+## START builder image operator-builder-one:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder-one
+    USER root
+
+###### START module 'org.kie.kogito.builder:7.11'
+###### \\
+        # Copy 'org.kie.kogito.builder' module general artifacts to '/workspace/' destination
+        COPY \\
+            main.go \\
+            /workspace/
+        # Copy 'org.kie.kogito.builder' module content
+        COPY modules/org.kie.kogito.builder /tmp/scripts/org.kie.kogito.builder
+        # Custom scripts from 'org.kie.kogito.builder' module
+        USER root
+        RUN [ "sh", "-x", "/tmp/scripts/org.kie.kogito.builder/install.sh" ]
+###### /
+###### END module 'org.kie.kogito.builder:7.11'
+
+###### START image 'operator-builder-one:7.11'
+###### \\
+        # Set 'operator-builder-one' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'operator-builder-one' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            version="7.11" 
+###### /
+###### END image 'operator-builder-one:7.11'
+
+
+## /
+## END builder image
+## START builder image operator-builder-two:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder-two
+    USER root
+
+    COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
+    WORKDIR $REMOTE_SOURCE_DIR/app
+
+###### START image 'operator-builder-two:7.11'
+###### \\
+        # Set 'operator-builder-two' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'operator-builder-two' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            version="7.11" 
+###### /
+###### END image 'operator-builder-two:7.11'
+
+    RUN rm -rf $REMOTE_SOURCE_DIR
+
+## /
+## END builder image
+
+## START target image rhpam-7/rhpam-kogito-operator:7.11
+## \\
+    FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+
+    USER root
+
+###### START image 'rhpam-7/rhpam-kogito-operator:7.11'
+###### \\
+        # Copy 'rhpam-7/rhpam-kogito-operator' image stage artifacts
+        COPY --from=operator-builder /workspace/rhpam-kogito-operator-manager /usr/local/bin/rhpam-kogito-operator-manager
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11" 
+        # Set 'rhpam-7/rhpam-kogito-operator' image defined labels
+        LABEL \\
+            com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
+            description="Runtime Image for the RHPAM Kogito Operator"  \\
+            io.cekit.version="3.11.0.dev0"  \\
+            io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
+            io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
+            io.openshift.tags="rhpam,kogito,operator"  \\
+            maintainer="bsig-cloud@redhat.com"  \\
+            name="rhpam-7/rhpam-kogito-operator"  \\
+            summary="Runtime Image for the RHPAM Kogito Operator"  \\
+            version="7.11" 
+###### /
+###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
+
+
+
+    # Switch to 'root' user and remove artifacts and modules
+    USER root
+    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
+    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    # Define the user
+    USER 1001
+## /
+## END target image""" in dockerfile
+    container_path = os.path.join(str(tmpdir), 'rhpam', 'target', 'image', 'container.yaml')
+    assert os.path.exists(container_path) is True
+    with open(container_path, 'r') as _file:
+        containerfile = _file.read()
+        print("\n" + containerfile + "\n")
+        assert """image_build_method: imagebuilder
+platforms:
+  only:
+  - x86_64
+remote_source:
+  pkg_managers:
+  - gomod
+  ref: db4a5d18f5f52a64083d8f1bd1776ad60a46904c
+  repo: https://github.com/kiegroup/rhpam-kogito-operator""" in containerfile

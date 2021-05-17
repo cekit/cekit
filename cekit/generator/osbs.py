@@ -3,12 +3,17 @@ import logging
 import os
 import sys
 import tempfile
-
 import yaml
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 from cekit import crypto
 from cekit.config import Config
 from cekit.descriptor.resource import _PlainResource, _UrlResource
+from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
 
@@ -33,9 +38,8 @@ class OSBSGenerator(Generator):
         # https://github.com/cekit/cekit/issues/394
         copy_recursively(
             os.path.join(os.path.dirname(self._descriptor_path), self.image.osbs.extra_dir),
-            os.path.join(self.target, 'image')
+            os.path.join(self.target, os.path.join('image', self.image.osbs.extra_dir))
         )
-
         super(OSBSGenerator, self).generate(builder)
 
     def _prepare_content_sets(self, content_sets):
@@ -49,16 +53,27 @@ class OSBSGenerator(Generator):
 
     def _prepare_container_yaml(self):
         container_f = os.path.join(self.target, 'image', 'container.yaml')
-        container = self.image.get('osbs', {}).get('configuration', {}).get('container')
+        containers = []
 
-        if not container:
+        if self.image.get('osbs', {}).get('configuration', {}).get('container'):
+            containers.append(self.image.get('osbs', {}).get('configuration', {}).get('container'))
+
+        # Check all images (for multi-stage) if they contain a container definition
+        for i in self.builder_images:
+            if i.get('osbs', {}).get('configuration', {}).get('container'):
+                containers.append(i.get('osbs', {}).get('configuration', {}).get('container', {}))
+
+        if len(containers) > 1:
+            logger.error("Found multiple container definitions ({})".format(containers))
+            raise CekitError("Found multiple container definitions ({})!".format(containers))
+        elif len(containers) == 0:
             return
 
         if not os.path.exists(os.path.dirname(container_f)):
             os.makedirs(os.path.dirname(container_f))
 
         with open(container_f, 'w') as _file:
-            yaml.safe_dump(container, _file, default_flow_style=False)
+            yaml.safe_dump(containers[0], _file, default_flow_style=False)
 
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template
@@ -74,11 +89,33 @@ class OSBSGenerator(Generator):
         fetch_artifacts_url = []
         url_description = {}
 
+        fetch_domains = config.get('common', 'fetch_artifact_domains')
+
         for image in self.images:
             for artifact in image.all_artifacts:
                 logger.info("Preparing artifact '{}' (of type {})".format(artifact['name'], type(artifact)))
 
+                # We only want to use fetch-artifact-url if
+                # 1. is type _UrlResource
+                # 2. if fetch_artifact_domains configured, URL conforms to that.
+                process_fetch = False
                 if isinstance(artifact, _UrlResource):
+                    if fetch_domains is not None:
+                        fad = fetch_domains.replace(" ", "").split(",")
+                        # Verify if the URL can be used in fetch-artifact-url or now
+                        for d in fad:
+                            u = urlparse(d)
+                            logger.debug("Parsed URL '{}' and path '{}'".format(u.netloc, u.path))
+                            if u.netloc + u.path in artifact['url']:
+                                process_fetch = True
+                        if not process_fetch:
+                            artifact['lookaside'] = True
+                            logger.warning("Ignoring {} as restricted to {}".format(artifact['url'], fad))
+                    else:
+                        # Just process all UrlResource
+                        process_fetch = True
+
+                if process_fetch:
                     intersected_hash = [x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact]
                     logger.debug("Found checksum markers of {}".format(intersected_hash))
                     if not intersected_hash:
@@ -94,11 +131,12 @@ class OSBSGenerator(Generator):
                     fetch_artifacts_url.append({'url': artifact['url'],
                                                 'target': os.path.join(artifact['target'])})
                     for c in intersected_hash:
-                        fetch_artifacts_url[0].update({c: artifact[c]})
+                        fetch_artifacts_url[len(fetch_artifacts_url) - 1].update({c: artifact[c]})
                     if 'description' in artifact:
                         url_description[artifact['url']] = artifact['description']
                     logger.debug(
-                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml".format(artifact['target']))
+                        "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml with contents {}".format(
+                            artifact['target'], fetch_artifacts_url[len(fetch_artifacts_url) - 1]))
                     # OSBS by default downloads all artifacts to artifacts/<target_path>
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
                 elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
@@ -127,7 +165,7 @@ class OSBSGenerator(Generator):
             with open(fetch_artifacts_file, 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
             if config.get('common', 'redhat'):
-                for key,value in url_description.items():
+                for key, value in url_description.items():
                     logger.debug("Processing to add build references for {} -> {}".format(key, value))
                     for line in fileinput.input(fetch_artifacts_file, inplace=1):
                         line = line.replace(key, key + ' # ' + value)
