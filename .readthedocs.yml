@@ -1,0 +1,18 @@
+
+# Config file for readthedocs.io : see https://docs.readthedocs.io/en/stable/config-file/v2.html
+
+version: 2
+
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+   builder: html
+   configuration: docs/conf.py
+
+build:
+  image: latest
+  apt_packages:
+    - libkrb5-dev
+
+python:
+  install:
+    - requirements: docs/requirements.txt
