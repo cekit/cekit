@@ -761,9 +761,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, c
 
     tmpdir.mkdir('osbs').mkdir('repo')
 
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
-
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
         subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
@@ -805,9 +802,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
 
     tmpdir.mkdir('osbs').mkdir('repo')
 
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
-
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
         subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
@@ -844,9 +838,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
     tmpdir.mkdir('osbs').mkdir('repo')
-
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
 
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
@@ -889,9 +880,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
 
     tmpdir.mkdir('osbs').mkdir('repo')
 
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
-
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
         subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
@@ -928,9 +916,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
     tmpdir.mkdir('osbs').mkdir('repo')
-
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
 
     res = mocker.Mock()
     res.getcode.return_value = 200
@@ -994,9 +979,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(tmpdi
 
     tmpdir.mkdir('osbs').mkdir('repo')
 
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
-
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
         subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
@@ -1037,9 +1019,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(tmpdir, mock
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
     tmpdir.mkdir('osbs').mkdir('repo')
-
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
 
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
@@ -1082,9 +1061,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
 
     tmpdir.mkdir('osbs').mkdir('repo')
 
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
-
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
         subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
@@ -1126,9 +1102,6 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(tmpdir, mocke
 
     tmpdir.mkdir('osbs').mkdir('repo')
 
-    tmpdir.join('osbs').join('repo').join(
-        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
-
     with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
         subprocess.call(["git", "init"])
         subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
@@ -1156,7 +1129,7 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(tmpdir, mocke
     assert "Artifact 'myfile.jar' (as URL) added to fetch-artifacts-url.yaml" in caplog.text
 
 
-def test_osbs_builder_with_fetch_artifacts_file_removal(tmpdir, mocker, caplog):
+def test_osbs_builder_with_fetch_artifacts_url_file_removal(tmpdir, mocker, caplog):
     """
     Checks whether the fetch-artifacts-url.yaml file is removed if exists
     and is not used anymore.
@@ -1186,6 +1159,36 @@ def test_osbs_builder_with_fetch_artifacts_file_removal(tmpdir, mocker, caplog):
 
     assert not os.path.exists(os.path.join(str(tmpdir), 'osbs', 'repo', 'fetch-artifacts-url.yaml'))
     assert "Removing old 'fetch-artifacts-url.yaml' file" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-pnc.yaml file is removed if exists
+    and is not used anymore.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-pnc.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-pnc.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    run_osbs(image_descriptor, str(tmpdir), mocker)
+
+    assert not os.path.exists(os.path.join(str(tmpdir), 'osbs', 'repo', 'fetch-artifacts-pnc.yaml'))
+    assert "Removing old 'fetch-artifacts-pnc.yaml' file" in caplog.text
 
 
 @pytest.mark.parametrize('flag', [[], ['--redhat']])
@@ -1596,3 +1599,83 @@ remote_source:
   - gomod
   ref: db4a5d18f5f52a64083d8f1bd1776ad60a46904c
   repo: https://github.com/kiegroup/rhpam-kogito-operator""" in containerfile
+
+
+def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-pnc.yaml file is generated with correct artifact ids.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-pnc.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'target': 'foo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '54321'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-pnc.yaml'), 'r') as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert fetch_artifacts['builds'] == [{'build_id': '123456', 'artifacts': [{'id': '54321', 'target': '/tmp/artifacts/foo.jar'}]}]
+
+
+def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-pnc.yaml file is generated with correct artifact ids.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-pnc.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'target': 'boo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '00001'},
+        {'target': 'foo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '54321'},
+        {'target': 'goo.zip', 'pnc_build_id': '987654', 'pnc_artifact_id': '00002'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-pnc.yaml'), 'r') as _file:
+        fetch_artifacts = _file.read()
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-pnc.yaml'), 'r') as _file:
+        fetch_artifacts_yaml = yaml.safe_load(_file)
+    print("Read fetch_pnc_artifacts {} ".format(fetch_artifacts))
+    assert """- artifacts:
+  - id: '00001'
+    target: /tmp/artifacts/boo.jar
+  - id: '54321'
+    target: /tmp/artifacts/foo.jar
+  build_id: '123456'
+- artifacts:
+  - id: '00002'
+    target: /tmp/artifacts/goo.zip
+  build_id: '987654'""" in fetch_artifacts
+    assert fetch_artifacts_yaml['builds'] == [{'build_id': '123456', 'artifacts': [{'id': '00001', 'target': '/tmp/artifacts/boo.jar'}, {'id': '54321', 'target': '/tmp/artifacts/foo.jar'}]}, {'build_id': '987654', 'artifacts': [{'id': '00002', 'target': '/tmp/artifacts/goo.zip'}]}]

@@ -416,6 +416,10 @@ class DistGit(object):
                 LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")
                 subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-url.yaml"])
 
+            if os.path.exists("fetch-artifacts-pnc.yaml"):
+                LOGGER.info("Removing old 'fetch-artifacts-pnc.yaml' file")
+                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"])
+
     def add(self, artifacts):
         LOGGER.debug("Adding files to git stage...")
 

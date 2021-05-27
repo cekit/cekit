@@ -249,3 +249,38 @@ def test_image_descriptor_with_execute(caplog):
         """), 'foo')
 
     assert "Cannot validate schema: Image" in excinfo.value.message
+
+
+def test_image_pnc_artifacts_1(caplog):
+    image = Image(yaml.safe_load("""
+            from: foo
+            name: test/foo
+            version: 1.9
+            artifacts:
+              - name: foobar
+                target: jolokia.jar
+                pnc_artifact_id: '12345'
+                pnc_build_id: '54321'
+            """), 'foo')
+    assert image.artifacts[0]['name'] == 'foobar'
+    assert image.artifacts[0]['pnc_build_id'] == '54321'
+    assert image.artifacts[0]['target'] == 'jolokia.jar'
+    assert image.artifacts[0]['dest'] == '/tmp/artifacts/'
+
+
+def test_image_pnc_artifacts_2(caplog):
+    image = Image(yaml.safe_load("""
+            from: foo
+            name: test/foo
+            version: 1.9
+            artifacts:
+              - target: jolokia.jar
+                dest: '/installation/'
+                pnc_artifact_id: '12345'
+                pnc_build_id: '54321'
+            """), 'foo')
+    print("Got {}".format(image.artifacts[0]))
+    assert image.artifacts[0]['name'] == 'jolokia.jar'
+    assert image.artifacts[0]['pnc_build_id'] == '54321'
+    assert image.artifacts[0]['target'] == 'jolokia.jar'
+    assert image.artifacts[0]['dest'] == '/installation/'

@@ -3,6 +3,8 @@ import logging
 import os
 import sys
 import tempfile
+from collections import OrderedDict
+
 import yaml
 
 try:
@@ -10,9 +12,10 @@ try:
 except ImportError:
     from urlparse import urlparse
 
+from cekit import version
 from cekit import crypto
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource, _UrlResource
+from cekit.descriptor.resource import _PlainResource, _UrlResource, _PncResource
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
@@ -89,6 +92,7 @@ class OSBSGenerator(Generator):
         logger.info("Handling artifacts for OSBS...")
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
+        fetch_artifacts_pnc = OrderedDict()
         url_description = {}
 
         fetch_domains = config.get('common', 'fetch_artifact_domains')
@@ -157,13 +161,25 @@ class OSBSGenerator(Generator):
                         # TODO: This is ugly, rewrite this!
                         artifact['lookaside'] = True
 
+                elif isinstance(artifact, _PncResource):
+                    logger.info("Handling pnc resources for {}".format(artifact))
+                    build = fetch_artifacts_pnc.setdefault(artifact['pnc_build_id'], [])
+                    build.append({'id': artifact['pnc_artifact_id'], 'target': artifact['dest'] + artifact['target']})
                 else:
                     logger.debug("Copying artifact {} to {}".format(artifact, target_dir))
                     artifact.copy(target_dir)
 
-        fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
-
+        if fetch_artifacts_pnc:
+            fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-pnc.yaml')
+            pnc = {
+                'metadata': {'author': 'cekit ' + version.__version__},
+                'builds': [{'build_id': key, 'artifacts': fetch_artifacts_pnc.get(key)} for key in fetch_artifacts_pnc]
+            }
+            logger.debug("Writing {} to fetch-artifacts-pnc.yaml".format(pnc))
+            with open(fetch_artifacts_file, 'w') as _file:
+                yaml.safe_dump(pnc, _file, default_flow_style=False)
         if fetch_artifacts_url:
+            fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
             with open(fetch_artifacts_file, 'w') as _file:
                 yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
             if config.get('common', 'redhat'):

@@ -47,7 +47,7 @@ directly from Brew. To enable this set :ref:`redhat configuration option <handbo
 to ``True`` (or use ``--redhat`` switch) and define plain artifacts which have ``md5`` checksum.
 
 .. warning::
-    Using different checksum thn ``md5`` will not work!
+    Using a different checksum than ``md5`` will not work!
 
 CEKit will fetch artifacts automatically from Brew, adding them to local cache.
 
