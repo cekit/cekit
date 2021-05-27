@@ -16,7 +16,6 @@ The automated process uses https://pypi.org/project/zest.releaser to perform the
 * Clone ``git@github.com:cekit/cekit.git`` (from https://github.com/cekit/cekit)
 * Run ``make release`` and follow the prompts.
 
-
     .. note:: A ``.pypirc`` should be configured according to https://packaging.python.org/specifications/pypirc for PyPi uploads.
 
     .. note:: It is recommended to use a 3 digit version specification when prompted (e.g. ``3.9.10``, ``3.10.2``).
@@ -25,7 +24,7 @@ Manual Process (reference only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Switch to master branch
-+ Ensure you are latest code: ``git reset --hard upstream/master``
+* Ensure you have the latest code: ``git reset --hard upstream/master``
 * Merge develop: ``git merge develop -X theirs`` and in the commit message enter: ``Release <version>``
 * Edit ``cekit/version.py`` file and put ``<next-version>``, add that file and amend the previous commit.
 * Tag repository: ``git tag <version>``

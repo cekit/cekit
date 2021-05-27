@@ -53,6 +53,7 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
+
                 LOGGER.debug("Loading override '{}'".format(override))
 
                 override_artifact_dir = os.path.dirname(os.path.abspath(override))

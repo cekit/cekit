@@ -55,6 +55,9 @@ def create_resource(descriptor, **kwargs):
     if 'md5' in descriptor:
         return _PlainResource(descriptor)
 
+    if 'pnc_build_id' in descriptor:
+        return _PncResource(descriptor)
+
     raise CekitError("Resource '{}' is not supported".format(descriptor))
 
 
@@ -560,3 +563,39 @@ class _ImageContentResource(Resource):
         in an image that should be built in earlier stage of the image build process.
         """
         return target
+
+
+class _PncResource(Resource):
+    """
+    Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#pnc-artifacts
+    """
+
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'required': True, 'desc': 'Target file name for the resource'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'pnc_artifact_id': {'type': 'str', 'required': True, 'desc': 'The ID of the artifact'},
+            'pnc_build_id': {'type': 'str', 'required': True, 'desc': 'The ID of the build'}
+        }
+    }
+
+    def __init__(self, descriptor):
+        self.schema = _PncResource.SCHEMA
+
+        super(_PncResource, self).__init__(descriptor)
+
+    def _get_default_name_value(self, descriptor):
+        """
+        Default identifier is the target file name.
+        """
+        return descriptor.get('target')
+
+    def _copy_impl(self, target):
+        """
+        For PNC artifacts there is nothing to copy as the artifact is held remotely on PNC.
+        """
+        return target
+
+

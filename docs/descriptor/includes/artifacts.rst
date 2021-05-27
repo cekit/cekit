@@ -147,6 +147,7 @@ CEKit supports following artifact types:
 * URL artifacts
 * Path artifacts
 * Image source artifacts
+* `PNC <https://github.com/project-ncl/pnc>`_ artifacts
 
 Plain artifacts
 ******************
@@ -259,3 +260,23 @@ multi-stage builds.
           # Path to the artifact within the image
           path: /path/to/application/inside/the/builder/image.jar
 
+PNC artifacts
+************************
+
+PNC artifacts are created via the `ProjectNCL <https://github.com/project-ncl/pnc>`_ build system and are
+intended to be used with `OSBS <https://osbs.readthedocs.io/en/latest/users.html#fetch-artifacts-pnc-yaml>`_
+``fetch-artifacts-pnc.yaml``.
+
+
+.. schema:: cekit.descriptor.resource._PncResource
+    :name: pnc-artifact-schema
+
+.. code-block:: yaml
+    :name: pnc-artifact-examples
+    :caption: Examples
+
+    artifacts:
+        - name: jolokia
+          pnc_build_id: 123456
+          pnc_artifact_id: 00001
+          target: jolokia.tar.gz
