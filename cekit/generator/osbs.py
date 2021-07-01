@@ -29,7 +29,8 @@ class OSBSGenerator(Generator):
     def init(self):
         super(OSBSGenerator, self).init()
 
-        self._prepare_container_yaml()
+        self._prepare_osbs_config_file(yaml.safe_dump, 'container.yaml')
+        self._prepare_osbs_config_file(lambda contents, file, **kwargs: file.write(contents), 'gating.yaml')
 
     def generate(self, builder):
         # If extra directory exists (by default named 'osbs_extra') next to
@@ -51,29 +52,30 @@ class OSBSGenerator(Generator):
         with open(content_sets_f, 'w') as _file:
             yaml.safe_dump(content_sets, _file, default_flow_style=False)
 
-    def _prepare_container_yaml(self):
-        container_f = os.path.join(self.target, 'image', 'container.yaml')
-        containers = []
+    def _prepare_osbs_config_file(self, writer, config_file):
+        config_path = os.path.join(self.target, 'image', config_file)
+        config_name = config_file.split('.')[0]
+        all_configs = []
 
-        if self.image.get('osbs', {}).get('configuration', {}).get('container'):
-            containers.append(self.image.get('osbs', {}).get('configuration', {}).get('container'))
+        if self.image.get('osbs', {}).get('configuration', {}).get(config_name):
+            all_configs.append(self.image.get('osbs', {}).get('configuration', {}).get(config_name))
 
         # Check all images (for multi-stage) if they contain a container definition
         for i in self.builder_images:
-            if i.get('osbs', {}).get('configuration', {}).get('container'):
-                containers.append(i.get('osbs', {}).get('configuration', {}).get('container', {}))
+            if i.get('osbs', {}).get('configuration', {}).get(config_name):
+                all_configs.append(i.get('osbs', {}).get('configuration', {}).get(config_name, {}))
 
-        if len(containers) > 1:
-            logger.error("Found multiple container definitions ({})".format(containers))
-            raise CekitError("Found multiple container definitions ({})!".format(containers))
-        elif len(containers) == 0:
+        if len(all_configs) > 1:
+            logger.error("Found multiple {} definitions ({})".format(config_name, all_configs))
+            raise CekitError("Found multiple {} definitions ({})!".format(config_name, all_configs))
+        elif len(all_configs) == 0:
             return
 
-        if not os.path.exists(os.path.dirname(container_f)):
-            os.makedirs(os.path.dirname(container_f))
-
-        with open(container_f, 'w') as _file:
-            yaml.safe_dump(containers[0], _file, default_flow_style=False)
+        logger.debug("Writing to {} using ident of {} with content {}".format(config_path, config_name, all_configs[0]))
+        if not os.path.exists(os.path.dirname(config_path)):
+            os.makedirs(os.path.dirname(config_path))
+        with open(config_path, 'w') as _file:
+            writer(all_configs[0], _file, default_flow_style=False)
 
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template

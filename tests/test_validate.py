@@ -1398,6 +1398,51 @@ def test_validation_of_image_and_module_descriptors_should_fail_on_invalid_descr
     assert "Cannot find required key 'name'" in caplog.text
 
 
+def test_gating_file(tmpdir, caplog):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    with open(os.path.join(image_dir, 'bar.jar'), 'w') as fd:
+        fd.write('foo')
+
+    img_desc = image_descriptor.copy()
+    img_desc['artifacts'] = [{'path': 'bar.jar', 'dest': '/tmp/destination'}]
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(img_desc, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'osbs': {'configuration': {'gating_file': 'gating.yaml'}}}
+
+    gating = """
+--- !Policy
+id: kafka-jenkins
+product_versions:
+  - cvp
+decision_context: cvp_default
+rules:
+  - !PassingTestCaseRule {test_case_name: kafka-jenkins.default.systemtest}
+"""
+    with open(os.path.join(image_dir, 'gating.yaml'), 'w') as fd:
+        fd.write(gating)
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               'osbs'])
+    gating_path = os.path.join(str(image_dir), 'target', 'image', 'gating.yaml')
+    assert os.path.exists(gating_path) is True
+    with open(gating_path, 'r') as _file:
+        f = _file.read()
+        assert gating in f
+
+
 def run_cekit(cwd, parameters=None, message=None, env=None):
 
     if parameters is None:
