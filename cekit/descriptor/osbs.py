@@ -20,6 +20,7 @@ configuration_schema = yaml.safe_load("""
     map:
       container: {type: any}
       container_file: {type: str}
+      gating_file: {type: str}
 """)
 
 repository_schema = yaml.safe_load("""
@@ -119,20 +120,24 @@ class Configuration(Descriptor):
         self.descriptor_path = descriptor_path
         super(Configuration, self).__init__(descriptor)
 
-        if 'container' in self and 'container_file' in self:
-            raise CekitError('You cannot specify container and container_file together!')
-
-        if 'container_file' in self:
-            container_file = os.path.join(self.descriptor_path, self['container_file'])
-            if not os.path.exists(container_file):
-                raise CekitError("'%s' file not found!" % container_file)
-            with open(container_file, 'r') as file_:
-                self['container'] = yaml.safe_load(file_)
-            del self['container_file']
+        self._process_osbs_config_files(yaml.load, 'container', 'container_file')
+        self._process_osbs_config_files(lambda file: file.read(), 'gating', 'gating_file')
 
         remote_source = self.get('container', {}).get('remote_source', {})
         if remote_source:
             logger.debug("Cachito definition is {}".format(remote_source))
+
+    def _process_osbs_config_files(self, loader, text, filename):
+        if text in self and filename in self:
+            raise CekitError('You cannot specify %s and %s together!' % (text, filename))
+
+        if filename in self:
+            path = os.path.join(self.descriptor_path, self[filename])
+            if not os.path.exists(path):
+                raise CekitError("'%s' file not found!" % path)
+            with open(path, 'r') as file_:
+                self[text] = loader(file_)
+            del self[filename]
 
 
 class Repository(Descriptor):

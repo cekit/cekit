@@ -255,9 +255,5 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     # Define run cmd
     CMD {{ helper.cmd(run['cmd']) }}
     {% endif -%}
-
-    {% if image.help.add %}
-    ADD help.md /
-    {% endif -%}
 ## /
 ## END target image

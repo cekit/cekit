@@ -177,7 +177,7 @@ CEKit supports two ways of defining content of the  ``container.yaml`` file:
 
 Selecting preferred way of defining this configuration is up to the user.
 Maintaining external file may be handy in case where it is shared across
-multiple images in the same repository. 
+multiple images in the same repository.
 
 
 Embedding
@@ -211,3 +211,22 @@ Linking
 
         compose:
             pulp_repos: true
+
+OSBS Gating Files
+^^^^^^^^^^^^^^^^^
+
+The ``gating.yaml`` file is used within the Container Verification Pipeline (CVP). Both live within the dist-git repository
+next to the Dockerfile. The configuration within CEKit is very similar to :ref:`OSBS configuration <descriptor/image:OSBS configuration>`
+
+Due to the CVP definition including custom tags embedded definitions are not supported ; instead the ``gating_file``
+key should be used to specify the file to include.
+
+For example:
+
+    .. code-block:: yaml
+
+        osbs:
+            configuration:
+                gating_file: gating.yaml
+                container:
+                    ...
