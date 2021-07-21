@@ -18,10 +18,14 @@ It contains two main keys:
 .. code-block:: yaml
 
     osbs:
+        extra_dir: osbs-extra
+        extra_dir_target: /
         repository:
             name: containers/redhat-openjdk-18
             branch: jb-openjdk-1.8-openshift-rhel-7
+        koji_target: rhaos-middleware-rhel-7-containers-candidate
         configuration:
+            gating_file: gating.yaml
             container:
                 compose:
                     pulp_repos: true
