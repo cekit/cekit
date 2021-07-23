@@ -9,19 +9,26 @@ Required
 This section represents object we use to hint OSBS builder with a configuration which needs to be tweaked
 for successful and reproducible builds.
 
-It contains two main keys:
+It contains five keys:
 
+* :ref:`extra_dir <descriptor/image:OSBS extra directory>`
+* :ref:`extra_dir_target <descriptor/image:OSBS extra copy command>`
 * :ref:`repository <descriptor/image:OSBS repository>`
+* :ref:`koji_target <descriptor/image:OSBS Koji target>`
 * :ref:`configuration <descriptor/image:OSBS configuration>`
 
 
 .. code-block:: yaml
 
     osbs:
+        extra_dir: osbs-extra
+        extra_dir_target: /
         repository:
             name: containers/redhat-openjdk-18
             branch: jb-openjdk-1.8-openshift-rhel-7
+        koji_target: rhaos-middleware-rhel-7-containers-candidate
         configuration:
+            gating_file: gating.yaml
             container:
                 compose:
                     pulp_repos: true
