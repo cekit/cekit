@@ -9,9 +9,12 @@ Required
 This section represents object we use to hint OSBS builder with a configuration which needs to be tweaked
 for successful and reproducible builds.
 
-It contains two main keys:
+It contains five keys:
 
+* :ref:`extra_dir <descriptor/image:OSBS extra directory>`
+* :ref:`extra_dir_target <descriptor/image:OSBS extra copy command>`
 * :ref:`repository <descriptor/image:OSBS repository>`
+* :ref:`koji_target <descriptor/image:OSBS Koji target>`
 * :ref:`configuration <descriptor/image:OSBS configuration>`
 
 
