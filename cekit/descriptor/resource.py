@@ -46,6 +46,10 @@ def create_resource(descriptor, **kwargs):
 
         return _PathResource(descriptor, directory)
 
+    # PNC first so it can have an optional URL component
+    if 'pnc_build_id' in descriptor:
+        return _PncResource(descriptor)
+
     if 'url' in descriptor:
         return _UrlResource(descriptor)
 
@@ -54,9 +58,6 @@ def create_resource(descriptor, **kwargs):
 
     if 'md5' in descriptor:
         return _PlainResource(descriptor)
-
-    if 'pnc_build_id' in descriptor:
-        return _PncResource(descriptor)
 
     raise CekitError("Resource '{}' is not supported".format(descriptor))
 
@@ -577,7 +578,8 @@ class _PncResource(Resource):
             'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'pnc_artifact_id': {'type': 'str', 'required': True, 'desc': 'The ID of the artifact'},
-            'pnc_build_id': {'type': 'str', 'required': True, 'desc': 'The ID of the build'}
+            'pnc_build_id': {'type': 'str', 'required': True, 'desc': 'The ID of the build'},
+            'url': {'type': 'str', 'desc': 'Optional URL where the resource can be found'}
         }
     }
 
@@ -597,5 +599,3 @@ class _PncResource(Resource):
         For PNC artifacts there is nothing to copy as the artifact is held remotely on PNC.
         """
         return target
-
-

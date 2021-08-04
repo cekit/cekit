@@ -9,10 +9,8 @@ import shutil
 import subprocess
 import sys
 
-import yaml
-
 import pytest
-
+import yaml
 from click.testing import CliRunner
 
 from cekit.cli import cli
@@ -1657,7 +1655,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
 
     descriptor['artifacts'] = [
         {'target': 'boo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '00001'},
-        {'target': 'foo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '54321'},
+        {'target': 'foo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '54321', 'url': 'http://www.dummy.com/build/artifact.jar'},
         {'target': 'goo.zip', 'pnc_build_id': '987654', 'pnc_artifact_id': '00002'}
     ]
 
@@ -1667,15 +1665,19 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
         fetch_artifacts = _file.read()
     with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-pnc.yaml'), 'r') as _file:
         fetch_artifacts_yaml = yaml.safe_load(_file)
-    print("Read fetch_pnc_artifacts {} ".format(fetch_artifacts))
-    assert """- artifacts:
+    print("Read fetch_pnc_artifacts {}\n".format(fetch_artifacts))
+    assert "# Created by CEKit version" in fetch_artifacts
+    assert fetch_artifacts_yaml['builds'] == [{'build_id': '123456', 'artifacts': [{'id': '00001', 'target': '/tmp/artifacts/boo.jar'}, {'id': '54321', 'target': '/tmp/artifacts/foo.jar'}]}, {'build_id': '987654', 'artifacts': [{'id': '00002', 'target': '/tmp/artifacts/goo.zip'}]}]
+    # Skip the following test under Python 2.7 as there can be ordering differences.
+    if sys.version_info >= (3, 7):
+        assert """builds:
+- build_id: '123456'
+  artifacts:
   - id: '00001'
     target: /tmp/artifacts/boo.jar
-  - id: '54321'
+  - id: '54321' # http://www.dummy.com/build/artifact.jar
     target: /tmp/artifacts/foo.jar
-  build_id: '123456'
-- artifacts:
+- build_id: '987654'
+  artifacts:
   - id: '00002'
-    target: /tmp/artifacts/goo.zip
-  build_id: '987654'""" in fetch_artifacts
-    assert fetch_artifacts_yaml['builds'] == [{'build_id': '123456', 'artifacts': [{'id': '00001', 'target': '/tmp/artifacts/boo.jar'}, {'id': '54321', 'target': '/tmp/artifacts/foo.jar'}]}, {'build_id': '987654', 'artifacts': [{'id': '00002', 'target': '/tmp/artifacts/goo.zip'}]}]
+    target: /tmp/artifacts/goo.zip""" in fetch_artifacts

@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 from collections import OrderedDict
+from contextlib import closing
 
 import yaml
 
@@ -93,7 +94,7 @@ class OSBSGenerator(Generator):
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
         fetch_artifacts_pnc = OrderedDict()
-        url_description = {}
+        file_comments = {}
 
         fetch_domains = config.get('common', 'fetch_artifact_domains')
 
@@ -139,7 +140,7 @@ class OSBSGenerator(Generator):
                     for c in intersected_hash:
                         fetch_artifacts_url[len(fetch_artifacts_url) - 1].update({c: artifact[c]})
                     if 'description' in artifact:
-                        url_description[artifact['url']] = artifact['description']
+                        file_comments[artifact['url']] = artifact['description']
                     logger.debug(
                         "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml with contents {}".format(
                             artifact['target'], fetch_artifacts_url[len(fetch_artifacts_url) - 1]))
@@ -165,6 +166,8 @@ class OSBSGenerator(Generator):
                     logger.info("Handling pnc resources for {}".format(artifact))
                     build = fetch_artifacts_pnc.setdefault(artifact['pnc_build_id'], [])
                     build.append({'id': artifact['pnc_artifact_id'], 'target': artifact['dest'] + artifact['target']})
+                    if 'url' in artifact:
+                        file_comments[artifact['pnc_artifact_id']] = artifact['url']
                 else:
                     logger.debug("Copying artifact {} to {}".format(artifact, target_dir))
                     artifact.copy(target_dir)
@@ -172,20 +175,30 @@ class OSBSGenerator(Generator):
         if fetch_artifacts_pnc:
             fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-pnc.yaml')
             pnc = {
-                'metadata': {'author': 'cekit ' + version.__version__},
+                'metadata': {'author': 'CEKit ' + version.__version__},
                 'builds': [{'build_id': key, 'artifacts': fetch_artifacts_pnc.get(key)} for key in fetch_artifacts_pnc]
             }
             logger.debug("Writing {} to fetch-artifacts-pnc.yaml".format(pnc))
             with open(fetch_artifacts_file, 'w') as _file:
-                yaml.safe_dump(pnc, _file, default_flow_style=False)
+                _file.write("# Created by CEKit version {}\n".format(version.__version__))
+                yaml.safe_dump(pnc, _file, default_flow_style=False, sort_keys=False)
+            patch_file(file_comments, fetch_artifacts_file)
         if fetch_artifacts_url:
             fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
             with open(fetch_artifacts_file, 'w') as _file:
-                yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
-            if config.get('common', 'redhat'):
-                for key, value in url_description.items():
-                    logger.debug("Processing to add build references for {} -> {}".format(key, value))
-                    for line in fileinput.input(fetch_artifacts_file, inplace=1):
-                        line = line.replace(key, key + ' # ' + value)
-                        sys.stdout.write(line)
+                _file.write("# Created by CEKit version {}\n".format(version.__version__))
+                yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False, sort_keys=False)
+            patch_file(file_comments, fetch_artifacts_file)
         logger.debug("Artifacts handled")
+
+
+# Used to modify either the fetch-artifact or fetch-pnc files to add extra human readable information.
+def patch_file(file_comments, file):
+    # Can't use it as a context manager with plain with as that is >= 3.2
+    with closing(fileinput.input(file, inplace=1)) as input_list:
+        for line in input_list:
+            r = [line.replace('\n', ' # ' + value + '\n') for (key, value) in file_comments.items() if key in line]
+            if r:
+                sys.stdout.write(r[0])
+            else:
+                sys.stdout.write(line)
