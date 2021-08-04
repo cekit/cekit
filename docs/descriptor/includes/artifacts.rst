@@ -280,3 +280,5 @@ intended to be used with `OSBS <https://osbs.readthedocs.io/en/latest/users.html
           pnc_build_id: 123456
           pnc_artifact_id: 00001
           target: jolokia.tar.gz
+          # Optional URL to denote the link to the artifact
+          url: https://www.pnc.build.system.com/builds/123456/jolokia-1.3.6-bin.tar.gz

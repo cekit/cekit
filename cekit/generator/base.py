@@ -315,8 +315,7 @@ class Generator(object):
     def render_help(self):
         """
         If requested, renders image help page based on the image descriptor.
-        It is generated to the $target/image/help.md file and added later
-        to the root of the image (/).
+        It is generated to the $target/image/help.md file.
         """
 
         if not self.image.help.get('add', False):
