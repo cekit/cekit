@@ -237,7 +237,7 @@ class Resource(Descriptor):
         return target
 
     def __verify(self, target):
-        """ Checks all defined check_sums for an aritfact """
+        """ Checks all defined check_sums for an artifact """
         if not set(SUPPORTED_HASH_ALGORITHMS).intersection(self):
             logger.debug("Artifact '{}' lacks any checksum definition.".format(self.name))
             return False

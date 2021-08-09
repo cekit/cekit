@@ -126,7 +126,7 @@ class OSBSGenerator(Generator):
                     intersected_hash = [x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact]
                     logger.debug("Found checksum markers of {}".format(intersected_hash))
                     if not intersected_hash:
-                        logger.warning("No md5 supplied for {}, calculating from the remote artifact".format(artifact['url']))
+                        logger.warning("No checksum supplied for {}, calculating from the remote artifact".format(artifact['url']))
                         intersected_hash = ["md5"]
                         tmpfile = tempfile.NamedTemporaryFile()
                         try:

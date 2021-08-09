@@ -46,6 +46,9 @@ CEKit provides an integration layer with Brew and enables to use artifact
 directly from Brew. To enable this set :ref:`redhat configuration option <handbook/configuration:Red Hat environment>`
 to ``True`` (or use ``--redhat`` switch) and define plain artifacts which have ``md5`` checksum.
 
+.. note::
+    Only Maven type artifacts are supported from Brew.
+
 .. warning::
     Using a different checksum than ``md5`` will not work!
 
