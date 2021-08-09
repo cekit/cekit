@@ -574,7 +574,7 @@ class _PncResource(Resource):
     SCHEMA = {
         'map': {
             'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
-            'target': {'type': 'str', 'required': True, 'desc': 'Target file name for the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
             'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
             'pnc_artifact_id': {'type': 'str', 'required': True, 'desc': 'The ID of the artifact'},
