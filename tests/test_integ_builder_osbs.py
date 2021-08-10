@@ -1621,7 +1621,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
     descriptor = image_descriptor.copy()
 
     descriptor['artifacts'] = [
-        {'target': 'foo.jar', 'pnc_build_id': '123456', 'pnc_artifact_id': '54321'}
+        {'pnc_build_id': '123456', 'pnc_artifact_id': '54321', 'name': 'foo.jar'}
     ]
 
     run_osbs(descriptor, str(tmpdir), mocker)
@@ -1629,6 +1629,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
     with open(os.path.join(str(tmpdir), 'target', 'image', 'fetch-artifacts-pnc.yaml'), 'r') as _file:
         fetch_artifacts = yaml.safe_load(_file)
 
+    assert "Executing '['/usr/bin/rhpkg', 'new-sources', 'foo.jar']'" not in caplog.text
     assert fetch_artifacts['builds'] == [{'build_id': '123456', 'artifacts': [{'id': '54321', 'target': '/tmp/artifacts/foo.jar'}]}]
 
 
