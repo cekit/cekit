@@ -56,10 +56,10 @@ def create_resource(descriptor, **kwargs):
     if 'git' in descriptor:
         return _GitResource(descriptor)
 
-    if 'md5' in descriptor:
+    if [x for x in SUPPORTED_HASH_ALGORITHMS if x in descriptor]:
         return _PlainResource(descriptor)
 
-    raise CekitError("Resource '{}' is not supported".format(descriptor))
+    raise CekitError("Unable to determine whether a URL/Git/Plain or PNC resource so '{}' is not supported".format(descriptor))
 
 
 class Resource(Descriptor):
@@ -480,7 +480,7 @@ class _PlainResource(Resource):
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
             'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
-            'md5': {'type': 'str', 'required': True, 'desc': 'The md5 checksum of the resource'},
+            'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
             'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
             'sha256': {'type': 'str', 'desc': 'The sha256 checksum of the resource'},
             'sha512': {'type': 'str', 'desc': 'The sha512 checksum of the resource'}
@@ -502,7 +502,7 @@ class _PlainResource(Resource):
                 logger.debug(str(e))
                 logger.warning("Could not download '{}' artifact using cacher".format(self.name))
 
-        # Next option is to download it from Brew directly but only if the md5 checkum
+        # Next option is to download it from Brew directly but only if the md5 checksum
         # is provided and we are running with the --redhat switch
         if self.md5 and config.get('common', 'redhat'):
             logger.debug("Trying to download artifact '{}' from Brew directly".format(self.name))

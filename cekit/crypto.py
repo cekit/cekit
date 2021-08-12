@@ -18,7 +18,7 @@ def get_sum(target, algorithm):
 
 
 def check_sum(target, algorithm, expected, name=None):
-    """ Check that file chksum is correct
+    """ Check that file checksum is correct
     Args:
       alg - algorithm which will be used for diget
       expected_chksum - checksum which artifact must match

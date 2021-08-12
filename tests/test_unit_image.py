@@ -354,6 +354,7 @@ def test_module_processing_fail_when_a_module_aready_exists_in_registry():
         excinfo.value)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_module_processing_warning_when_a_module_version_cannot_be_parsed_as_pep_440(caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
