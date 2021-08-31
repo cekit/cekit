@@ -50,7 +50,7 @@ to ``True`` (or use ``--redhat`` switch) and define plain artifacts which have `
     Only Maven type artifacts are supported from Brew.
 
 .. warning::
-    Using a different checksum than ``md5`` will not work!
+    Using a different checksum than ``md5`` will not work and throw an error.
 
 CEKit will fetch artifacts automatically from Brew, adding them to local cache.
 

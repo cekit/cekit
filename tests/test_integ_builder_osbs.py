@@ -1682,3 +1682,50 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
   artifacts:
   - id: '00002'
     target: /tmp/artifacts/goo.zip""" in fetch_artifacts
+
+
+def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with plain artifact.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch('cekit.crypto.get_sum', return_value='123456')
+    mocker.patch('cekit.cache.artifact.get_sum', return_value='123456')
+    mocker.patch('cekit.tools.decision', return_value=True)
+    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
+    mocker.patch.object(subprocess, 'check_output')
+    mocker.patch('cekit.builders.osbs.DistGit.push')
+
+    work_dir = str(tmpdir.mkdir('work_dir'))
+    image_dir = str(tmpdir)
+    os.makedirs(work_dir + '/cache')
+    with open(os.path.join(image_dir, 'config'), 'w') as fd:
+        fd.write("[common]\n")
+        fd.write("cache_url = #filename#\n")
+    with open(os.path.join(image_dir, 'artifact_name'), 'w') as fd:
+        fd.write('jar-content')
+
+    tmpdir.mkdir('osbs').mkdir('repo')
+
+    tmpdir.join('osbs').join('repo').join(
+        'fetch-artifacts-url.yaml').write_text(u'Some content', 'utf8')
+
+    with Chdir(os.path.join(str(tmpdir), 'osbs', 'repo')):
+        subprocess.call(["git", "init"])
+        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.call(["git", "commit", "-m", "Dummy"])
+
+    descriptor = image_descriptor.copy()
+
+    descriptor['artifacts'] = [
+        {'name': 'artifact_name', 'sha256': '123456'}
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    assert "Unable to use Brew as artifact does not have md5 checksum defined" in caplog.text
+    assert "Plain artifact artifact_name could not be found in Brew, trying to handle it using lookaside cache" in caplog.text
+
+

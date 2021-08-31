@@ -148,6 +148,9 @@ class OSBSGenerator(Generator):
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
                 elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
                     try:
+                        if 'md5' not in artifact:
+                            logger.error("Unable to use Brew as artifact does not have md5 checksum defined")
+                            raise CekitError("Unable to use Brew as artifact does not have md5 checksum defined")
                         fetch_artifacts_url.append({'md5': artifact['md5'],
                                                     'url': get_brew_url(artifact['md5']),
                                                     'target': os.path.join(artifact['target'])})
