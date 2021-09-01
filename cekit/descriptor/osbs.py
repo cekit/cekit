@@ -120,7 +120,7 @@ class Configuration(Descriptor):
         self.descriptor_path = descriptor_path
         super(Configuration, self).__init__(descriptor)
 
-        self._process_osbs_config_files(yaml.load, 'container', 'container_file')
+        self._process_osbs_config_files(yaml.safe_load, 'container', 'container_file')
         self._process_osbs_config_files(lambda file: file.read(), 'gating', 'gating_file')
 
         remote_source = self.get('container', {}).get('remote_source', {})

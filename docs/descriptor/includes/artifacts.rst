@@ -152,7 +152,7 @@ CEKit supports following artifact types:
 Plain artifacts
 ******************
 
-This is an abstract way of defining artifacts. The only required keys are ``name`` and the ``md5`` checksum.
+This is an abstract way of defining artifacts. The only required keys are ``name`` and the checksum.
 This type of artifacts is used to define artifacts that are not available publicly and instead
 provided by some (internal) systems.
 
