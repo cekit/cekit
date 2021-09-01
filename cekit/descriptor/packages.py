@@ -29,11 +29,9 @@ repository_schema = yaml.safe_load("""
 map:
   name: {type: str, required: True}
   id: {type: str}
-  present: {type: bool}
   url:
     map:
       repository: {type: str}
-      gpg: {type: str}
   rpm: {type: str}
   description: {type: str}
   odcs:
@@ -155,9 +153,6 @@ class Repository(Descriptor):
                              'id',
                              'url']
 
-        if 'present' not in self._descriptor:
-            self._descriptor['present'] = True
-
     def fetch(self, target_dir):
         if not self._descriptor['url']['repository']:
             raise CekitError("Repository not defined for '{}'.".format(self.name))
@@ -181,14 +176,6 @@ class Repository(Descriptor):
     @description.setter
     def description(self, value):
         self._descriptor['description'] = value
-
-    @property
-    def present(self):
-        return self.get('present', True)
-
-    @present.setter
-    def present(self, value):
-        self._descriptor['present'] = value
 
     @property
     def id(self):

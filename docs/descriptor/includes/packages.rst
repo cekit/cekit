@@ -215,7 +215,7 @@ URL repository
 .. note::
     Available only on RPM-based distributions.
 
-This approach enables you to download a yum repository file and corresponding GPG key. To do it, define
+This approach enables you to download a yum repository file. To do it, define
 repositories section in a way of:
 
 .. code-block:: yaml
