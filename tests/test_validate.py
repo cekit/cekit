@@ -1443,8 +1443,30 @@ rules:
         assert gating in f
 
 
-def run_cekit(cwd, parameters=None, message=None, env=None):
+def test_run_descriptor_stdin(tmpdir):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
 
+    overrides_descriptor = {
+        'schema_version': 1,
+        'run': {'user': '4321'}}
+
+    with open(os.path.join(image_dir, 'overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               '--descriptor', '-',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'overrides.yaml',
+               'podman'],
+              input=str(image_descriptor))
+
+    assert check_dockerfile(image_dir, 'USER 4321')
+
+
+def run_cekit(cwd, parameters=None, message=None, env=None, input=None):
     if parameters is None:
         parameters = ['build', '--dry-run', 'podman']
 
@@ -1452,7 +1474,7 @@ def run_cekit(cwd, parameters=None, message=None, env=None):
         env = {}
 
     with Chdir(cwd):
-        result = CliRunner(env=env).invoke(cli, parameters, catch_exceptions=False)
+        result = CliRunner(env=env).invoke(cli, parameters, catch_exceptions=False, input=input)
         sys.stdout.write("\n")
         sys.stdout.write(result.output)
 

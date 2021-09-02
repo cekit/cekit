@@ -51,6 +51,10 @@ class Generator(object):
         self.builder_images = []
         self.images = []
 
+        # If descriptor has been passed in from standard input its not a path so use current working directory
+        if "-" == descriptor_path:
+            descriptor_path = os.getcwd()
+
         if overrides:
             for override in overrides:
 

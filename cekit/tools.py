@@ -44,6 +44,10 @@ def load_descriptor(descriptor):
     Returns descriptor as a dictionary
     """
 
+    if "-" == descriptor:
+        descriptor = click.get_text_stream('stdin').read()
+        LOGGER.debug("Read from stdin: {}".format(descriptor))
+
     try:
         data = yaml.safe_load(descriptor)
     except Exception as ex:
@@ -65,7 +69,7 @@ def load_descriptor(descriptor):
 
 
 def decision(question):
-    """Asks user for a question returning True/False answed"""
+    """Asks user for a question returning True/False answered"""
     return click.confirm(question, show_default=True)
 
 

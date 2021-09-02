@@ -7,6 +7,7 @@ This chapter will guide you through the CEKit usage covering all important topic
     :maxdepth: 2
 
     installation/index
+    cli
     building/index
     testing/index
     modules/index
