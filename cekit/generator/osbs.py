@@ -168,7 +168,9 @@ class OSBSGenerator(Generator):
                 elif isinstance(artifact, _PncResource):
                     logger.info("Handling pnc resources for {}".format(artifact))
                     build = fetch_artifacts_pnc.setdefault(artifact['pnc_build_id'], [])
-                    build.append({'id': artifact['pnc_artifact_id'], 'target': artifact['dest'] + artifact['target']})
+                    build.append({'id': artifact['pnc_artifact_id'], 'target': artifact['target']})
+                    # OSBS by default downloads all artifacts to artifacts/<target_path>
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
                     if 'url' in artifact:
                         file_comments[artifact['pnc_artifact_id']] = artifact['url']
                 else:
