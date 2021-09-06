@@ -3,6 +3,9 @@ import logging
 import os
 import sys
 import tempfile
+from collections import OrderedDict
+from contextlib import closing
+
 import yaml
 
 try:
@@ -10,9 +13,10 @@ try:
 except ImportError:
     from urlparse import urlparse
 
+from cekit import version
 from cekit import crypto
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource, _UrlResource
+from cekit.descriptor.resource import _PlainResource, _UrlResource, _PncResource
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import get_brew_url, copy_recursively
@@ -29,7 +33,8 @@ class OSBSGenerator(Generator):
     def init(self):
         super(OSBSGenerator, self).init()
 
-        self._prepare_container_yaml()
+        self._prepare_osbs_config_file(yaml.safe_dump, 'container.yaml')
+        self._prepare_osbs_config_file(lambda contents, file, **kwargs: file.write(contents), 'gating.yaml')
 
     def generate(self, builder):
         # If extra directory exists (by default named 'osbs_extra') next to
@@ -51,29 +56,30 @@ class OSBSGenerator(Generator):
         with open(content_sets_f, 'w') as _file:
             yaml.safe_dump(content_sets, _file, default_flow_style=False)
 
-    def _prepare_container_yaml(self):
-        container_f = os.path.join(self.target, 'image', 'container.yaml')
-        containers = []
+    def _prepare_osbs_config_file(self, writer, config_file):
+        config_path = os.path.join(self.target, 'image', config_file)
+        config_name = config_file.split('.')[0]
+        all_configs = []
 
-        if self.image.get('osbs', {}).get('configuration', {}).get('container'):
-            containers.append(self.image.get('osbs', {}).get('configuration', {}).get('container'))
+        if self.image.get('osbs', {}).get('configuration', {}).get(config_name):
+            all_configs.append(self.image.get('osbs', {}).get('configuration', {}).get(config_name))
 
         # Check all images (for multi-stage) if they contain a container definition
         for i in self.builder_images:
-            if i.get('osbs', {}).get('configuration', {}).get('container'):
-                containers.append(i.get('osbs', {}).get('configuration', {}).get('container', {}))
+            if i.get('osbs', {}).get('configuration', {}).get(config_name):
+                all_configs.append(i.get('osbs', {}).get('configuration', {}).get(config_name, {}))
 
-        if len(containers) > 1:
-            logger.error("Found multiple container definitions ({})".format(containers))
-            raise CekitError("Found multiple container definitions ({})!".format(containers))
-        elif len(containers) == 0:
+        if len(all_configs) > 1:
+            logger.error("Found multiple {} definitions ({})".format(config_name, all_configs))
+            raise CekitError("Found multiple {} definitions ({})!".format(config_name, all_configs))
+        elif len(all_configs) == 0:
             return
 
-        if not os.path.exists(os.path.dirname(container_f)):
-            os.makedirs(os.path.dirname(container_f))
-
-        with open(container_f, 'w') as _file:
-            yaml.safe_dump(containers[0], _file, default_flow_style=False)
+        logger.debug("Writing to {} using ident of {} with content {}".format(config_path, config_name, all_configs[0]))
+        if not os.path.exists(os.path.dirname(config_path)):
+            os.makedirs(os.path.dirname(config_path))
+        with open(config_path, 'w') as _file:
+            writer(all_configs[0], _file, default_flow_style=False)
 
     def _prepare_repository_rpm(self, repo):
         # no special handling is needed here, everything is in template
@@ -87,7 +93,8 @@ class OSBSGenerator(Generator):
         logger.info("Handling artifacts for OSBS...")
         target_dir = os.path.join(self.target, 'image')
         fetch_artifacts_url = []
-        url_description = {}
+        fetch_artifacts_pnc = OrderedDict()
+        file_comments = {}
 
         fetch_domains = config.get('common', 'fetch_artifact_domains')
 
@@ -119,7 +126,7 @@ class OSBSGenerator(Generator):
                     intersected_hash = [x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact]
                     logger.debug("Found checksum markers of {}".format(intersected_hash))
                     if not intersected_hash:
-                        logger.warning("No md5 supplied for {}, calculating from the remote artifact".format(artifact['url']))
+                        logger.warning("No checksum supplied for {}, calculating from the remote artifact".format(artifact['url']))
                         intersected_hash = ["md5"]
                         tmpfile = tempfile.NamedTemporaryFile()
                         try:
@@ -133,7 +140,7 @@ class OSBSGenerator(Generator):
                     for c in intersected_hash:
                         fetch_artifacts_url[len(fetch_artifacts_url) - 1].update({c: artifact[c]})
                     if 'description' in artifact:
-                        url_description[artifact['url']] = artifact['description']
+                        file_comments[artifact['url']] = artifact['description']
                     logger.debug(
                         "Artifact '{}' (as URL) added to fetch-artifacts-url.yaml with contents {}".format(
                             artifact['target'], fetch_artifacts_url[len(fetch_artifacts_url) - 1]))
@@ -141,6 +148,9 @@ class OSBSGenerator(Generator):
                     artifact['target'] = os.path.join('artifacts', artifact['target'])
                 elif isinstance(artifact, _PlainResource) and config.get('common', 'redhat'):
                     try:
+                        if 'md5' not in artifact:
+                            logger.error("Unable to use Brew as artifact does not have md5 checksum defined")
+                            raise CekitError("Unable to use Brew as artifact does not have md5 checksum defined")
                         fetch_artifacts_url.append({'md5': artifact['md5'],
                                                     'url': get_brew_url(artifact['md5']),
                                                     'target': os.path.join(artifact['target'])})
@@ -155,19 +165,45 @@ class OSBSGenerator(Generator):
                         # TODO: This is ugly, rewrite this!
                         artifact['lookaside'] = True
 
+                elif isinstance(artifact, _PncResource):
+                    logger.info("Handling pnc resources for {}".format(artifact))
+                    build = fetch_artifacts_pnc.setdefault(artifact['pnc_build_id'], [])
+                    build.append({'id': artifact['pnc_artifact_id'], 'target': artifact['target']})
+                    # OSBS by default downloads all artifacts to artifacts/<target_path>
+                    artifact['target'] = os.path.join('artifacts', artifact['target'])
+                    if 'url' in artifact:
+                        file_comments[artifact['pnc_artifact_id']] = artifact['url']
                 else:
                     logger.debug("Copying artifact {} to {}".format(artifact, target_dir))
                     artifact.copy(target_dir)
 
-        fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
-
-        if fetch_artifacts_url:
+        if fetch_artifacts_pnc:
+            fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-pnc.yaml')
+            pnc = {
+                'metadata': {'author': 'CEKit ' + version.__version__},
+                'builds': [{'build_id': key, 'artifacts': fetch_artifacts_pnc.get(key)} for key in fetch_artifacts_pnc]
+            }
+            logger.debug("Writing {} to fetch-artifacts-pnc.yaml".format(pnc))
             with open(fetch_artifacts_file, 'w') as _file:
-                yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False)
-            if config.get('common', 'redhat'):
-                for key, value in url_description.items():
-                    logger.debug("Processing to add build references for {} -> {}".format(key, value))
-                    for line in fileinput.input(fetch_artifacts_file, inplace=1):
-                        line = line.replace(key, key + ' # ' + value)
-                        sys.stdout.write(line)
+                _file.write("# Created by CEKit version {}\n".format(version.__version__))
+                yaml.safe_dump(pnc, _file, default_flow_style=False, sort_keys=False)
+            patch_file(file_comments, fetch_artifacts_file)
+        if fetch_artifacts_url:
+            fetch_artifacts_file = os.path.join(self.target, 'image', 'fetch-artifacts-url.yaml')
+            with open(fetch_artifacts_file, 'w') as _file:
+                _file.write("# Created by CEKit version {}\n".format(version.__version__))
+                yaml.safe_dump(fetch_artifacts_url, _file, default_flow_style=False, sort_keys=False)
+            patch_file(file_comments, fetch_artifacts_file)
         logger.debug("Artifacts handled")
+
+
+# Used to modify either the fetch-artifact or fetch-pnc files to add extra human readable information.
+def patch_file(file_comments, file):
+    # Can't use it as a context manager with plain with as that is >= 3.2
+    with closing(fileinput.input(file, inplace=1)) as input_list:
+        for line in input_list:
+            r = [line.replace('\n', ' # ' + value + '\n') for (key, value) in file_comments.items() if key in line]
+            if r:
+                sys.stdout.write(r[0])
+            else:
+                sys.stdout.write(line)

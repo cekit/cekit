@@ -46,16 +46,20 @@ def create_resource(descriptor, **kwargs):
 
         return _PathResource(descriptor, directory)
 
+    # PNC first so it can have an optional URL component
+    if 'pnc_build_id' in descriptor:
+        return _PncResource(descriptor)
+
     if 'url' in descriptor:
         return _UrlResource(descriptor)
 
     if 'git' in descriptor:
         return _GitResource(descriptor)
 
-    if 'md5' in descriptor:
+    if [x for x in SUPPORTED_HASH_ALGORITHMS if x in descriptor]:
         return _PlainResource(descriptor)
 
-    raise CekitError("Resource '{}' is not supported".format(descriptor))
+    raise CekitError("Unable to determine whether a URL/Git/Plain or PNC resource so '{}' is not supported".format(descriptor))
 
 
 class Resource(Descriptor):
@@ -233,7 +237,7 @@ class Resource(Descriptor):
         return target
 
     def __verify(self, target):
-        """ Checks all defined check_sums for an aritfact """
+        """ Checks all defined check_sums for an artifact """
         if not set(SUPPORTED_HASH_ALGORITHMS).intersection(self):
             logger.debug("Artifact '{}' lacks any checksum definition.".format(self.name))
             return False
@@ -476,7 +480,7 @@ class _PlainResource(Resource):
             'target': {'type': 'str', 'desc': 'Target file name for the resource'},
             'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
             'description': {'type': 'str', 'desc': 'Description of the resource'},
-            'md5': {'type': 'str', 'required': True, 'desc': 'The md5 checksum of the resource'},
+            'md5': {'type': 'str', 'desc': 'The md5 checksum of the resource'},
             'sha1': {'type': 'str', 'desc': 'The sha1 checksum of the resource'},
             'sha256': {'type': 'str', 'desc': 'The sha256 checksum of the resource'},
             'sha512': {'type': 'str', 'desc': 'The sha512 checksum of the resource'}
@@ -498,7 +502,7 @@ class _PlainResource(Resource):
                 logger.debug(str(e))
                 logger.warning("Could not download '{}' artifact using cacher".format(self.name))
 
-        # Next option is to download it from Brew directly but only if the md5 checkum
+        # Next option is to download it from Brew directly but only if the md5 checksum
         # is provided and we are running with the --redhat switch
         if self.md5 and config.get('common', 'redhat'):
             logger.debug("Trying to download artifact '{}' from Brew directly".format(self.name))
@@ -558,5 +562,40 @@ class _ImageContentResource(Resource):
         """
         For stage artifacts, there is nothing to copy, because the artifact is located
         in an image that should be built in earlier stage of the image build process.
+        """
+        return target
+
+
+class _PncResource(Resource):
+    """
+    Documentation: http://docs.cekit.io/en/latest/descriptor/image.html#pnc-artifacts
+    """
+
+    SCHEMA = {
+        'map': {
+            'name': {'type': 'str', 'desc': 'Key used to identify the resource'},
+            'target': {'type': 'str', 'desc': 'Target file name for the resource'},
+            'dest': {'type': 'str', 'desc': 'Destination directory inside of the container', 'default': artifact_dest},
+            'description': {'type': 'str', 'desc': 'Description of the resource'},
+            'pnc_artifact_id': {'type': 'str', 'required': True, 'desc': 'The ID of the artifact'},
+            'pnc_build_id': {'type': 'str', 'required': True, 'desc': 'The ID of the build'},
+            'url': {'type': 'str', 'desc': 'Optional URL where the resource can be found'}
+        }
+    }
+
+    def __init__(self, descriptor):
+        self.schema = _PncResource.SCHEMA
+
+        super(_PncResource, self).__init__(descriptor)
+
+    def _get_default_name_value(self, descriptor):
+        """
+        Default identifier is the target file name.
+        """
+        return descriptor.get('target')
+
+    def _copy_impl(self, target):
+        """
+        For PNC artifacts there is nothing to copy as the artifact is held remotely on PNC.
         """
         return target

@@ -177,7 +177,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endif %}
     {% if animage.packages.repositories %}
     {% for repo in animage.packages.repositories %}
-    {% if repo.present and repo.rpm %}
+    {% if repo.rpm %}
 
     RUN {{ repo_install(animage.packages.manager, animage.packages.manager_flags, repo.rpm) }}
     {% endif %}
@@ -254,10 +254,6 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if 'cmd' in run %}
     # Define run cmd
     CMD {{ helper.cmd(run['cmd']) }}
-    {% endif -%}
-
-    {% if image.help.add %}
-    ADD help.md /
     {% endif -%}
 ## /
 ## END target image

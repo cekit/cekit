@@ -9,19 +9,26 @@ Required
 This section represents object we use to hint OSBS builder with a configuration which needs to be tweaked
 for successful and reproducible builds.
 
-It contains two main keys:
+It contains five keys:
 
+* :ref:`extra_dir <descriptor/image:OSBS extra directory>`
+* :ref:`extra_dir_target <descriptor/image:OSBS extra copy command>`
 * :ref:`repository <descriptor/image:OSBS repository>`
+* :ref:`koji_target <descriptor/image:OSBS Koji target>`
 * :ref:`configuration <descriptor/image:OSBS configuration>`
 
 
 .. code-block:: yaml
 
     osbs:
+        extra_dir: osbs-extra
+        extra_dir_target: /
         repository:
             name: containers/redhat-openjdk-18
             branch: jb-openjdk-1.8-openshift-rhel-7
+        koji_target: rhaos-middleware-rhel-7-containers-candidate
         configuration:
+            gating_file: gating.yaml
             container:
                 compose:
                     pulp_repos: true
@@ -177,7 +184,7 @@ CEKit supports two ways of defining content of the  ``container.yaml`` file:
 
 Selecting preferred way of defining this configuration is up to the user.
 Maintaining external file may be handy in case where it is shared across
-multiple images in the same repository. 
+multiple images in the same repository.
 
 
 Embedding
@@ -211,3 +218,22 @@ Linking
 
         compose:
             pulp_repos: true
+
+OSBS Gating Files
+^^^^^^^^^^^^^^^^^
+
+The ``gating.yaml`` file is used within the Container Verification Pipeline (CVP). Both live within the dist-git repository
+next to the Dockerfile. The configuration within CEKit is very similar to :ref:`OSBS configuration <descriptor/image:OSBS configuration>`
+
+Due to the CVP definition including custom tags embedded definitions are not supported ; instead the ``gating_file``
+key should be used to specify the file to include.
+
+For example:
+
+    .. code-block:: yaml
+
+        osbs:
+            configuration:
+                gating_file: gating.yaml
+                container:
+                    ...

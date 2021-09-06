@@ -340,7 +340,7 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
     urlopen_class_mock.assert_called_with('http://cache/abc', context=ctx)
 
 
-def test_overide_resource_remove_chksum():
+def test_override_resource_remove_chksum():
     image = Image(yaml.safe_load("""
     from: foo
     name: test/foo

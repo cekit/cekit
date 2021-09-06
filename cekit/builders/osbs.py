@@ -17,7 +17,7 @@ except ImportError:
 from cekit import tools
 from cekit.config import Config
 from cekit.builder import Builder
-from cekit.descriptor.resource import _PlainResource, _ImageContentResource, _UrlResource
+from cekit.descriptor.resource import _PlainResource, _ImageContentResource, _UrlResource, _PncResource
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively
 
@@ -112,7 +112,7 @@ class OSBSBuilder(Builder):
 
         # First get all artifacts that are not plain/url artifacts (the latter is added to fetch-artifacts.yaml)
         self.artifacts = [a.target
-                          for a in all_artifacts if not isinstance(a, (_UrlResource, _PlainResource, _ImageContentResource))]
+                          for a in all_artifacts if not isinstance(a, (_PncResource, _UrlResource, _PlainResource, _ImageContentResource))]
         # When plain artifact was handled using lookaside cache, we need to add it too
         # TODO Rewrite this!
         self.artifacts += [a.target
@@ -415,6 +415,10 @@ class DistGit(object):
             if os.path.exists("fetch-artifacts-url.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")
                 subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-url.yaml"])
+
+            if os.path.exists("fetch-artifacts-pnc.yaml"):
+                LOGGER.info("Removing old 'fetch-artifacts-pnc.yaml' file")
+                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"])
 
     def add(self, artifacts):
         LOGGER.debug("Adding files to git stage...")

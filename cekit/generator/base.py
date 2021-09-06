@@ -53,8 +53,13 @@ class Generator(object):
         self.builder_images = []
         self.images = []
 
+        # If descriptor has been passed in from standard input its not a path so use current working directory
+        if "-" == descriptor_path:
+            descriptor_path = os.getcwd()
+
         if overrides:
             for override in overrides:
+
                 LOGGER.debug("Loading override '{}'".format(override))
 
                 override_artifact_dir = os.path.dirname(os.path.abspath(override))
@@ -316,14 +321,11 @@ class Generator(object):
     def render_help(self):
         """
         If requested, renders image help page based on the image descriptor.
-        It is generated to the $target/image/help.md file and added later
-        to the root of the image (/).
+        It is generated to the $target/image/help.md file.
         """
 
-        if not self.image.get('help', {}).get('add', False):
+        if not self.image.help.get('add', False):
             return
-
-        LOGGER.info("Rendering help.md page...")
 
         # Set default help template
         help_template_path = os.path.join(os.path.dirname(__file__),
@@ -341,17 +343,17 @@ class Generator(object):
                 help_template_path = os.path.join(os.path.dirname(
                     self._descriptor_path), help_template_path)
 
-        help_dirname, help_basename = os.path.split(help_template_path)
+        LOGGER.info("Rendering help.md page from template {}".format(help_template_path))
 
+        help_dirname, help_basename = os.path.split(help_template_path)
         loader = FileSystemLoader(help_dirname)
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
         env.globals['helper'] = TemplateHelper(self._module_registry)
         env.globals['image'] = self.image
         help_template = env.get_template(help_basename)
+        help_file = os.path.join(self.target, 'image', 'help.md')
 
-        helpfile = os.path.join(self.target, 'image', 'help.md')
-
-        with open(helpfile, 'wb') as f:
+        with open(help_file, 'wb') as f:
             f.write(help_template.render(self.image).encode('utf-8'))
 
         LOGGER.debug("help.md rendered")

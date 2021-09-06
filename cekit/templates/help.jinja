@@ -10,12 +10,6 @@ This image is based on the `{{ from }}` image.
 
 {{ description }}
 
-{% if usage %}
-## Usage
-
-{{ usage }}
-{% endif %}
-
 ## Environment variables
 
 {% if helper.all_envs(image)|count > 0 %}

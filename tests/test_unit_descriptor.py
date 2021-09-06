@@ -201,7 +201,7 @@ def test_image_artifacts(caplog):
            in caplog.text
 
 
-def test_image_plain_artifacts(caplog):
+def test_image_plain_artifacts_md5_fail(caplog):
     with pytest.raises(CekitError) as excinfo:
         Image(yaml.safe_load("""
             from: foo
@@ -213,6 +213,30 @@ def test_image_plain_artifacts(caplog):
             """), 'foo')
     assert "Cannot validate schema: _PlainResource" in excinfo.value.message
     assert "Cannot find required key 'name'" in caplog.text
+
+
+def test_image_plain_artifacts_md5(caplog):
+    Image(yaml.safe_load("""
+        from: foo
+        name: test/foo
+        version: 1.9
+        artifacts:
+          - name: jolokia.jar
+            target: jolokia.jar
+            md5: 080075877a66adf52b7f6d0013fa9730
+        """), 'foo')
+
+
+def test_image_plain_artifacts_sha256(caplog):
+    Image(yaml.safe_load("""
+        from: foo
+        name: test/foo
+        version: 1.9
+        artifacts:
+          - name: jolokia.jar
+            target: jolokia.jar
+            sha256: ac8aef606f79c19321c9d74790168da973c4f10d2784e2e763d2bec8b4ac610f
+        """), 'foo')
 
 
 def test_image_modules_git_repo(caplog):
@@ -249,3 +273,38 @@ def test_image_descriptor_with_execute(caplog):
         """), 'foo')
 
     assert "Cannot validate schema: Image" in excinfo.value.message
+
+
+def test_image_pnc_artifacts_1(caplog):
+    image = Image(yaml.safe_load("""
+            from: foo
+            name: test/foo
+            version: 1.9
+            artifacts:
+              - name: foobar
+                target: jolokia.jar
+                pnc_artifact_id: '12345'
+                pnc_build_id: '54321'
+            """), 'foo')
+    assert image.artifacts[0]['name'] == 'foobar'
+    assert image.artifacts[0]['pnc_build_id'] == '54321'
+    assert image.artifacts[0]['target'] == 'jolokia.jar'
+    assert image.artifacts[0]['dest'] == '/tmp/artifacts/'
+
+
+def test_image_pnc_artifacts_2(caplog):
+    image = Image(yaml.safe_load("""
+            from: foo
+            name: test/foo
+            version: 1.9
+            artifacts:
+              - target: jolokia.jar
+                dest: '/installation/'
+                pnc_artifact_id: '12345'
+                pnc_build_id: '54321'
+            """), 'foo')
+    print("Got {}".format(image.artifacts[0]))
+    assert image.artifacts[0]['name'] == 'jolokia.jar'
+    assert image.artifacts[0]['pnc_build_id'] == '54321'
+    assert image.artifacts[0]['target'] == 'jolokia.jar'
+    assert image.artifacts[0]['dest'] == '/installation/'
