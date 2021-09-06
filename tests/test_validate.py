@@ -42,7 +42,7 @@ image_descriptor = {
     'from': 'centos:7',
     'name': 'test/image',
     'version': '1.0',
-    'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
+    'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a', 'description': 'my description'}],
     'run': {'cmd': ['sleep', '60']},
     'modules': {'repositories': [{'name': 'modules',
                                   'path': 'tests/modules/repo_1'}],
