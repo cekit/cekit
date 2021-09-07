@@ -596,7 +596,6 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
     res.read.side_effect = [b'test', None]
 
     mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
-    #mocker.patch('cekit.builders.osbs.os.path.isdir', side_effect=[False, False, True])
 
     descriptor = image_descriptor.copy()
 
@@ -640,6 +639,7 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
     res.read.side_effect = [b'test', None]
 
     mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.descriptor.resource.Resource._get_remote_size', return_value=0)
 
     repo_dir = tmpdir.mkdir('osbs').mkdir('repo').mkdir(
         '.git').join('other').write_text(u'Some content', 'utf8')
@@ -872,6 +872,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     res.read.side_effect = [b'test', None]
 
     mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.descriptor.resource.Resource._get_remote_size', return_value=0)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -920,6 +921,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
     res.read.side_effect = [b'test', None]
 
     mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.descriptor.resource.Resource._get_remote_size', return_value=0)
 
     cfgcontents = """
 [common]

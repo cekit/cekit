@@ -4,6 +4,9 @@ import os
 import shutil
 import ssl
 import subprocess
+import sys
+
+import click
 
 try:
     from urllib.parse import urlparse
@@ -304,15 +307,24 @@ class Resource(Descriptor):
                 raise CekitError("Could not download file from %s" % url)
 
             try:
-                with open(destination, 'wb') as f:
+                remote_size = self._get_remote_size(res)
+                chunk_size = 1048576  # 1 MB
+                with open(destination, 'wb') as f, click.progressbar(
+                        length=remote_size,
+                        label="Downloading {}".format(url.rsplit('/', 1)[-1]),
+                        show_percent=True,
+                        fill_char=(click.style("#", fg="green")),
+                        empty_char=(click.style("-", fg="white", dim=True))
+                ) as bar:
                     while True:
-                        chunk = res.read(1048576)  # 1 MB
+                        chunk = res.read(chunk_size)
                         if not chunk:
                             break
+                        bar.update(chunk_size)
                         f.write(chunk)
-            except Exception:
+            except Exception as e:
                 try:
-                    logger.debug("Removing incompletely downloaded '{}' file".format(destination))
+                    logger.debug("Removing incompletely downloaded '{}' file due to {}".format(destination, e))
                     os.remove(destination)
                 except OSError:
                     logger.warning("An error occurred while removing file '{}'".format(destination))
@@ -320,6 +332,16 @@ class Resource(Descriptor):
                 raise
         else:
             raise CekitError("Unsupported URL scheme: {}".format(url))
+
+    # Split out to separate function to allow for easy mock overriding. This is due to
+    # Python 2 using a different API so hiding that for the test mocks.
+    @staticmethod
+    def _get_remote_size(res):
+        if sys.version_info[0] < 3:
+            remote_size = int(res.info().getheader('Content-Length', '0'))
+        else:
+            remote_size = int(res.getheader('Content-Length', '0'))
+        return remote_size
 
 
 class _PathResource(Resource):
