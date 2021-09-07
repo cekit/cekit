@@ -31,6 +31,15 @@ Example
 
         $ cekit build --overrides '{"labels": [{"name": "foo", "value": "overridden"}]}' podman
 
+.. note::
+    It is possible to specify YAML as well as JSON on the CLI e.g.
+
+    .. code-block:: bash
+
+        $  cekit -v build --overrides 'labels:
+         - name: foo
+           value: overridden' --dry-run podman
+
 Overrides chaining
 ------------------
 
