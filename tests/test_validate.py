@@ -391,6 +391,37 @@ def test_image_test_with_override_on_cmd(tmpdir):
     run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
 
+def test_image_test_with_override_yaml_on_cmd(tmpdir):
+    overrides_descriptor = """labels:
+  - name: foo
+    value: overriden
+"""
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    feature_files = os.path.join(image_dir, 'tests', 'features', 'test.feature')
+
+    os.makedirs(os.path.dirname(feature_files))
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    with open(feature_files, 'w') as fd:
+        fd.write(feature_label_test_overriden)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--overrides', overrides_descriptor,
+               '--dry-run',
+               'podman'])
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    assert """LABEL \\
+            foo="overriden""" in dockerfile
+
+
 def test_module_override(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
