@@ -81,11 +81,11 @@ def get_ctx(mocker):
 
 
 def get_mock_urlopen(mocker):
-    return mocker.patch('cekit.descriptor.resource.urlopen', return_value=get_res(mocker))
+    return mocker.patch('cekit.tools.urlopen', return_value=get_res(mocker))
 
 
 def get_mock_ssl(mocker, ctx):
-    return mocker.patch('cekit.descriptor.resource.ssl.create_default_context',
+    return mocker.patch('cekit.tools.ssl.create_default_context',
                         return_value=ctx)
 
 
@@ -263,7 +263,7 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
     mocker.patch('os.makedirs')
     os_remove_mock = mocker.patch('os.remove')
 
-    urlopen_class_mock = mocker.patch('cekit.descriptor.resource.urlopen')
+    urlopen_class_mock = mocker.patch('cekit.tools.urlopen')
     urlopen_mock = urlopen_class_mock.return_value
     urlopen_mock.getcode.return_value = 200
     urlopen_mock.read.side_effect = Exception
@@ -287,7 +287,7 @@ def test_copy_plain_resource_with_cacher(mocker, tmpdir):
     config.cfg['common']['cache_url'] = '#filename#,#algorithm#,#hash#'
     config.cfg['common']['work_dir'] = str(tmpdir)
 
-    urlopen_class_mock = mocker.patch('cekit.descriptor.resource.urlopen')
+    urlopen_class_mock = mocker.patch('cekit.tools.urlopen')
     mock_urlopen = urlopen_class_mock.return_value
     mock_urlopen.getcode.return_value = 200
     mock_urlopen.read.side_effect = [b"one", b"two", None]
@@ -314,7 +314,7 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
     config.cfg['common']['work_dir'] = str(tmpdir)
     config.cfg['common']['redhat'] = True
 
-    urlopen_class_mock = mocker.patch('cekit.descriptor.resource.urlopen')
+    urlopen_class_mock = mocker.patch('cekit.tools.urlopen')
     mock_urlopen = urlopen_class_mock.return_value
     mock_urlopen.getcode.return_value = 200
     mock_urlopen.read.side_effect = [b"one", b"two", None]

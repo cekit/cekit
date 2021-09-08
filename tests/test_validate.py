@@ -13,6 +13,7 @@ from requests.exceptions import ConnectionError  # pylint: disable=redefined-bui
 from cekit.cli import cli
 from cekit.descriptor import Repository
 from cekit.tools import Chdir
+from cekit.config import Config
 
 odcs_fake_resp = b"""Result:
 {u'arches': u'x86_64',
@@ -603,6 +604,63 @@ def test_run_override_user(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
+               'podman'])
+
+    assert check_dockerfile(image_dir, 'USER 4321')
+
+
+def get_res(mocker):
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b"{'run': {'user': '4321'}}", None]
+    return res
+
+
+def test_run_load_remote_override(tmpdir, mocker):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    config = Config()
+    config.cfg['common'] = {}
+    mock_urlopen = mocker.patch('cekit.tools.urlopen', return_value=get_res(mocker))
+    mocker.patch('cekit.tools._get_remote_size', return_value=0)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'https://example.com/overrides.yaml',
+               'podman'])
+
+    assert check_dockerfile(image_dir, 'USER 4321')
+    mock_urlopen.assert_called_with('https://example.com/overrides.yaml', context=mocker.ANY)
+
+
+def test_run_load_remote_file_override(tmpdir, mocker):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    config = Config()
+    config.cfg['common'] = {}
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'run': {'user': '4321'}}
+
+    with open(os.path.join(image_dir, 'remote_overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'file://' + image_dir + '/remote_overrides.yaml',
                'podman'])
 
     assert check_dockerfile(image_dir, 'USER 4321')

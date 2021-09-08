@@ -2,11 +2,7 @@ import json
 import logging
 import os
 import shutil
-import ssl
 import subprocess
-import sys
-
-import click
 
 try:
     from urllib.parse import urlparse
@@ -19,7 +15,7 @@ from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-from cekit.tools import get_brew_url, Map, Chdir
+from cekit.tools import get_brew_url, Map, Chdir, download_file
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -277,71 +273,9 @@ class Resource(Descriptor):
         """ Downloads a file from url and save it as destination """
         if use_cache:
             url = self.__substitute_cache_url(url)
-
         if not url:
             raise CekitError("Artifact %s cannot be downloaded, no URL provided" % self.name)
-
-        logger.debug("Downloading from '{}' as {}".format(url, destination))
-
-        parsed_url = urlparse(url)
-
-        if parsed_url.scheme == 'file' or not parsed_url.scheme:
-            if os.path.isdir(parsed_url.path):
-                shutil.copytree(parsed_url.path, destination)
-            else:
-                shutil.copy(parsed_url.path, destination)
-        elif parsed_url.scheme in ['http', 'https']:
-            verify = config.get('common', 'ssl_verify')
-            if str(verify).lower() == 'false':
-                verify = False
-
-            ctx = ssl.create_default_context()
-
-            if not verify:
-                ctx.check_hostname = False
-                ctx.verify_mode = ssl.CERT_NONE
-
-            res = urlopen(url, context=ctx)
-
-            if res.getcode() != 200:
-                raise CekitError("Could not download file from %s" % url)
-
-            try:
-                remote_size = self._get_remote_size(res)
-                chunk_size = 1048576  # 1 MB
-                with open(destination, 'wb') as f, click.progressbar(
-                        length=remote_size,
-                        label="Downloading {}".format(url.rsplit('/', 1)[-1]),
-                        show_percent=True,
-                        fill_char=(click.style("#", fg="green")),
-                        empty_char=(click.style("-", fg="white", dim=True))
-                ) as bar:
-                    while True:
-                        chunk = res.read(chunk_size)
-                        if not chunk:
-                            break
-                        bar.update(chunk_size)
-                        f.write(chunk)
-            except Exception as e:
-                try:
-                    logger.debug("Removing incompletely downloaded '{}' file due to {}".format(destination, e))
-                    os.remove(destination)
-                except OSError:
-                    logger.warning("An error occurred while removing file '{}'".format(destination))
-
-                raise
-        else:
-            raise CekitError("Unsupported URL scheme: {}".format(url))
-
-    # Split out to separate function to allow for easy mock overriding. This is due to
-    # Python 2 using a different API so hiding that for the test mocks.
-    @staticmethod
-    def _get_remote_size(res):
-        if sys.version_info[0] < 3:
-            remote_size = int(res.info().getheader('Content-Length', '0'))
-        else:
-            remote_size = int(res.getheader('Content-Length', '0'))
-        return remote_size
+        download_file(url, destination)
 
 
 class _PathResource(Resource):
