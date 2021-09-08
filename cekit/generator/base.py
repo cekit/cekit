@@ -5,21 +5,26 @@ import os
 import platform
 import re
 import shutil
+import tempfile
 
 from jinja2 import Environment, FileSystemLoader
 from packaging.version import LegacyVersion, parse as parse_version
 
-from cekit import tools
 from cekit.config import Config
 from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.template_helper import TemplateHelper
 from cekit.version import __version__ as cekit_version
+from cekit.tools import download_file, load_descriptor
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
 
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 try:
     from odcs.client.odcs import ODCS, AuthMech
     # Requests is a dependency of ODCS client, so this should be safe
@@ -59,12 +64,18 @@ class Generator(object):
             for override in overrides:
 
                 LOGGER.debug("Loading override '{}'".format(override))
-
-                override_artifact_dir = os.path.dirname(os.path.abspath(override))
-                if not os.path.exists(override):
-                    override_artifact_dir = os.path.dirname(os.path.abspath(descriptor_path))
-                self._overrides.append(Overrides(tools.load_descriptor(
-                    override), override_artifact_dir))
+                if urlparse(override).scheme in ['http', 'https', 'file']:
+                    # HTTP Handling
+                    tmpfile = tempfile.NamedTemporaryFile()
+                    download_file(override, tmpfile.name)
+                    self._overrides.append(Overrides(load_descriptor(tmpfile.name), os.path.dirname(tmpfile.name)))
+                else:
+                    # File handling
+                    override_artifact_dir = os.path.dirname(os.path.abspath(override))
+                    if not os.path.exists(override):
+                        override_artifact_dir = os.path.dirname(os.path.abspath(descriptor_path))
+                    self._overrides.append(Overrides(load_descriptor(
+                        override), override_artifact_dir))
 
         LOGGER.info("Initializing image descriptor...")
 
@@ -98,7 +109,7 @@ class Generator(object):
         os.makedirs(os.path.join(self.target, 'image'))
 
         # Read the main image descriptor and create an Image object from it
-        descriptor = tools.load_descriptor(self._descriptor_path)
+        descriptor = load_descriptor(self._descriptor_path)
 
         if isinstance(descriptor, list):
             LOGGER.info("Descriptor contains multiple elements, assuming multi-stage image")
@@ -224,7 +235,7 @@ class Generator(object):
                 module_descriptor_path = os.path.abspath(os.path.expanduser(
                     os.path.normcase(os.path.join(modules_dir, 'module.yaml'))))
 
-                module = Module(tools.load_descriptor(module_descriptor_path),
+                module = Module(load_descriptor(module_descriptor_path),
                                 modules_dir,
                                 os.path.dirname(module_descriptor_path))
                 LOGGER.debug("Adding module '{}', path: '{}'".format(module.name, module.path))

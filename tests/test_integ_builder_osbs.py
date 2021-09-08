@@ -556,7 +556,7 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(tmpdir, mocke
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
 
     descriptor = image_descriptor.copy()
 
@@ -595,7 +595,7 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
 
     descriptor = image_descriptor.copy()
 
@@ -638,8 +638,8 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
-    mocker.patch('cekit.descriptor.resource.Resource._get_remote_size', return_value=0)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
+    mocker.patch('cekit.tools._get_remote_size', return_value=0)
 
     repo_dir = tmpdir.mkdir('osbs').mkdir('repo').mkdir(
         '.git').join('other').write_text(u'Some content', 'utf8')
@@ -671,7 +671,7 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
 
 def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'call')
     mocker.patch.object(subprocess, 'check_call')
 
@@ -687,7 +687,7 @@ def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
 
 def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'call')
     mocker.patch.object(subprocess, 'check_call')
 
@@ -711,7 +711,7 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -753,7 +753,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
@@ -794,7 +794,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
@@ -831,7 +831,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
@@ -871,8 +871,8 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
-    mocker.patch('cekit.descriptor.resource.Resource._get_remote_size', return_value=0)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
+    mocker.patch('cekit.tools._get_remote_size', return_value=0)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -910,7 +910,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
@@ -920,8 +920,8 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
-    mocker.patch('cekit.descriptor.resource.Resource._get_remote_size', return_value=0)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
+    mocker.patch('cekit.tools._get_remote_size', return_value=0)
 
     cfgcontents = """
 [common]
@@ -972,7 +972,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(tmpdi
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1013,7 +1013,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(tmpdir, mock
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1054,7 +1054,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1095,7 +1095,7 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(tmpdir, mocke
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
 
-    mocker.patch('cekit.descriptor.resource.urlopen', return_value=res)
+    mocker.patch('cekit.tools.urlopen', return_value=res)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1140,7 +1140,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_removal(tmpdir, mocker, capl
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1170,7 +1170,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, capl
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1203,7 +1203,7 @@ def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1240,7 +1240,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -1609,7 +1609,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
@@ -1643,7 +1643,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
 
@@ -1705,7 +1705,7 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
     mocker.patch('cekit.crypto.get_sum', return_value='123456')
     mocker.patch('cekit.cache.artifact.get_sum', return_value='123456')
     mocker.patch('cekit.tools.decision', return_value=True)
-    mocker.patch('cekit.descriptor.resource.urlopen')
+    mocker.patch('cekit.tools.urlopen')
     mocker.patch('cekit.generator.osbs.get_brew_url', return_value='http://random.url/path')
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
