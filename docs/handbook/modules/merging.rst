@@ -56,7 +56,7 @@ Each module descriptor marked to be installed can :doc:`define many different th
 All this metadata needs to be merged correctly into a single image, so that the resulting image is
 what we really expected.
 
-This is where templates come into play. We use a `template <https://github.com/cekit/cekit/blob/master/cekit/templates/template.jinja>`__
+This is where templates come into play. We use a `template <https://github.com/cekit/cekit/blob/main/cekit/templates/template.jinja>`__
 to generate the Dockerfile that is later fed into the builder engine.
 
 This section will go through it and explain how we combine everything together in the template.

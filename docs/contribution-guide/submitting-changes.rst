@@ -11,7 +11,7 @@ All development is done in the ``develop`` branch. This branch is what will the 
 look like and this is the place you should submit your changes.
 
 .. note::
-    Submitting a pull request against the ``master`` branch may result in a request to rebase it against ``develop``.
+    Submitting a pull request against the ``main`` branch may result in a request to rebase it against ``develop``.
 
 In case a fix needs to target the currently released version (a bugfix), the commit will be manually cherry-picked
 by the CEKit team.
