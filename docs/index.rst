@@ -48,7 +48,7 @@ Documentation
     guidelines/index
     descriptor/index
     contribution-guide/index
-    
+
 
 Sponsor
 --------
@@ -63,4 +63,4 @@ Sponsor
 License
 ----------
 
-Distributed under the terms of the `MIT license <https://github.com/cekit/cekit/blob/master/LICENSE>`_.
+Distributed under the terms of the `MIT license <https://github.com/cekit/cekit/blob/main/LICENSE>`_.

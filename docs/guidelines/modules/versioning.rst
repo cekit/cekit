@@ -200,7 +200,7 @@ locally developed -- ``2.0``, so there is no need to define it, but of course we
 
 If we want to share with someone our development work, we should push the module repository
 to a Git repository **using specific branch**. This branch could be a feature branch,
-or a regular development branch (for example ``master``), it depends on your workflow.
+or a regular development branch (for example ``main``), it depends on your workflow.
 
 In our example, let's use a feature branch: ``feature-dev``. Once code is pushed to this
 branch, we can update our ``overrides.yaml`` file to use it:

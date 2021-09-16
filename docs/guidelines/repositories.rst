@@ -126,7 +126,7 @@ Last option is all about manual repository management. This means that enabling 
 can be done as part of a module which directly creates repo files in the image while building it.
 
 Enabling repositories this way needs to be well thought. Repositories will be available
-for package installation in the **subsequent module execution**: 
+for package installation in the **subsequent module execution**:
 
 .. code-block:: yaml
 
@@ -248,7 +248,7 @@ or in image descriptor or in overrides -- it will be ignored.
 
 .. note::
     If you want to enable content sets in OSBS, you need also set the ``pulp_repos`` key to ``true`` in the
-    ``compose`` section of the :ref:`OSBS configuration <descriptor/image:OSBS configuration>`.
+    ``compose`` section of the :ref:`OSBS Configuration <descriptor/image:OSBS configuration>`.
 
 
 Notes

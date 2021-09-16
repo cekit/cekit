@@ -490,14 +490,14 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
-               '--overrides', '{"modules": {"install": [{"name": "master"}, {"name": "child"}] } }',
+               '--overrides', '{"modules": {"install": [{"name": "main"}, {"name": "child"}] } }',
                '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
                '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml", "dest": "/tmp/artifacts/"}] }',
                'podman'])
 
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
-    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/master/script_a" ]')
+    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]')
     assert check_dockerfile_text(
         image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
 
@@ -972,7 +972,7 @@ def test_execution_order(tmpdir):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
-    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['install'] = [{'name': 'main'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_3'}]
 
@@ -1063,18 +1063,18 @@ def test_execution_order(tmpdir):
 ###### /
 ###### END module 'child_3:1.0'
 
-###### START module 'master:1.0'
+###### START module 'main:1.0'
 ###### \\
-        # Copy 'master' module content
-        COPY modules/master /tmp/scripts/master
-        # Set 'master' module defined environment variables
+        # Copy 'main' module content
+        COPY modules/main /tmp/scripts/main
+        # Set 'main' module defined environment variables
         ENV \\
-            foo="master" 
-        # Custom scripts from 'master' module
+            foo="main" 
+        # Custom scripts from 'main' module
         USER root
-        RUN [ "sh", "-x", "/tmp/scripts/master/script_a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]
 ###### /
-###### END module 'master:1.0'
+###### END module 'main:1.0'
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
@@ -1084,7 +1084,7 @@ def test_override_modules_child(tmpdir, mocker):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
-    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['install'] = [{'name': 'main'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_3'}]
 
@@ -1092,7 +1092,7 @@ def test_override_modules_child(tmpdir, mocker):
         yaml.dump(img_desc, fd, default_flow_style=False)
 
     run_cekit(image_dir)
-    assert check_dockerfile_text(image_dir, 'foo="master"')
+    assert check_dockerfile_text(image_dir, 'foo="main"')
 
 
 def test_override_modules_flat(tmpdir, mocker):

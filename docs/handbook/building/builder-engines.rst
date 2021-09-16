@@ -126,7 +126,7 @@ will be squashed into a single layer.
    URL based artifacts (See :ref:`here <descriptor/image:URL artifacts>`) will **not** be cached and instead will be added to ``fetch-artifacts.yaml`` to use the `OSBS integration <https://osbs.readthedocs.io/en/latest/users.html#fetch-artifacts-url-yaml>`_. This may be constrained by using :ref:`OSBS URL Restriction <handbook/configuration:OSBS URL Restriction>` configuration
 
 .. note::
-   Extra OSBS configuration may be passed in via the OSBS descriptor (See :ref:`here <descriptor/image:OSBS>`). Automatic `Cachito integration <https://osbs.readthedocs.io/en/latest/users.html#fetching-source-code-from-external-source-using-cachito>`_ may also be included within the :ref:`OSBS configuration <descriptor/image:OSBS configuration>` and if this is detected CEKit will include the commands in the Dockerfile.
+   Extra OSBS Configuration may be passed in via the OSBS descriptor (See :ref:`here <descriptor/image:OSBS>`). Automatic `Cachito integration <https://osbs.readthedocs.io/en/latest/users.html#fetching-source-code-from-external-source-using-cachito>`_ may also be included within the :ref:`OSBS Configuration <descriptor/image:OSBS Configuration>` and if this is detected CEKit will include the commands in the Dockerfile.
 
 Input format
     Dockerfile

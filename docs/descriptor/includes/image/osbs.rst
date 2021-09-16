@@ -13,9 +13,9 @@ It contains five keys:
 
 * :ref:`extra_dir <descriptor/image:OSBS extra directory>`
 * :ref:`extra_dir_target <descriptor/image:OSBS extra copy command>`
-* :ref:`repository <descriptor/image:OSBS repository>`
+* :ref:`repository <descriptor/image:OSBS Repository>`
 * :ref:`koji_target <descriptor/image:OSBS Koji target>`
-* :ref:`configuration <descriptor/image:OSBS configuration>`
+* :ref:`configuration <descriptor/image:OSBS Configuration>`
 
 
 .. code-block:: yaml
@@ -125,7 +125,7 @@ container image is used.
                     ...
 
 
-OSBS repository
+OSBS Repository
 ^^^^^^^^^^^^^^^^
 
 Key
@@ -166,7 +166,7 @@ overridden by specifying the ``koji_target`` key.
     osbs:
         koji_target: rhaos-middleware-rhel-7-containers-candidate
 
-OSBS configuration
+OSBS Configuration
 ^^^^^^^^^^^^^^^^^^^
 
 Key
@@ -223,7 +223,7 @@ OSBS Gating Files
 ^^^^^^^^^^^^^^^^^
 
 The ``gating.yaml`` file is used within the Container Verification Pipeline (CVP). Both live within the dist-git repository
-next to the Dockerfile. The configuration within CEKit is very similar to :ref:`OSBS configuration <descriptor/image:OSBS configuration>`
+next to the Dockerfile. The configuration within CEKit is very similar to :ref:`OSBS Configuration <descriptor/image:OSBS configuration>`
 
 Due to the CVP definition including custom tags embedded definitions are not supported ; instead the ``gating_file``
 key should be used to specify the file to include.

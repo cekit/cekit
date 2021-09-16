@@ -45,8 +45,8 @@ release: clean
 	git reset --hard origin/develop
 	prerelease
 
-	git checkout master
-	git reset --hard origin/master
+	git checkout main
+	git reset --hard origin/main
 	git merge develop -X theirs --message "Merging develop branch"
 	release -v
 	git push

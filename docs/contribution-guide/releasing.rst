@@ -23,12 +23,12 @@ The automated process uses https://pypi.org/project/zest.releaser to perform the
 Manual Process (reference only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Switch to master branch
-* Ensure you have the latest code: ``git reset --hard upstream/master``
+* Switch to main branch
+* Ensure you have the latest code: ``git reset --hard upstream/main``
 * Merge develop: ``git merge develop -X theirs`` and in the commit message enter: ``Release <version>``
 * Edit ``cekit/version.py`` file and put ``<next-version>``, add that file and amend the previous commit.
 * Tag repository: ``git tag <version>``
-* Push code to master: ``git push upstream master``
+* Push code to main: ``git push upstream main``
 * Push tags: ``git push upstream --tags``
 * Push a release to PyPi (https://pypi.org/project/cekit/ ) via ``make clean release`` (requires twine: https://pypi.org/project/twine/ which is also available as a RPM in Fedora)
 * Update version on develop to point to next major/minor release
