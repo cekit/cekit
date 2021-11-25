@@ -9,3 +9,4 @@ Image descriptor contains all information CEKit needs to build and test a contai
 .. include:: includes/image/name.rst
 .. include:: common_keys.rst
 .. include:: includes/image/osbs.rst
+.. include:: includes/image/packages.rst

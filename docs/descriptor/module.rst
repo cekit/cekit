@@ -18,3 +18,4 @@ know how and when it'll be executed.
 .. include:: includes/module/name.rst
 .. include:: includes/module/execute.rst
 .. include:: common_keys.rst
+.. include:: includes/module/packages.rst
