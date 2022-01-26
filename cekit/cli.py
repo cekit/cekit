@@ -93,8 +93,9 @@ def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
+@click.option('--platform', help="Set the ARCH of the image to the provided value instead of the architecture of the host.")
 @click.pass_context
-def build_docker(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
+def build_docker(ctx, pull, no_squash, tags, platform):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -111,8 +112,9 @@ def build_docker(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
+@click.option('--platform', help="Set the ARCH of the image to the provided value instead of the architecture of the host.")
 @click.pass_context
-def build_buildah(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
+def build_buildah(ctx, pull, no_squash, tags, platform):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -127,8 +129,9 @@ def build_buildah(ctx, pull, no_squash, tags):  # pylint: disable=unused-argumen
 @click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
 @click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
 @click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
+@click.option('--platform', help="Set the ARCH of the image to the provided value instead of the architecture of the host.")
 @click.pass_context
-def build_podman(ctx, pull, no_squash, tags):  # pylint: disable=unused-argument
+def build_podman(ctx, pull, no_squash, tags, platform):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 

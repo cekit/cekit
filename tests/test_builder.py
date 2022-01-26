@@ -11,7 +11,7 @@ from cekit.descriptor import Image
 from cekit.errors import CekitError
 from cekit.generator.docker import DockerGenerator
 from cekit.tools import Map
-from tests.utils import merge_two_dicts
+from tests.utils import merge_dicts
 
 try:
     from unittest.mock import call
@@ -164,7 +164,7 @@ def create_builder_object(mocker, builder, params, common_params={'target': 'som
 
     mocker.patch('cekit.tools.decision')
 
-    builder = BuilderImpl(Map(merge_two_dicts(common_params, params)))
+    builder = BuilderImpl(Map(merge_dicts(common_params, params)))
     builder.dist_git_dir = '/tmp'
     builder.dist_git = DistGitMock()
     builder.artifacts = []
@@ -462,7 +462,7 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
 
 
 def test_docker_builder_defaults():
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     assert builder.params.tags == ['foo', 'bar']
 
@@ -553,7 +553,7 @@ def test_docker_build_default_tags(mocker):
 
 
 def test_docker_squashing_enabled(mocker):
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash == None
@@ -572,7 +572,7 @@ def test_docker_squashing_enabled(mocker):
 
 
 def test_docker_squashing_disabled(mocker):
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {
                             'no_squash': True, 'tags': ['foo', 'bar']})))
 
     assert builder.params.no_squash == True
@@ -591,7 +591,7 @@ def test_docker_squashing_disabled(mocker):
 
 
 def test_docker_squashing_parameters(mocker):
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash == None
@@ -622,6 +622,23 @@ def test_buildah_builder_run(mocker):
         '/usr/bin/buildah',
         'build-using-dockerfile',
         '--squash',
+        '-t', 'foo',
+        '-t', 'bar',
+        'something/image'])
+
+
+def test_buildah_builder_run_platform(mocker):
+    params = {'tags': ['foo', 'bar'], 'platform': 'linux/amd64,linux/arm64'}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'buildah', params)
+    builder.run()
+
+    check_call.assert_called_once_with([
+        '/usr/bin/buildah',
+        'build-using-dockerfile',
+        '--squash',
+        '--platform',
+        'linux/amd64,linux/arm64',
         '-t', 'foo',
         '-t', 'bar',
         'something/image'])
@@ -667,6 +684,23 @@ def test_podman_builder_run_pull(mocker):
                                         'build',
                                         '--pull-always',
                                         '--squash',
+                                        '-t', 'foo',
+                                        '-t', 'bar',
+                                        'something/image'])
+
+
+def test_podman_builder_run_platform(mocker):
+    params = {'tags': ['foo', 'bar'], 'pull': True, 'platform': 'linux/amd64,linux/arm64'}
+    check_call = mocker.patch.object(subprocess, 'check_call')
+    builder = create_builder_object(mocker, 'podman', params)
+    builder.run()
+
+    check_call.assert_called_once_with(['/usr/bin/podman',
+                                        'build',
+                                        '--pull-always',
+                                        '--squash',
+                                        '--platform',
+                                        'linux/amd64,linux/arm64',
                                         '-t', 'foo',
                                         '-t', 'bar',
                                         'something/image'])

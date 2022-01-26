@@ -28,6 +28,8 @@ Parameters
         An image tag used to build image (can be specified multiple times)
     ``--no-squash``
         Do not squash the image after build is done.
+    ``--platform``
+        Set the ARCH of the image to the provided value(s).
 
 Example
     Building Docker image
@@ -184,6 +186,8 @@ Parameters
         An image tag used to build image (can be specified multiple times)
     ``--no-squash``
         Do not squash the image after build is done.
+    ``--platform``
+        Set the ARCH of the image to the provided value(s).
 
 Example
     Build image using Buildah
@@ -240,6 +244,8 @@ Parameters
         An image tag used to build image (can be specified multiple times)
     ``--no-squash``
         Do not squash the image after build is done.
+    ``--platform``
+        Set the ARCH of the image to the provided value(s).
 
 Example
     Build image using Podman
