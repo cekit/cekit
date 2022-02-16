@@ -9,7 +9,7 @@
 
 PyYAML>=3.10
 Jinja2>=2.7
-pykwalify>=1.6.0,<1.8.0
+pykwalify>=1.6.0
 colorlog>=2.10.0
 click>=6.7
 packaging>=19.0
