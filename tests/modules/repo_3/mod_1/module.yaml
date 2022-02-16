@@ -1,14 +1,13 @@
 schema_version: 1
-name: master
+name: main
 version: 1.0
 execute:
   - script: script_a
 envs:
   - name: foo
-    value: master
+    value: main
 modules:
   install:
     - name: child
     - name: child_2
     - name: child_3
-

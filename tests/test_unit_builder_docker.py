@@ -3,13 +3,14 @@
 # pylint: disable=protected-access
 
 import logging
+import re
 
 import pytest
 
-from cekit.errors import CekitError
 from cekit.builders.docker_builder import DockerBuilder
+from cekit.errors import CekitError
 from cekit.tools import Map
-from tests.utils import merge_two_dicts
+from tests.utils import merge_dicts
 
 docker_success_output = [
     {"stream": "Step 1/18 : FROM rhel7:7.5-released\n"},
@@ -83,7 +84,7 @@ def test_docker_client_build(mocker, caplog):
     docker_client_build = mocker.patch.object(
         docker_client, 'build', return_value=docker_success_output)
 
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
     builder.generator = Map({'image': {'from': 'FROM'}})
     builder.run()
 
@@ -96,10 +97,31 @@ def test_docker_client_build(mocker, caplog):
     assert "Image built and available under following tags: foo, bar" in caplog.text
 
 
+def test_docker_client_build_platform(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
+    squash = squash_class.return_value
+    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    docker_client = docker_client_class.return_value
+    docker_client_build = mocker.patch.object(
+        docker_client, 'build', return_value=docker_success_output)
+
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'},
+                                            {'tags': ['foo', 'bar']},
+                                            {'platform': 'linux/amd64,linux/arm64'})))
+    builder.generator = Map({'image': {'from': 'FROM'}})
+    builder.run()
+
+    docker_client_build.assert_called_once_with(
+        decode=True, path='something/image', platform='linux/amd64,linux/arm64', pull=None, rm=True )
+    assert re.match(".*Running Docker build:.*'platform': 'linux/amd64,linux/arm64'.*", caplog.text, re.DOTALL)
+
+
 def test_docker_client_build_with_failure(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
     squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
@@ -125,7 +147,7 @@ def test_docker_client_build_with_failure(mocker, caplog):
 
 # https://github.com/cekit/cekit/issues/508
 def test_docker_tag(mocker):
-    builder = DockerBuilder(Map(merge_two_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
 
     docker_client_mock = mocker.Mock()
 

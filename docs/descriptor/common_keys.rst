@@ -4,7 +4,6 @@
 .. include:: includes/envs.rst
 .. include:: includes/labels.rst
 .. include:: includes/artifacts.rst
-.. include:: includes/packages.rst
 .. include:: includes/ports.rst
 .. include:: includes/volumes.rst
 .. include:: includes/modules.rst

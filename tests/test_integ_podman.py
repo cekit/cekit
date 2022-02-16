@@ -3,15 +3,14 @@
 from __future__ import print_function
 
 import os
-import shutil
-import yaml
-import pytest
 import platform
+import shutil
 
+import pytest
 from click.testing import CliRunner
 
-from cekit.tools import Chdir
 from cekit.cli import cli
+from cekit.tools import Chdir
 
 
 def run_cekit(image_dir, args=None, env=None):

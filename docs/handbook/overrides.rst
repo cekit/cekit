@@ -13,8 +13,8 @@ anything from the descriptor. The overrides are based on overrides descriptor --
 a YAML object containing overrides for the image descriptor.
 
 To use an override descriptor you need to pass ``--overrides-file`` argument to
-CEKit. You can also pass JSON/YAML object representing changes directly via
-``--overrides`` command line argument.
+CEKit. This may be a path based object or a URL scheme (HTTP/HTTPS/file). You can also pass JSON/YAML
+object representing changes directly via ``--overrides`` command line argument.
 
 Example
     Use ``overrides.yaml`` file located in current working directory
@@ -23,6 +23,13 @@ Example
 
         $ cekit build --overrides-file overrides.yaml podman
 
+Example
+    Use ``overrides.yaml`` file located on a remote server
+
+    .. code-block:: bash
+
+        $ cekit build --overrides-file https://example.com/overrides.yaml podman
+
 
 Example
     Override a label via command line
@@ -30,6 +37,15 @@ Example
     .. code-block:: bash
 
         $ cekit build --overrides '{"labels": [{"name": "foo", "value": "overridden"}]}' podman
+
+.. note::
+    It is possible to specify YAML as well as JSON on the CLI e.g.
+
+    .. code-block:: bash
+
+        $  cekit -v build --overrides 'labels:
+         - name: foo
+           value: overridden' --dry-run podman
 
 Overrides chaining
 ------------------

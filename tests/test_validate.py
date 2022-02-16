@@ -13,6 +13,7 @@ from requests.exceptions import ConnectionError  # pylint: disable=redefined-bui
 from cekit.cli import cli
 from cekit.descriptor import Repository
 from cekit.tools import Chdir
+from cekit.config import Config
 
 odcs_fake_resp = b"""Result:
 {u'arches': u'x86_64',
@@ -391,6 +392,37 @@ def test_image_test_with_override_on_cmd(tmpdir):
     run_cekit(image_dir, ['-v', 'test', '--image', 'test/image:1.0', 'behave'])
 
 
+def test_image_test_with_override_yaml_on_cmd(tmpdir):
+    overrides_descriptor = """labels:
+  - name: foo
+    value: overriden
+"""
+
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    feature_files = os.path.join(image_dir, 'tests', 'features', 'test.feature')
+
+    os.makedirs(os.path.dirname(feature_files))
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    with open(feature_files, 'w') as fd:
+        fd.write(feature_label_test_overriden)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--overrides', overrides_descriptor,
+               '--dry-run',
+               'podman'])
+    with open(os.path.join(image_dir, 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    assert """LABEL \\
+            foo="overriden""" in dockerfile
+
+
 def test_module_override(tmpdir):
     image_dir = str(tmpdir.mkdir('source'))
     copy_repos(image_dir)
@@ -458,14 +490,14 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
-               '--overrides', '{"modules": {"install": [{"name": "master"}, {"name": "child"}] } }',
+               '--overrides', '{"modules": {"install": [{"name": "main"}, {"name": "child"}] } }',
                '--overrides', '{"packages": {"install": ["package1", "package2"] } }',
                '--overrides', '{"artifacts": [{"name": "test", "path": "image.yaml", "dest": "/tmp/artifacts/"}] }',
                'podman'])
 
     assert check_dockerfile(
         image_dir, 'RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\')
-    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/master/script_a" ]')
+    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]')
     assert check_dockerfile_text(
         image_dir, '        COPY \\\n            test \\\n            /tmp/artifacts/')
 
@@ -572,6 +604,63 @@ def test_run_override_user(tmpdir):
                'build',
                '--dry-run',
                '--overrides-file', 'overrides.yaml',
+               'podman'])
+
+    assert check_dockerfile(image_dir, 'USER 4321')
+
+
+def get_res(mocker):
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b"{'run': {'user': '4321'}}", None]
+    return res
+
+
+def test_run_load_remote_override(tmpdir, mocker):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    config = Config()
+    config.cfg['common'] = {}
+    mock_urlopen = mocker.patch('cekit.tools.urlopen', return_value=get_res(mocker))
+    mocker.patch('cekit.tools._get_remote_size', return_value=0)
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'https://example.com/overrides.yaml',
+               'podman'])
+
+    assert check_dockerfile(image_dir, 'USER 4321')
+    mock_urlopen.assert_called_with('https://example.com/overrides.yaml', context=mocker.ANY)
+
+
+def test_run_load_remote_file_override(tmpdir, mocker):
+    image_dir = str(tmpdir.mkdir('source'))
+    copy_repos(image_dir)
+
+    config = Config()
+    config.cfg['common'] = {}
+
+    with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        yaml.dump(image_descriptor, fd, default_flow_style=False)
+
+    overrides_descriptor = {
+        'schema_version': 1,
+        'run': {'user': '4321'}}
+
+    with open(os.path.join(image_dir, 'remote_overrides.yaml'), 'w') as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    run_cekit(image_dir,
+              ['-v',
+               'build',
+               '--dry-run',
+               '--overrides-file', 'file://' + image_dir + '/remote_overrides.yaml',
                'podman'])
 
     assert check_dockerfile(image_dir, 'USER 4321')
@@ -883,7 +972,7 @@ def test_execution_order(tmpdir):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
-    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['install'] = [{'name': 'main'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_3'}]
 
@@ -974,18 +1063,18 @@ def test_execution_order(tmpdir):
 ###### /
 ###### END module 'child_3:1.0'
 
-###### START module 'master:1.0'
+###### START module 'main:1.0'
 ###### \\
-        # Copy 'master' module content
-        COPY modules/master /tmp/scripts/master
-        # Set 'master' module defined environment variables
+        # Copy 'main' module content
+        COPY modules/main /tmp/scripts/main
+        # Set 'main' module defined environment variables
         ENV \\
-            foo="master" 
-        # Custom scripts from 'master' module
+            foo="main" 
+        # Custom scripts from 'main' module
         USER root
-        RUN [ "sh", "-x", "/tmp/scripts/master/script_a" ]
+        RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]
 ###### /
-###### END module 'master:1.0'
+###### END module 'main:1.0'
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
 
@@ -995,7 +1084,7 @@ def test_override_modules_child(tmpdir, mocker):
     copy_repos(image_dir)
 
     img_desc = image_descriptor.copy()
-    img_desc['modules']['install'] = [{'name': 'master'}]
+    img_desc['modules']['install'] = [{'name': 'main'}]
     img_desc['modules']['repositories'] = [{'name': 'modules',
                                             'path': 'tests/modules/repo_3'}]
 
@@ -1003,7 +1092,7 @@ def test_override_modules_child(tmpdir, mocker):
         yaml.dump(img_desc, fd, default_flow_style=False)
 
     run_cekit(image_dir)
-    assert check_dockerfile_text(image_dir, 'foo="master"')
+    assert check_dockerfile_text(image_dir, 'foo="main"')
 
 
 def test_override_modules_flat(tmpdir, mocker):

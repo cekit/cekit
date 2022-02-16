@@ -9,3 +9,4 @@ Overrides descriptors are used to modify on the fly :doc:`image descriptors </de
 .. include:: includes/image/name.rst
 .. include:: common_keys.rst
 .. include:: includes/image/osbs.rst
+.. include:: includes/image/packages.rst

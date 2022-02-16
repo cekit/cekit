@@ -24,7 +24,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': True,
             'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     # Check custom target
@@ -34,7 +34,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config', 'redhat': False,
             'target': 'custom-target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     # Check custom work dir
@@ -44,7 +44,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': 'custom-workdir', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     # Check custom config file
@@ -54,7 +54,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': 'custom-config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (),  'pull': False,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     # Test default values for Docker builder
@@ -64,7 +64,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     # Test overrides
@@ -74,7 +74,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': ('foo', 'bar'),
-            'pull': False, 'no_squash': False, 'tags': ()
+            'pull': False, 'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     # Test default values for OSBS builder
@@ -133,7 +133,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': True,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     (
@@ -150,7 +150,7 @@ def _get_class_by_name(clazz):
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
             'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False,
-            'no_squash': False, 'tags': ()
+            'no_squash': False, 'tags': (), 'platform': None
         }
     ),
     (
@@ -158,7 +158,7 @@ def _get_class_by_name(clazz):
         'cekit.builders.buildah.BuildahBuilder',
         {
             'descriptor': 'image.yaml', 'verbose': False, 'nocolor': False, 'work_dir': '~/.cekit', 'config': '~/.cekit/config',
-            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': (), 'no_squash': False
+            'redhat': False, 'target': 'target', 'validate': False, 'dry_run': False, 'overrides': (), 'pull': False, 'tags': (), 'platform': None, 'no_squash': False
         }
     )
 ])

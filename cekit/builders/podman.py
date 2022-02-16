@@ -39,6 +39,10 @@ class PodmanBuilder(Builder):
         if not self.params.no_squash:
             cmd.append('--squash')
 
+        if self.params.platform:
+            cmd.append('--platform')
+            cmd.append(self.params.platform)
+
         # Custom tags for the container image
         LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
 

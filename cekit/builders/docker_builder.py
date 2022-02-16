@@ -1,8 +1,10 @@
+import json
 import logging
 import os
 import re
 import sys
 import traceback
+from collections import OrderedDict
 
 from cekit.builder import Builder
 from cekit.errors import CekitError
@@ -71,14 +73,17 @@ class DockerBuilder(Builder):
 
     def _build_with_docker(self, docker_client):
         docker_args = {}
+        docker_args['decode'] = True
         docker_args['path'] = os.path.join(self.target, 'image')
         docker_args['pull'] = self.params.pull
         docker_args['rm'] = True
-        docker_args['decode'] = True
+        if self.params.platform:
+            docker_args['platform'] = self.params.platform
 
         build_log = []
         docker_layer_ids = []
 
+        LOGGER.debug("Running Docker build: {}".format(str(docker_args)))
         try:
             stream = docker_client.build(**docker_args)
 
@@ -233,8 +238,8 @@ class DockerBuilder(Builder):
         if not tags:
             tags = self.generator.get_tags()
 
-        LOGGER.info("Building container image using Docker...")
         LOGGER.debug("Building image with tags: '{}'".format("', '".join(tags)))
+        LOGGER.info("Building container image...")
 
         docker_client = self._docker_client()
 
