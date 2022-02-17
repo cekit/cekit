@@ -75,10 +75,6 @@ Feature: Test test
     then the image should contain label foo with value overriden
 """
 
-if sys.version_info.major == 2:
-    PermissionError = ConnectionError
-    FileNotFoundError = ConnectionError
-
 
 def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
     mocker.patch.object(subprocess, 'check_output', return_value=odcs_fake_resp)
@@ -613,6 +609,7 @@ def get_res(mocker):
     res = mocker.Mock()
     res.getcode.return_value = 200
     res.read.side_effect = [b"{'run': {'user': '4321'}}", None]
+    res.getheader.return_value = 0
     return res
 
 
@@ -623,7 +620,6 @@ def test_run_load_remote_override(tmpdir, mocker):
     config = Config()
     config.cfg['common'] = {}
     mock_urlopen = mocker.patch('cekit.tools.urlopen', return_value=get_res(mocker))
-    mocker.patch('cekit.tools._get_remote_size', return_value=0)
 
     with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
         yaml.dump(image_descriptor, fd, default_flow_style=False)

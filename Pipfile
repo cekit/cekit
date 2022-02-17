@@ -19,7 +19,7 @@ autopep8 = "*"
 
 [packages]
 pykwalify = ">=1.6.0"
-colorlog = ">=2.10.0,<=5.1"
+colorlog = ">=2.10.0"
 PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
 click = ">=6.7"

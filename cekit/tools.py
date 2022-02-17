@@ -4,25 +4,16 @@ import shutil
 import ssl
 import subprocess
 import sys
+from distutils import dir_util
+from urllib.parse import urlparse
+from urllib.request import urlopen
 
 import click
-
 import yaml
 from yaml.representer import SafeRepresenter
-from distutils import dir_util
-from cekit.errors import CekitError
-from cekit.config import Config
 
-try:
-    basestring
-except NameError:
-    basestring = str
-try:
-    from urllib.parse import urlparse
-    from urllib.request import urlopen
-except ImportError:
-    from urlparse import urlparse
-    from urllib2 import urlopen
+from cekit.config import Config
+from cekit.errors import CekitError
 
 logger = logging.getLogger('cekit')
 config = Config()
@@ -69,7 +60,7 @@ def download_file(url, destination):
             raise CekitError("Could not download file from %s" % url)
 
         try:
-            remote_size = _get_remote_size(res)
+            remote_size = int(res.getheader('Content-Length', '0'))
             chunk_size = 1048576  # 1 MB
             with open(destination, 'wb') as f, click.progressbar(
                     length=remote_size,
@@ -96,16 +87,6 @@ def download_file(url, destination):
         raise CekitError("Unsupported URL scheme: {}".format(url))
 
 
-# Split out to separate function to allow for easy mock overriding. This is due to
-# Python 2 using a different API so hiding that for the test mocks.
-def _get_remote_size(res):
-    if sys.version_info[0] < 3:
-        remote_size = int(res.info().getheader('Content-Length', '0'))
-    else:
-        remote_size = int(res.getheader('Content-Length', '0'))
-    return remote_size
-
-
 def load_descriptor(descriptor):
     """ parses descriptor and validate it against requested schema type
 
@@ -126,7 +107,7 @@ def load_descriptor(descriptor):
     except Exception as ex:
         raise CekitError('Cannot load descriptor', ex)
 
-    if isinstance(data, basestring):
+    if isinstance(data, str):
         logger.debug("Reading descriptor from '{}' file...".format(descriptor))
 
         if os.path.exists(descriptor):

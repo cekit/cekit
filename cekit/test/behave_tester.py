@@ -3,8 +3,8 @@ import os
 
 from cekit.builder import Command
 from cekit.generator.base import Generator
-from cekit.test.collector import BehaveTestCollector
 from cekit.test.behave_runner import BehaveTestRunner
+from cekit.test.collector import BehaveTestCollector
 
 LOGGER = logging.getLogger('cekit')
 

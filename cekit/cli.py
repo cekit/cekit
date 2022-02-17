@@ -7,8 +7,7 @@ import sys
 
 import click
 
-from cekit.config import default_work_dir
-from cekit.config import Config
+from cekit.config import Config, default_work_dir
 from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map

@@ -637,9 +637,9 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(tmpdir, moc
     res = mocker.Mock()
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
+    res.getheader.return_value = 0
 
     mocker.patch('cekit.tools.urlopen', return_value=res)
-    mocker.patch('cekit.tools._get_remote_size', return_value=0)
 
     repo_dir = tmpdir.mkdir('osbs').mkdir('repo').mkdir(
         '.git').join('other').write_text(u'Some content', 'utf8')
@@ -870,9 +870,9 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     res = mocker.Mock()
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
+    res.getheader.return_value = 0
 
     mocker.patch('cekit.tools.urlopen', return_value=res)
-    mocker.patch('cekit.tools._get_remote_size', return_value=0)
     mocker.patch('cekit.tools.decision', return_value=True)
     mocker.patch.object(subprocess, 'check_output')
     mocker.patch('cekit.builders.osbs.DistGit.push')
@@ -919,9 +919,9 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
     res = mocker.Mock()
     res.getcode.return_value = 200
     res.read.side_effect = [b'test', None]
+    res.getheader.return_value = 0
 
     mocker.patch('cekit.tools.urlopen', return_value=res)
-    mocker.patch('cekit.tools._get_remote_size', return_value=0)
 
     cfgcontents = """
 [common]
@@ -1674,9 +1674,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
         [{'id': '00001', 'target': 'boo.jar'},
          {'id': '54321', 'target': 'foo.jar'}]}, {'build_id': '987654', 'artifacts':
         [{'id': '00002', 'target': 'foobar/goo.zip'}]}]
-    # Skip the following test under Python 2.7 as there can be ordering differences.
-    if sys.version_info >= (3, 7):
-        assert """builds:
+    assert """builds:
 - build_id: '123456'
   artifacts:
   - id: '00001'
@@ -1687,9 +1685,9 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
   artifacts:
   - id: '00002'
     target: foobar/goo.zip""" in fetch_artifacts
-        with open(os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile'), 'r') as _file:
-            dockerfile = _file.read()
-        assert """COPY \\
+    with open(os.path.join(str(tmpdir), 'target', 'image', 'Dockerfile'), 'r') as _file:
+        dockerfile = _file.read()
+    assert """COPY \\
             artifacts/boo.jar \\
             artifacts/foo.jar \\
             artifacts/foobar/goo.zip \\

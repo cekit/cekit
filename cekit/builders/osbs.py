@@ -6,18 +6,19 @@ import shutil
 import subprocess
 import sys
 import time
+from urllib.parse import urlparse
 
 import yaml
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
 from cekit import tools
-from cekit.config import Config
 from cekit.builder import Builder
-from cekit.descriptor.resource import _PlainResource, _ImageContentResource, _UrlResource, _PncResource
+from cekit.config import Config
+from cekit.descriptor.resource import (
+    _ImageContentResource,
+    _PlainResource,
+    _PncResource,
+    _UrlResource,
+)
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively
 

@@ -1,6 +1,7 @@
+import copy
+
 from cekit.descriptor import Image
 from cekit.descriptor.image import get_image_schema
-import copy
 
 overrides_schema = get_image_schema()
 overrides_schema['map']['name'] = {'type': 'str'}

@@ -37,7 +37,9 @@ except ImportError:
 try:
     # Docker Python library, the old one
     import docker  # pylint: disable=ungrouped-imports
-    from docker.client import Client as APIClientClass  # pylint: disable=ungrouped-imports
+    from docker.client import (
+        Client as APIClientClass,  # pylint: disable=ungrouped-imports
+    )
 except ImportError:
     pass
 
@@ -105,10 +107,6 @@ class DockerBuilder(Builder):
                 # This prevents polluting CEKit log with downloading/extracting messages
                 messages = ANSI_ESCAPE.sub('', messages).strip()
 
-                # Python 2 compatibility
-                if sys.version_info[0] == 2:
-                    messages = messages.encode("utf-8", errors="ignore")
-
                 for message in messages.split('\n'):
                     LOGGER.info('Docker: {}'.format(message))
 
@@ -132,13 +130,10 @@ class DockerBuilder(Builder):
             else:
                 message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup?"
 
-            if sys.version_info.major == 3:
-                # Work-around for python 2 / 3 code - replicate exception(...) from None
-                cekit_exception = CekitError(message, ex)
-                cekit_exception.__cause__ = None
-                raise cekit_exception
-            else:
-                raise CekitError(message, ex)
+            # Work-around for python 3 code - replicate exception(...) from None
+            cekit_exception = CekitError(message, ex)
+            cekit_exception.__cause__ = None
+            raise cekit_exception
 
         except Exception as ex:
             msg = "Image build failed, see logs above."
