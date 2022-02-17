@@ -4,18 +4,11 @@ import os
 import shutil
 import subprocess
 
-try:
-    from urllib.parse import urlparse
-    from urllib.request import urlopen
-except ImportError:
-    from urlparse import urlparse
-    from urllib2 import urlopen
-
 from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-from cekit.tools import get_brew_url, Map, Chdir, download_file
+from cekit.tools import Chdir, Map, download_file, get_brew_url
 
 logger = logging.getLogger('cekit')
 config = Config()

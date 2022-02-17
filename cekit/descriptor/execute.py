@@ -1,4 +1,5 @@
 import logging
+
 import yaml
 
 import cekit

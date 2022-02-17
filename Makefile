@@ -1,9 +1,6 @@
 test: prepare
 	tox -- tests
 
-test-py27: prepare
-	tox -e py27 -- tests
-
 test-py35: prepare
 	tox -e py35 -- tests
 
@@ -18,6 +15,9 @@ test-py38: prepare
 
 test-py39: prepare
 	tox -e py39 -- tests
+
+test-py310: prepare
+	tox -e py3.10 -- tests
 
 test-unit: prepare
 	tox -- tests/test_unit*

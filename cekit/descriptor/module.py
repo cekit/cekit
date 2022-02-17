@@ -1,4 +1,4 @@
-from cekit.descriptor import Image, Execute
+from cekit.descriptor import Execute, Image
 from cekit.descriptor.image import get_image_schema
 
 overrides_schema = get_image_schema()

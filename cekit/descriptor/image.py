@@ -4,7 +4,17 @@ from collections import OrderedDict
 import yaml
 
 import cekit
-from cekit.descriptor import Descriptor, Label, Env, Port, Run, Modules, Packages, Osbs, Volume
+from cekit.descriptor import (
+    Descriptor,
+    Env,
+    Label,
+    Modules,
+    Osbs,
+    Packages,
+    Port,
+    Run,
+    Volume,
+)
 from cekit.descriptor.base import logger
 from cekit.descriptor.resource import create_resource
 from cekit.errors import CekitError

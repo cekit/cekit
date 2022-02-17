@@ -6,29 +6,26 @@ import platform
 import re
 import shutil
 import tempfile
+from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader
-from packaging.version import LegacyVersion, parse as parse_version
+from packaging.version import LegacyVersion
+from packaging.version import parse as parse_version
 
 from cekit.config import Config
 from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.template_helper import TemplateHelper
-from cekit.version import __version__ as cekit_version
 from cekit.tools import download_file, load_descriptor
+from cekit.version import __version__ as cekit_version
 
 LOGGER = logging.getLogger('cekit')
 CONFIG = Config()
 
-
 try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-try:
-    from odcs.client.odcs import ODCS, AuthMech
     # Requests is a dependency of ODCS client, so this should be safe
     import requests
+    from odcs.client.odcs import ODCS, AuthMech
 except ImportError:
     pass
 
@@ -523,6 +520,7 @@ class ModuleRegistry(object):
         Args:
             name (str): module name
             version (float or str): module version
+            suppress_warnings: whether to suppress warnings
 
         Returns:
             Module object.

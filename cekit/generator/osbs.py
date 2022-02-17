@@ -5,21 +5,16 @@ import sys
 import tempfile
 from collections import OrderedDict
 from contextlib import closing
+from urllib.parse import urlparse
 
 import yaml
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
-from cekit import version
-from cekit import crypto
+from cekit import crypto, version
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource, _UrlResource, _PncResource
+from cekit.descriptor.resource import _PlainResource, _PncResource, _UrlResource
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
-from cekit.tools import get_brew_url, copy_recursively
+from cekit.tools import copy_recursively, get_brew_url
 
 logger = logging.getLogger('cekit')
 config = Config()

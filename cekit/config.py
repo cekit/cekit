@@ -1,11 +1,7 @@
+import configparser
 import os
 
 import yaml
-
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
 
 default_work_dir = "~/.cekit"
 
