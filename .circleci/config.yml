@@ -3,7 +3,7 @@ jobs:
   test:
     parallelism: 4
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202111-02
     steps:
       - run:
           name: "Prepare host for installation"
@@ -19,36 +19,45 @@ jobs:
       - run:
           name: "Install required packages"
           command: |
-            sudo add-apt-repository -y ppa:projectatomic/ppa
+            source /etc/os-release
+            sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
+            wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/xUbuntu_${VERSION_ID}/Release.key -O- | sudo apt-key add -
             sudo apt-get update
-            sudo apt-get install libkrb5-dev software-properties-common uidmap podman docker-ce libxml2-dev libxslt1-dev
+            sudo apt-get install libkrb5-dev software-properties-common uidmap podman docker.io tox
+            # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
+            sudo systemctl unmask docker
+            sudo systemctl start docker
+            #libxml2-dev libxslt1-dev
       - checkout
       - run: docker version
       - run: docker info
       - run: podman version
       - run: podman info
-      - run: pip install tox zipp==0.5.2 --user
+#      - run: pip install tox zipp==0.5.2 --user
       - run: echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
       - run: cd ~/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
-      - run: pyenv local 3.5.9 3.6.10 3.7.7
-      - run: echo -e "[registries.search]\nregistries = ['docker.io', 'registry.fedoraproject.org', 'registry.access.redhat.com']" | sudo tee -a /etc/containers/registries.conf
+      - run: pyenv install 3.6.10
+      - run: pyenv install 3.7.7
+      - run: pyenv install 3.10.0
+      - run: pyenv local 3.6.10 3.7.7 3.10.0
+      - run: sudo sed -i -E 's/(unqualified-search-registries = [[])(.*)/\1"registry.fedoraproject.org", "registry.access.redhat.com", \2/g' /etc/containers/registries.conf
       - run: git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
       - run: |
           if [[ "${CIRCLE_NODE_INDEX}" == 1 ]]; then
-             make test-py35
-          fi
-      - run: |
-          if [[ "${CIRCLE_NODE_INDEX}" == 2 ]]; then
              make test-py36
           fi
       - run: |
-          if [[ "${CIRCLE_NODE_INDEX}" == 3 ]]; then
+          if [[ "${CIRCLE_NODE_INDEX}" == 2 ]]; then
              make test-py37
+          fi
+      - run: |
+          if [[ "${CIRCLE_NODE_INDEX}" == 3 ]]; then
+             make test-py310
           fi
 
   docs-build:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202111-02
     steps:
       - run:
           name: "Prepare host for installation"
