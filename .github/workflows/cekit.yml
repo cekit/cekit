@@ -49,9 +49,6 @@ jobs:
         mkdir -p $HOME/.local/bin
         cd $HOME/.local/bin && curl -sL https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
         PV=${{ matrix.python-version }}
-        if [ "$PV" == "2.7" ]; then
-          pip install tox zipp==0.5.2 --user
-        fi
     - name: Setup MacOS
       if: startsWith(matrix.os,'macos')
       run: |
