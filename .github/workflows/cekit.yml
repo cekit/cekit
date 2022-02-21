@@ -36,7 +36,7 @@ jobs:
       if: startsWith(matrix.os,'ubuntu')
       run: |
         sudo apt-get update
-        sudo apt-get -y install libkrb5-dev software-properties-common containerd runc podman docker.io tox
+        sudo apt-get -y install libkrb5-dev software-properties-common containerd runc podman docker.io
         # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
         sudo systemctl unmask docker
         sudo systemctl start docker
@@ -44,6 +44,7 @@ jobs:
         docker info
         podman version
         podman info
+        pip install tox
         git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
         echo "$HOME/.local/bin" >> $GITHUB_PATH
         mkdir -p $HOME/.local/bin
