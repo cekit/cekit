@@ -1,18 +1,17 @@
 # -*- encoding: utf-8 -*-
 
 import os
+import platform
 import shutil
 import sys
 import tempfile
-import platform
+
 import pytest
 import yaml
-
 from click.testing import CliRunner
 
 from cekit.cli import cli
 from cekit.tools import Chdir
-
 
 image_descriptor = {
     'schema_version': 1,

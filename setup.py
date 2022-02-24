@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
-from setuptools import setup, find_packages
-from cekit.version import __version__
-
 import codecs
+
+from setuptools import find_packages, setup
+
+from cekit.version import __version__
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()

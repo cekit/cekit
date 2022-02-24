@@ -1,11 +1,12 @@
 import logging
-import pytest
 import os
+
+import pytest
 import yaml
 
+from cekit.config import Config
 from cekit.descriptor import Image, Overrides
 from cekit.descriptor.resource import create_resource
-from cekit.config import Config
 from cekit.errors import CekitError
 
 try:

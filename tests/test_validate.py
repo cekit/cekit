@@ -11,9 +11,9 @@ from click.testing import CliRunner
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 
 from cekit.cli import cli
+from cekit.config import Config
 from cekit.descriptor import Repository
 from cekit.tools import Chdir
-from cekit.config import Config
 
 odcs_fake_resp = b"""Result:
 {u'arches': u'x86_64',

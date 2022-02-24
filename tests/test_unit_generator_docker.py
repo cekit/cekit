@@ -4,17 +4,15 @@
 
 import logging
 import os
-
 from contextlib import contextmanager
 
 import pytest
 import yaml
 
 from cekit.config import Config
+from cekit.descriptor import Image
 from cekit.errors import CekitError
 from cekit.generator.docker import DockerGenerator
-from cekit.descriptor import Image
-
 
 odcs_fake_resp = {
     "arches": "x86_64 ppc64",
