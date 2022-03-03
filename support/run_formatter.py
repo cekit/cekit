@@ -10,7 +10,7 @@ import click
 from cekit.log import setup_logging
 from cekit.tools import Chdir
 
-logger = logging.getLogger()
+logger = logging.getLogger('cekit')
 
 
 @click.command(
@@ -19,7 +19,10 @@ logger = logging.getLogger()
 @click.option(
     "--check", help="Don't write the files back, just return the status.", is_flag=True
 )
-def main(check: bool) -> None:
+@click.option(
+    '-v', '--verbose', help="Enable verbose output.", is_flag=True
+)
+def main(check: bool, verbose: bool) -> None:
     """Main function
 
     :params check: Flag to return the status without overwriting any file.
@@ -28,6 +31,11 @@ def main(check: bool) -> None:
     options = []
     if check:
         options.append("--check")
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+        options.append("--verbose")
+    else:
+        logger.setLevel(logging.INFO)
 
     repo_root = str(Path(__file__).parent.parent)
     logger.debug(f"Repository root is {repo_root}")
