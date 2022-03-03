@@ -34,7 +34,7 @@ def main(check: bool) -> None:
 
     # Run the various formatters, stop on the first error
     for formatter in [
-        ["isort", "--skip", "__init__.py", "--skip", ".tox", "--profile", "black"],
+        ["isort"],
         # black should be run last
         # ["black"],
     ]:
