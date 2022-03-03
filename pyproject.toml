@@ -1,4 +1,0 @@
-[tool.isort]
-profile = "black"
-src_paths = ["cekit", "docs", "support", "tests"]
-skip = ["__init__.py", ".tox"]
