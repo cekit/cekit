@@ -3,7 +3,6 @@ import re
 import sys
 
 import pytest
-
 from click.testing import CliRunner
 
 from cekit.cache.cli import cli

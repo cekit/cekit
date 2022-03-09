@@ -4,14 +4,13 @@ import sys
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
 from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
-from cekit.version import __version__ as cekit_version
 from cekit.tools import Chdir
-
-from click.testing import CliRunner
+from cekit.version import __version__ as cekit_version
 
 basic_config = {'release': 1,
                 'version': 1,

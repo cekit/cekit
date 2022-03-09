@@ -8,7 +8,6 @@ from pykwalify.errors import SchemaError
 
 from cekit.errors import CekitError
 
-
 logger = logging.getLogger('cekit')
 
 

@@ -2,9 +2,9 @@ import pytest
 import yaml
 
 from cekit.config import Config
-from cekit.log import setup_logging
+from cekit.descriptor import Env, Image, Label, Osbs, Packages, Port, Volume
 from cekit.errors import CekitError
-from cekit.descriptor import Label, Port, Env, Volume, Packages, Image, Osbs
+from cekit.log import setup_logging
 
 config = Config()
 config.configure('/dev/null', {'redhat': True})

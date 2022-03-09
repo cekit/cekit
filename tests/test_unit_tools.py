@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from cekit import tools
-from cekit.descriptor import Descriptor, Image, Module, Overrides, Run, Osbs
+from cekit.descriptor import Descriptor, Image, Module, Osbs, Overrides, Run
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
 from cekit.errors import CekitError
 
