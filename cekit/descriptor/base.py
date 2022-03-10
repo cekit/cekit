@@ -1,23 +1,17 @@
-import collections
 import logging
 import os
-import yaml
+from collections.abc import MutableMapping
 
+import yaml
 from pykwalify.core import Core
 from pykwalify.errors import SchemaError
 
 from cekit.errors import CekitError
 
-try:
-    collectionsAbc = collections.abc
-except AttributeError:
-    collectionsAbc = collections
-
-
 logger = logging.getLogger('cekit')
 
 
-class Descriptor(collectionsAbc.MutableMapping):
+class Descriptor(MutableMapping):
     """Class serving as parent for any descriptor in cekit.
 
     Class implement collections.MutableMapping so it can be used as a dictionary.

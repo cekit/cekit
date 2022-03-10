@@ -3,9 +3,8 @@ import json
 
 from docutils import nodes
 from docutils.parsers.rst import directives
-
-from sphinx.util.docutils import SphinxDirective
 from sphinx.directives.code import container_wrapper
+from sphinx.util.docutils import SphinxDirective
 
 
 class SchemaDirective(SphinxDirective):

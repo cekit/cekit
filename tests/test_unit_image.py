@@ -1,13 +1,13 @@
 import logging
+from collections import OrderedDict
+
 import pytest
 import yaml
 
-from collections import OrderedDict
-
-from cekit.descriptor import Image, Overrides, Module
+from cekit.descriptor import Image, Module, Overrides
+from cekit.errors import CekitError
 from cekit.generator.base import ModuleRegistry
 from cekit.tools import Map
-from cekit.errors import CekitError
 
 
 def test_image_overrides_with_content_sets_none():

@@ -3,15 +3,15 @@
 from __future__ import print_function
 
 import os
-import shutil
-import yaml
-import pytest
 import platform
+import shutil
 
+import pytest
+import yaml
 from click.testing import CliRunner
 
-from cekit.tools import Chdir
 from cekit.cli import cli
+from cekit.tools import Chdir
 
 image_descriptor = {
     'schema_version': 1,

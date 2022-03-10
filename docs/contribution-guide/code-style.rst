@@ -7,6 +7,10 @@ This is a general Python style, with 4 spaces as the delimiter, nothing groundbr
 Formatting
 -----------
 
+Import sorting is controlled by `isort <https://pycqa.github.io/isort/>`__. There is a helper script
+to reformat the code under ``support/run_formatter.py`` and the tests
+will also verify this formatting.
+
 For code formatting we use `Flake8 <http://flake8.pycqa.org/en/latest/>`__. You can find a ``.flake8``
 configuration file in the root directory.
 
