@@ -5,23 +5,20 @@ import subprocess
 from cekit.builder import Builder
 from cekit.errors import CekitError
 
-LOGGER = logging.getLogger('cekit')
+LOGGER = logging.getLogger("cekit")
 
 
 class PodmanBuilder(Builder):
     """This class represents podman builder in build mode."""
 
     def __init__(self, params):
-        super(PodmanBuilder, self).__init__('podman', params)
+        super(PodmanBuilder, self).__init__("podman", params)
 
     @staticmethod
     def dependencies(params=None):
         deps = {}
 
-        deps['podman'] = {
-            'package': 'podman',
-            'executable': 'podman'
-        }
+        deps["podman"] = {"package": "podman", "executable": "podman"}
 
         return deps
 
@@ -34,13 +31,13 @@ class PodmanBuilder(Builder):
             tags = self.generator.get_tags()
 
         if self.params.pull:
-            cmd.append('--pull-always')
+            cmd.append("--pull-always")
 
         if not self.params.no_squash:
-            cmd.append('--squash')
+            cmd.append("--squash")
 
         if self.params.platform:
-            cmd.append('--platform')
+            cmd.append("--platform")
             cmd.append(self.params.platform)
 
         # Custom tags for the container image
@@ -51,13 +48,17 @@ class PodmanBuilder(Builder):
 
         LOGGER.info("Building container image...")
 
-        cmd.append(os.path.join(self.target, 'image'))
+        cmd.append(os.path.join(self.target, "image"))
 
         LOGGER.debug("Running Podman build: '{}'".format(" ".join(cmd)))
 
         try:
             subprocess.check_call(cmd)
 
-            LOGGER.info("Image built and available under following tags: {}".format(", ".join(tags)))
+            LOGGER.info(
+                "Image built and available under following tags: {}".format(
+                    ", ".join(tags)
+                )
+            )
         except:
             raise CekitError("Image build failed, see logs above.")

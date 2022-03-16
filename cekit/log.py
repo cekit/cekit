@@ -26,12 +26,14 @@ def setup_logging(color=True):
     handler_out.addFilter(SingleLevelFilter(logging.INFO, False))
     handler_err.addFilter(SingleLevelFilter(logging.INFO, True))
 
-    if not color or os.environ.get('NO_COLOR'):
+    if not color or os.environ.get("NO_COLOR"):
         formatter = logging.Formatter(
-            '%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s')
+            "%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s"
+        )
     else:
         formatter = colorlog.ColoredFormatter(
-            '%(log_color)s%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s')
+            "%(log_color)s%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s"
+        )
 
     handler_out.setFormatter(formatter)
     handler_err.setFormatter(formatter)

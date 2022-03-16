@@ -2,7 +2,8 @@ import yaml
 
 from cekit.descriptor import Descriptor
 
-run_schema = yaml.safe_load("""
+run_schema = yaml.safe_load(
+    """
 map:
   workdir: {type: str}
   user: {type: text}
@@ -11,7 +12,8 @@ map:
       - {type: str}
   entrypoint:
     seq:
-      - {type: str} """)
+      - {type: str} """
+)
 
 
 class Run(Descriptor):
@@ -21,12 +23,13 @@ class Run(Descriptor):
     Args:
        descriptor - a yaml containing descriptor object
     """
+
     def __init__(self, descriptor):
         self.schema = run_schema
         super(Run, self).__init__(descriptor)
-        if 'name' not in self._descriptor:
-            self._descriptor['name'] = 'run'
-        self.skip_merging = ['cmd', 'entrypoint']
+        if "name" not in self._descriptor:
+            self._descriptor["name"] = "run"
+        self.skip_merging = ["cmd", "entrypoint"]
 
     def merge(self, descriptor):
         if not descriptor:

@@ -5,12 +5,14 @@ import yaml
 
 from cekit.descriptor import Descriptor
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 
-volume_schema = yaml.safe_load("""
+volume_schema = yaml.safe_load(
+    """
 map:
   name: {type: str}
-  path: {type: str, required: True}""")
+  path: {type: str, required: True}"""
+)
 
 
 class Volume(Descriptor):
@@ -24,5 +26,5 @@ class Volume(Descriptor):
     def __init__(self, descriptor):
         self.schema = volume_schema
         super(Volume, self).__init__(descriptor)
-        if 'name' not in self._descriptor:
-            self._descriptor['name'] = os.path.basename(self._descriptor['path'])
+        if "name" not in self._descriptor:
+            self._descriptor["name"] = os.path.basename(self._descriptor["path"])
