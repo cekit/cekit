@@ -4,6 +4,10 @@ Installation instructions
 .. contents::
     :backlinks: none
 
+
+Python versions >= 3.6 are supported. See the `GitHub Action <https://github.com/cekit/cekit/blob/develop/
+.github/workflows/cekit.yml#L20>`_ for the matrix we test against.
+
 We provide RPM packages for Fedora, CentOS/RHEL distribution.
 CEKit installation on other platforms is still possible via ``pip``.
 
@@ -22,7 +26,7 @@ Fedora
 -------------------
 
 .. note::
-    Supported versions: 29+.
+    Supported versions: 34+.
 
 CEKit is available from regular Fedora repositories.
 
@@ -79,7 +83,7 @@ If you don't want to (or cannot) use Virtualenv, the best idea is to install CEK
 .. note::
     In this case you may need to add ``~/.local/bin/`` directory to your ``$PATH`` environment variable to
     be able to run the ``cekit`` command.
-    
+
 .. note::
     For Debian based distros, you *may* need to pre-install the ``libkrb5-dev`` apt package *before*
     installing cekit using pip (either inside or outside a virtualenv). You can do this by typing:
