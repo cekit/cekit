@@ -211,7 +211,7 @@ class OSBSGenerator(Generator):
                         artifact["target"] = os.path.join(
                             "artifacts", artifact["target"]
                         )
-                    except:
+                    except Exception:
                         logger.warning(
                             "Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".format(
                                 artifact["name"]

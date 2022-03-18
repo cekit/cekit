@@ -313,9 +313,9 @@ class DependencyHandler(object):
 
             self.os_release = dict(
                 [
-                    l.strip().split("=")
-                    for l in content
-                    if not l.isspace() and not l.strip().startswith("#")
+                    ll.strip().split("=")
+                    for ll in content
+                    if not ll.isspace() and not ll.strip().startswith("#")
                 ]
             )
 

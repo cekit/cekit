@@ -129,8 +129,7 @@ def test_docker_client_build(mocker, caplog):
 def test_docker_client_build_platform(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
-    squash = squash_class.return_value
+    mocker.patch("cekit.builders.docker_builder.Squash")
     docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
     docker_client = docker_client_class.return_value
     docker_client_build = mocker.patch.object(

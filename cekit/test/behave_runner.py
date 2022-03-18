@@ -76,5 +76,5 @@ class BehaveTestRunner(object):
                     )
         except CekitError:
             raise
-        except:
+        except Exception:
             raise CekitError("An error occurred while executing tests")

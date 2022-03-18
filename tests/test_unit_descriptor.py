@@ -352,7 +352,7 @@ def test_image_modules_git_repo(caplog):
 
 def test_image_descriptor_with_execute(caplog):
     with pytest.raises(CekitError) as excinfo:
-        image = Image(
+        Image(
             yaml.safe_load(
                 """
         from: foo

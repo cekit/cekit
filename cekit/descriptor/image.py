@@ -329,7 +329,7 @@ class Image(Descriptor):
                 image_modules[name] = module
             self.modules._descriptor["install"] = list(image_modules.values())
 
-            if override.run != None:
+            if override.run is not None:
                 if self.run:
                     self.run = override.run.merge(self.run)
                 else:
@@ -431,7 +431,7 @@ class Image(Descriptor):
             # collect package repositories
             for repo in module.packages.repositories:
                 name = repo.name
-                if not name in self._package_repositories:
+                if name not in self._package_repositories:
                     self._package_repositories[name] = repo
 
             # incorporate run specification contributed by module

@@ -115,7 +115,7 @@ def test_fetching_with_ssl_verify(mocker):
 
     try:
         res.copy()
-    except:
+    except Exception:
         pass
 
     mock_urlopen.assert_called_with("https:///dummy", context=ctx)
@@ -134,7 +134,7 @@ def test_fetching_disable_ssl_verify(mocker):
 
     try:
         res.copy()
-    except:
+    except Exception:
         pass
 
     mock_urlopen.assert_called_with("https:///dummy", context=ctx)

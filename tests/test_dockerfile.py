@@ -76,7 +76,7 @@ def print_test_name(value):
                     },
                 ]
             },
-            r" \\\s+COMBINED_ENV=\"set_value\" \\\s+JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\" \n",
+            r" \\\s+COMBINED_ENV=\"set_value\" \\\s+JBOSS_IMAGE_NAME=\"testimage\" \\\s+JBOSS_IMAGE_VERSION=\"1\"\n",
         ),
         ("test_cekit_label_version", {}, r'.*io.cekit.version="%s".*' % cekit_version),
     ],

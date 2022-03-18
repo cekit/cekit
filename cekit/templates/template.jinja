@@ -113,7 +113,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Set '{{ module.name }}' {{ module_type }} defined environment variables
         ENV \
             {% for env in module.envs|sort(attribute='name')|selectattr("value")|list %}
-            {{ env.name }}="{{ env.value }}" {% if loop.index < loop.length %}\{% endif %}
+            {{ env.name }}="{{ env.value }}"{% if loop.index < loop.length %} \{% endif %}
 
             {% endfor %}
         {% endif -%}
@@ -122,7 +122,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Set '{{ module.name }}' {{ module_type }} defined labels
         LABEL \
             {% for label in module.labels|sort(attribute='name') %}
-            {{ label.name }}="{{ label.value }}" {% if loop.index < loop.length %} \{% endif %}
+            {{ label.name }}="{{ label.value }}"{% if loop.index < loop.length %} \{% endif %}
 
             {% endfor %}
         {% endif -%}
