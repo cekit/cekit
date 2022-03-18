@@ -5,17 +5,21 @@ import yaml
 import cekit
 from cekit.descriptor import Descriptor
 
-execute_schemas = yaml.safe_load("""
+execute_schemas = yaml.safe_load(
+    """
         map:
           name: {type: str}
           script: {type: str}
-          user: {type: text}""")
+          user: {type: text}"""
+)
 
-container_schemas = yaml.safe_load("""
+container_schemas = yaml.safe_load(
+    """
         seq:
-          - {type: any}""")
+          - {type: any}"""
+)
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 
 
 class Execute(Descriptor):
@@ -23,32 +27,32 @@ class Execute(Descriptor):
         self.schema = execute_schemas
         super(Execute, self).__init__(descriptor)
 
-        descriptor['directory'] = module_name
-        descriptor['module_name'] = module_name
+        descriptor["directory"] = module_name
+        descriptor["module_name"] = module_name
 
-        if 'name' not in descriptor:
-            descriptor['name'] = "{}/{}".format(module_name, descriptor['script'])
+        if "name" not in descriptor:
+            descriptor["name"] = "{}/{}".format(module_name, descriptor["script"])
 
     @property
     def name(self):
-        return self.get('name')
+        return self.get("name")
 
     @name.setter
     def name(self, value):
-        self._descriptor['name'] = value
+        self._descriptor["name"] = value
 
     @property
     def script(self):
-        return self.get('script')
+        return self.get("script")
 
     @script.setter
     def script(self, value):
-        self._descriptor['script'] = value
+        self._descriptor["script"] = value
 
     @property
     def user(self):
-        return self.get('user', cekit.DEFAULT_USER)
+        return self.get("user", cekit.DEFAULT_USER)
 
     @user.setter
     def user(self, value):
-        self._descriptor['user'] = value
+        self._descriptor["user"] = value

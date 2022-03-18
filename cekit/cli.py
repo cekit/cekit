@@ -13,20 +13,50 @@ from cekit.log import setup_logging
 from cekit.tools import Map
 from cekit.version import __version__
 
-LOGGER = logging.getLogger('cekit')
+LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
 
 
 @click.group(context_settings=dict(max_content_width=100))
-@click.option('--descriptor', metavar="PATH", help="Path to image descriptor file.", default="image.yaml", show_default=True)
-@click.option('-v', '--verbose', help="Enable verbose output.", is_flag=True)
-@click.option('--nocolor', help="Disable color output.", is_flag=True)
-@click.option('--work-dir', metavar="PATH", help="Location of the working directory.", default=default_work_dir, show_default=True)
-@click.option('--config', metavar="PATH", help="Path to configuration file.", default=default_work_dir + "/config", show_default=True)
-@click.option('--redhat', help="Set default options for Red Hat internal infrastructure.", is_flag=True)
-@click.option('--target', metavar="PATH", help="Path to directory where files should be generated", default="target", show_default=True)
+@click.option(
+    "--descriptor",
+    metavar="PATH",
+    help="Path to image descriptor file.",
+    default="image.yaml",
+    show_default=True,
+)
+@click.option("-v", "--verbose", help="Enable verbose output.", is_flag=True)
+@click.option("--nocolor", help="Disable color output.", is_flag=True)
+@click.option(
+    "--work-dir",
+    metavar="PATH",
+    help="Location of the working directory.",
+    default=default_work_dir,
+    show_default=True,
+)
+@click.option(
+    "--config",
+    metavar="PATH",
+    help="Path to configuration file.",
+    default=default_work_dir + "/config",
+    show_default=True,
+)
+@click.option(
+    "--redhat",
+    help="Set default options for Red Hat internal infrastructure.",
+    is_flag=True,
+)
+@click.option(
+    "--target",
+    metavar="PATH",
+    help="Path to directory where files should be generated",
+    default="target",
+    show_default=True,
+)
 @click.version_option(message="%(version)s", version=__version__)
-def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):  # pylint: disable=unused-argument,too-many-arguments
+def cli(
+    descriptor, verbose, nocolor, work_dir, config, redhat, target
+):  # pylint: disable=unused-argument,too-many-arguments
     """
     ABOUT
 
@@ -54,10 +84,29 @@ def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):  # pyli
 
 
 @cli.group(short_help="Build container image")
-@click.option('--validate', help="Do not execute the build nor generate files, just validate image and module descriptors.", is_flag=True)
-@click.option('--dry-run', help="Do not execute the build, just generate required files.", is_flag=True)
-@click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
-@click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
+@click.option(
+    "--validate",
+    help="Do not execute the build nor generate files, just validate image and module descriptors.",
+    is_flag=True,
+)
+@click.option(
+    "--dry-run",
+    help="Do not execute the build, just generate required files.",
+    is_flag=True,
+)
+@click.option(
+    "--overrides",
+    metavar="JSON",
+    help="Inline overrides in JSON format.",
+    multiple=True,
+)
+@click.option(
+    "--overrides-file",
+    "overrides",
+    metavar="PATH",
+    help="Path to overrides file in YAML format.",
+    multiple=True,
+)
 def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
     """
     DESCRIPTION
@@ -89,12 +138,25 @@ def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
 
 
 @build.command(name="docker", short_help="Build using Docker engine")
-@click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
-@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
-@click.option('--platform', help="Set the ARCH of the image to the provided value instead of the architecture of the host.")
+@click.option("--pull", help="Always try to fetch latest base image.", is_flag=True)
+@click.option(
+    "--no-squash", help="Do not squash the image after build is done.", is_flag=True
+)
+@click.option(
+    "--tag",
+    "tags",
+    metavar="TAG",
+    help="Use specified tag to tag the image after build, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
+    "--platform",
+    help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
+)
 @click.pass_context
-def build_docker(ctx, pull, no_squash, tags, platform):  # pylint: disable=unused-argument
+def build_docker(
+    ctx, pull, no_squash, tags, platform
+):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -104,16 +166,29 @@ def build_docker(ctx, pull, no_squash, tags, platform):  # pylint: disable=unuse
 
         By default after image is built, it is squashed using the https://github.com/goldmann/docker-squash tool. You can disable it by specifying the '--no-squash' parameter.
     """
-    run_build(ctx, 'docker')
+    run_build(ctx, "docker")
 
 
 @build.command(name="buildah", short_help="Build using Buildah engine")
-@click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
-@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
-@click.option('--platform', help="Set the ARCH of the image to the provided value instead of the architecture of the host.")
+@click.option("--pull", help="Always try to fetch latest base image.", is_flag=True)
+@click.option(
+    "--no-squash", help="Do not squash the image after build is done.", is_flag=True
+)
+@click.option(
+    "--tag",
+    "tags",
+    metavar="TAG",
+    help="Use specified tag to tag the image after build, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
+    "--platform",
+    help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
+)
 @click.pass_context
-def build_buildah(ctx, pull, no_squash, tags, platform):  # pylint: disable=unused-argument
+def build_buildah(
+    ctx, pull, no_squash, tags, platform
+):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -121,16 +196,29 @@ def build_buildah(ctx, pull, no_squash, tags, platform):  # pylint: disable=unus
 
         https://buildah.io/
     """
-    run_build(ctx, 'buildah')
+    run_build(ctx, "buildah")
 
 
 @build.command(name="podman", short_help="Build using Podman engine")
-@click.option('--pull', help="Always try to fetch latest base image.", is_flag=True)
-@click.option('--no-squash', help="Do not squash the image after build is done.", is_flag=True)
-@click.option('--tag', 'tags', metavar="TAG", help="Use specified tag to tag the image after build, can be specified multiple times.", multiple=True)
-@click.option('--platform', help="Set the ARCH of the image to the provided value instead of the architecture of the host.")
+@click.option("--pull", help="Always try to fetch latest base image.", is_flag=True)
+@click.option(
+    "--no-squash", help="Do not squash the image after build is done.", is_flag=True
+)
+@click.option(
+    "--tag",
+    "tags",
+    metavar="TAG",
+    help="Use specified tag to tag the image after build, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
+    "--platform",
+    help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
+)
 @click.pass_context
-def build_podman(ctx, pull, no_squash, tags, platform):  # pylint: disable=unused-argument
+def build_podman(
+    ctx, pull, no_squash, tags, platform
+):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -138,19 +226,29 @@ def build_podman(ctx, pull, no_squash, tags, platform):  # pylint: disable=unuse
 
         https://podman.io/
     """
-    run_build(ctx, 'podman')
+    run_build(ctx, "podman")
 
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
-@click.option('--release', help="Execute a release build.", is_flag=True)
-@click.option('--user', metavar="USER", help="User used to kick the build as.")
-@click.option('--nowait', help="Do not wait for the task to finish.", is_flag=True)
-@click.option('--stage', help="Use stage environmen.", is_flag=True)
-@click.option('--sync-only', help="Generate files and sync with dist-git, but do not execute build.", is_flag=True)
-@click.option('--commit-message', metavar="MESSAGE", help="Custom dist-git commit message.")
-@click.option('--assume-yes', '-y', help="Execute build in non-interactive mode.", is_flag=True)
+@click.option("--release", help="Execute a release build.", is_flag=True)
+@click.option("--user", metavar="USER", help="User used to kick the build as.")
+@click.option("--nowait", help="Do not wait for the task to finish.", is_flag=True)
+@click.option("--stage", help="Use stage environmen.", is_flag=True)
+@click.option(
+    "--sync-only",
+    help="Generate files and sync with dist-git, but do not execute build.",
+    is_flag=True,
+)
+@click.option(
+    "--commit-message", metavar="MESSAGE", help="Custom dist-git commit message."
+)
+@click.option(
+    "--assume-yes", "-y", help="Execute build in non-interactive mode.", is_flag=True
+)
 @click.pass_context
-def build_osbs(ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes):  # pylint: disable=unused-argument
+def build_osbs(
+    ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes
+):  # pylint: disable=unused-argument
     """
     DESCRIPTION
 
@@ -172,13 +270,24 @@ def build_osbs(ctx, release, user, nowait, stage, sync_only, commit_message, ass
 
             $ cekit build osbs --release --commit-message "Release 1.0"
     """
-    run_build(ctx, 'osbs')
+    run_build(ctx, "osbs")
 
 
 @cli.group(short_help="Execute container image tests")
-@click.option('--image', help="Image to run tests against.")
-@click.option('--overrides', metavar="JSON", help="Inline overrides in JSON format.", multiple=True)
-@click.option('--overrides-file', 'overrides', metavar="PATH", help="Path to overrides file in YAML format.", multiple=True)
+@click.option("--image", help="Image to run tests against.")
+@click.option(
+    "--overrides",
+    metavar="JSON",
+    help="Inline overrides in JSON format.",
+    multiple=True,
+)
+@click.option(
+    "--overrides-file",
+    "overrides",
+    metavar="PATH",
+    help="Path to overrides file in YAML format.",
+    multiple=True,
+)
 def test(image, overrides):  # pylint: disable=unused-argument
     """
     DESCRIPTION
@@ -196,9 +305,19 @@ def test(image, overrides):  # pylint: disable=unused-argument
 
 
 @test.command(name="behave", short_help="Run Behave tests")
-@click.option('--steps-url', help="Behave steps library.", default='https://github.com/cekit/behave-test-steps.git', show_default=True)
-@click.option('--wip', help="Run test scenarios tagged with @wip only.", is_flag=True)
-@click.option('--name', 'names', help="Run test scenario with the specified name, can be used specified times.", multiple=True)
+@click.option(
+    "--steps-url",
+    help="Behave steps library.",
+    default="https://github.com/cekit/behave-test-steps.git",
+    show_default=True,
+)
+@click.option("--wip", help="Run test scenarios tagged with @wip only.", is_flag=True)
+@click.option(
+    "--name",
+    "names",
+    help="Run test scenario with the specified name, can be used specified times.",
+    multiple=True,
+)
 @click.pass_context
 def test_behave(ctx, steps_url, wip, names):  # pylint: disable=unused-argument
     """
@@ -226,7 +345,7 @@ def test_behave(ctx, steps_url, wip, names):  # pylint: disable=unused-argument
     if wip and names:
         raise click.UsageError("Parameters --name and --wip cannot be used together")
 
-    run_test(ctx, 'behave')
+    run_test(ctx, "behave")
 
 
 def prepare_params(ctx, params=None):
@@ -248,8 +367,9 @@ def run_command(ctx, clazz):
 
 
 def run_test(ctx, tester):
-    if tester == 'behave':
+    if tester == "behave":
         from cekit.test.behave_tester import BehaveTester as tester_impl
+
         LOGGER.info("Using Behave tester to test the image")
     else:
         raise CekitError("Tester engine {} is not supported".format(tester))
@@ -258,19 +378,23 @@ def run_test(ctx, tester):
 
 
 def run_build(ctx, builder):
-    if builder == 'docker':
+    if builder == "docker":
         # import is delayed until here to prevent circular import error
         from cekit.builders.docker_builder import DockerBuilder as builder_impl
+
         LOGGER.info("Using Docker builder to build the image")
-    elif builder == 'osbs':
+    elif builder == "osbs":
         # import is delayed until here to prevent circular import error
         from cekit.builders.osbs import OSBSBuilder as builder_impl
+
         LOGGER.info("Using OSBS builder to build the image")
-    elif builder == 'podman':
+    elif builder == "podman":
         from cekit.builders.podman import PodmanBuilder as builder_impl
+
         LOGGER.info("Using Podman builder to build the image")
-    elif builder == 'buildah':
+    elif builder == "buildah":
         from cekit.builders.buildah import BuildahBuilder as builder_impl
+
         LOGGER.info("Using Buildah builder to build the image")
     else:
         raise CekitError("Builder engine {} is not supported".format(builder))
@@ -279,13 +403,13 @@ def run_build(ctx, builder):
 
 
 class Cekit(object):
-    """ Main application """
+    """Main application"""
 
     def __init__(self, params):
         self.params = params
 
     def init(self):
-        """ Initialize logging """
+        """Initialize logging"""
         if self.params.nocolor:
             setup_logging(False)
         else:
@@ -297,9 +421,11 @@ class Cekit(object):
 
         LOGGER.debug("Running version {}".format(__version__))
 
-        if 'dev' in __version__ or 'rc' in __version__:
-            LOGGER.warning("You are running unreleased development version of CEKit, "
-                           "use it only at your own risk!")
+        if "dev" in __version__ or "rc" in __version__:
+            LOGGER.warning(
+                "You are running unreleased development version of CEKit, "
+                "use it only at your own risk!"
+            )
 
     def configure(self):
         """
@@ -308,17 +434,18 @@ class Cekit(object):
         """
         LOGGER.debug("Configuring CEKit...")
 
-        CONFIG.configure(self.params.config,
-                         {
-                             'redhat': self.params.redhat,
-                             'work_dir': self.params.work_dir
-                         })
+        CONFIG.configure(
+            self.params.config,
+            {"redhat": self.params.redhat, "work_dir": self.params.work_dir},
+        )
 
     def cleanup(self):
-        """ Prepares target/image directory to be regenerated."""
-        directories_to_clean = [os.path.join(self.params.target, 'image', 'modules'),
-                                os.path.join(self.params.target, 'image', 'repos'),
-                                os.path.join(self.params.target, 'repo')]
+        """Prepares target/image directory to be regenerated."""
+        directories_to_clean = [
+            os.path.join(self.params.target, "image", "modules"),
+            os.path.join(self.params.target, "image", "repos"),
+            os.path.join(self.params.target, "repo"),
+        ]
 
         for directory in directories_to_clean:
             if os.path.exists(directory):
@@ -329,7 +456,7 @@ class Cekit(object):
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
     def run(self, clazz):
-        """ Main application entry """
+        """Main application entry"""
 
         self.init()
         self.configure()
@@ -351,5 +478,5 @@ class Cekit(object):
             sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()  # pylint: disable=no-value-for-parameter

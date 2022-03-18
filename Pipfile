@@ -17,6 +17,7 @@ pylint = "*"
 autopep8 = "*"
 "zest.releaser" = "*"
 isort = "*"
+black = "*"
 
 [packages]
 pykwalify = ">=1.6.0"

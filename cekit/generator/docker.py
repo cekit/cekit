@@ -4,12 +4,11 @@ import os
 from cekit.config import Config
 from cekit.generator.base import Generator
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 config = Config()
 
 
 class DockerGenerator(Generator):
-
     def __init__(self, descriptor_path, target, overrides):
         super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
@@ -24,7 +23,7 @@ class DockerGenerator(Generator):
         """
 
         logger.info("Handling artifacts for docker...")
-        target_dir = os.path.join(self.target, 'image')
+        target_dir = os.path.join(self.target, "image")
 
         for image in self.images:
             for artifact in image.all_artifacts:

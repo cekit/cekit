@@ -14,13 +14,13 @@ from cekit.cli import cli
 from cekit.tools import Chdir
 
 image_descriptor = {
-    'schema_version': 1,
-    'from': 'alpine:3.9',
-    'name': 'test/image',
-    'version': '1.0',
-    'labels': [{'name': 'foo', 'value': 'bar'}, {'name': 'labela', 'value': 'a'}],
-    'envs': [{'name': 'baz', 'value': 'qux'}, {'name': 'enva', 'value': 'a'}],
-    'run': {'cmd': ['tail', '-f', '/dev/null']},
+    "schema_version": 1,
+    "from": "alpine:3.9",
+    "name": "test/image",
+    "version": "1.0",
+    "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
+    "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
+    "run": {"cmd": ["tail", "-f", "/dev/null"]},
 }
 
 
@@ -29,7 +29,7 @@ def fixture_build_image():
     def _build_image(overrides=None):
         image_dir = tempfile.mkdtemp(prefix="tmp-cekit-test")
 
-        with open(os.path.join(image_dir, 'image.yaml'), 'w') as fd:
+        with open(os.path.join(image_dir, "image.yaml"), "w") as fd:
             yaml.dump(image_descriptor, fd, default_flow_style=False)
 
         args = ["-v", "build"]
@@ -52,8 +52,10 @@ def fixture_build_image():
     return _build_image
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS")
-@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
+@pytest.mark.skipif(platform.system() == "Darwin", reason="Disabled on macOS")
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
 def test_execute_simple_behave_test(build_image):
     feature = """@test
 Feature: Basic tests
@@ -66,15 +68,17 @@ Feature: Basic tests
 
     test_image_dir = build_image()
 
-    features_dir = os.path.join(test_image_dir, 'tests', 'features')
+    features_dir = os.path.join(test_image_dir, "tests", "features")
 
     os.makedirs(features_dir)
 
-    with open(os.path.join(features_dir, 'basic.feature'), 'w') as fd:
+    with open(os.path.join(features_dir, "basic.feature"), "w") as fd:
         fd.write(feature)
 
     with Chdir(test_image_dir):
-        result = CliRunner().invoke(cli, ["-v", "test", "behave"], catch_exceptions=False)
+        result = CliRunner().invoke(
+            cli, ["-v", "test", "behave"], catch_exceptions=False
+        )
 
     sys.stdout.write("\n")
     sys.stdout.write(result.output)
@@ -84,11 +88,13 @@ Feature: Basic tests
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
     assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
 
-    shutil.rmtree(os.path.join(test_image_dir, 'target'), ignore_errors=True)
+    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
 
 
-@pytest.mark.skipif(platform.system() == 'Darwin', reason="Disabled on macOS")
-@pytest.mark.skipif(os.path.exists('/var/run/docker.sock') is False, reason="No Docker available")
+@pytest.mark.skipif(platform.system() == "Darwin", reason="Disabled on macOS")
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
 def test_execute_simple_behave_test_with_overrides(build_image):
     feature = """@different
 Feature: Basic tests
@@ -103,16 +109,19 @@ Feature: Basic tests
 
     test_image_dir = build_image(overrides)
 
-    features_dir = os.path.join(test_image_dir, 'tests', 'features')
+    features_dir = os.path.join(test_image_dir, "tests", "features")
 
     os.makedirs(features_dir)
 
-    with open(os.path.join(features_dir, 'basic.feature'), 'w') as fd:
+    with open(os.path.join(features_dir, "basic.feature"), "w") as fd:
         fd.write(feature)
 
     with Chdir(test_image_dir):
         result = CliRunner().invoke(
-            cli, ["-v", "test", "--overrides", overrides, "behave"], catch_exceptions=False)
+            cli,
+            ["-v", "test", "--overrides", overrides, "behave"],
+            catch_exceptions=False,
+        )
 
     sys.stdout.write("\n")
     sys.stdout.write(result.output)
@@ -122,4 +131,4 @@ Feature: Basic tests
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
     assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
 
-    shutil.rmtree(os.path.join(test_image_dir, 'target'), ignore_errors=True)
+    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)

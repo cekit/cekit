@@ -15,7 +15,7 @@ from yaml.representer import SafeRepresenter
 from cekit.config import Config
 from cekit.errors import CekitError
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 config = Config()
 
 
@@ -38,14 +38,14 @@ def download_file(url, destination):
 
     parsed_url = urlparse(url)
 
-    if parsed_url.scheme == 'file' or not parsed_url.scheme:
+    if parsed_url.scheme == "file" or not parsed_url.scheme:
         if os.path.isdir(parsed_url.path):
             shutil.copytree(parsed_url.path, destination)
         else:
             shutil.copy(parsed_url.path, destination)
-    elif parsed_url.scheme in ['http', 'https']:
-        verify = config.get('common', 'ssl_verify')
-        if str(verify).lower() == 'false':
+    elif parsed_url.scheme in ["http", "https"]:
+        verify = config.get("common", "ssl_verify")
+        if str(verify).lower() == "false":
             verify = False
 
         ctx = ssl.create_default_context()
@@ -60,14 +60,14 @@ def download_file(url, destination):
             raise CekitError("Could not download file from %s" % url)
 
         try:
-            remote_size = int(res.getheader('Content-Length', '0'))
+            remote_size = int(res.getheader("Content-Length", "0"))
             chunk_size = 1048576  # 1 MB
-            with open(destination, 'wb') as f, click.progressbar(
-                    length=remote_size,
-                    label="Downloading {}".format(url.rsplit('/', 1)[-1]),
-                    show_percent=True,
-                    fill_char=(click.style("#", fg="green")),
-                    empty_char=(click.style("-", fg="white", dim=True))
+            with open(destination, "wb") as f, click.progressbar(
+                length=remote_size,
+                label="Downloading {}".format(url.rsplit("/", 1)[-1]),
+                show_percent=True,
+                fill_char=(click.style("#", fg="green")),
+                empty_char=(click.style("-", fg="white", dim=True)),
             ) as bar:
                 while True:
                     chunk = res.read(chunk_size)
@@ -77,10 +77,16 @@ def download_file(url, destination):
                     f.write(chunk)
         except Exception as e:
             try:
-                logger.debug("Removing incompletely downloaded '{}' file due to {}".format(destination, e))
+                logger.debug(
+                    "Removing incompletely downloaded '{}' file due to {}".format(
+                        destination, e
+                    )
+                )
                 os.remove(destination)
             except OSError:
-                logger.warning("An error occurred while removing file '{}'".format(destination))
+                logger.warning(
+                    "An error occurred while removing file '{}'".format(destination)
+                )
 
             raise
     else:
@@ -88,7 +94,7 @@ def download_file(url, destination):
 
 
 def load_descriptor(descriptor):
-    """ parses descriptor and validate it against requested schema type
+    """parses descriptor and validate it against requested schema type
 
     Args:
       descriptor - yaml descriptor or path to a descriptor to be loaded.
@@ -99,23 +105,26 @@ def load_descriptor(descriptor):
     """
 
     if "-" == descriptor:
-        descriptor = click.get_text_stream('stdin').read()
+        descriptor = click.get_text_stream("stdin").read()
         logger.debug("Read from stdin: {}".format(descriptor))
 
     try:
         data = yaml.safe_load(descriptor)
     except Exception as ex:
-        raise CekitError('Cannot load descriptor', ex)
+        raise CekitError("Cannot load descriptor", ex)
 
     if isinstance(data, str):
         logger.debug("Reading descriptor from '{}' file...".format(descriptor))
 
         if os.path.exists(descriptor):
-            with open(descriptor, 'r') as fh:
+            with open(descriptor, "r") as fh:
                 return yaml.safe_load(fh)
 
         raise CekitError(
-            "Descriptor could not be found on the '{}' path, please check your arguments!".format(descriptor))
+            "Descriptor could not be found on the '{}' path, please check your arguments!".format(
+                descriptor
+            )
+        )
 
     logger.debug("Reading descriptor directly...")
 
@@ -129,33 +138,51 @@ def decision(question):
 
 def get_brew_url(md5):
     try:
-        logger.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
-        list_archives_cmd = ['/usr/bin/brew', 'call', '--json-output', 'listArchives',
-                             "checksum={}".format(md5), 'type=maven']
+        logger.debug(
+            "Getting brew details for an artifact with '{}' md5 sum".format(md5)
+        )
+        list_archives_cmd = [
+            "/usr/bin/brew",
+            "call",
+            "--json-output",
+            "listArchives",
+            "checksum={}".format(md5),
+            "type=maven",
+        ]
         logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
 
         try:
-            json_archives = subprocess.check_output(list_archives_cmd).strip().decode("utf8")
+            json_archives = (
+                subprocess.check_output(list_archives_cmd).strip().decode("utf8")
+            )
         except subprocess.CalledProcessError as ex:
-            if ex.output is not None and 'AuthError' in ex.output:
+            if ex.output is not None and "AuthError" in ex.output:
                 logger.warning(
-                    "Brew authentication failed, please make sure you have a valid Kerberos ticket")
+                    "Brew authentication failed, please make sure you have a valid Kerberos ticket"
+                )
             raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
 
         archives = yaml.safe_load(json_archives)
 
         if not archives:
-            raise CekitError("Artifact with md5 checksum {} could not be found in Brew".format(md5))
+            raise CekitError(
+                "Artifact with md5 checksum {} could not be found in Brew".format(md5)
+            )
 
         archive = archives[0]
-        build_id = archive['build_id']
-        filename = archive['filename']
-        group_id = archive['group_id']
-        artifact_id = archive['artifact_id']
-        version = archive['version']
+        build_id = archive["build_id"]
+        filename = archive["filename"]
+        group_id = archive["group_id"]
+        artifact_id = archive["artifact_id"]
+        version = archive["version"]
 
-        get_build_cmd = ['brew', 'call', '--json-output',
-                         'getBuild', "buildInfo={}".format(build_id)]
+        get_build_cmd = [
+            "brew",
+            "call",
+            "--json-output",
+            "getBuild",
+            "buildInfo={}".format(build_id),
+        ]
 
         logger.debug("Executing '{}'".format(" ".join(get_build_cmd)))
 
@@ -166,7 +193,7 @@ def get_brew_url(md5):
 
         build = yaml.safe_load(json_build)
 
-        build_states = ['BUILDING', 'COMPLETE', 'DELETED', 'FAILED', 'CANCELED']
+        build_states = ["BUILDING", "COMPLETE", "DELETED", "FAILED", "CANCELED"]
 
         # State 1 means: COMPLETE which is the only success state. Other states are:
         #
@@ -175,21 +202,35 @@ def get_brew_url(md5):
         # 'DELETED': 2
         # 'FAILED': 3
         # 'CANCELED': 4
-        if build['state'] != 1:
+        if build["state"] != 1:
             raise CekitError(
                 "Artifact with checksum {} was found in Koji metadata but the build is in incorrect state ({}) making "
-                "the artifact not available for downloading anymore".format(md5, build_states[build['state']]))
+                "the artifact not available for downloading anymore".format(
+                    md5, build_states[build["state"]]
+                )
+            )
 
-        package = build['package_name']
-        release = build['release']
+        package = build["package_name"]
+        release = build["release"]
 
-        url = 'http://download.devel.redhat.com/brewroot/packages/' + package + '/' + \
-            version.replace('-', '_') + '/' + release + '/maven/' + \
-            group_id.replace('.', '/') + '/' + \
-            artifact_id + '/' + version + '/' + filename
+        url = (
+            "http://download.devel.redhat.com/brewroot/packages/"
+            + package
+            + "/"
+            + version.replace("-", "_")
+            + "/"
+            + release
+            + "/maven/"
+            + group_id.replace(".", "/")
+            + "/"
+            + artifact_id
+            + "/"
+            + version
+            + "/"
+            + filename
+        )
     except subprocess.CalledProcessError as ex:
-        logger.error("Can't fetch artifacts details from brew: '{}'.".format(
-                     ex.output))
+        logger.error("Can't fetch artifacts details from brew: '{}'.".format(ex.output))
         raise ex
     return url
 
@@ -230,7 +271,7 @@ def copy_recursively(source_directory, destination_directory):
 
 
 class Chdir(object):
-    """ Context manager for changing the current working directory """
+    """Context manager for changing the current working directory"""
 
     def __init__(self, new_path):
         self.newPath = os.path.expanduser(new_path)
@@ -253,16 +294,11 @@ class DependencyHandler(object):
 
     # List of operating system families on which CEKit is known to work.
     # It may work on other operating systems too, but it was not tested.
-    KNOWN_OPERATING_SYSTEMS = ['fedora', 'centos', 'rhel']
+    KNOWN_OPERATING_SYSTEMS = ["fedora", "centos", "rhel"]
 
     # Set of core CEKit external dependencies.
     # Format is defined below, in the handle_dependencies() method
-    EXTERNAL_CORE_DEPENDENCIES = {
-        'git': {
-            'package': 'git',
-            'executable': 'git'
-        }
-    }
+    EXTERNAL_CORE_DEPENDENCIES = {"git": {"package": "git", "executable": "git"}}
 
     def __init__(self):
         self.os_release = {}
@@ -272,31 +308,48 @@ class DependencyHandler(object):
 
         if os.path.exists(os_release_path):
             # Read the file containing operating system information
-            with open(os_release_path, 'r') as f:
+            with open(os_release_path, "r") as f:
                 content = f.readlines()
 
-            self.os_release = dict([l.strip().split('=')
-                                    for l in content if not l.isspace() and not l.strip().startswith('#')])
+            self.os_release = dict(
+                [
+                    l.strip().split("=")
+                    for l in content
+                    if not l.isspace() and not l.strip().startswith("#")
+                ]
+            )
 
             # Remove the quote character, if it's there
             for key in self.os_release.keys():
                 self.os_release[key] = self.os_release[key].strip('"')
 
-        if not self.os_release or 'ID' not in self.os_release or 'NAME' not in self.os_release or 'VERSION' not in self.os_release:
+        if (
+            not self.os_release
+            or "ID" not in self.os_release
+            or "NAME" not in self.os_release
+            or "VERSION" not in self.os_release
+        ):
             logger.warning(
-                "You are running CEKit on an unknown platform. External dependencies suggestions may not work!")
+                "You are running CEKit on an unknown platform. External dependencies suggestions may not work!"
+            )
             return
 
-        self.platform = self.os_release['ID']
+        self.platform = self.os_release["ID"]
 
-        if self.os_release['ID'] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+        if self.os_release["ID"] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
             logger.warning(
                 "You are running CEKit on an untested platform: {} {}. External dependencies "
-                "suggestions will not work!".format(self.os_release['NAME'], self.os_release['VERSION']))
+                "suggestions will not work!".format(
+                    self.os_release["NAME"], self.os_release["VERSION"]
+                )
+            )
             return
 
-        logger.info("You are running on known platform: {} {}".format(
-            self.os_release['NAME'], self.os_release['VERSION']))
+        logger.info(
+            "You are running on known platform: {} {}".format(
+                self.os_release["NAME"], self.os_release["VERSION"]
+            )
+        )
 
     def _handle_dependencies(self, dependencies):
         """
@@ -329,46 +382,60 @@ class DependencyHandler(object):
         for dependency in dependencies.keys():
             current_dependency = dependencies[dependency]
 
-            package = current_dependency.get('package')
-            library = current_dependency.get('library')
-            executable = current_dependency.get('executable')
+            package = current_dependency.get("package")
+            library = current_dependency.get("library")
+            executable = current_dependency.get("executable")
 
             if self.platform in current_dependency:
-                package = current_dependency[self.platform].get('package', package)
-                library = current_dependency[self.platform].get('library', library)
-                executable = current_dependency[self.platform].get('executable', executable)
+                package = current_dependency[self.platform].get("package", package)
+                library = current_dependency[self.platform].get("library", library)
+                executable = current_dependency[self.platform].get(
+                    "executable", executable
+                )
 
-            logger.debug("Checking if '{}' dependency is provided...".format(dependency))
+            logger.debug(
+                "Checking if '{}' dependency is provided...".format(dependency)
+            )
 
             if library:
                 if self._check_for_library(library):
-                    logger.debug("Required CEKit library '{}' was found as a '{}' module!".format(
-                        dependency, library))
+                    logger.debug(
+                        "Required CEKit library '{}' was found as a '{}' module!".format(
+                            dependency, library
+                        )
+                    )
                     continue
                 else:
                     msg = "Required CEKit library '{}' was not found; required module '{}' could not be found.".format(
-                        dependency, library)
+                        dependency, library
+                    )
 
                     # Library was not found, check if we have a hint
-                    if package and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                    if (
+                        package
+                        and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS
+                    ):
                         msg += " Try to install the '{}' package.".format(package)
 
                     raise CekitError(msg)
 
             if executable:
-                if package and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
+                if (
+                    package
+                    and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS
+                ):
                     self._check_for_executable(dependency, executable, package)
                 else:
                     self._check_for_executable(dependency, executable)
 
         logger.debug("All dependencies provided!")
 
-    # pylint: disable=R0201
     def _check_for_library(self, library):
         library_found = False
 
         if sys.version_info[0] < 3:
             import imp
+
             try:
                 imp.find_module(library)
                 library_found = True
@@ -376,6 +443,7 @@ class DependencyHandler(object):
                 pass
         else:
             import importlib
+
             if importlib.util.find_spec(library):
                 library_found = True
 
@@ -396,33 +464,51 @@ class DependencyHandler(object):
             file_path = os.path.join(os.path.normcase(directory), executable)
 
             if self._is_program(file_path):
-                logger.debug("CEKit dependency '{}' provided via the '{}' executable.".format(
-                    dependency, file_path))
+                logger.debug(
+                    "CEKit dependency '{}' provided via the '{}' executable.".format(
+                        dependency, file_path
+                    )
+                )
                 return
 
         msg = "CEKit dependency: '{}' was not found, please provide the '{}' executable.".format(
-            dependency, executable)
+            dependency, executable
+        )
 
         if package:
-            msg += " To satisfy this requirement you can install the '{}' package.".format(package)
+            msg += (
+                " To satisfy this requirement you can install the '{}' package.".format(
+                    package
+                )
+            )
 
         raise CekitError(msg)
 
     def _is_program(self, path):
-        if os.path.exists(path) and os.access(path, os.F_OK | os.X_OK) and not os.path.isdir(path):
+        if (
+            os.path.exists(path)
+            and os.access(path, os.F_OK | os.X_OK)
+            and not os.path.isdir(path)
+        ):
             return True
 
         return False
 
     def handle_core_dependencies(self):
-        self._handle_dependencies(
-            DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
+        self._handle_dependencies(DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
 
         try:
             import certifi  # pylint: disable=unused-import
-            logger.warning(("The certifi library (https://certifi.io/) was found, depending on the operating " +
-                            "system configuration this may result in certificate validation issues"))
-            logger.warning("Certificate Authority (CA) bundle in use: '{}'".format(certifi.where()))
+
+            logger.warning(
+                (
+                    "The certifi library (https://certifi.io/) was found, depending on the operating "
+                    + "system configuration this may result in certificate validation issues"
+                )
+            )
+            logger.warning(
+                "Certificate Authority (CA) bundle in use: '{}'".format(certifi.where())
+            )
         except ImportError:
             pass
 
