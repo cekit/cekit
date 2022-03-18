@@ -50,6 +50,16 @@ def main(check: bool, verbose: bool) -> None:
         except CalledProcessError as err:
             sys.exit(err.returncode)
 
+    # Flake8 does not support a --check flag
+    for formatter in [
+        ["flake8"],
+    ]:
+        try:
+            with Chdir(repo_root):
+                run(formatter + verbose + ["."], check=True)
+        except CalledProcessError as err:
+            sys.exit(err.returncode)
+
     sys.exit(0)
 
 

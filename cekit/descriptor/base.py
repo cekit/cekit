@@ -71,9 +71,9 @@ class Descriptor(MutableMapping):
             )
 
     def label(self, key):
-        for l in self._descriptor["labels"]:
-            if l["name"] == key:
-                return l
+        for ll in self._descriptor["labels"]:
+            if ll["name"] == key:
+                return ll
         return None
 
     def merge(self, descriptor):
@@ -180,7 +180,7 @@ def _merge_descriptors(desc1, desc2):
 
     Return merged descriptor
     """
-    if desc2 == None:
+    if desc2 is None:
         return desc1
     for k2, v2 in desc2.items():
         if k2 in desc1.skip_merging:

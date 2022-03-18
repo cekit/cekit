@@ -60,5 +60,5 @@ class PodmanBuilder(Builder):
                     ", ".join(tags)
                 )
             )
-        except:
+        except Exception:
             raise CekitError("Image build failed, see logs above.")

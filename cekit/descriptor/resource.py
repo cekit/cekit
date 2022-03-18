@@ -429,7 +429,7 @@ class _UrlResource(Resource):
     def _copy_impl(self, target):
         try:
             self._download_file(self.url, target)
-        except:
+        except Exception:
             logger.debug(
                 "Cannot hit artifact: '{}' via cache, trying directly.".format(
                     self.name

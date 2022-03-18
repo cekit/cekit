@@ -8,7 +8,6 @@ import uuid
 import pytest
 import yaml
 from click.testing import CliRunner
-from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 
 from cekit.cli import cli
 from cekit.config import Config
@@ -1099,7 +1098,7 @@ def test_execution_order(tmpdir):
         COPY modules/child_of_child /tmp/scripts/child_of_child
         # Set 'child_of_child' module defined environment variables
         ENV \\
-            foo="child_of_child" 
+            foo="child_of_child"
         # Custom scripts from 'child_of_child' module
         USER root
         RUN [ "sh", "-x", "/tmp/scripts/child_of_child/script_d" ]
@@ -1132,7 +1131,7 @@ def test_execution_order(tmpdir):
         COPY modules/child /tmp/scripts/child
         # Set 'child' module defined environment variables
         ENV \\
-            foo="child" 
+            foo="child"
         # Custom scripts from 'child' module
         USER root
         RUN [ "sh", "-x", "/tmp/scripts/child/script_b" ]
@@ -1180,7 +1179,7 @@ def test_execution_order(tmpdir):
         COPY modules/main /tmp/scripts/main
         # Set 'main' module defined environment variables
         ENV \\
-            foo="main" 
+            foo="main"
         # Custom scripts from 'main' module
         USER root
         RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]
@@ -1258,7 +1257,7 @@ def test_execution_order_flat(tmpdir, mocker):
         COPY modules/mod_1 /tmp/scripts/mod_1
         # Set 'mod_1' module defined environment variables
         ENV \\
-            foo="mod_1" 
+            foo="mod_1"
         # Custom scripts from 'mod_1' module
         USER root
         RUN [ "sh", "-x", "/tmp/scripts/mod_1/a" ]
@@ -1275,7 +1274,7 @@ def test_execution_order_flat(tmpdir, mocker):
         COPY modules/mod_2 /tmp/scripts/mod_2
         # Set 'mod_2' module defined environment variables
         ENV \\
-            foo="mod_2" 
+            foo="mod_2"
         # Custom scripts from 'mod_2' module
         USER root
         RUN [ "sh", "-x", "/tmp/scripts/mod_2/a" ]

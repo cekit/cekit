@@ -295,7 +295,7 @@ def test_osbs_builder_run_koji(mocker):
 def test_osbs_builder_run_brew_nowait(mocker):
     params = {"nowait": True}
 
-    check_output = mocker.patch.object(
+    mocker.patch.object(
         subprocess,
         "check_output",
         autospec=True,
@@ -404,7 +404,7 @@ def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
         ],
     )
 
-    assert builder._wait_for_osbs_task("12345") == True
+    assert builder._wait_for_osbs_task("12345") is True
 
     check_output.assert_called_with(
         ["/usr/bin/brew", "call", "--json-output", "getTaskInfo", "12345"]
@@ -446,7 +446,7 @@ def test_osbs_wait_for_osbs_task_in_progress(mocker):
         ],
     )
 
-    assert builder._wait_for_osbs_task("12345") == True
+    assert builder._wait_for_osbs_task("12345") is True
 
     check_output.assert_has_calls(
         [
@@ -681,7 +681,7 @@ def test_docker_squashing_enabled(mocker):
     )
 
     # None is fine here, default values for params are tested in different place
-    assert builder.params.no_squash == None
+    assert builder.params.no_squash is None
     assert builder.params.tags == ["foo", "bar"]
 
     docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
@@ -705,7 +705,7 @@ def test_docker_squashing_disabled(mocker):
         )
     )
 
-    assert builder.params.no_squash == True
+    assert builder.params.no_squash is True
 
     docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
     docker_client = docker_client_class.return_value
@@ -726,7 +726,7 @@ def test_docker_squashing_parameters(mocker):
     )
 
     # None is fine here, default values for params are tested in different place
-    assert builder.params.no_squash == None
+    assert builder.params.no_squash is None
 
     docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
     squash_class = mocker.patch("cekit.builders.docker_builder.Squash")

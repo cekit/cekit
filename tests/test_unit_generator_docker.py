@@ -2,7 +2,6 @@
 
 # pylint: disable=protected-access
 
-import logging
 import os
 from contextlib import contextmanager
 

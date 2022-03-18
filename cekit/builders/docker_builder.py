@@ -33,10 +33,8 @@ except ImportError:
 
 try:
     # Docker Python library, the old one
-    import docker  # pylint: disable=ungrouped-imports
-    from docker.client import (
-        Client as APIClientClass,  # pylint: disable=ungrouped-imports
-    )
+    import docker  # noqa: F811
+    from docker.client import Client as APIClientClass  # noqa: F811
 except ImportError:
     pass
 

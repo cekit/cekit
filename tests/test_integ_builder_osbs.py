@@ -62,7 +62,7 @@ def run_osbs(
     mocker.patch("cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task")
     mocker.patch("cekit.builders.osbs.DistGit.prepare")
 
-    mocker_check_output = mocker.patch.object(
+    mocker.patch.object(
         subprocess,
         "check_output",
         side_effect=[
@@ -765,7 +765,7 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
 
-    repo_dir = (
+    (
         tmpdir.mkdir("osbs")
         .mkdir("repo")
         .mkdir(".git")
@@ -1573,14 +1573,14 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
         # Set 'test/image' image defined environment variables
         ENV \\
             JBOSS_IMAGE_NAME="test/image" \\
-            JBOSS_IMAGE_VERSION="1.0" 
+            JBOSS_IMAGE_VERSION="1.0"
         # Set 'test/image' image defined labels
         LABEL \\
-            foo="bar"  \\
-            io.cekit.version="VVVVV"  \\
-            labela="a"  \\
-            name="test/image"  \\
-            version="1.0" 
+            foo="bar" \\
+            io.cekit.version="VVVVV" \\
+            labela="a" \\
+            name="test/image" \\
+            version="1.0"
 ###### /
 ###### END image 'test/image:1.0'
 
@@ -1664,11 +1664,11 @@ redhat = True
         # Set 'operator-builder' image defined environment variables
         ENV \\
             JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11" 
+            JBOSS_IMAGE_VERSION="7.11"
         # Set 'operator-builder' image defined labels
         LABEL \\
-            name="rhpam-7/rhpam-kogito-operator"  \\
-            version="7.11" 
+            name="rhpam-7/rhpam-kogito-operator" \\
+            version="7.11"
 ###### /
 ###### END image 'operator-builder:7.11'
 
@@ -1691,19 +1691,19 @@ redhat = True
         # Set 'rhpam-7/rhpam-kogito-operator' image defined environment variables
         ENV \\
             JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11" 
+            JBOSS_IMAGE_VERSION="7.11"
         # Set 'rhpam-7/rhpam-kogito-operator' image defined labels
         LABEL \\
-            com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
-            description="Runtime Image for the RHPAM Kogito Operator"  \\
-            io.cekit.version="VVVVV"  \\
-            io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
-            io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
-            io.openshift.tags="rhpam,kogito,operator"  \\
-            maintainer="bsig-cloud@redhat.com"  \\
-            name="rhpam-7/rhpam-kogito-operator"  \\
-            summary="Runtime Image for the RHPAM Kogito Operator"  \\
-            version="7.11" 
+            com.redhat.component="rhpam-7-kogito-rhel8-operator-container" \\
+            description="Runtime Image for the RHPAM Kogito Operator" \\
+            io.cekit.version="VVVVV" \\
+            io.k8s.description="Operator for deploying RHPAM Kogito Application" \\
+            io.k8s.display-name="Red Hat PAM Kogito Operator" \\
+            io.openshift.tags="rhpam,kogito,operator" \\
+            maintainer="bsig-cloud@redhat.com" \\
+            name="rhpam-7/rhpam-kogito-operator" \\
+            summary="Runtime Image for the RHPAM Kogito Operator" \\
+            version="7.11"
 ###### /
 ###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
 
@@ -1853,11 +1853,11 @@ redhat = True
         # Set 'operator-builder-one' image defined environment variables
         ENV \\
             JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11" 
+            JBOSS_IMAGE_VERSION="7.11"
         # Set 'operator-builder-one' image defined labels
         LABEL \\
-            name="rhpam-7/rhpam-kogito-operator"  \\
-            version="7.11" 
+            name="rhpam-7/rhpam-kogito-operator" \\
+            version="7.11"
 ###### /
 ###### END image 'operator-builder-one:7.11'
 
@@ -1877,11 +1877,11 @@ redhat = True
         # Set 'operator-builder-two' image defined environment variables
         ENV \\
             JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11" 
+            JBOSS_IMAGE_VERSION="7.11"
         # Set 'operator-builder-two' image defined labels
         LABEL \\
-            name="rhpam-7/rhpam-kogito-operator"  \\
-            version="7.11" 
+            name="rhpam-7/rhpam-kogito-operator" \\
+            version="7.11"
 ###### /
 ###### END image 'operator-builder-two:7.11'
 
@@ -1904,19 +1904,19 @@ redhat = True
         # Set 'rhpam-7/rhpam-kogito-operator' image defined environment variables
         ENV \\
             JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11" 
+            JBOSS_IMAGE_VERSION="7.11"
         # Set 'rhpam-7/rhpam-kogito-operator' image defined labels
         LABEL \\
-            com.redhat.component="rhpam-7-kogito-rhel8-operator-container"  \\
-            description="Runtime Image for the RHPAM Kogito Operator"  \\
-            io.cekit.version="VVVVV"  \\
-            io.k8s.description="Operator for deploying RHPAM Kogito Application"  \\
-            io.k8s.display-name="Red Hat PAM Kogito Operator"  \\
-            io.openshift.tags="rhpam,kogito,operator"  \\
-            maintainer="bsig-cloud@redhat.com"  \\
-            name="rhpam-7/rhpam-kogito-operator"  \\
-            summary="Runtime Image for the RHPAM Kogito Operator"  \\
-            version="7.11" 
+            com.redhat.component="rhpam-7-kogito-rhel8-operator-container" \\
+            description="Runtime Image for the RHPAM Kogito Operator" \\
+            io.cekit.version="VVVVV" \\
+            io.k8s.description="Operator for deploying RHPAM Kogito Application" \\
+            io.k8s.display-name="Red Hat PAM Kogito Operator" \\
+            io.openshift.tags="rhpam,kogito,operator" \\
+            maintainer="bsig-cloud@redhat.com" \\
+            name="rhpam-7/rhpam-kogito-operator" \\
+            summary="Runtime Image for the RHPAM Kogito Operator" \\
+            version="7.11"
 ###### /
 ###### END image 'rhpam-7/rhpam-kogito-operator:7.11'
 
