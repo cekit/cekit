@@ -158,7 +158,7 @@ class Generator(object):
         # Add build labels
         self.add_build_labels()
 
-    def generate(self, builder):  # pylint: disable=unused-argument
+    def generate(self, builder):
         self.copy_modules()
         self.prepare_artifacts()
         self.prepare_repositories()

@@ -54,9 +54,7 @@ CONFIG = Config()
     show_default=True,
 )
 @click.version_option(message="%(version)s", version=__version__)
-def cli(
-    descriptor, verbose, nocolor, work_dir, config, redhat, target
-):  # pylint: disable=unused-argument,too-many-arguments
+def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):
     """
     ABOUT
 
@@ -107,7 +105,7 @@ def cli(
     help="Path to overrides file in YAML format.",
     multiple=True,
 )
-def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
+def build(validate, dry_run, overrides):
     """
     DESCRIPTION
 
@@ -154,9 +152,7 @@ def build(validate, dry_run, overrides):  # pylint: disable=unused-argument
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_docker(
-    ctx, pull, no_squash, tags, platform
-):  # pylint: disable=unused-argument
+def build_docker(ctx, pull, no_squash, tags, platform):
     """
     DESCRIPTION
 
@@ -186,9 +182,7 @@ def build_docker(
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_buildah(
-    ctx, pull, no_squash, tags, platform
-):  # pylint: disable=unused-argument
+def build_buildah(ctx, pull, no_squash, tags, platform):
     """
     DESCRIPTION
 
@@ -216,9 +210,7 @@ def build_buildah(
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_podman(
-    ctx, pull, no_squash, tags, platform
-):  # pylint: disable=unused-argument
+def build_podman(ctx, pull, no_squash, tags, platform):
     """
     DESCRIPTION
 
@@ -248,7 +240,7 @@ def build_podman(
 @click.pass_context
 def build_osbs(
     ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes
-):  # pylint: disable=unused-argument
+):
     """
     DESCRIPTION
 
@@ -288,7 +280,7 @@ def build_osbs(
     help="Path to overrides file in YAML format.",
     multiple=True,
 )
-def test(image, overrides):  # pylint: disable=unused-argument
+def test(image, overrides):
     """
     DESCRIPTION
 
@@ -319,7 +311,7 @@ def test(image, overrides):  # pylint: disable=unused-argument
     multiple=True,
 )
 @click.pass_context
-def test_behave(ctx, steps_url, wip, names):  # pylint: disable=unused-argument
+def test_behave(ctx, steps_url, wip, names):
     """
     DESCRIPTION
 
@@ -479,4 +471,4 @@ class Cekit(object):
 
 
 if __name__ == "__main__":
-    cli()  # pylint: disable=no-value-for-parameter
+    cli()

@@ -605,7 +605,6 @@ def test_dependency_handler_handle_dependencies_with_executable_only(mocker, cap
         mocker.spy(handler, "_check_for_executable")
         handler._handle_dependencies(deps)
 
-        # pylint: disable=E1101
         assert handler._check_for_executable.call_count == 1
         handler._check_for_executable.assert_called_with("xyz", "xyz-aaa")
 
@@ -647,7 +646,6 @@ def test_dependency_handler_handle_dependencies_with_executable_and_package_on_k
         mocker.spy(handler, "_check_for_executable")
         handler._handle_dependencies(deps)
 
-        # pylint: disable=E1101
         handler._check_for_executable.assert_called_once_with(
             "xyz", "xyz-aaa", "python-xyz-aaa"
         )
@@ -674,7 +672,6 @@ def test_dependency_handler_handle_dependencies_with_platform_specific_package(
         mocker.spy(handler, "_check_for_executable")
         handler._handle_dependencies(deps)
 
-        # pylint: disable=E1101
         handler._check_for_executable.assert_called_once_with(
             "xyz", "xyz-aaa", "python-fedora-xyz-aaa"
         )

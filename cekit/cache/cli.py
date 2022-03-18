@@ -34,7 +34,7 @@ CONFIG = Config()
     show_default=True,
 )
 @click.version_option(message="%(version)s", version=__version__)
-def cli(config, verbose, work_dir):  # pylint: disable=unused-argument
+def cli(config, verbose, work_dir):
     pass
 
 
@@ -53,7 +53,7 @@ def ls():
 @click.option(
     "--sha512", metavar="CHECKSUM", help="The sha512 checksum of the artifact."
 )
-def add(location, md5, sha1, sha256, sha512):  # pylint: disable=unused-argument
+def add(location, md5, sha1, sha256, sha512):
     if not (md5 or sha1 or sha256 or sha512):
         raise click.UsageError("At least one checksum must be provided")
 
@@ -118,7 +118,7 @@ class CacheCli:
             click.echo(
                 "Artifact {} cached with UUID '{}'".format(location, artifact_id)
             )
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:
             click.secho(
                 "Cannot cache artifact {}: {}".format(location, str(ex)), fg="red"
             )
@@ -157,7 +157,7 @@ class CacheCli:
         try:
             artifact_cache.delete(uuid)
             click.echo("Artifact with UUID '{}' removed".format(uuid))
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             click.secho(
                 "Artifact with UUID '{}' doesn't exists in the cache".format(uuid),
                 fg="yellow",
@@ -180,7 +180,7 @@ class CacheCli:
         try:
             shutil.rmtree(artifact_cache.cache_dir)
             click.echo("Artifact cache cleared!")
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             click.secho(
                 "An error occurred while removing the artifact cache directory '{}'".format(
                     artifact_cache.cache_dir
@@ -191,4 +191,4 @@ class CacheCli:
 
 
 if __name__ == "__main__":
-    cli()  # pylint: disable=no-value-for-parameter
+    cli()
