@@ -449,7 +449,6 @@ class DependencyHandler(object):
 
         return library_found
 
-    # pylint: disable=no-self-use
     def _check_for_executable(self, dependency, executable, package=None):
         if os.path.isabs(executable):
             if self._is_program(executable):
@@ -498,7 +497,7 @@ class DependencyHandler(object):
         self._handle_dependencies(DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
 
         try:
-            import certifi  # pylint: disable=unused-import
+            import certifi
 
             logger.warning(
                 (

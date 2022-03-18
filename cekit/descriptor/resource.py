@@ -145,9 +145,7 @@ class Resource(Descriptor):
             return
 
         # Get the default value set for particular resource type
-        default = self._get_default_name_value(
-            descriptor
-        )  # pylint: disable=assignment-from-none
+        default = self._get_default_name_value(descriptor)
 
         # If there is still no default, we need to fail, because 'name' is required.
         # If we ever get here, it is a bug and should be reported.
@@ -181,7 +179,7 @@ class Resource(Descriptor):
         if descriptor.get("dest") is not None:
             descriptor["dest"] = os.path.normpath(descriptor.get("dest")) + "/"
 
-    def _get_default_name_value(self, descriptor):  # pylint: disable=unused-argument
+    def _get_default_name_value(self, descriptor):
         """
         Returns default identifier value for particular class.
 
@@ -191,7 +189,7 @@ class Resource(Descriptor):
         """
         return None
 
-    def _get_default_target_value(self, descriptor):  # pylint: disable=unused-argument
+    def _get_default_target_value(self, descriptor):
         return os.path.basename(descriptor.get("name"))
 
     def _copy_impl(self, target):

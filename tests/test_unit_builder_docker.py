@@ -1,7 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-# pylint: disable=protected-access
-
 import logging
 import re
 
