@@ -25,7 +25,7 @@ colorlog = ">=2.10.0"
 PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
 click = ">=6.7"
-odcs = ">=0.2.50"
+odcs = ">=0.2.10"
 
 [requires]
 python_version = "*"
