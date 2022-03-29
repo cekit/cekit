@@ -137,102 +137,100 @@ def decision(question):
 
 
 def get_brew_url(md5):
+    logger.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
+    list_archives_cmd = [
+        "/usr/bin/brew",
+        "call",
+        "--json-output",
+        "listArchives",
+        "checksum={}".format(md5),
+        "type=maven",
+    ]
+    logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
+
     try:
-        logger.debug(
-            "Getting brew details for an artifact with '{}' md5 sum".format(md5)
-        )
-        list_archives_cmd = [
-            "/usr/bin/brew",
-            "call",
-            "--json-output",
-            "listArchives",
-            "checksum={}".format(md5),
-            "type=maven",
-        ]
-        logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
-
-        try:
-            json_archives = (
-                subprocess.check_output(list_archives_cmd).strip().decode("utf8")
-            )
-        except subprocess.CalledProcessError as ex:
-            if ex.output is not None and "AuthError" in ex.output:
-                logger.warning(
-                    "Brew authentication failed, please make sure you have a valid Kerberos ticket"
-                )
-            raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
-
-        archives = yaml.safe_load(json_archives)
-
-        if not archives:
-            raise CekitError(
-                "Artifact with md5 checksum {} could not be found in Brew".format(md5)
-            )
-
-        archive = archives[0]
-        build_id = archive["build_id"]
-        filename = archive["filename"]
-        group_id = archive["group_id"]
-        artifact_id = archive["artifact_id"]
-        version = archive["version"]
-
-        get_build_cmd = [
-            "brew",
-            "call",
-            "--json-output",
-            "getBuild",
-            "buildInfo={}".format(build_id),
-        ]
-
-        logger.debug("Executing '{}'".format(" ".join(get_build_cmd)))
-
-        try:
-            json_build = subprocess.check_output(get_build_cmd).strip().decode("utf8")
-        except subprocess.CalledProcessError as ex:
-            raise CekitError("Could not fetch build {} from Brew".format(build_id), ex)
-
-        build = yaml.safe_load(json_build)
-
-        build_states = ["BUILDING", "COMPLETE", "DELETED", "FAILED", "CANCELED"]
-
-        # State 1 means: COMPLETE which is the only success state. Other states are:
-        #
-        # 'BUILDING': 0
-        # 'COMPLETE': 1
-        # 'DELETED': 2
-        # 'FAILED': 3
-        # 'CANCELED': 4
-        if build["state"] != 1:
-            raise CekitError(
-                "Artifact with checksum {} was found in Koji metadata but the build is in incorrect state ({}) making "
-                "the artifact not available for downloading anymore".format(
-                    md5, build_states[build["state"]]
-                )
-            )
-
-        package = build["package_name"]
-        release = build["release"]
-
-        url = (
-            "http://download.devel.redhat.com/brewroot/packages/"
-            + package
-            + "/"
-            + version.replace("-", "_")
-            + "/"
-            + release
-            + "/maven/"
-            + group_id.replace(".", "/")
-            + "/"
-            + artifact_id
-            + "/"
-            + version
-            + "/"
-            + filename
+        json_archives = (
+            subprocess.check_output(list_archives_cmd).strip().decode("utf8")
         )
     except subprocess.CalledProcessError as ex:
-        logger.error("Can't fetch artifacts details from brew: '{}'.".format(ex.output))
-        raise ex
-    return url
+        if ex.output is not None and "AuthError" in ex.output:
+            logger.warning(
+                "Brew authentication failed, please make sure you have a valid Kerberos ticket"
+            )
+        raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
+
+    archives = yaml.safe_load(json_archives)
+
+    if not archives:
+        raise CekitError(
+            "Artifact with md5 checksum {} could not be found in Brew".format(md5)
+        )
+
+    archive = archives[0]
+    build_id = archive["build_id"]
+    filename = archive["filename"]
+    group_id = archive["group_id"]
+    artifact_id = archive["artifact_id"]
+    version = archive["version"]
+
+    get_build_cmd = [
+        "brew",
+        "call",
+        "--json-output",
+        "getBuild",
+        "buildInfo={}".format(build_id),
+    ]
+
+    logger.debug("Executing '{}'".format(" ".join(get_build_cmd)))
+
+    try:
+        json_build = subprocess.check_output(get_build_cmd).strip().decode("utf8")
+    except subprocess.CalledProcessError as ex:
+        logger.error(
+            "{} Command stdout is '{}' with stderr '{}'".format(
+                ex, ex.stdout, ex.stderr
+            )
+        )
+        raise CekitError("Could not fetch build {} from Brew".format(build_id), ex)
+
+    build = yaml.safe_load(json_build)
+
+    build_states = ["BUILDING", "COMPLETE", "DELETED", "FAILED", "CANCELED"]
+
+    # State 1 means: COMPLETE which is the only success state. Other states are:
+    #
+    # 'BUILDING': 0
+    # 'COMPLETE': 1
+    # 'DELETED': 2
+    # 'FAILED': 3
+    # 'CANCELED': 4
+    if build["state"] != 1:
+        raise CekitError(
+            "Artifact with checksum {} was found in Koji metadata but the build is in incorrect state ({}) making "
+            "the artifact not available for downloading anymore".format(
+                md5, build_states[build["state"]]
+            )
+        )
+
+    package = build["package_name"]
+    release = build["release"]
+
+    return (
+        "http://download.devel.redhat.com/brewroot/packages/"
+        + package
+        + "/"
+        + version.replace("-", "_")
+        + "/"
+        + release
+        + "/maven/"
+        + group_id.replace(".", "/")
+        + "/"
+        + artifact_id
+        + "/"
+        + version
+        + "/"
+        + filename
+    )
 
 
 def copy_recursively(source_directory, destination_directory):

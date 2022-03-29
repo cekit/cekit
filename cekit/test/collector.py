@@ -52,7 +52,7 @@ class BehaveTestCollector(object):
             "v%s" % version,
         ]
         logger.debug("Running '{}'".format(" ".join(cmd)))
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.check_output(cmd)
 
     def collect(self, version, url):
         # first clone common steps
