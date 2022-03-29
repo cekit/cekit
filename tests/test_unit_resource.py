@@ -75,10 +75,8 @@ def test_git_clone(mocker):
     res.copy("dir")
     mock.assert_has_calls(
         [
-            call(
-                ["git", "clone", "http://host.com/url/path.git", "dir/path"], stderr=-2
-            ),
-            call(["git", "checkout", "ref"], stderr=-2),
+            call(["git", "clone", "http://host.com/url/path.git", "dir/path"]),
+            call(["git", "checkout", "ref"]),
         ]
     )
 

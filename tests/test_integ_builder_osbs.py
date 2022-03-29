@@ -90,7 +90,7 @@ def run_osbs(
     )
 
 
-def test_osbs_builder_with_asume_yes(tmpdir, mocker, caplog):
+def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     # Specifically set the decision result to False, to fail any build
@@ -134,6 +134,37 @@ def test_osbs_builder_with_asume_yes(tmpdir, mocker, caplog):
         in caplog.text
     )
     assert "Image was built successfully in OSBS!" in caplog.text
+
+
+def test_osbs_builder_with_process_error(tmpdir, mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    # Specifically set the decision result to False, to fail any build
+    # that depends on the decision. But in case the --assume-yes switch is used
+    # we should not get to this point at all. If we get, the test should fail.
+    mock_decision = mocker.patch("cekit.tools.decision", return_value=False)
+    mock_check_call = mocker.patch.object(subprocess, "check_call")
+    mock_check_call.side_effect = [
+        0,
+        subprocess.CalledProcessError(1, "git", output="A GIT ERROR"),
+    ]
+    mocker.patch.object(subprocess, "call", return_value=1)
+
+    source_dir = tmpdir.mkdir("source")
+    source_dir.mkdir("osbs").mkdir("repo")
+
+    run_osbs(
+        image_descriptor.copy(),
+        str(source_dir),
+        mocker,
+        1,
+        ["build", "osbs", "--assume-yes"],
+    )
+
+    mock_decision.assert_not_called()
+
+    assert "A GIT ERROR" in caplog.text
+    assert "Image was built successfully in OSBS!" not in caplog.text
 
 
 def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):

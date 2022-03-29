@@ -3,7 +3,6 @@ import os
 import subprocess
 
 from cekit.builder import Builder
-from cekit.errors import CekitError
 
 LOGGER = logging.getLogger("cekit")
 
@@ -52,13 +51,8 @@ class BuildahBuilder(Builder):
 
         LOGGER.debug("Running Buildah build: '{}'".format(" ".join(cmd)))
 
-        try:
-            subprocess.check_call(cmd)
+        subprocess.check_call(cmd)
 
-            LOGGER.info(
-                "Image built and available under following tags: {}".format(
-                    ", ".join(tags)
-                )
-            )
-        except Exception:
-            raise CekitError("Image build failed, see logs above.")
+        LOGGER.info(
+            "Image built and available under following tags: {}".format(", ".join(tags))
+        )

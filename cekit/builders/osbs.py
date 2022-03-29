@@ -282,11 +282,7 @@ class OSBSBuilder(Builder):
 
         LOGGER.debug("Executing '{}'".format(cmd))
         with Chdir(self.dist_git_dir):
-            try:
-                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as ex:
-                LOGGER.error("Cannot run '{}', output: '{}'".format(cmd, ex.output))
-                raise CekitError("Cannot update sources.")
+            subprocess.check_output(cmd)
 
         LOGGER.info("Update finished.")
 
@@ -350,11 +346,7 @@ class OSBSBuilder(Builder):
                     "Executing {} container build in OSBS...".format(build_type)
                 )
 
-                try:
-                    task_id = subprocess.check_output(cmd).strip().decode("utf8")
-
-                except subprocess.CalledProcessError as ex:
-                    raise CekitError("Building container image in OSBS failed", ex)
+                task_id = subprocess.check_output(cmd).strip().decode("utf8")
 
                 LOGGER.info(
                     "Task {0} was submitted, you can watch the progress here: {1}/taskinfo?taskID={0}".format(
@@ -436,9 +428,7 @@ class DistGit(object):
                 LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
                 subprocess.check_call(["git", "fetch"])
                 LOGGER.debug("Checking out {} branch...".format(self.branch))
-                subprocess.check_call(
-                    ["git", "checkout", "-f", self.branch], stderr=subprocess.STDOUT
-                )
+                subprocess.check_call(["git", "checkout", "-f", self.branch])
                 LOGGER.debug("Resetting branch...")
                 subprocess.check_call(
                     ["git", "reset", "--hard", "origin/%s" % self.branch]

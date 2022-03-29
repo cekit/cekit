@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import sys
+from subprocess import CalledProcessError
 
 import click
 
@@ -462,6 +463,13 @@ class Cekit(object):
             sys.exit(0)
         except KeyboardInterrupt:
             pass
+        except CalledProcessError as ex:
+            LOGGER.error(ex)
+            if ex.stdout:
+                LOGGER.error("Command stdout is:\n{}".format(ex.stdout))
+            if ex.stderr:
+                LOGGER.error("Command stderr is:\n{}".format(ex.stderr))
+            sys.exit(1)
         except CekitError as ex:
             if self.params.verbose:
                 LOGGER.exception(ex)

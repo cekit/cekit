@@ -473,14 +473,14 @@ class _GitResource(Resource):
     def _copy_impl(self, target):
         cmd = ["git", "clone", self.git.url, target]
         logger.debug("Cloning Git repository: '{}'".format(" ".join(cmd)))
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.check_output(cmd)
 
         with Chdir(target):
             cmd = ["git", "checkout", self.git.ref]
             logger.debug(
                 "Checking out '{}' ref: '{}'".format(self.git.ref, " ".join(cmd))
             )
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            subprocess.check_output(cmd)
 
         return target
 
