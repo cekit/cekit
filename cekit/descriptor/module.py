@@ -2,7 +2,8 @@ from cekit.descriptor import Execute, Image
 from cekit.descriptor.image import get_image_schema
 
 overrides_schema = get_image_schema()
-overrides_schema['map']['execute'] = {'type': 'any'}
+overrides_schema["map"]["execute"] = {"type": "any"}
+
 
 class Module(Image):
     """Represents a module.
@@ -17,17 +18,14 @@ class Module(Image):
         self.schema = overrides_schema.copy()
         # calling Descriptor constructor only here (we don't want Image() to mess with schema)
         super(Image, self).__init__(descriptor)
-        self.skip_merging = ['description',
-                             'version',
-                             'name',
-                             'release',
-                             'help']
+        self.skip_merging = ["description", "version", "name", "release", "help"]
 
         self._prepare()
-        self.name = self._descriptor['name']
-        self._descriptor['execute'] = [Execute(x, self.name)
-                                       for x in self._descriptor.get('execute', [])]
+        self.name = self._descriptor["name"]
+        self._descriptor["execute"] = [
+            Execute(x, self.name) for x in self._descriptor.get("execute", [])
+        ]
 
     @property
     def execute(self):
-        return self.get('execute')
+        return self.get("execute")

@@ -1,7 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-# pylint: disable=protected-access
-
 import logging
 import re
 
@@ -23,8 +21,12 @@ docker_success_output = [
     {"stream": " ---> 5b8c17742206\n"},
     {"stream": "Step 4/18 : RUN yum makecache\n"},
     {"stream": " ---> Running in bbefb458e837\n"},
-    {"stream": "Loaded plugins: ovl, product-id, search-disabled-repos, subscription-manager\n"},
-    {"stream": "This system is not receiving updates. You can use subscription-manager on the host to register and assign subscriptions.\n"},
+    {
+        "stream": "Loaded plugins: ovl, product-id, search-disabled-repos, subscription-manager\n"
+    },
+    {
+        "stream": "This system is not receiving updates. You can use subscription-manager on the host to register and assign subscriptions.\n"
+    },
     {"stream": "Metadata Cache Created\n"},
     {"stream": " ---> 3c496e216ae4\n"},
     {"stream": "Removing intermediate container bbefb458e837\n"},
@@ -44,7 +46,7 @@ docker_success_output = [
     {"stream": "Step 18/18 : WORKDIR /home/jboss\n"},
     {"stream": " ---> 985573b8bb7b\n"},
     {"stream": "Removing intermediate container 413ed29c9497\n"},
-    {"stream": "Successfully built 985573b8bb7b\n"}
+    {"stream": "Successfully built 985573b8bb7b\n"},
 ]
 
 docker_fail_output = [
@@ -56,81 +58,124 @@ docker_fail_output = [
     {"stream": "Step 3/159 : COPY modules /tmp/scripts/\n"},
     {"stream": " ---> Using cache\n"},
     {"stream": " ---> 8f6d31270e03\n"},
-    {"stream": "Step 4/159 : COPY jboss-eap-7.2.1-patch.zip jboss-eap-7.2.zip jolokia-jvm-1.5.0.redhat-1-agent.jar txn-recovery-marker-jdbc-common-1.1.2.Final-redhat-00001.jar txn-recovery-marker-jdbc-hibernate5-1.1.2.Final-redhat-00001.jar openshift-ping-common-1.2.3.Final-redhat-1.jar openshift-ping-dns-1.2.3.Final-redhat-1.jar openshift-ping-kube-1.2.3.Final-redhat-1.jar oauth-20100527.jar activemq-rar-5.11.0.redhat-630371.rar jboss-logmanager-2.1.7.Final.jar rh-sso-7.2.2-eap7-adapter.zip rh-sso-7.2.2-saml-eap7-adapter.zip jmx_prometheus_javaagent-0.3.1.redhat-00006.jar /tmp/artifacts/\n"},
+    {
+        "stream": "Step 4/159 : COPY jboss-eap-7.2.1-patch.zip jboss-eap-7.2.zip jolokia-jvm-1.5.0.redhat-1-agent.jar txn-recovery-marker-jdbc-common-1.1.2.Final-redhat-00001.jar txn-recovery-marker-jdbc-hibernate5-1.1.2.Final-redhat-00001.jar openshift-ping-common-1.2.3.Final-redhat-1.jar openshift-ping-dns-1.2.3.Final-redhat-1.jar openshift-ping-kube-1.2.3.Final-redhat-1.jar oauth-20100527.jar activemq-rar-5.11.0.redhat-630371.rar jboss-logmanager-2.1.7.Final.jar rh-sso-7.2.2-eap7-adapter.zip rh-sso-7.2.2-saml-eap7-adapter.zip jmx_prometheus_javaagent-0.3.1.redhat-00006.jar /tmp/artifacts/\n"
+    },
     {"stream": " ---> Using cache\n"},
     {"stream": " ---> b901f2266584\n"},
     {"stream": "Step 5/159 : USER root\n"},
     {"stream": " ---> Using cache\n"},
     {"stream": " ---> 81a88b63f47f\n"},
-    {"stream": "Step 6/159 : RUN microdnf --setopt=tsflags=nodocs install -y maven     \u0026\u0026 rpm -q maven\n"},
+    {
+        "stream": "Step 6/159 : RUN microdnf --setopt=tsflags=nodocs install -y maven     \u0026\u0026 rpm -q maven\n"
+    },
     {"stream": " ---> Running in 4763fe199ffd\n"},
-    {"stream": "\u001b[91m\n(process:8): librhsm-WARNING **: 09:58:25.023: Found 0 entitlement certificates\n\u001b[0m"},
-    {"stream": "\u001b[91m\n(process:8): librhsm-WARNING **: 09:58:25.024: Found 0 entitlement certificates\n\u001b[0m"},
+    {
+        "stream": "\u001b[91m\n(process:8): librhsm-WARNING **: 09:58:25.023: Found 0 entitlement certificates\n\u001b[0m"
+    },
+    {
+        "stream": "\u001b[91m\n(process:8): librhsm-WARNING **: 09:58:25.024: Found 0 entitlement certificates\n\u001b[0m"
+    },
     {"stream": "Downloading metadata...\n"},
     {"stream": "Downloading metadata...\n"},
-    {"stream": "\u001b[91merror: No package matches \'maven\'\n\u001b[0m"},
-    {"errorDetail": {"code": 1, "message": "The command \'/bin/sh -c microdnf --setopt=tsflags=nodocs install -y maven     \u0026\u0026 rpm -q maven\' returned a non-zero code: 1"},
-        "error": "The command \'/bin/sh -c microdnf --setopt=tsflags=nodocs install -y maven     \u0026\u0026 rpm -q maven\' returned a non-zero code: 1"}
+    {"stream": "\u001b[91merror: No package matches 'maven'\n\u001b[0m"},
+    {
+        "errorDetail": {
+            "code": 1,
+            "message": "The command '/bin/sh -c microdnf --setopt=tsflags=nodocs install -y maven     \u0026\u0026 rpm -q maven' returned a non-zero code: 1",
+        },
+        "error": "The command '/bin/sh -c microdnf --setopt=tsflags=nodocs install -y maven     \u0026\u0026 rpm -q maven' returned a non-zero code: 1",
+    },
 ]
 
 
 def test_docker_client_build(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
+    squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
     squash = squash_class.return_value
-    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
     docker_client = docker_client_class.return_value
     docker_client_build = mocker.patch.object(
-        docker_client, 'build', return_value=docker_success_output)
+        docker_client, "build", return_value=docker_success_output
+    )
 
-    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
-    builder.generator = Map({'image': {'from': 'FROM'}})
+    builder = DockerBuilder(
+        Map(merge_dicts({"target": "something"}, {"tags": ["foo", "bar"]}))
+    )
+    builder.generator = Map({"image": {"from": "FROM"}})
     builder.run()
 
     squash_class.assert_called_once_with(
-        cleanup=True, docker=docker_client, from_layer="FROM", image="985573b8bb7b", log=logging.getLogger('cekit'))
+        cleanup=True,
+        docker=docker_client,
+        from_layer="FROM",
+        image="985573b8bb7b",
+        log=logging.getLogger("cekit"),
+    )
     squash.run.assert_called_once_with()
     docker_client_build.assert_called_once_with(
-        decode=True, path='something/image', pull=None, rm=True)
-    assert "Docker: This system is not receiving updates. You can use subscription-manager on the host to register and assign subscriptions." in caplog.text
+        decode=True, path="something/image", pull=None, rm=True
+    )
+    assert (
+        "Docker: This system is not receiving updates. You can use subscription-manager on the host to register and assign subscriptions."
+        in caplog.text
+    )
     assert "Image built and available under following tags: foo, bar" in caplog.text
 
 
 def test_docker_client_build_platform(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
-    squash = squash_class.return_value
-    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
+    mocker.patch("cekit.builders.docker_builder.Squash")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
     docker_client = docker_client_class.return_value
     docker_client_build = mocker.patch.object(
-        docker_client, 'build', return_value=docker_success_output)
+        docker_client, "build", return_value=docker_success_output
+    )
 
-    builder = DockerBuilder(Map(merge_dicts({'target': 'something'},
-                                            {'tags': ['foo', 'bar']},
-                                            {'platform': 'linux/amd64,linux/arm64'})))
-    builder.generator = Map({'image': {'from': 'FROM'}})
+    builder = DockerBuilder(
+        Map(
+            merge_dicts(
+                {"target": "something"},
+                {"tags": ["foo", "bar"]},
+                {"platform": "linux/amd64,linux/arm64"},
+            )
+        )
+    )
+    builder.generator = Map({"image": {"from": "FROM"}})
     builder.run()
 
     docker_client_build.assert_called_once_with(
-        decode=True, path='something/image', platform='linux/amd64,linux/arm64', pull=None, rm=True )
-    assert re.match(".*Running Docker build:.*'platform': 'linux/amd64,linux/arm64'.*", caplog.text, re.DOTALL)
+        decode=True,
+        path="something/image",
+        platform="linux/amd64,linux/arm64",
+        pull=None,
+        rm=True,
+    )
+    assert re.match(
+        ".*Running Docker build:.*'platform': 'linux/amd64,linux/arm64'.*",
+        caplog.text,
+        re.DOTALL,
+    )
 
 
 def test_docker_client_build_with_failure(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
-    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(
+        Map(merge_dicts({"target": "something"}, {"tags": ["foo", "bar"]}))
+    )
 
-    docker_client_class = mocker.patch('cekit.builders.docker_builder.APIClientClass')
-    squash_class = mocker.patch('cekit.builders.docker_builder.Squash')
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
     squash = squash_class.return_value
     docker_client = docker_client_class.return_value
     docker_client_build = mocker.patch.object(
-        docker_client, 'build', return_value=docker_fail_output)
+        docker_client, "build", return_value=docker_fail_output
+    )
 
-    builder.generator = Map({'image': {'from': 'FROM'}})
+    builder.generator = Map({"image": {"from": "FROM"}})
 
     with pytest.raises(CekitError) as exception:
         builder.run()
@@ -140,22 +185,32 @@ def test_docker_client_build_with_failure(mocker, caplog):
     squash_class.assert_not_called()
     squash.run.assert_not_called()
     docker_client_build.assert_called_once_with(
-        decode=True, path='something/image', pull=None, rm=True)
+        decode=True, path="something/image", pull=None, rm=True
+    )
     assert "Docker: Step 3/159 : COPY modules /tmp/scripts/" in caplog.text
-    assert "You can look inside the failed image by running 'docker run --rm -ti 81a88b63f47f bash'" in caplog.text
+    assert (
+        "You can look inside the failed image by running 'docker run --rm -ti 81a88b63f47f bash'"
+        in caplog.text
+    )
 
 
 # https://github.com/cekit/cekit/issues/508
 def test_docker_tag(mocker):
-    builder = DockerBuilder(Map(merge_dicts({'target': 'something'}, {'tags': ['foo', 'bar']})))
+    builder = DockerBuilder(
+        Map(merge_dicts({"target": "something"}, {"tags": ["foo", "bar"]}))
+    )
 
     docker_client_mock = mocker.Mock()
 
-    builder._tag(docker_client_mock, "image_id", ["image:latest", "host:5000/repo/image:tag"])
+    builder._tag(
+        docker_client_mock, "image_id", ["image:latest", "host:5000/repo/image:tag"]
+    )
 
     assert len(docker_client_mock.tag.mock_calls) == 2
 
-    docker_client_mock.tag.assert_has_calls([
-        mocker.call("image_id", "image", tag="latest"),
-        mocker.call("image_id", "host:5000/repo/image", tag="tag")
-    ])
+    docker_client_mock.tag.assert_has_calls(
+        [
+            mocker.call("image_id", "image", tag="latest"),
+            mocker.call("image_id", "host:5000/repo/image", tag="tag"),
+        ]
+    )

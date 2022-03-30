@@ -10,7 +10,7 @@ import click
 from cekit.log import setup_logging
 from cekit.tools import Chdir
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 
 
 @click.command(
@@ -19,9 +19,7 @@ logger = logging.getLogger('cekit')
 @click.option(
     "--check", help="Don't write the files back, just return the status.", is_flag=True
 )
-@click.option(
-    '-v', '--verbose', help="Enable verbose output.", is_flag=True
-)
+@click.option("-v", "--verbose", help="Enable verbose output.", is_flag=True)
 def main(check: bool, verbose: bool) -> None:
     """Main function
 
@@ -29,11 +27,12 @@ def main(check: bool, verbose: bool) -> None:
     """
     setup_logging()
     options = []
+    verbose = []
     if check:
         options.append("--check")
     if verbose:
         logger.setLevel(logging.DEBUG)
-        options.append("--verbose")
+        verbose.append("--verbose")
     else:
         logger.setLevel(logging.INFO)
 
@@ -43,12 +42,21 @@ def main(check: bool, verbose: bool) -> None:
     # Run the various formatters, stop on the first error
     for formatter in [
         ["isort"],
-        # black should be run last
-        # ["black"],
+        ["black"],
     ]:
         try:
             with Chdir(repo_root):
-                run(formatter + options + ["."], check=True)
+                run(formatter + options + verbose + ["."], check=True)
+        except CalledProcessError as err:
+            sys.exit(err.returncode)
+
+    # Flake8 does not support a --check flag
+    for formatter in [
+        ["flake8"],
+    ]:
+        try:
+            with Chdir(repo_root):
+                run(formatter + verbose + ["."], check=True)
         except CalledProcessError as err:
             sys.exit(err.returncode)
 

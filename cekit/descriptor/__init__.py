@@ -1,3 +1,4 @@
+# flake8: noqa
 # forwarding import
 from cekit.descriptor.base import Descriptor
 from cekit.descriptor.resource import Resource

@@ -21,7 +21,7 @@ from cekit.template_helper import TemplateHelper
 from cekit.tools import download_file, load_descriptor
 from cekit.version import __version__ as cekit_version
 
-LOGGER = logging.getLogger('cekit')
+LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
 
 try:
@@ -43,7 +43,7 @@ class Generator(object):
       overrides - path to overrides file (can be None)
     """
 
-    ODCS_HIDDEN_REPOS_FLAG = 'include_unpublished_pulp_repos'
+    ODCS_HIDDEN_REPOS_FLAG = "include_unpublished_pulp_repos"
 
     def __init__(self, descriptor_path, target, overrides):
         self._descriptor_path = descriptor_path
@@ -63,18 +63,25 @@ class Generator(object):
             for override in overrides:
 
                 LOGGER.debug("Loading override '{}'".format(override))
-                if urlparse(override).scheme in ['http', 'https', 'file']:
+                if urlparse(override).scheme in ["http", "https", "file"]:
                     # HTTP Handling
                     tmpfile = tempfile.NamedTemporaryFile()
                     download_file(override, tmpfile.name)
-                    self._overrides.append(Overrides(load_descriptor(tmpfile.name), os.path.dirname(tmpfile.name)))
+                    self._overrides.append(
+                        Overrides(
+                            load_descriptor(tmpfile.name), os.path.dirname(tmpfile.name)
+                        )
+                    )
                 else:
                     # File handling
                     override_artifact_dir = os.path.dirname(os.path.abspath(override))
                     if not os.path.exists(override):
-                        override_artifact_dir = os.path.dirname(os.path.abspath(descriptor_path))
-                    self._overrides.append(Overrides(load_descriptor(
-                        override), override_artifact_dir))
+                        override_artifact_dir = os.path.dirname(
+                            os.path.abspath(descriptor_path)
+                        )
+                    self._overrides.append(
+                        Overrides(load_descriptor(override), override_artifact_dir)
+                    )
 
         LOGGER.info("Initializing image descriptor...")
 
@@ -82,19 +89,14 @@ class Generator(object):
     def dependencies(params=None):
         deps = {}
 
-        deps['odcs-client'] = {
-            'package': 'python3-odcs-client',
-            'library': 'odcs',
-            'rhel': {
-                'package': 'python2-odcs-client'
-            }
+        deps["odcs-client"] = {
+            "package": "python3-odcs-client",
+            "library": "odcs",
+            "rhel": {"package": "python2-odcs-client"},
         }
 
-        if CONFIG.get('common', 'redhat'):
-            deps['brew'] = {
-                'package': 'brewkoji',
-                'executable': '/usr/bin/brew'
-            }
+        if CONFIG.get("common", "redhat"):
+            deps["brew"] = {"package": "brewkoji", "executable": "/usr/bin/brew"}
 
         return deps
 
@@ -105,25 +107,36 @@ class Generator(object):
 
         LOGGER.debug("Removing old target directory")
         shutil.rmtree(self.target, ignore_errors=True)
-        os.makedirs(os.path.join(self.target, 'image'))
+        os.makedirs(os.path.join(self.target, "image"))
 
         # Read the main image descriptor and create an Image object from it
         descriptor = load_descriptor(self._descriptor_path)
 
         if isinstance(descriptor, list):
-            LOGGER.info("Descriptor contains multiple elements, assuming multi-stage image")
-            LOGGER.info("Found {} builder image(s) and one target image".format(
-                len(descriptor[:-1])))
+            LOGGER.info(
+                "Descriptor contains multiple elements, assuming multi-stage image"
+            )
+            LOGGER.info(
+                "Found {} builder image(s) and one target image".format(
+                    len(descriptor[:-1])
+                )
+            )
 
             # Iterate over images defined in image descriptor and
             # create Image objects out of them
             for image_descriptor in descriptor[:-1]:
                 self.builder_images.append(
-                    Image(image_descriptor, os.path.dirname(os.path.abspath(self._descriptor_path))))
+                    Image(
+                        image_descriptor,
+                        os.path.dirname(os.path.abspath(self._descriptor_path)),
+                    )
+                )
 
             descriptor = descriptor[-1]
 
-        self.image = Image(descriptor, os.path.dirname(os.path.abspath(self._descriptor_path)))
+        self.image = Image(
+            descriptor, os.path.dirname(os.path.abspath(self._descriptor_path))
+        )
 
         # Construct list of all images (builder images + main one)
         self.images = [self.image] + self.builder_images
@@ -147,12 +160,12 @@ class Generator(object):
         # Add build labels
         self.add_build_labels()
 
-    def generate(self, builder):  # pylint: disable=unused-argument
+    def generate(self, builder):
         self.copy_modules()
         self.prepare_artifacts()
         self.prepare_repositories()
         self.image.remove_none_keys()
-        self.image.write(os.path.join(self.target, 'image.yaml'))
+        self.image.write(os.path.join(self.target, "image.yaml"))
         self.render_dockerfile()
         self.render_help()
 
@@ -163,7 +176,7 @@ class Generator(object):
         image_labels = self.image.labels
         # we will persist cekit version in a label here, so we know which version of cekit
         # was used to build the image
-        image_labels.append(Label({'name': 'io.cekit.version', 'value': cekit_version}))
+        image_labels.append(Label({"name": "io.cekit.version", "value": cekit_version}))
 
         for label in image_labels:
             if len(label.value) > 128:
@@ -173,17 +186,21 @@ class Generator(object):
         # If we define the label in the image descriptor
         # we should *not* override it with value from
         # the root's key
-        if self.image.description and not self.image.label('description'):
-            image_labels.append(Label({'name': 'description', 'value': self.image.description}))
+        if self.image.description and not self.image.label("description"):
+            image_labels.append(
+                Label({"name": "description", "value": self.image.description})
+            )
 
         # Last - if there is no 'summary' label added to image descriptor
         # we should use the value of the 'description' key and create
         # a 'summary' label with it's content. If there is even that
         # key missing - we should not add anything.
-        description = self.image.label('description')
+        description = self.image.label("description")
 
-        if not self.image.label('summary') and description:
-            image_labels.append(Label({'name': 'summary', 'value': description['value']}))
+        if not self.image.label("summary") and description:
+            image_labels.append(
+                Label({"name": "summary", "value": description["value"]})
+            )
 
     def _modules(self):
         """
@@ -209,9 +226,12 @@ class Generator(object):
         for module in self._modules():
             for repo in module.repositories:
                 if repo in repositories:
-                    LOGGER.warning((
-                        "Module repository '{0}' already added, please check your image configuration, " +
-                        "skipping module repository '{0}'").format(repo.name))
+                    LOGGER.warning(
+                        (
+                            "Module repository '{0}' already added, please check your image configuration, "
+                            + "skipping module repository '{0}'"
+                        ).format(repo.name)
+                    )
                     continue
                 # If the repository already exists, skip it
                 repositories.append(repo)
@@ -219,7 +239,7 @@ class Generator(object):
         return repositories
 
     def build_module_registry(self):
-        base_dir = os.path.join(self.target, 'repo')
+        base_dir = os.path.join(self.target, "repo")
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
         for repo in self._module_repositories():
@@ -229,20 +249,29 @@ class Generator(object):
 
     def load_repository(self, repo_dir):
         for modules_dir, _, files in os.walk(repo_dir):
-            if 'module.yaml' in files:
+            if "module.yaml" in files:
 
-                module_descriptor_path = os.path.abspath(os.path.expanduser(
-                    os.path.normcase(os.path.join(modules_dir, 'module.yaml'))))
+                module_descriptor_path = os.path.abspath(
+                    os.path.expanduser(
+                        os.path.normcase(os.path.join(modules_dir, "module.yaml"))
+                    )
+                )
 
-                module = Module(load_descriptor(module_descriptor_path),
-                                modules_dir,
-                                os.path.dirname(module_descriptor_path))
-                LOGGER.debug("Adding module '{}', path: '{}'".format(module.name, module.path))
+                module = Module(
+                    load_descriptor(module_descriptor_path),
+                    modules_dir,
+                    os.path.dirname(module_descriptor_path),
+                )
+                LOGGER.debug(
+                    "Adding module '{}', path: '{}'".format(module.name, module.path)
+                )
                 self._module_registry.add_module(module)
 
     def get_tags(self):
-        return ["%s:%s" % (self.image['name'], self.image[
-            'version']), "%s:latest" % self.image['name']]
+        return [
+            "%s:%s" % (self.image["name"], self.image["version"]),
+            "%s:latest" % self.image["name"],
+        ]
 
     def copy_modules(self):
         """Prepare module to be used for Dockerfile generation.
@@ -258,13 +287,17 @@ class Generator(object):
             if module.install:
                 modules_to_install += module.install
 
-        target = os.path.join(self.target, 'image', 'modules')
+        target = os.path.join(self.target, "image", "modules")
 
         for module in modules_to_install:
             module = self._module_registry.get_module(
-                module.name, module.version, suppress_warnings=True)
-            LOGGER.debug("Copying module '{}' required by '{}'.".format(
-                module.name, self.image.name))
+                module.name, module.version, suppress_warnings=True
+            )
+            LOGGER.debug(
+                "Copying module '{}' required by '{}'.".format(
+                    module.name, self.image.name
+                )
+            )
 
             dest = os.path.join(target, module.name)
 
@@ -283,17 +316,32 @@ class Generator(object):
             @property
             def envs(self):
                 return [
-                    Env({'name': 'JBOSS_IMAGE_NAME',
-                         'value': '%s' % self._generator.image['name']}),
-                    Env({'name': 'JBOSS_IMAGE_VERSION',
-                         'value': '%s' % self._generator.image['version']})
+                    Env(
+                        {
+                            "name": "JBOSS_IMAGE_NAME",
+                            "value": "%s" % self._generator.image["name"],
+                        }
+                    ),
+                    Env(
+                        {
+                            "name": "JBOSS_IMAGE_VERSION",
+                            "value": "%s" % self._generator.image["version"],
+                        }
+                    ),
                 ]
 
             @property
             def labels(self):
                 labels = [
-                    Label({'name': 'name', 'value': '%s' % self._generator.image['name']}),
-                    Label({'name': 'version', 'value': '%s' % self._generator.image['version']})
+                    Label(
+                        {"name": "name", "value": "%s" % self._generator.image["name"]}
+                    ),
+                    Label(
+                        {
+                            "name": "version",
+                            "value": "%s" % self._generator.image["version"],
+                        }
+                    ),
                 ]
                 return labels
 
@@ -303,27 +351,23 @@ class Generator(object):
         """Renders Dockerfile to $target/image/Dockerfile"""
         LOGGER.info("Rendering Dockerfile...")
 
-        template_file = os.path.join(os.path.dirname(__file__),
-                                     '..',
-                                     'templates',
-                                     'template.jinja')
+        template_file = os.path.join(
+            os.path.dirname(__file__), "..", "templates", "template.jinja"
+        )
         loader = FileSystemLoader(os.path.dirname(template_file))
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-        env.globals['helper'] = TemplateHelper(self._module_registry)
-        env.globals['image'] = self.image
-        env.globals['builders'] = self.builder_images
+        env.globals["helper"] = TemplateHelper(self._module_registry)
+        env.globals["image"] = self.image
+        env.globals["builders"] = self.builder_images
 
         template = env.get_template(os.path.basename(template_file))
 
-        dockerfile = os.path.join(self.target,
-                                  'image',
-                                  'Dockerfile')
+        dockerfile = os.path.join(self.target, "image", "Dockerfile")
         if not os.path.exists(os.path.dirname(dockerfile)):
             os.makedirs(os.path.dirname(dockerfile))
 
-        with open(dockerfile, 'wb') as f:
-            f.write(template.render(
-                self.image).encode('utf-8'))
+        with open(dockerfile, "wb") as f:
+            f.write(template.render(self.image).encode("utf-8"))
         LOGGER.debug("Dockerfile rendered")
 
     def render_help(self):
@@ -332,50 +376,53 @@ class Generator(object):
         It is generated to the $target/image/help.md file.
         """
 
-        if not self.image.help.get('add', False):
+        if not self.image.help.get("add", False):
             return
 
         # Set default help template
-        help_template_path = os.path.join(os.path.dirname(__file__),
-                                          '..',
-                                          'templates',
-                                          'help.jinja')
+        help_template_path = os.path.join(
+            os.path.dirname(__file__), "..", "templates", "help.jinja"
+        )
 
         # If custom template is requested, use it
-        if self.image.get('help', {}).get('template', ""):
-            help_template_path = self.image['help']['template']
+        if self.image.get("help", {}).get("template", ""):
+            help_template_path = self.image["help"]["template"]
 
             # If the path provided is absolute, use it
             # If it's a relative path, make it relative to the image descriptor
             if not os.path.isabs(help_template_path):
-                help_template_path = os.path.join(os.path.dirname(
-                    self._descriptor_path), help_template_path)
+                help_template_path = os.path.join(
+                    os.path.dirname(self._descriptor_path), help_template_path
+                )
 
-        LOGGER.info("Rendering help.md page from template {}".format(help_template_path))
+        LOGGER.info(
+            "Rendering help.md page from template {}".format(help_template_path)
+        )
 
         help_dirname, help_basename = os.path.split(help_template_path)
         loader = FileSystemLoader(help_dirname)
         env = Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-        env.globals['helper'] = TemplateHelper(self._module_registry)
-        env.globals['image'] = self.image
+        env.globals["helper"] = TemplateHelper(self._module_registry)
+        env.globals["image"] = self.image
         help_template = env.get_template(help_basename)
-        help_file = os.path.join(self.target, 'image', 'help.md')
+        help_file = os.path.join(self.target, "image", "help.md")
 
-        with open(help_file, 'wb') as f:
-            f.write(help_template.render(self.image).encode('utf-8'))
+        with open(help_file, "wb") as f:
+            f.write(help_template.render(self.image).encode("utf-8"))
 
         LOGGER.debug("help.md rendered")
 
     def prepare_repositories(self):
-        """ Prepare repositories for build time injection. """
-        if 'packages' not in self.image:
+        """Prepare repositories for build time injection."""
+        if "packages" not in self.image:
             return
 
-        if self.image.get('packages').get('content_sets'):
+        if self.image.get("packages").get("content_sets"):
             LOGGER.warning(
-                'The image has ContentSets repositories specified, all other repositories are removed!')
-            self.image['packages']['repositories'] = []
-        repos = self.image.get('packages').get('repositories', [])
+                "The image has ContentSets repositories specified, all other repositories are removed!"
+            )
+            self.image["packages"]["repositories"] = []
+        repos = self.image.get("packages").get("repositories", [])
 
         injected_repos = []
 
@@ -383,20 +430,23 @@ class Generator(object):
             if self._handle_repository(repo):
                 injected_repos.append(repo)
 
-        if self.image.get('packages').get('content_sets'):
-            url = self._prepare_content_sets(self.image.get('packages').get('content_sets'))
+        if self.image.get("packages").get("content_sets"):
+            url = self._prepare_content_sets(
+                self.image.get("packages").get("content_sets")
+            )
             if url:
-                repo = Repository({'name': 'content_sets_odcs',
-                                   'url': {'repository': url}})
+                repo = Repository(
+                    {"name": "content_sets_odcs", "url": {"repository": url}}
+                )
                 injected_repos.append(repo)
                 self._fetch_repos = True
 
         if self._fetch_repos:
             for repo in injected_repos:
-                repo.fetch(os.path.join(self.target, 'image', 'repos'))
-            self.image['packages']['repositories_injected'] = injected_repos
+                repo.fetch(os.path.join(self.target, "image", "repos"))
+            self.image["packages"]["repositories_injected"] = injected_repos
         else:
-            self.image['packages']['set_url'] = injected_repos
+            self.image["packages"]["set_url"] = injected_repos
 
     def _prepare_content_sets(self, content_sets):
         if not content_sets:
@@ -405,23 +455,31 @@ class Generator(object):
         arch = platform.machine()
 
         if arch not in content_sets:
-            raise CekitError("There are no content_sets defined for platform '{}'!".format(arch))
+            raise CekitError(
+                "There are no content_sets defined for platform '{}'!".format(arch)
+            )
 
-        repos = ' '.join(content_sets[arch])
+        repos = " ".join(content_sets[arch])
 
         odcs_service_type = "Fedora"
         odcs_url = "https://odcs.fedoraproject.org"
 
-        if CONFIG.get('common', 'redhat'):
+        if CONFIG.get("common", "redhat"):
             odcs_service_type = "Red Hat"
             odcs_url = "https://odcs.engineering.redhat.com"
 
-        LOGGER.info("Using {} ODCS service to create composes".format(odcs_service_type))
+        LOGGER.info(
+            "Using {} ODCS service to create composes".format(odcs_service_type)
+        )
 
         flags = []
 
-        compose = self.image.get('osbs', {}).get(
-            'configuration', {}).get('container', {}).get('compose', {})
+        compose = (
+            self.image.get("osbs", {})
+            .get("configuration", {})
+            .get("container", {})
+            .get("compose", {})
+        )
 
         if compose.get(Generator.ODCS_HIDDEN_REPOS_FLAG, False):
             flags.append(Generator.ODCS_HIDDEN_REPOS_FLAG)
@@ -429,30 +487,41 @@ class Generator(object):
         odcs = ODCS(odcs_url, auth_mech=AuthMech.Kerberos)
 
         LOGGER.debug(
-            "Requesting ODCS pulp compose for '{}' repositories with '{}' flags...".format(repos, flags))
+            "Requesting ODCS pulp compose for '{}' repositories with '{}' flags...".format(
+                repos, flags
+            )
+        )
 
         try:
-            compose = odcs.new_compose(repos, 'pulp', flags=flags)
+            compose = odcs.new_compose(repos, "pulp", flags=flags)
         except requests.exceptions.HTTPError as ex:
             if ex.response.status_code == 401:
-                LOGGER.error(("You are not authorized to use {} ODCS service. "
-                              "Are you sure you have a valid Kerberos session?").format(odcs_service_type))
+                LOGGER.error(
+                    (
+                        "You are not authorized to use {} ODCS service. "
+                        "Are you sure you have a valid Kerberos session?"
+                    ).format(odcs_service_type)
+                )
             raise CekitError("Could not create ODCS compose", ex)
 
-        compose_id = compose.get('id', None)
+        compose_id = compose.get("id", None)
 
         if not compose_id:
             raise CekitError(
-                "Invalid response from ODCS service: no compose id found: {}".format(compose))
+                "Invalid response from ODCS service: no compose id found: {}".format(
+                    compose
+                )
+            )
 
         LOGGER.debug("Waiting for compose {} to finish...".format(compose_id))
 
         compose = odcs.wait_for_compose(compose_id, timeout=600)
-        state = compose.get('state', None)
+        state = compose.get("state", None)
 
         if not state:
             raise CekitError(
-                "Invalid response from ODCS service: no state found: {}".format(compose))
+                "Invalid response from ODCS service: no state found: {}".format(compose)
+            )
 
         # State 2 is "done"
         if state != 2:
@@ -460,11 +529,14 @@ class Generator(object):
 
         LOGGER.debug("Compose finished successfully")
 
-        repofile = compose.get('result_repofile', None)
+        repofile = compose.get("result_repofile", None)
 
         if not repofile:
             raise CekitError(
-                "Invalid response from ODCS service: no state_repofile key found: {}".format(compose))
+                "Invalid response from ODCS service: no state_repofile key found: {}".format(
+                    compose
+                )
+            )
 
         return repofile
 
@@ -477,22 +549,27 @@ class Generator(object):
         Returns True if repository file is prepared and should be injected"""
 
         LOGGER.debug(
-            "Loading configuration for repository: '{}' from 'repositories'.".format(repo['name']))
+            "Loading configuration for repository: '{}' from 'repositories'.".format(
+                repo["name"]
+            )
+        )
 
-        if 'id' in repo:
-            LOGGER.warning("Repository '{}' is defined as plain. It must be available "
-                           "inside the image as Cekit will not inject it.".format(repo['name']))
+        if "id" in repo:
+            LOGGER.warning(
+                "Repository '{}' is defined as plain. It must be available "
+                "inside the image as Cekit will not inject it.".format(repo["name"])
+            )
             return False
 
-        if 'content_sets' in repo:
+        if "content_sets" in repo:
             self._fetch_repos = True
             return self._prepare_content_sets(repo)
 
-        elif 'rpm' in repo:
+        elif "rpm" in repo:
             self._prepare_repository_rpm(repo)
             return False
 
-        elif 'url' in repo:
+        elif "url" in repo:
             return True
 
         return False
@@ -536,7 +613,9 @@ class ModuleRegistry(object):
 
         # If there are no modules with the requested name, fail
         if not modules:
-            raise CekitError("There are no modules with '{}' name available".format(name))
+            raise CekitError(
+                "There are no modules with '{}' name available".format(name)
+            )
 
         # If there is no module version requested, get default one
         if version is None:
@@ -544,13 +623,19 @@ class ModuleRegistry(object):
 
             if not default_version:
                 raise CekitError(
-                    "Internal error: default version for module '{}' could not be found, please report it".format(name))
+                    "Internal error: default version for module '{}' could not be found, please report it".format(
+                        name
+                    )
+                )
 
             default_module = self.get_module(name, default_version)
 
             if not suppress_warnings and len(modules) > 1:
-                LOGGER.warning("Module version not specified for '{}' module, using '{}' default version".format(
-                    name, default_version))
+                LOGGER.warning(
+                    "Module version not specified for '{}' module, using '{}' default version".format(
+                        name, default_version
+                    )
+                )
 
             return default_module
 
@@ -559,8 +644,11 @@ class ModuleRegistry(object):
 
         # If there is no such module, fail
         if not module:
-            raise CekitError("Module '{}' with version '{}' could not be found, available versions: {}".format(
-                name, version, ", ".join(list(modules.keys()))))
+            raise CekitError(
+                "Module '{}' with version '{}' could not be found, available versions: {}".format(
+                    name, version, ", ".join(list(modules.keys()))
+                )
+            )
 
         return module
 
@@ -587,9 +675,12 @@ class ModuleRegistry(object):
 
         # If module version is not provided, fail because it is required
         if not module.version:
-            raise CekitError((
-                "Internal error: module '{}' does not have version specified, "
-                "we cannot add it to registry, please report it").format(module.name))
+            raise CekitError(
+                (
+                    "Internal error: module '{}' does not have version specified, "
+                    "we cannot add it to registry, please report it"
+                ).format(module.name)
+            )
 
         # Convert version to string, it can be float or int, or anything actually
         version = str(module.version)
@@ -608,16 +699,23 @@ class ModuleRegistry(object):
 
         # If a module of specified name and version already exists in the registry - fail
         if version in modules:
-            raise CekitError("Module '{}' with version '{}' already exists in module registry".format(
-                module.name, version))
+            raise CekitError(
+                "Module '{}' with version '{}' already exists in module registry".format(
+                    module.name, version
+                )
+            )
 
         default_version = parse_version(self._defaults.get(module.name))
         current_version = parse_version(version)
 
         if isinstance(current_version, LegacyVersion):
-            LOGGER.warning(("Module's '{}' version '{}' does not follow PEP 440 versioning scheme "
-                            "(https://www.python.org/dev/peps/pep-0440), "
-                            "we suggest follow this versioning scheme in modules").format(module.name, version))
+            LOGGER.warning(
+                (
+                    "Module's '{}' version '{}' does not follow PEP 440 versioning scheme "
+                    "(https://www.python.org/dev/peps/pep-0440), "
+                    "we suggest follow this versioning scheme in modules"
+                ).format(module.name, version)
+            )
 
         # If current module version is never, we need to make it the new default
         if current_version > default_version:

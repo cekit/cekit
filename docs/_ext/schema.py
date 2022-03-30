@@ -13,7 +13,10 @@ class SchemaDirective(SphinxDirective):
     optional_arguments = 1
 
     option_spec = {
-        'name': directives.unchanged
+        "name": directives.unchanged,
+        "language": directives.unchanged,
+        "encoding": directives.unchanged,
+        "linenos": directives.flag,
     }
 
     def run(self):
@@ -25,8 +28,10 @@ class SchemaDirective(SphinxDirective):
         if not clazz.SCHEMA:
             return []
 
-        code = nodes.literal_block(text=json.dumps(clazz.SCHEMA, indent=4, sort_keys=True))
-        code['language'] = 'json'
+        code = nodes.literal_block(
+            text=json.dumps(clazz.SCHEMA, indent=4, sort_keys=True)
+        )
+        code["language"] = "json"
 
         code = container_wrapper(self, code, "Schema")
 
@@ -36,18 +41,14 @@ class SchemaDirective(SphinxDirective):
 
 
 def setup(app):
-    app.add_directive('schema', SchemaDirective,
-                      content=0, arguments=(1, 0, 0),
-                      linenos=directives.flag,
-                      language=directives.unchanged,
-                      encoding=directives.encoding)
+    app.add_directive("schema", SchemaDirective)
 
     # TODO: Replace nodes after the source was changed
     # app.connect('source-read', process_schema_nodes)
     # app.connect('doctree-resolved', process_schema_nodes)
 
     return {
-        'version': '0.1',
-        'parallel_read_safe': True,
-        'parallel_write_safe': True,
+        "version": "0.1",
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
     }

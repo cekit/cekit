@@ -1,9 +1,9 @@
 import hashlib
 import logging
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 
-SUPPORTED_HASH_ALGORITHMS = ['sha512', 'sha256', 'sha1', 'md5']
+SUPPORTED_HASH_ALGORITHMS = ["sha512", "sha256", "sha1", "md5"]
 
 
 def get_sum(target, algorithm):
@@ -18,7 +18,7 @@ def get_sum(target, algorithm):
 
 
 def check_sum(target, algorithm, expected, name=None):
-    """ Check that file checksum is correct
+    """Check that file checksum is correct
     Args:
       alg - algorithm which will be used for diget
       expected_chksum - checksum which artifact must match
@@ -30,8 +30,11 @@ def check_sum(target, algorithm, expected, name=None):
     checksum = get_sum(target, algorithm)
 
     if checksum.lower() != expected.lower():
-        logger.error("The {} computed for the '{}' file ('{}') doesn't match the '{}' value".
-                     format(algorithm, target, checksum, expected))
+        logger.error(
+            "The {} computed for the '{}' file ('{}') doesn't match the '{}' value".format(
+                algorithm, target, checksum, expected
+            )
+        )
         return False
 
     logger.debug("Hash is correct.")

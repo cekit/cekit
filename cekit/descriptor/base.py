@@ -8,7 +8,7 @@ from pykwalify.errors import SchemaError
 
 from cekit.errors import CekitError
 
-logger = logging.getLogger('cekit')
+logger = logging.getLogger("cekit")
 
 
 class Descriptor(MutableMapping):
@@ -44,12 +44,14 @@ class Descriptor(MutableMapping):
             core = Core(
                 source_data=self._descriptor,
                 schema_data=self.schema,
-                allow_assertions=True
+                allow_assertions=True,
             )
 
             core.validate(raise_exception=True)
         except SchemaError as ex:
-            raise CekitError("Cannot validate schema: {}".format(self.__class__.__name__), ex)
+            raise CekitError(
+                "Cannot validate schema: {}".format(self.__class__.__name__), ex
+            )
 
     @classmethod
     def to_yaml(cls, representer, node):
@@ -59,18 +61,23 @@ class Descriptor(MutableMapping):
         directory = os.path.dirname(path)
         if not os.path.exists(directory):
             os.makedirs(directory)
-        with open(path, 'w') as outfile:
+        with open(path, "w") as outfile:
             yaml.SafeDumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
-            yaml.dump(self._descriptor, outfile, default_flow_style=False, Dumper=yaml.SafeDumper)
+            yaml.dump(
+                self._descriptor,
+                outfile,
+                default_flow_style=False,
+                Dumper=yaml.SafeDumper,
+            )
 
     def label(self, key):
-        for l in self._descriptor['labels']:
-            if l['name'] == key:
-                return l
+        for ll in self._descriptor["labels"]:
+            if ll["name"] == key:
+                return ll
         return None
 
     def merge(self, descriptor):
-        """ Merges two descriptors in a way, that arrays are appended
+        """Merges two descriptors in a way, that arrays are appended
         and duplicate values are kept
         Args:
           descriptor - a cekit descriptor
@@ -80,16 +87,18 @@ class Descriptor(MutableMapping):
             return self
         except KeyError as ex:
             logger.debug(ex, exc_info=True)
-            raise CekitError("Cannot merge descriptors, see log message for more information")
+            raise CekitError(
+                "Cannot merge descriptors, see log message for more information"
+            )
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self['name'] == other['name']
+            return self["name"] == other["name"]
         return NotImplemented
 
     def __ne__(self, other):
         if isinstance(other, self.__class__):
-            return not self['name'] == other['name']
+            return not self["name"] == other["name"]
         return NotImplemented
 
     def __getattr__(self, name):
@@ -171,7 +180,7 @@ def _merge_descriptors(desc1, desc2):
 
     Return merged descriptor
     """
-    if desc2 == None:
+    if desc2 is None:
         return desc1
     for k2, v2 in desc2.items():
         if k2 in desc1.skip_merging:
@@ -188,7 +197,7 @@ def _merge_descriptors(desc1, desc2):
 
 
 def _merge_lists(list1, list2):
-    """ Merges two lists handling embedded dictionaries via 'name' as a key
+    """Merges two lists handling embedded dictionaries via 'name' as a key
     In a case of simple type values are appended.
 
     Args:

@@ -19,7 +19,8 @@ from cekit.descriptor.base import logger
 from cekit.descriptor.resource import create_resource
 from cekit.errors import CekitError
 
-_image_schema = yaml.safe_load("""
+_image_schema = yaml.safe_load(
+    """
 map:
   name: {type: str, required: True}
   version: {type: text, required: True}
@@ -39,7 +40,8 @@ map:
   help:
     map:
       add: {type: bool}
-      template: {type: text}""")
+      template: {type: text}"""
+)
 
 
 def get_image_schema():
@@ -52,28 +54,37 @@ class Image(Descriptor):
         self.path = artifact_dir
         self.schema = _image_schema.copy()
         super(Image, self).__init__(descriptor)
-        self.skip_merging = ['description',
-                             'version',
-                             'name',
-                             'release']
+        self.skip_merging = ["description", "version", "name", "release"]
         self._prepare()
 
     def _prepare(self):
-        self._descriptor['labels'] = [Label(x) for x in self._descriptor.get('labels', [])]
-        self._descriptor['envs'] = [Env(x) for x in self._descriptor.get('envs', [])]
-        self._descriptor['ports'] = [Port(x) for x in self._descriptor.get('ports', [])]
-        if 'run' in self._descriptor:
-            self._descriptor['run'] = Run(self._descriptor['run'])
-        self._descriptor['artifacts'] = [create_resource(a, directory=self._artifact_dir)
-                                         for a in self._descriptor.get('artifacts', [])]
-        self._descriptor['modules'] = Modules(self._descriptor.get('modules', {}), self.path)
-        self._descriptor['packages'] = Packages(self._descriptor.get('packages', {}), self.path)
-        self._descriptor['osbs'] = Osbs(self._descriptor.get('osbs', {}), self.path)
-        self._descriptor['volumes'] = [Volume(x) for x in self._descriptor.get('volumes', [])]
+        self._descriptor["labels"] = [
+            Label(x) for x in self._descriptor.get("labels", [])
+        ]
+        self._descriptor["envs"] = [Env(x) for x in self._descriptor.get("envs", [])]
+        self._descriptor["ports"] = [Port(x) for x in self._descriptor.get("ports", [])]
+        if "run" in self._descriptor:
+            self._descriptor["run"] = Run(self._descriptor["run"])
+        self._descriptor["artifacts"] = [
+            create_resource(a, directory=self._artifact_dir)
+            for a in self._descriptor.get("artifacts", [])
+        ]
+        self._descriptor["modules"] = Modules(
+            self._descriptor.get("modules", {}), self.path
+        )
+        self._descriptor["packages"] = Packages(
+            self._descriptor.get("packages", {}), self.path
+        )
+        self._descriptor["osbs"] = Osbs(self._descriptor.get("osbs", {}), self.path)
+        self._descriptor["volumes"] = [
+            Volume(x) for x in self._descriptor.get("volumes", [])
+        ]
 
         # make sure image declarations override any module definitions
-        self._image_overrides = {'artifacts': Image._to_dict(
-            self.artifacts), 'modules': Image._to_dict(self.modules.install)}
+        self._image_overrides = {
+            "artifacts": Image._to_dict(self.artifacts),
+            "modules": Image._to_dict(self.modules.install),
+        }
         self._all_artifacts = Image._to_dict(self.artifacts)
 
     def process_defaults(self):
@@ -82,76 +93,76 @@ class Image(Descriptor):
             self.run = Run({})
 
         # do we want to force a user?
-        if 'user' not in self.run:
-            self.run._descriptor['user'] = cekit.DEFAULT_USER
+        if "user" not in self.run:
+            self.run._descriptor["user"] = cekit.DEFAULT_USER
 
         # Default package manager is yum
         if not self.packages.manager:
-            self.packages._descriptor['manager'] = 'yum'
+            self.packages._descriptor["manager"] = "yum"
 
         # Default directory for supplementary files that should be copied to dist-git directory
         if not self.osbs.extra_dir:
-            self.osbs._descriptor['extra_dir'] = 'osbs_extra'
+            self.osbs._descriptor["extra_dir"] = "osbs_extra"
 
     @property
     def name(self):
-        return self.get('name')
+        return self.get("name")
 
     @name.setter
     def name(self, value):
-        self._descriptor['name'] = value
+        self._descriptor["name"] = value
 
     @property
     def version(self):
-        return self.get('version')
+        return self.get("version")
 
     @version.setter
     def version(self, value):
-        self._descriptor['version'] = value
+        self._descriptor["version"] = value
 
     @property
     def release(self):
-        return self.get('release')
+        return self.get("release")
 
     @release.setter
     def release(self, value):
-        self._descriptor['release'] = value
+        self._descriptor["release"] = value
 
     @property
     def base(self):
-        return self.get('from')
+        return self.get("from")
 
     @base.setter
     def base(self, value):
-        self._descriptor['from'] = value
+        self._descriptor["from"] = value
 
     @property
     def description(self):
-        return self.get('description')
+        return self.get("description")
 
     @description.setter
     def description(self, value):
-        self._descriptor['description'] = value
+        self._descriptor["description"] = value
 
     @property
     def labels(self):
-        return self.get('labels', [])
+        return self.get("labels", [])
 
     @property
     def envs(self):
-        return self.get('envs', [])
+        return self.get("envs", [])
 
     @property
     def ports(self):
-        return self.get('ports', [])
+        return self.get("ports", [])
 
     @property
     def run(self):
-        return self.get('run')
+        return self.get("run")
 
     @run.setter
     def run(self, value):
-        self._descriptor['run'] = value
+        self._descriptor["run"] = value
 
     @property
     def all_artifacts(self):
@@ -159,31 +170,31 @@ class Image(Descriptor):
 
     @property
     def artifacts(self):
-        return self.get('artifacts', [])
+        return self.get("artifacts", [])
 
     @property
     def modules(self):
-        return self.get('modules', Modules({}, self._artifact_dir))
+        return self.get("modules", Modules({}, self._artifact_dir))
 
     @property
     def packages(self):
-        return self.get('packages', Packages({}, self.path))
+        return self.get("packages", Packages({}, self.path))
 
     @property
     def osbs(self):
-        return self.get('osbs')
+        return self.get("osbs")
 
     @osbs.setter
     def osbs(self, value):
-        self._descriptor['osbs'] = value
+        self._descriptor["osbs"] = value
 
     @property
     def volumes(self):
-        return self.get('volumes', [])
+        return self.get("volumes", [])
 
     @property
     def help(self):
-        return self.get('help', {})
+        return self.get("help", {})
 
     def apply_image_overrides(self, overrides):
         """
@@ -208,7 +219,7 @@ class Image(Descriptor):
                     labels[name] = label.merge(labels[name])
                 else:
                     labels[name] = label
-            self._descriptor['labels'] = list(labels.values())
+            self._descriptor["labels"] = list(labels.values())
 
             envs = Image._to_dict(self.envs)
             for env in override.envs:
@@ -217,7 +228,7 @@ class Image(Descriptor):
                     envs[name] = env.merge(envs[name])
                 else:
                     envs[name] = env
-            self._descriptor['envs'] = list(envs.values())
+            self._descriptor["envs"] = list(envs.values())
 
             ports = Image._to_dict(self.ports)
             for port in override.ports:
@@ -226,26 +237,30 @@ class Image(Descriptor):
                     ports[name] = port.merge(ports[name])
                 else:
                     ports[name] = port
-            self._descriptor['ports'] = list(ports.values())
+            self._descriptor["ports"] = list(ports.values())
 
             module_repositories = Image._to_dict(self.modules.repositories)
             for repository in override.modules.repositories:
                 name = repository.name
                 if name in module_repositories:
-                    module_repositories[name] = repository.merge(module_repositories[name])
+                    module_repositories[name] = repository.merge(
+                        module_repositories[name]
+                    )
                 else:
                     module_repositories[name] = repository
-            self.modules._descriptor['repositories'] = list(module_repositories.values())
+            self.modules._descriptor["repositories"] = list(
+                module_repositories.values()
+            )
 
             self.packages._descriptor = override.packages.merge(self.packages)
 
             # In case content sets are provided as null values
             # Remove the key entirely.
             # TODO: This should be handled probably at general level, for every key
-            for flag in ['content_sets', 'content_sets_file']:
+            for flag in ["content_sets", "content_sets_file"]:
                 if flag in override.packages and override.packages[flag] is None:
-                    self.packages._descriptor.pop('content_sets', None)
-                    self.packages._descriptor.pop('content_sets_file', None)
+                    self.packages._descriptor.pop("content_sets", None)
+                    self.packages._descriptor.pop("content_sets_file", None)
 
             # Merge override osbs items into self.
             self.osbs = self.osbs.merge(override.osbs)
@@ -254,7 +269,7 @@ class Image(Descriptor):
                 if package not in self.packages.install:
                     self.packages.install.append(package)
 
-            artifact_overrides = self._image_overrides['artifacts']
+            artifact_overrides = self._image_overrides["artifacts"]
             image_artifacts = Image._to_dict(self.artifacts)
             for i, artifact in enumerate(override.artifacts):
                 name = artifact.name
@@ -266,14 +281,26 @@ class Image(Descriptor):
                 #   If we have _not_ supplied a target (check original_descriptor),
                 #      then check artifact_overrides,
                 #         otherwise use default from override.artifact
-                override_without_defaults = override.original_descriptor.get('artifacts')[i]
-                for key in ['dest', 'target', 'description']:
+                override_without_defaults = override.original_descriptor.get(
+                    "artifacts"
+                )[i]
+                for key in ["dest", "target", "description"]:
                     if override_without_defaults.get(key):
-                        logger.debug("Key ({}) found in override as {}".format(key, override_without_defaults.get(key)))
+                        logger.debug(
+                            "Key ({}) found in override as {}".format(
+                                key, override_without_defaults.get(key)
+                            )
+                        )
                         artifact[key] = override_without_defaults.get(key)
-                    elif artifact_overrides.get(name) and artifact_overrides.get(name).get(key):
+                    elif artifact_overrides.get(name) and artifact_overrides.get(
+                        name
+                    ).get(key):
                         new_value = artifact_overrides.get(name).get(key)
-                        logger.debug("Key ({}) found in original artifact as {}".format(key, new_value))
+                        logger.debug(
+                            "Key ({}) found in original artifact as {}".format(
+                                key, new_value
+                            )
+                        )
                         artifact[key] = new_value
 
                 # collect override so we can apply it to modules
@@ -283,10 +310,14 @@ class Image(Descriptor):
                 # Apply override to image descriptor
                 image_artifacts[name] = artifact
                 # Sort the output as it makes it easier to view and test.
-                logger.debug("Final (with override) artifact is {}".format(sorted(artifact.items())))
-            self._descriptor['artifacts'] = list(image_artifacts.values())
+                logger.debug(
+                    "Final (with override) artifact is {}".format(
+                        sorted(artifact.items())
+                    )
+                )
+            self._descriptor["artifacts"] = list(image_artifacts.values())
 
-            module_overrides = self._image_overrides['modules']
+            module_overrides = self._image_overrides["modules"]
             image_modules = Image._to_dict(self.modules.install)
             for module in override.modules.install:
                 name = module.name
@@ -296,9 +327,9 @@ class Image(Descriptor):
                 # Apply override to image descriptor
                 # If the module does not exists in the original descriptor, add it there
                 image_modules[name] = module
-            self.modules._descriptor['install'] = list(image_modules.values())
+            self.modules._descriptor["install"] = list(image_modules.values())
 
-            if override.run != None:
+            if override.run is not None:
                 if self.run:
                     self.run = override.run.merge(self.run)
                 else:
@@ -323,30 +354,45 @@ class Image(Descriptor):
         self._module_run = Run({})
 
         # process the modules and integrate relevant bits into ourself
-        self.process_install_list(self, self.modules.install, install_list, module_registry)
+        self.process_install_list(
+            self, self.modules.install, install_list, module_registry
+        )
 
         # update ourself based on module declarations
         # final order of modules to be installed
-        self.modules._descriptor['install'] = list(install_list.values())
+        self.modules._descriptor["install"] = list(install_list.values())
         # all package repositories required for installing packages
-        self.packages._descriptor['repositories'] = list(self._package_repositories.values())
+        self.packages._descriptor["repositories"] = list(
+            self._package_repositories.values()
+        )
         # final 'run' value
         if self.run:
             self.run = self.run.merge(self._module_run)
         else:
             self.run = self._module_run
 
-    def process_install_list(self, source, to_install_list, install_list, module_registry):
-        module_overrides = self._image_overrides['modules']
-        artifact_overrides = self._image_overrides['artifacts']
+    def process_install_list(
+        self, source, to_install_list, install_list, module_registry
+    ):
+        module_overrides = self._image_overrides["modules"]
+        artifact_overrides = self._image_overrides["artifacts"]
         for to_install in to_install_list:
-            logger.debug("Preparing module '{}' required by '{}'.".format(
-                to_install.name, source.name))
+            logger.debug(
+                "Preparing module '{}' required by '{}'.".format(
+                    to_install.name, source.name
+                )
+            )
             override = module_overrides.get(to_install.name, None)
             if override:
                 if override.version != to_install.version:
-                    logger.debug("Module '{}:{}' being overridden with '{}:{}'.".format
-                                 (to_install.name, to_install.version, override.name, override.version))
+                    logger.debug(
+                        "Module '{}:{}' being overridden with '{}:{}'.".format(
+                            to_install.name,
+                            to_install.version,
+                            override.name,
+                            override.version,
+                        )
+                    )
                 # apply module override
                 to_install = override
 
@@ -355,14 +401,20 @@ class Image(Descriptor):
             if existing:
                 # check for a version conflict
                 if existing.version != to_install.version:
-                    logger.warning("Module version inconsistency for {}: {} requested, but {} will be used.".format(
-                        to_install.name, to_install.version, existing.version))
+                    logger.warning(
+                        "Module version inconsistency for {}: {} requested, but {} will be used.".format(
+                            to_install.name, to_install.version, existing.version
+                        )
+                    )
                 continue
 
             module = module_registry.get_module(to_install.name, to_install.version)
             if not module:
-                raise CekitError("Could not locate module %s version %s. Please verify that it is included in one of the "
-                                 "specified module repositories." % (to_install.name, to_install.version))
+                raise CekitError(
+                    "Could not locate module %s version %s. Please verify that it is included in one of the "
+                    "specified module repositories."
+                    % (to_install.name, to_install.version)
+                )
 
             # collect artifacts and apply overrides
             module_artifacts = Image._to_dict(module.artifacts)
@@ -374,12 +426,12 @@ class Image(Descriptor):
                     module_artifacts[name] = override
                 else:
                     self._all_artifacts[name] = artifact
-            module._descriptor['artifacts'] = list(module_artifacts.values())
+            module._descriptor["artifacts"] = list(module_artifacts.values())
 
             # collect package repositories
             for repo in module.packages.repositories:
                 name = repo.name
-                if not name in self._package_repositories:
+                if name not in self._package_repositories:
                     self._package_repositories[name] = repo
 
             # incorporate run specification contributed by module
@@ -391,7 +443,9 @@ class Image(Descriptor):
             install_list[to_install.name] = to_install
 
             # process this modules dependencies
-            self.process_install_list(module, module.modules.install, install_list, module_registry)
+            self.process_install_list(
+                module, module.modules.install, install_list, module_registry
+            )
 
             # move this module to the end of the list.
             install_list.pop(to_install.name)
@@ -399,7 +453,7 @@ class Image(Descriptor):
 
     # helper to simplify merging lists of objects
     @classmethod
-    def _to_dict(cls, named_items, key='name'):
+    def _to_dict(cls, named_items, key="name"):
         dictionary = OrderedDict()
         for item in named_items:
             dictionary[item[key]] = item

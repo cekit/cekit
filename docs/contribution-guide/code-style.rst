@@ -4,22 +4,19 @@ Code style
 In case you contribute code, we generally ask for following the code style we are using already.
 This is a general Python style, with 4 spaces as the delimiter, nothing groundbreaking here :)
 
-Formatting
------------
+Formatting/Linting
+------------------
 
-Import sorting is controlled by `isort <https://pycqa.github.io/isort/>`__. There is a helper script
-to reformat the code under ``support/run_formatter.py`` and the tests
+Import sorting is controlled by `isort <https://pycqa.github.io/isort/>`__. An isort
+configuration is part of the ``setup.cfg`` in the root directory.
+
+For code formatting we use `Black <https://black.readthedocs.io/en/stable/index.html/>`__.
+
+For linting we use `Flake8 <http://flake8.pycqa.org/en/latest/>`__.  A Flake8 configuration is
+part of the ``setup.cfg`` in the root directory.
+
+There is a helper script to reformat the code under ``support/run_formatter.py`` and the tests
 will also verify this formatting.
-
-For code formatting we use `Flake8 <http://flake8.pycqa.org/en/latest/>`__. You can find a ``.flake8``
-configuration file in the root directory.
-
-Linting
------------
-
-Additionally we check for code errors with `Pylint <https://www.pylint.org/>`__. We provide a
-``.pylintrc`` file in the root directory which defines differences from the default
-Pylint configuration. Your IDE may help with linting your code too!
 
 Logging
 --------

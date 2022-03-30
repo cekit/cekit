@@ -6,7 +6,7 @@ from cekit.generator.base import Generator
 from cekit.test.behave_runner import BehaveTestRunner
 from cekit.test.collector import BehaveTestCollector
 
-LOGGER = logging.getLogger('cekit')
+LOGGER = logging.getLogger("cekit")
 
 
 class BehaveTester(Command):
@@ -15,20 +15,22 @@ class BehaveTester(Command):
     """
 
     def __init__(self, params):
-        super(BehaveTester, self).__init__('behave', Command.TYPE_TESTER)
+        super(BehaveTester, self).__init__("behave", Command.TYPE_TESTER)
 
         self.params = params
         self.collected = False
 
-        self.test_collector = BehaveTestCollector(os.path.dirname(self.params.descriptor), self.params.target)
+        self.test_collector = BehaveTestCollector(
+            os.path.dirname(self.params.descriptor), self.params.target
+        )
         self.test_runner = BehaveTestRunner(self.params.target)
 
         self.generator = None
 
     def prepare(self):
-        self.generator = Generator(self.params.descriptor,
-                                   self.params.target,
-                                   self.params.overrides)
+        self.generator = Generator(
+            self.params.descriptor, self.params.target, self.params.overrides
+        )
 
         # Handle dependencies for selected generator, if any
         LOGGER.debug("Checking CEKit generate dependencies...")
@@ -38,7 +40,8 @@ class BehaveTester(Command):
 
         # TODO: investigate if we can improve handling different schema versions
         self.collected = self.test_collector.collect(
-            self.generator.image.get('schema_version'), self.params.steps_url)
+            self.generator.image.get("schema_version"), self.params.steps_url
+        )
 
         if self.collected:
             # Handle test dependencies, if any
@@ -56,12 +59,11 @@ class BehaveTester(Command):
 
         # If wip is specified set tags to @wip
         if self.params.wip:
-            test_tags = ['@wip']
+            test_tags = ["@wip"]
 
         image = self.params.image
 
         if not image:
             image = self.generator.get_tags()[0]
 
-        self.test_runner.run(image, test_tags,
-                             test_names=self.params.names)
+        self.test_runner.run(image, test_tags, test_names=self.params.names)
