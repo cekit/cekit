@@ -195,7 +195,7 @@ class DockerBuilder(Builder):
                 )
             )
 
-        params = {"version": "1.22"}
+        params = {"version": "1.35"}
         params.update(docker.utils.kwargs_from_env())
         params["timeout"] = timeout
 
