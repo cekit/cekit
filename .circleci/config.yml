@@ -1,33 +1,19 @@
-version: 2
+version: 2.1
 jobs:
   test:
-    parallelism: 4
+    parallelism: 3
     machine:
-      image: ubuntu-2004:202111-02
+      # New tag format : https://discuss.circleci.com/t/new-image-tag-convention-for-ubuntu-linux-android-and-windows-vms/43750
+      image: ubuntu-2204:2022.04.1
     steps:
-      - run:
-          name: "Prepare host for installation"
-          command: |
-            sudo killall apt-get || true
-            for service in apt-daily.service apt-daily-upgrade.service unattended-upgrades.service apt-daily.timer apt-daily-upgrade.timer; do
-              sudo systemctl stop ${service}
-              sudo systemctl kill --kill-who=all ${service} || true
-              sudo systemctl disable ${service}
-              sudo systemctl mask ${service}
-            done
-            sudo systemctl daemon-reload
       - run:
           name: "Install required packages"
           command: |
             source /etc/os-release
-            sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
-            wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/xUbuntu_${VERSION_ID}/Release.key -O- | sudo apt-key add -
             sudo apt-get update
-            sudo apt-get install libkrb5-dev software-properties-common containerd runc podman docker.io
-            sudo sed -i -E 's/(unqualified-search-registries = [[])(.*)/\1"registry.fedoraproject.org", "registry.access.redhat.com", \2/g' /etc/containers/registries.conf
-            # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
-            sudo systemctl unmask docker
-            sudo systemctl start docker
+            sudo apt-get install libkrb5-dev software-properties-common podman docker
+            #sudo sed -i -E 's/(unqualified-search-registries = [[])(.*)/\1"registry.fedoraproject.org", "registry.access.redhat.com", \2/g' /etc/containers/registries.conf
+            echo "unqualified-search-registries = ['registry.fedoraproject.org', 'registry.access.redhat.com', 'registry.centos.org', 'docker.io']" | sudo tee -a /etc/containers/registries.conf > /dev/null
             echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
             mkdir -p $HOME/.local/bin
             cd ~/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
@@ -35,30 +21,28 @@ jobs:
       - run:
           name: "Versions"
           command: |
+            echo "Docker:"
             docker version
             docker info
+            echo "Podman:"
             podman version
             podman info
       - run:
           name: "Install required Python versions/packages"
           command: |
             pyenv uninstall -f 2.7.18
-            pyenv install 3.6.10
-            pyenv install 3.7.7
-            pyenv install 3.10.0
-            pyenv local 3.6.10 3.7.7 3.10.0
+
+            pyenv install -s 3.7.13
+            pyenv install -s 3.10.3
+            pyenv local 3.7.13 3.10.3
             pip install tox
       - run: git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
       - run: |
-          if [[ "${CIRCLE_NODE_INDEX}" == 1 ]]; then
-             make test-py36
-          fi
+         if [[ "${CIRCLE_NODE_INDEX}" == 1 ]]; then
+             make test-py37
+         fi
       - run: |
           if [[ "${CIRCLE_NODE_INDEX}" == 2 ]]; then
-             make test-py37
-          fi
-      - run: |
-          if [[ "${CIRCLE_NODE_INDEX}" == 3 ]]; then
              make test-py310
           fi
 
@@ -66,17 +50,6 @@ jobs:
     machine:
       image: ubuntu-2004:202111-02
     steps:
-      - run:
-          name: "Prepare host for installation"
-          command: |
-            sudo killall apt-get || true
-            for service in apt-daily.service apt-daily-upgrade.service unattended-upgrades.service apt-daily.timer apt-daily-upgrade.timer; do
-              sudo systemctl stop ${service}
-              sudo systemctl kill --kill-who=all ${service} || true
-              sudo systemctl disable ${service}
-              sudo systemctl mask ${service}
-            done
-            sudo systemctl daemon-reload
       - run:
           name: "Install required packages"
           command: |
