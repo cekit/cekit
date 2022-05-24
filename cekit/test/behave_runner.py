@@ -51,12 +51,13 @@ class BehaveTestRunner(object):
                 args.append("%s" % name)
         else:
             for tag in run_tags:
-                if ":" in tag:
-                    test_tag = tag.split(":")[0]
+
+                # Remove anything after the colon, typically the docker tag.
+                tag = tag.partition(":")[0]
 
                 args.append("-t")
                 if "/" in tag:
-                    args.append("@%s,@%s" % (test_tag.split("/")[0], test_tag))
+                    args.append("@%s,@%s" % (tag.split("/")[0], tag))
                 else:
                     args.append(tag)
 
