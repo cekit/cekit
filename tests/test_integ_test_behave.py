@@ -13,20 +13,32 @@ from click.testing import CliRunner
 from cekit.cli import cli
 from cekit.tools import Chdir
 
-image_descriptor = {
-    "schema_version": 1,
-    "from": "alpine:3.9",
-    "name": "test/image",
-    "version": "1.0",
-    "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
-    "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
-    "run": {"cmd": ["tail", "-f", "/dev/null"]},
-}
+image_descriptors = [
+    {
+        "schema_version": 1,
+        "from": "alpine:3.9",
+        "name": "test/image",
+        "version": "1.0",
+        "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
+        "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
+        "run": {"cmd": ["tail", "-f", "/dev/null"]},
+    },
+    {
+        "schema_version": 1,
+        "from": "alpine:3.9",
+        "name": "image",
+        "version": "1.0-slim",
+        "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
+        "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
+        "run": {"cmd": ["tail", "-f", "/dev/null"]},
+    }
+]
 
 
-@pytest.fixture(scope="function", name="build_image")
-def fixture_build_image():
+@pytest.fixture(scope="function", name="build_image", params=image_descriptors)
+def fixture_build_image(request):
     def _build_image(overrides=None):
+        image_descriptor = request.param
         image_dir = tempfile.mkdtemp(prefix="tmp-cekit-test")
 
         with open(os.path.join(image_dir, "image.yaml"), "w") as fd:
@@ -52,7 +64,6 @@ def fixture_build_image():
     return _build_image
 
 
-@pytest.mark.skipif(platform.system() == "Darwin", reason="Disabled on macOS")
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
@@ -91,7 +102,6 @@ Feature: Basic tests
     shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
 
 
-@pytest.mark.skipif(platform.system() == "Darwin", reason="Disabled on macOS")
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
