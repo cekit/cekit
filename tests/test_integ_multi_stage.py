@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import platform
 import shutil
+import subprocess
 
 import pytest
 import yaml
@@ -88,6 +89,24 @@ def test_multi_stage_proper_image(tmpdir):
         args=["-v", "build", "podman"],
         env={"BUILDAH_LAYERS": "false"},
     )
+
+
+def test_multi_stage_ecapsulated_modules(tmpdir):
+    """
+    Build multi-stage image resulting from encapsulated modules (i.e. module defines builder image).
+    """
+    tmpdir = str(tmpdir)
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), "images", "multi-stage-modules"),
+        os.path.join(tmpdir, "multi-stage-modules"),
+    )
+
+    run_cekit(
+        os.path.join(tmpdir, "multi-stage-modules")
+    )
+
+    # TODO: Actually check that the image has the expected layout (e.g. resource file is present and unzip isn't)
 
 
 @pytest.mark.skipif(

@@ -3,6 +3,7 @@ from cekit.descriptor.image import get_image_schema
 
 overrides_schema = get_image_schema()
 overrides_schema["map"]["execute"] = {"type": "any"}
+overrides_schema["map"]["build_images"] = {"type": "any"}
 
 
 class Module(Image):
@@ -25,7 +26,13 @@ class Module(Image):
         self._descriptor["execute"] = [
             Execute(x, self.name) for x in self._descriptor.get("execute", [])
         ]
+        self._descriptor["build_images"] = [
+            Image(i, self.path) for i in self._descriptor.get("build_images", [])
+        ]
 
     @property
     def execute(self):
         return self.get("execute")
+
+    def build_images(self):
+        return self.get("build_images")

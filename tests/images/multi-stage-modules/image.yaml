@@ -1,0 +1,20 @@
+name: cekit-test-multi-stage-modules
+version: 12
+from: debian:stable-slim
+description: Our application
+
+packages:
+  manager: apt-get
+
+modules:
+  repositories:
+    - path: modules
+
+  install:
+    - name: unzipped-resource
+
+run:
+  cmd:
+    - bash
+    - -c
+    - "[ -z \\\"$(which unzip)\\\" ] && cat /tmp/resource.txt"

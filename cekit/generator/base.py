@@ -159,7 +159,8 @@ class Generator(object):
         self.add_build_labels()
 
     def generate(self, builder):
-        self.copy_modules()
+        self.copy_modules(self._modules())
+        self.add_module_build_images(self._modules())
         self.prepare_artifacts()
         self.prepare_repositories()
         self.image.remove_none_keys()
@@ -271,7 +272,7 @@ class Generator(object):
             "%s:latest" % self.image["name"],
         ]
 
-    def copy_modules(self):
+    def copy_modules(self, modules):
         """Prepare module to be used for Dockerfile generation.
         This means:
 
@@ -281,16 +282,18 @@ class Generator(object):
 
         modules_to_install = []
 
-        for module in self._modules():
-            if module.install:
-                modules_to_install += module.install
+        for image_module_list in modules:
+            for module_key in image_module_list.install:
+                module: Module = self._module_registry.get_module(
+                    module_key.name, module_key.version, suppress_warnings=True
+                )
+                modules_to_install.append(module)
+                for build_image in module.build_images():
+                    self.copy_modules([build_image.modules])
 
         target = os.path.join(self.target, "image", "modules")
 
         for module in modules_to_install:
-            module = self._module_registry.get_module(
-                module.name, module.version, suppress_warnings=True
-            )
             LOGGER.debug(
                 "Copying module '{}' required by '{}'.".format(
                     module.name, self.image.name
@@ -304,6 +307,22 @@ class Generator(object):
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
+
+    def add_module_build_images(self, modules):
+        """Add any build images defined inside modules."""
+
+        for image_module_list in modules:
+            for module_key in image_module_list.install:
+
+                module: Module = self._module_registry.get_module(
+                    module_key.name, module_key.version, suppress_warnings=True
+                )
+
+                self.builder_images.extend(module.build_images())
+
+                for build_image in module.build_images():
+                    self.add_module_build_images([build_image.modules])
+
 
     def get_redhat_overrides(self):
         class RedHatOverrides(Overrides):

@@ -1,0 +1,25 @@
+name: unzipped-resource
+version: 1.0
+
+build_images:
+  - name: unzipper
+    version: latest
+
+    from: debian:stable-slim
+
+    packages:
+      manager: apt-get
+      install:
+        - unzip
+
+    modules:
+      install:
+        - name: zipped-resource
+
+artifacts:
+  - name: resource.txt
+    image: unzipper
+    path: /tmp/resource.txt
+    dest: /tmp/
+    target: resource.txt
+
