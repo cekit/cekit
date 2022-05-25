@@ -31,7 +31,7 @@ image_descriptors = [
         "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
         "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
         "run": {"cmd": ["tail", "-f", "/dev/null"]},
-    }
+    },
 ]
 
 
