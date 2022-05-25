@@ -323,7 +323,6 @@ class Generator(object):
                 for build_image in module.build_images():
                     self.add_module_build_images([build_image.modules])
 
-
     def get_redhat_overrides(self):
         class RedHatOverrides(Overrides):
             def __init__(self, generator):

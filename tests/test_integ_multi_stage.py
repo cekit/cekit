@@ -102,9 +102,7 @@ def test_multi_stage_ecapsulated_modules(tmpdir):
         os.path.join(tmpdir, "multi-stage-modules"),
     )
 
-    run_cekit(
-        os.path.join(tmpdir, "multi-stage-modules")
-    )
+    run_cekit(os.path.join(tmpdir, "multi-stage-modules"))
 
     # TODO: Actually check that the image has the expected layout (e.g. resource file is present and unzip isn't)
 
