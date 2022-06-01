@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
 
 import os
-import platform
 import shutil
 import sys
 import tempfile
@@ -68,7 +67,7 @@ def fixture_build_image(request):
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
 def test_execute_simple_behave_test(build_image):
-    feature = """@test
+    feature = """@test @image
 Feature: Basic tests
 
   Scenario: Check that the labels are correctly set
