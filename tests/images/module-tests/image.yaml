@@ -1,0 +1,12 @@
+schema_version: 1
+
+name: "dummy"
+version: "1"
+
+from: "debian:bullseye-slim"
+
+modules:
+   repositories:
+     - path: "./modules"
+   install:
+     - name: "mymodule"
