@@ -33,7 +33,7 @@ class OSBSGenerator(Generator):
             lambda contents, file, **kwargs: file.write(contents), "gating.yaml"
         )
 
-    def generate(self, builder):
+    def generate(self):
         # If extra directory exists (by default named 'osbs_extra') next to
         # the image descriptor, copy it contents to the target directory.
         #
@@ -44,7 +44,7 @@ class OSBSGenerator(Generator):
             ),
             os.path.join(self.target, os.path.join("image", self.image.osbs.extra_dir)),
         )
-        super(OSBSGenerator, self).generate(builder)
+        super(OSBSGenerator, self).generate()
 
     def _prepare_content_sets(self, content_sets):
         content_sets_f = os.path.join(self.target, "image", "content_sets.yml")

@@ -159,7 +159,7 @@ class Generator(object):
         self.add_build_labels()
         self.copy_modules()
 
-    def generate(self, builder):
+    def generate(self):
         self.prepare_artifacts()
         self.prepare_repositories()
         self.image.remove_none_keys()

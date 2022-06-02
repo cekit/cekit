@@ -58,17 +58,17 @@ class BehaveTestCollector(object):
         # first clone common steps
         self._fetch_steps(version, url)
         # copy tests from repository root
-        tests_root = os.path.join(self.target_dir, "repo")
-        if os.path.exists(tests_root):
-            for tests_dir in os.listdir(tests_root):
-                self._copy_tests(tests_root, tests_dir)
+        repos_dir = os.path.join(self.target_dir, "repo")
+        if os.path.exists(repos_dir):
+            for repo_dir in os.listdir(repos_dir):
+                self._copy_tests(source=repos_dir, name=repo_dir)
         logger.debug("Collected tests from repositories roots")
 
         # copy tests from collected modules
-        tests_dirs = os.path.join(self.target_dir, "image", "modules")
-        if os.path.exists(tests_dirs):
-            for tests_dir in os.listdir(tests_dirs):
-                self._copy_tests(tests_dirs, tests_dir)
+        modules_dir = os.path.join(self.target_dir, "image", "modules")
+        if os.path.exists(modules_dir):
+            for module_dir in os.listdir(modules_dir):
+                self._copy_tests(source=modules_dir, name=module_dir)
         logger.debug("Collected tests from modules")
 
         # copy tests from image repo
