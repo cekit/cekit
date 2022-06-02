@@ -157,9 +157,9 @@ class Generator(object):
 
         # Add build labels
         self.add_build_labels()
+        self.copy_modules()
 
     def generate(self, builder):
-        self.copy_modules()
         self.prepare_artifacts()
         self.prepare_repositories()
         self.image.remove_none_keys()
