@@ -2,7 +2,7 @@ import logging
 import os
 
 from cekit.builder import Command
-from cekit.generator.base import Generator
+from cekit.generator.behave import BehaveGenerator
 from cekit.test.behave_runner import BehaveTestRunner
 from cekit.test.collector import BehaveTestCollector
 from cekit.version import schema_version
@@ -29,7 +29,7 @@ class BehaveTester(Command):
         self.generator = None
 
     def prepare(self):
-        self.generator = Generator(
+        self.generator = BehaveGenerator(
             self.params.descriptor, self.params.target, self.params.overrides
         )
 
@@ -38,6 +38,8 @@ class BehaveTester(Command):
         self.dependency_handler.handle(self.generator, self.params)
 
         self.generator.init()
+
+        self.generator.generate()
 
         # The branch to clone is determined by the schema_version in the descriptor prefixed with `v`
         # It defaults to the CEKIt current schema_version.

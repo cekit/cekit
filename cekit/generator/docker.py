@@ -13,10 +13,6 @@ class DockerGenerator(Generator):
         super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
 
-    def _prepare_repository_rpm(self, repo):
-        # no special handling is needed here, everything is in template
-        pass
-
     def prepare_artifacts(self):
         """Goes through artifacts section of image descriptor
         and fetches all of them

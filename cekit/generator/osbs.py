@@ -92,10 +92,6 @@ class OSBSGenerator(Generator):
         with open(config_path, "w") as _file:
             writer(all_configs[0], _file, default_flow_style=False)
 
-    def _prepare_repository_rpm(self, repo):
-        # no special handling is needed here, everything is in template
-        pass
-
     def prepare_artifacts(self):
         """Goes through artifacts section of image descriptor
         and fetches all of them

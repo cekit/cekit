@@ -151,6 +151,9 @@ Feature: Basic tests
     shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
 
 
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
 def test_execute_behave_test_from_module():
 
     # given: (image is built)
@@ -184,3 +187,48 @@ def test_execute_behave_test_from_module():
     assert "1 feature passed, 0 failed, 0 skipped" in test_result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in test_result.output
     assert "2 steps passed, 0 failed, 0 skipped, 0 undefined" in test_result.output
+
+
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
+def test_simple_image_test(build_image):
+    image_dir = build_image()
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), "modules"),
+        os.path.join(image_dir, "tests", "modules"),
+    )
+
+    feature_files = os.path.join(image_dir, "tests", "features", "test.feature")
+
+    os.makedirs(os.path.dirname(feature_files))
+
+    feature_label_test = """
+    @test @image
+    Feature: Test test
+
+      Scenario: Check label foo
+        When container is started as uid 0 with process sleep
+        then the image should contain label foo with value bar
+    """
+
+    with open(feature_files, "w") as fd:
+        fd.write(feature_label_test)
+
+    with Chdir(image_dir):
+        test_result = CliRunner().invoke(
+            cli,
+            ["-v", "test", "--image", "test/image:1.0", "behave"],
+            catch_exceptions=False,
+        )
+
+    sys.stdout.write("\n")
+    sys.stdout.write(test_result.output)
+
+    # then:
+    assert test_result.exit_code == 0
+    assert "1 feature passed, 0 failed, 0 skipped" in test_result.output
+    assert "1 scenario passed, 0 failed, 0 skipped" in test_result.output
+    assert "2 steps passed, 0 failed, 0 skipped, 0 undefined" in test_result.output
+    assert os.path.exists(os.path.join(image_dir, "target", "image", "Dockerfile"))
