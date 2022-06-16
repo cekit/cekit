@@ -157,9 +157,9 @@ class Generator(object):
 
         # Add build labels
         self.add_build_labels()
-        self.copy_modules()
 
     def generate(self):
+        self.copy_modules()
         self.prepare_artifacts()
         self.prepare_repositories()
         self.image.remove_none_keys()
@@ -573,7 +573,7 @@ class Generator(object):
         return False
 
     def _prepare_repository_rpm(self, repo):
-        raise NotImplementedError("RPM repository injection was not implemented!")
+        pass
 
     def prepare_artifacts(self):
         raise NotImplementedError("Artifacts handling is not implemented")
