@@ -5,6 +5,7 @@ from cekit.builder import Command
 from cekit.generator.base import Generator
 from cekit.test.behave_runner import BehaveTestRunner
 from cekit.test.collector import BehaveTestCollector
+from cekit.version import schema_version
 
 LOGGER = logging.getLogger("cekit")
 
@@ -38,9 +39,11 @@ class BehaveTester(Command):
 
         self.generator.init()
 
-        # TODO: investigate if we can improve handling different schema versions
+        # The branch to clone is determined by the schema_version in the descriptor prefixed with `v`
+        # It defaults to the CEKIt current schema_version.
         self.collected = self.test_collector.collect(
-            self.generator.image.get("schema_version"), self.params.steps_url
+            self.generator.image.get("schema_version", schema_version),
+            self.params.steps_url,
         )
 
         if self.collected:

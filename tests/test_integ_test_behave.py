@@ -31,6 +31,14 @@ image_descriptors = [
         "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
         "run": {"cmd": ["tail", "-f", "/dev/null"]},
     },
+    {
+        "from": "alpine:3.9",
+        "name": "image",
+        "version": "slimmed",
+        "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
+        "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
+        "run": {"cmd": ["tail", "-f", "/dev/null"]},
+    },
 ]
 
 
