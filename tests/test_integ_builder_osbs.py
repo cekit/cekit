@@ -1663,12 +1663,11 @@ redhat = True
     with open(dockerfile_path, "r") as _file:
         dockerfile = _file.read()
         print("\n" + dockerfile + "\n")
-        assert (
-            """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
+        result = """# This is a Dockerfile for the rhpam-7/rhpam-kogito-operator:7.11 image.
 
 ## START builder image operator-builder:7.11
 ## \\
-    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder
+    FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12-17.1618436992 AS operator-builder
     USER root
 
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
@@ -1746,10 +1745,16 @@ redhat = True
     USER 1001
 ## /
 ## END target image""".replace(
-                "VVVVV", __version__
-            )
-            in dockerfile
+            "VVVVV", __version__
         )
+        #            )
+        # Verify the nested ubi-minimal has been updated but then revert it back to
+        # a static value for easier comparisons.
+        assert re.search(r"ubi-minimal:\d\.\d-(\d|\.)+", dockerfile)
+        dockerfile = re.sub(
+            r"ubi-minimal:\d\.\d-(\d|\.)+", "ubi-minimal:latest", dockerfile
+        )
+        assert result in dockerfile
     container_path = os.path.join(
         str(tmpdir), "rhpam", "target", "image", "container.yaml"
     )
@@ -1784,8 +1789,6 @@ def test_osbs_builder_with_rhpam_2(tmpdir, caplog):
     )
 
     cfgcontents = """
-[common]
-redhat = True
     """
     cfgfile = os.path.join(str(tmpdir), "config.cfg")
     with open(cfgfile, "w") as _file:
@@ -2158,4 +2161,37 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
     assert (
         "Plain artifact artifact_name could not be found in Brew, trying to handle it using lookaside cache"
         in caplog.text
+    )
+
+
+def test_osbs_builder_with_follow_tag_non_rh(tmpdir):
+    """
+    Verify that follow_tag requires rh flag.
+    """
+
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), "images", "rhpam1"),
+        os.path.join(str(tmpdir), "rhpam"),
+    )
+
+    cfgcontents = """
+    """
+    cfgfile = os.path.join(str(tmpdir), "config.cfg")
+    with open(cfgfile, "w") as _file:
+        _file.write(cfgcontents)
+
+    run_cekit(
+        (os.path.join(str(tmpdir), "rhpam")),
+        parameters=[
+            "--config",
+            cfgfile,
+            "-v",
+            "--work-dir",
+            str(tmpdir),
+            "build",
+            "--dry-run",
+            "osbs",
+        ],
+        message="follow_tag annotation only supported with redhat flag",
+        return_code=1,
     )

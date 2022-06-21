@@ -95,6 +95,10 @@ class Generator(object):
 
         if CONFIG.get("common", "redhat"):
             deps["brew"] = {"package": "brewkoji", "executable": "/usr/bin/brew"}
+            # FOLLOW_TAG requires both version and release labels ; these are generally
+            # only added consistently within RH and Fedora repos so currently this annotation
+            # is only supported under the RH flag.
+            deps["skopeo"] = {"package": "skopeo", "executable": "/usr/bin/skopeo"}
 
         return deps
 

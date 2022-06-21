@@ -4,11 +4,9 @@ import yaml
 from cekit.config import Config
 from cekit.descriptor import Env, Image, Label, Osbs, Packages, Port, Volume
 from cekit.errors import CekitError
-from cekit.log import setup_logging
 
 config = Config()
 config.configure("/dev/null", {"redhat": True})
-setup_logging()
 
 
 def test_label():
@@ -64,7 +62,7 @@ def test_volume():
     assert volume["path"] == "/tmp/a"
 
 
-def test_volume_name(caplog):
+def test_volume_name():
     volume = Volume(
         yaml.safe_load(
             """
@@ -286,7 +284,7 @@ def test_image_plain_artifacts_md5_fail(caplog):
     assert "Cannot find required key 'name'" in caplog.text
 
 
-def test_image_plain_artifacts_md5(caplog):
+def test_image_plain_artifacts_md5():
     Image(
         yaml.safe_load(
             """
@@ -303,7 +301,7 @@ def test_image_plain_artifacts_md5(caplog):
     )
 
 
-def test_image_plain_artifacts_sha256(caplog):
+def test_image_plain_artifacts_sha256():
     Image(
         yaml.safe_load(
             """
@@ -350,7 +348,7 @@ def test_image_modules_git_repo(caplog):
     )
 
 
-def test_image_descriptor_with_execute(caplog):
+def test_image_descriptor_with_execute():
     with pytest.raises(CekitError) as excinfo:
         Image(
             yaml.safe_load(
@@ -368,7 +366,7 @@ def test_image_descriptor_with_execute(caplog):
     assert "Cannot validate schema: Image" in excinfo.value.message
 
 
-def test_image_pnc_artifacts_1(caplog):
+def test_image_pnc_artifacts_1():
     image = Image(
         yaml.safe_load(
             """
@@ -390,7 +388,7 @@ def test_image_pnc_artifacts_1(caplog):
     assert image.artifacts[0]["dest"] == "/tmp/artifacts/"
 
 
-def test_image_pnc_artifacts_2(caplog):
+def test_image_pnc_artifacts_2():
     image = Image(
         yaml.safe_load(
             """
@@ -411,3 +409,29 @@ def test_image_pnc_artifacts_2(caplog):
     assert image.artifacts[0]["pnc_build_id"] == "54321"
     assert image.artifacts[0]["target"] == "jolokia.jar"
     assert image.artifacts[0]["dest"] == "/installation/"
+
+
+def test_image_follow_tag():
+    image = Image(
+        yaml.safe_load(
+            """
+    from: foo:latest
+    name: test/foo
+    follow_tag: registry.fedoraproject.org/flatpak-build-base
+    version: 1.9
+    labels:
+      - name: test
+        value: val1
+      - name: label2
+        value: val2
+    envs:
+      - name: env1
+        value: env1val
+    """
+        ),
+        "foo",
+    )
+
+    assert image["name"] == "test/foo"
+    assert type(image["labels"][0]) == Label
+    assert image["labels"][0]["name"] == "test"

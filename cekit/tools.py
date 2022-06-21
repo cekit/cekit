@@ -5,6 +5,7 @@ import ssl
 import subprocess
 import sys
 from distutils import dir_util
+from typing import Mapping
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
@@ -33,7 +34,7 @@ class Map(dict):
 SafeRepresenter.add_representer(Map, SafeRepresenter.represent_dict)
 
 
-def download_file(url, destination):
+def download_file(url: str, destination: str) -> None:
     logger.debug("Downloading from '{}' as {}".format(url, destination))
 
     parsed_url = urlparse(url)
@@ -93,7 +94,7 @@ def download_file(url, destination):
         raise CekitError("Unsupported URL scheme: {}".format(url))
 
 
-def load_descriptor(descriptor):
+def load_descriptor(descriptor: str) -> dict:
     """parses descriptor and validate it against requested schema type
 
     Args:
@@ -136,7 +137,67 @@ def decision(question):
     return click.confirm(question, show_default=True)
 
 
-def get_brew_url(md5):
+def get_latest_image_version(image: str) -> str:
+    inspect_cmd = [
+        "/usr/bin/skopeo",
+        "inspect",
+        "--config",
+        "docker://{}".format(image),
+    ]
+    logger.debug("Executing '{}'.".format(" ".join(inspect_cmd)))
+    try:
+        inspect_str = subprocess.check_output(inspect_cmd).strip().decode("utf-8")
+    except subprocess.CalledProcessError as ex:
+        logger.error(
+            "{} Command stdout is '{}' with stderr '{}'".format(
+                ex, ex.stdout, ex.stderr
+            )
+        )
+        raise CekitError("Could not inspect container {}".format(image), ex)
+
+    inspect_json = yaml.safe_load(inspect_str)["config"]
+    tag = get_tag_from_inspect_struct(inspect_json)
+    logger.debug(f"Found new tag {tag} for {image}")
+    return f'{image.split(":")[0]}:{tag}'
+
+
+def get_tag_from_inspect_struct(struct: Mapping) -> str:
+    """Get the tag of a component from it's inspect struct
+
+    An inspect struct is the parsed output of 'skopeo inspect'
+    Generally it's a dict that contains a 'Labels' key that maps
+    to a dict.
+
+    Given the nvr "ubi8-minimal-8.1-279", the resulting tag will be
+    "8.1-279".
+
+    :param struct: Information about a container image.
+
+    :return: The tag of the component.
+    """
+    labels = struct.get("Labels")
+    if not isinstance(labels, Mapping):
+        raise CekitError("Labels dict was not found in {}".format(struct))
+
+    required_labels = {}
+    missing_labels = []
+    for label in ("version", "release"):
+        if labels.get(label):
+            required_labels[label] = labels[label]
+        else:
+            missing_labels.append(label)
+
+    if missing_labels:
+        raise CekitError(
+            "The following labels, for image {}, were not set or empty".format(
+                missing_labels
+            )
+        )
+
+    return "{version}-{release}".format(**required_labels)
+
+
+def get_brew_url(md5: str) -> str:
     logger.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
     list_archives_cmd = [
         "/usr/bin/brew",
@@ -233,7 +294,7 @@ def get_brew_url(md5):
     )
 
 
-def copy_recursively(source_directory, destination_directory):
+def copy_recursively(source_directory: str, destination_directory: str) -> None:
     """
     Copies contents of a directory to selected target location (also a directory).
     the specific source file to destination.
