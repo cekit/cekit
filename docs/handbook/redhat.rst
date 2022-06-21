@@ -13,6 +13,7 @@ CEKit integration with following tools is changed in following ways:
 
 * runs ``rhpkg`` instead of ``fedpkg``
 * runs ``odcs`` command with ``--redhat`` option set
+* enables ``follow_tag`` support via ``skopeo`` command
 
 Environment Variables
 ---------------------

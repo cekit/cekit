@@ -1,9 +1,11 @@
 import copy
+import logging
 from collections import OrderedDict
 
 import yaml
 
 import cekit
+from cekit.config import Config
 from cekit.descriptor import (
     Descriptor,
     Env,
@@ -15,9 +17,12 @@ from cekit.descriptor import (
     Run,
     Volume,
 )
-from cekit.descriptor.base import logger
 from cekit.descriptor.resource import create_resource
 from cekit.errors import CekitError
+from cekit.tools import get_latest_image_version
+
+logger = logging.getLogger("cekit")
+config = Config()
 
 _image_schema = yaml.safe_load(
     """
@@ -27,6 +32,7 @@ map:
   schema_version: {type: int}
   release: {type: text}
   from: {type: str}
+  follow_tag: {type: str}
   description: {type: text}
   labels: {type: any}
   envs:  {type: any}
@@ -104,6 +110,15 @@ class Image(Descriptor):
         if not self.osbs.extra_dir:
             self.osbs._descriptor["extra_dir"] = "osbs_extra"
 
+        # Placing this here rather than in init as apply_image_overrides runs after that. This means
+        # follow_tag is applied *after* overrides.
+        if self.follow:
+            if not config.get("common", "redhat"):
+                raise CekitError(
+                    "follow_tag annotation only supported with redhat flag"
+                )
+            self.base = get_latest_image_version(self.follow)
+
     @property
     def name(self):
         return self.get("name")
@@ -135,6 +150,14 @@ class Image(Descriptor):
     @base.setter
     def base(self, value):
         self._descriptor["from"] = value
+
+    @property
+    def follow(self):
+        return self.get("follow_tag")
+
+    @follow.setter
+    def follow(self, value):
+        self._descriptor["follow_tag"] = value
 
     @property
     def description(self):

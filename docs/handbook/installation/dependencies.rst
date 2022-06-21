@@ -67,6 +67,8 @@ Docker
         For RHEL/Fedora OS'es this is satisfied by installing the ``odcs-client`` package.
     ``brew`` command
         Used to identify and fetch artifacts from Brew.
+    ``skopeo`` command
+        Used for ``follow_tag`` annotation to determine latest image version and release information.
 
 Buildah builder dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -102,6 +104,10 @@ OSBS builder dependencies
 
     * ``koji`` is replaced by ``brew`` command (or ``brew-stage`` if run with the ``--stage`` parameter)
     * ``fedpkg`` is replaced by ``rhpkg`` command (or ``rhpkg-stage`` if run with the ``--stage`` parameter)
+
+    Further, the following dependency is required when using the ``follow_tag`` annotation
+
+    * ``skopeo`` command which is used to determine latest image version and release information.
 
 Test phase dependencies
 ----------------------------------

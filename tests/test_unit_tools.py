@@ -290,6 +290,32 @@ def test_merge_run_cmd():
     assert override["user"] == "foo"
 
 
+def skopeo_call_ok(*args, **kwargs):
+    return """{
+        "created": "2022-05-18T06:03:59Z",
+        "architecture": "amd64",
+        "os": "linux",
+        "config": {
+            "Labels": {
+                "architecture": "x86_64",
+                "authoritative-source-url": "registry.fedoraproject.org",
+                "build-date": "2022-05-18T06:01:29.868653",
+                "com.redhat.build-host": "osbs-node02.iad2.fedoraproject.org",
+                "com.redhat.component": "firefox",
+                "distribution-scope": "public",
+                "name": "firefox",
+                "release": "3620220517114827.1",
+                "vcs-ref": "56d470cf382a40ed44cc0ca57979683ca6a782d4",
+                "vcs-type": "git",
+                "vendor": "Fedora Project",
+                "version": "stable"
+            }
+        },
+    }""".encode(
+        "utf-8"
+    )
+
+
 def brew_call_ok(*args, **kwargs):
     if "listArchives" in args[0]:
         return """
@@ -437,6 +463,38 @@ def brew_call_removed(*args, **kwargs):
             "utf-8"
         )
     return "".encode("utf-8")
+
+
+def test_get_image_version(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("subprocess.check_output", side_effect=skopeo_call_ok)
+    image = tools.get_latest_image_version("registry.fedoraproject.org/firefox")
+    assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
+    assert (
+        "Found new tag stable-3620220517114827.1 for registry.fedoraproject.org/firefox"
+        in caplog.text
+    )
+
+
+def test_get_image_version_with_floating(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("subprocess.check_output", side_effect=skopeo_call_ok)
+    image = tools.get_latest_image_version("registry.fedoraproject.org/firefox:latest")
+    assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
+    assert (
+        "Found new tag stable-3620220517114827.1 for registry.fedoraproject.org/firefox"
+        in caplog.text
+    )
+
+
+def test_get_image_version_fails():
+    with pytest.raises(CekitError) as excinfo:
+        tools.get_latest_image_version("registry.fedoraproject.org/firefoxnotexist")
+
+    assert (
+        "Could not inspect container registry.fedoraproject.org/firefoxnotexist"
+        in str(excinfo.value)
+    )
 
 
 def test_get_brew_url(mocker):
