@@ -1,4 +1,5 @@
 import logging
+import platform
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -487,6 +488,9 @@ def test_get_image_version_with_floating(mocker, caplog):
     )
 
 
+@pytest.mark.skipif(
+    platform.system() == "Darwin", reason="Disabled on macOS, cannot run skopeo"
+)
 def test_get_image_version_fails():
     with pytest.raises(CekitError) as excinfo:
         tools.get_latest_image_version("registry.fedoraproject.org/firefoxnotexist")
