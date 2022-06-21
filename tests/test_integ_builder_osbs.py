@@ -2,6 +2,7 @@
 
 import logging
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -1622,6 +1623,9 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
 
 
+@pytest.mark.skipif(
+    platform.system() == "Darwin", reason="Disabled on macOS, cannot run skopeo"
+)
 def test_osbs_builder_with_rhpam_1(tmpdir, caplog):
     """
     Verify that multi-stage build has Cachito instructions enabled.
