@@ -1,8 +1,9 @@
 import logging
 import os
 import shutil
-import subprocess
 import sys
+
+from cekit.tools import run_wrapper
 
 logger = logging.getLogger("cekit")
 
@@ -51,8 +52,7 @@ class BehaveTestCollector(object):
             "-b",
             "v%s" % version,
         ]
-        logger.debug("Running '{}'".format(" ".join(cmd)))
-        subprocess.check_output(cmd)
+        run_wrapper(cmd, False, f"Could not fetch steps from {url}")
 
     def collect(self, version, url):
         # first clone common steps
