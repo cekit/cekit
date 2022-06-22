@@ -340,9 +340,9 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
     dist_dir = source_dir.mkdir("osbs_extra")
 
-    dist_dir.join("file_a").write_text("Some content", "utf8")
-    dist_dir.join("file_b").write_text("Some content", "utf8")
-    dist_dir.mkdir("child").join("other").write_text("Some content", "utf8")
+    dist_dir.join("file_a").write_text("Some content", "utf-8")
+    dist_dir.join("file_b").write_text("Some content", "utf-8")
+    dist_dir.mkdir("child").join("other").write_text("Some content", "utf-8")
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
@@ -391,11 +391,11 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     dist_dir = source_dir.mkdir("osbs_extra")
     repo_dir_osbs_extra = repo_dir.mkdir("osbs_extra")
     repo_dir_osbs_extra.mkdir("foobar_original")
-    repo_dir_osbs_extra.join("config_original.yaml").write_text("Some content", "utf8")
+    repo_dir_osbs_extra.join("config_original.yaml").write_text("Some content", "utf-8")
 
-    dist_dir.join("file_a").write_text("Some content", "utf8")
-    dist_dir.join("file_b").write_text("Some content", "utf8")
-    dist_dir.mkdir("child").join("other").write_text("Some content", "utf8")
+    dist_dir.join("file_a").write_text("Some content", "utf-8")
+    dist_dir.join("file_b").write_text("Some content", "utf-8")
+    dist_dir.mkdir("child").join("other").write_text("Some content", "utf-8")
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
@@ -476,9 +476,9 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(
     dist_dir = source_dir.mkdir("foobar")
     repo_dir.mkdir("foobar")
 
-    dist_dir.join("file_a").write_text("Some content", "utf8")
-    dist_dir.join("file_b").write_text("Some content", "utf8")
-    dist_dir.mkdir("child").join("other").write_text("Some content", "utf8")
+    dist_dir.join("file_a").write_text("Some content", "utf-8")
+    dist_dir.join("file_b").write_text("Some content", "utf-8")
+    dist_dir.mkdir("child").join("other").write_text("Some content", "utf-8")
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
@@ -544,14 +544,14 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     source_dir = tmpdir.mkdir("source")
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
     repo_dir.mkdir("osbs_extra").mkdir("child").join("other").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     dist_dir = source_dir.mkdir("osbs_extra")
 
-    dist_dir.join("file_a").write_text("Some content", "utf8")
-    dist_dir.join("file_b").write_text("Some content", "utf8")
-    dist_dir.mkdir("child").join("other").write_text("Some content", "utf8")
+    dist_dir.join("file_a").write_text("Some content", "utf-8")
+    dist_dir.join("file_b").write_text("Some content", "utf-8")
+    dist_dir.mkdir("child").join("other").write_text("Some content", "utf-8")
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
@@ -602,9 +602,9 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
     dist_dir = source_dir.mkdir("dist")
 
-    dist_dir.join("file_a").write_text("Some content", "utf8")
-    dist_dir.join("file_b").write_text("Some content", "utf8")
-    dist_dir.mkdir("child").join("other").write_text("Some content", "utf8")
+    dist_dir.join("file_a").write_text("Some content", "utf-8")
+    dist_dir.join("file_b").write_text("Some content", "utf-8")
+    dist_dir.mkdir("child").join("other").write_text("Some content", "utf-8")
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
@@ -691,7 +691,7 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
     descriptor["artifacts"] = [{"path": "manifests", "dest": "/manifests"}]
 
     tmpdir.mkdir("osbs").mkdir("repo").mkdir(".git").join("other").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     tmpdir.mkdir("manifests")
@@ -742,12 +742,12 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
     descriptor["artifacts"] = [{"path": "manifests", "dest": "/manifests"}]
 
     tmpdir.mkdir("osbs").mkdir("repo").mkdir(".git").join("other").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     tmpdir.join("osbs").join("repo").mkdir("manifests").join(
         "old-manifests.yaml"
-    ).write_text("Some content", "utf8")
+    ).write_text("Some content", "utf-8")
 
     tmpdir.mkdir("manifests")
 
@@ -799,7 +799,7 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
         .mkdir("repo")
         .mkdir(".git")
         .join("other")
-        .write_text("Some content", "utf8")
+        .write_text("Some content", "utf-8")
     )
 
     descriptor = image_descriptor.copy()
@@ -848,7 +848,7 @@ def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
     mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo").mkdir(".git").join("other").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     descriptor = image_descriptor.copy()
@@ -868,7 +868,7 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo").mkdir(".git").join("other").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     descriptor = image_descriptor.copy()
@@ -901,7 +901,7 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
     tmpdir.mkdir("osbs").mkdir("repo")
 
     tmpdir.join("osbs").join("repo").join("fetch-artifacts-url.yaml").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
@@ -1452,7 +1452,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_removal(tmpdir, mocker, capl
     tmpdir.mkdir("osbs").mkdir("repo")
 
     tmpdir.join("osbs").join("repo").join("fetch-artifacts-url.yaml").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
@@ -1487,7 +1487,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, capl
     tmpdir.mkdir("osbs").mkdir("repo")
 
     tmpdir.join("osbs").join("repo").join("fetch-artifacts-pnc.yaml").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
@@ -2137,7 +2137,7 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
     tmpdir.mkdir("osbs").mkdir("repo")
 
     tmpdir.join("osbs").join("repo").join("fetch-artifacts-url.yaml").write_text(
-        "Some content", "utf8"
+        "Some content", "utf-8"
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):

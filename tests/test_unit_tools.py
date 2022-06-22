@@ -315,7 +315,7 @@ def brew_call_ok(*args, **kwargs):
                 "size": 44209
             }
             ]""".encode(
-            "utf8"
+            "utf-8"
         )
     if "getBuild" in args[0]:
         return """
@@ -346,9 +346,9 @@ def brew_call_ok(*args, **kwargs):
             "release": "1"
             }
             """.encode(
-            "utf8"
+            "utf-8"
         )
-    return "".encode("utf8")
+    return "".encode("utf-8")
 
 
 def brew_call_ok_with_dot(*args, **kwargs):
@@ -376,7 +376,7 @@ def brew_call_ok_with_dot(*args, **kwargs):
                 "size": 85147
             }
             ]""".encode(
-            "utf8"
+            "utf-8"
         )
     if "getBuild" in args[0]:
         return """
@@ -407,9 +407,9 @@ def brew_call_ok_with_dot(*args, **kwargs):
             "release": "1"
             }
             """.encode(
-            "utf8"
+            "utf-8"
         )
-    return "".encode("utf8")
+    return "".encode("utf-8")
 
 
 def brew_call_removed(*args, **kwargs):
@@ -424,7 +424,7 @@ def brew_call_removed(*args, **kwargs):
             "version": "version",
           }
         ]""".encode(
-            "utf8"
+            "utf-8"
         )
     if "getBuild" in args[0]:
         return """
@@ -434,9 +434,9 @@ def brew_call_removed(*args, **kwargs):
           "state": 2
         }
         """.encode(
-            "utf8"
+            "utf-8"
         )
-    return "".encode("utf8")
+    return "".encode("utf-8")
 
 
 def test_get_brew_url(mocker):

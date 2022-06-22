@@ -230,7 +230,7 @@ class OSBSBuilder(Builder):
                     [self._koji, "call", "--json-output", "getTaskInfo", task_id]
                 )
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
             )
         except subprocess.CalledProcessError as ex:
             raise CekitError("Could not check the task {} result".format(task_id), ex)
@@ -305,13 +305,13 @@ class OSBSBuilder(Builder):
             url = (
                 subprocess.check_output(["git", "config", "--get", "remote.origin.url"])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
             )
             # Get the latest commit hash
             commit = (
                 subprocess.check_output(["git", "rev-parse", "HEAD"])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
             )
             # Parse the dist-git repository url
             url = urlparse(url)
@@ -346,7 +346,7 @@ class OSBSBuilder(Builder):
                     "Executing {} container build in OSBS...".format(build_type)
                 )
 
-                task_id = subprocess.check_output(cmd).strip().decode("utf8")
+                task_id = subprocess.check_output(cmd).strip().decode("utf-8")
 
                 LOGGER.info(
                     "Task {0} was submitted, you can watch the progress here: {1}/taskinfo?taskID={0}".format(
@@ -372,7 +372,7 @@ class DistGit(object):
             if (
                 subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
                 != "true"
             ):
 
@@ -384,17 +384,17 @@ class DistGit(object):
             name = os.path.basename(
                 subprocess.check_output(["git", "rev-parse", "--show-toplevel"])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
             )
             branch = (
                 subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
             )
             commit = (
                 subprocess.check_output(["git", "rev-parse", "HEAD"])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
             )
 
         return name, branch, commit
@@ -470,7 +470,7 @@ class DistGit(object):
             git_files = (
                 subprocess.check_output(["git", "ls-files", "."])
                 .strip()
-                .decode("utf8")
+                .decode("utf-8")
                 .splitlines()
             )
 
@@ -530,7 +530,7 @@ class DistGit(object):
 
         untracked = subprocess.check_output(
             ["git", "ls-files", "--others", "--exclude-standard"]
-        ).decode("utf8")
+        ).decode("utf-8")
 
         if untracked:
             LOGGER.warning(
@@ -540,7 +540,7 @@ class DistGit(object):
             )
 
         diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode(
-            "utf8"
+            "utf-8"
         )
 
         if diffs:
