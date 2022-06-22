@@ -1,9 +1,6 @@
 test: prepare
 	tox -- tests
 
-test-py36: prepare
-	tox -e py36 -- tests
-
 test-py37: prepare
 	tox -e py37 -- tests
 
