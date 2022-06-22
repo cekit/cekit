@@ -293,8 +293,11 @@ def test_merge_run_cmd():
     assert override["user"] == "foo"
 
 
-def skopeo_call_ok(*args, **kwargs):
-    return """{
+def skopeo_call_ok(*args, **kwargs) -> subprocess.CompletedProcess:
+    return subprocess.CompletedProcess(
+        args[0],
+        0,
+        """{
         "created": "2022-05-18T06:03:59Z",
         "architecture": "amd64",
         "os": "linux",
@@ -314,14 +317,16 @@ def skopeo_call_ok(*args, **kwargs):
                 "version": "stable"
             }
         },
-    }""".encode(
-        "utf-8"
+    }""",
     )
 
 
-def brew_call_ok(*args, **kwargs):
+def brew_call_ok(*args, **kwargs) -> subprocess.CompletedProcess:
     if "listArchives" in args[0]:
-        return """
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             [
             {
                 "build_id": 179262,
@@ -343,11 +348,13 @@ def brew_call_ok(*args, **kwargs):
                 "id": 105858,
                 "size": 44209
             }
-            ]""".encode(
-            "utf-8"
+            ]""",
         )
-    if "getBuild" in args[0]:
-        return """
+    elif "getBuild" in args[0]:
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             {
             "package_name": "net.oauth.core-oauth",
             "extra": null,
@@ -374,15 +381,17 @@ def brew_call_ok(*args, **kwargs):
             "volume_name": "rhel-7",
             "release": "1"
             }
-            """.encode(
-            "utf-8"
+            """,
         )
-    return "".encode("utf-8")
+    return subprocess.CompletedProcess(args[0], 0, "")
 
 
-def brew_call_ok_with_dot(*args, **kwargs):
+def brew_call_ok_with_dot(*args, **kwargs) -> subprocess.CompletedProcess:
     if "listArchives" in args[0]:
-        return """
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             [
             {
                 "build_id": 410568,
@@ -404,11 +413,13 @@ def brew_call_ok_with_dot(*args, **kwargs):
                 "id": 863130,
                 "size": 85147
             }
-            ]""".encode(
-            "utf-8"
+            ]""",
         )
-    if "getBuild" in args[0]:
-        return """
+    elif "getBuild" in args[0]:
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             {
             "package_name": "org.glassfish-javax.json",
             "extra": null,
@@ -435,15 +446,17 @@ def brew_call_ok_with_dot(*args, **kwargs):
             "volume_name": "rhel-7",
             "release": "1"
             }
-            """.encode(
-            "utf-8"
+            """,
         )
-    return "".encode("utf-8")
+    return subprocess.CompletedProcess(args[0], 0, "")
 
 
-def brew_call_removed(*args, **kwargs):
+def brew_call_removed(*args, **kwargs) -> subprocess.CompletedProcess:
     if "listArchives" in args[0]:
-        return """
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
         [
           {
             "build_id": "build_id",
@@ -452,20 +465,21 @@ def brew_call_removed(*args, **kwargs):
             "artifact_id": "artifact_id",
             "version": "version",
           }
-        ]""".encode(
-            "utf-8"
+        ]""",
         )
-    if "getBuild" in args[0]:
-        return """
+    elif "getBuild" in args[0]:
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
         {
           "package_name": "package_name",
           "release": "release",
           "state": 2
         }
-        """.encode(
-            "utf-8"
+        """,
         )
-    return "".encode("utf-8")
+    return subprocess.CompletedProcess(args[0], 0, "")
 
 
 @mock.patch.dict(
@@ -473,7 +487,7 @@ def brew_call_removed(*args, **kwargs):
 )
 def test_get_image_version_with_registry(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
-    mocker.patch("subprocess.check_output", side_effect=skopeo_call_ok)
+    mocker.patch("subprocess.run", side_effect=skopeo_call_ok)
     image = tools.get_latest_image_version("registry.fedoraproject.org/firefox")
     print(caplog.text)
     assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
@@ -486,7 +500,7 @@ def test_get_image_version_with_registry(mocker, caplog):
 
 def test_get_image_version(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
-    mocker.patch("subprocess.check_output", side_effect=skopeo_call_ok)
+    mocker.patch("subprocess.run", side_effect=skopeo_call_ok)
     image = tools.get_latest_image_version("registry.fedoraproject.org/firefox")
     assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
     assert (
@@ -497,7 +511,7 @@ def test_get_image_version(mocker, caplog):
 
 def test_get_image_version_with_floating(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
-    mocker.patch("subprocess.check_output", side_effect=skopeo_call_ok)
+    mocker.patch("subprocess.run", side_effect=skopeo_call_ok)
     image = tools.get_latest_image_version("registry.fedoraproject.org/firefox:latest")
     assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
     assert (
@@ -509,10 +523,13 @@ def test_get_image_version_with_floating(mocker, caplog):
 @pytest.mark.skipif(
     platform.system() == "Darwin", reason="Disabled on macOS, cannot run skopeo"
 )
-def test_get_image_version_fails():
+def test_get_image_version_fails(caplog):
     with pytest.raises(CekitError) as excinfo:
         tools.get_latest_image_version("registry.fedoraproject.org/firefoxnotexist")
-
+    assert (
+        "reading manifest latest in registry.fedoraproject.org/firefoxnotexist: manifest unknown"
+        in caplog.text
+    )
     assert (
         "Could not inspect container registry.fedoraproject.org/firefoxnotexist"
         in str(excinfo.value)
@@ -520,7 +537,7 @@ def test_get_image_version_fails():
 
 
 def test_get_brew_url(mocker):
-    mocker.patch("subprocess.check_output", side_effect=brew_call_ok)
+    mocker.patch("subprocess.run", side_effect=brew_call_ok)
     url = tools.get_brew_url("aa")
     assert (
         url
@@ -529,7 +546,7 @@ def test_get_brew_url(mocker):
 
 
 def test_get_brew_url_when_build_was_removed(mocker):
-    mocker.patch("subprocess.check_output", side_effect=brew_call_removed)
+    mocker.patch("subprocess.run", side_effect=brew_call_removed)
 
     with pytest.raises(CekitError) as excinfo:
         tools.get_brew_url("aa")
@@ -549,7 +566,7 @@ def test_get_brew_url_no_kerberos(mocker, caplog):
         "2019-05-06 14:58:44,502 [ERROR] koji: AuthError: unable to obtain a session"
     )
 
-    mocker.patch("subprocess.check_output", side_effect=kerberos_error)
+    mocker.patch("subprocess.run", side_effect=kerberos_error)
 
     with pytest.raises(CekitError) as excinfo:
         tools.get_brew_url("aa")
@@ -563,7 +580,7 @@ def test_get_brew_url_no_kerberos(mocker, caplog):
 
 # https://github.com/cekit/cekit/issues/531
 def test_get_brew_url_with_artifact_containing_dot(mocker):
-    mocker.patch("subprocess.check_output", side_effect=brew_call_ok_with_dot)
+    mocker.patch("subprocess.run", side_effect=brew_call_ok_with_dot)
     url = tools.get_brew_url("aa")
     assert (
         url

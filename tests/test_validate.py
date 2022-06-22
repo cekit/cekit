@@ -1,7 +1,6 @@
 import os
 import platform
 import shutil
-import subprocess
 import sys
 import uuid
 
@@ -71,7 +70,6 @@ Feature: Test test
 
 
 def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
-    mocker.patch.object(subprocess, "check_output", return_value=odcs_fake_resp)
     mocker.patch.object(Repository, "fetch")
 
     copy_repos(image_dir)

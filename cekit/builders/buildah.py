@@ -1,8 +1,8 @@
 import logging
 import os
-import subprocess
 
 from cekit.builder import Builder
+from cekit.tools import run_wrapper
 
 LOGGER = logging.getLogger("cekit")
 
@@ -49,9 +49,7 @@ class BuildahBuilder(Builder):
 
         cmd.append(os.path.join(self.target, "image"))
 
-        LOGGER.debug("Running Buildah build: '{}'".format(" ".join(cmd)))
-
-        subprocess.check_call(cmd)
+        run_wrapper(cmd, False, f"Could not run buildah {cmd}")
 
         LOGGER.info(
             "Image built and available under following tags: {}".format(", ".join(tags))

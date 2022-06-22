@@ -2,13 +2,12 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 
 from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-from cekit.tools import Chdir, Map, download_file, get_brew_url
+from cekit.tools import Chdir, Map, download_file, get_brew_url, run_wrapper
 
 logger = logging.getLogger("cekit")
 config = Config()
@@ -472,15 +471,11 @@ class _GitResource(Resource):
 
     def _copy_impl(self, target):
         cmd = ["git", "clone", self.git.url, target]
-        logger.debug("Cloning Git repository: '{}'".format(" ".join(cmd)))
-        subprocess.check_output(cmd)
+        run_wrapper(cmd, False, f"Could not clone from {self.git.url}")
 
         with Chdir(target):
             cmd = ["git", "checkout", self.git.ref]
-            logger.debug(
-                "Checking out '{}' ref: '{}'".format(self.git.ref, " ".join(cmd))
-            )
-            subprocess.check_output(cmd)
+            run_wrapper(cmd, False, f"Could not checkout from {self.git.ref}")
 
         return target
 

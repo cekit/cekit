@@ -5,7 +5,7 @@ import ssl
 import subprocess
 import sys
 from distutils import dir_util
-from typing import Mapping
+from typing import Mapping, Sequence
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
@@ -148,19 +148,8 @@ def get_latest_image_version(image: str) -> str:
     if auth:
         inspect_cmd.extend(["--authfile", auth])
 
-    logger.debug("Executing '{}'.".format(" ".join(inspect_cmd)))
-    try:
-        inspect_str = subprocess.check_output(inspect_cmd).strip().decode("utf-8")
-    except subprocess.CalledProcessError as ex:
-        logger.error(
-            "{} Command stdout is '{}' with stderr '{}'".format(
-                ex, ex.stdout, ex.stderr
-            )
-        )
-        raise CekitError("Could not inspect container {}".format(image), ex)
-
-    inspect_json = yaml.safe_load(inspect_str)["config"]
-
+    result = run_wrapper(inspect_cmd, True, f"Could not inspect container {image}")
+    inspect_json = yaml.safe_load(result.stdout)["config"]
     tag = get_tag_from_inspect_struct(inspect_json)
     logger.debug(f"Found new tag {tag} for {image}")
     return f'{image.split(":")[0]}:{tag}'
@@ -212,20 +201,25 @@ def get_brew_url(md5: str) -> str:
         "checksum={}".format(md5),
         "type=maven",
     ]
-    logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
 
+    logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
     try:
-        json_archives = (
-            subprocess.check_output(list_archives_cmd).strip().decode("utf-8")
+        result = subprocess.run(
+            list_archives_cmd, capture_output=True, check=True, text=True
         )
     except subprocess.CalledProcessError as ex:
+        logger.error(
+            "{} Command stdout is '{}' with stderr '{}'".format(
+                ex, ex.stdout, ex.stderr
+            )
+        )
         if ex.output is not None and "AuthError" in ex.output:
             logger.warning(
                 "Brew authentication failed, please make sure you have a valid Kerberos ticket"
             )
         raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
 
-    archives = yaml.safe_load(json_archives)
+    archives = yaml.safe_load(result.stdout)
 
     if not archives:
         raise CekitError(
@@ -247,19 +241,10 @@ def get_brew_url(md5: str) -> str:
         "buildInfo={}".format(build_id),
     ]
 
-    logger.debug("Executing '{}'".format(" ".join(get_build_cmd)))
-
-    try:
-        json_build = subprocess.check_output(get_build_cmd).strip().decode("utf-8")
-    except subprocess.CalledProcessError as ex:
-        logger.error(
-            "{} Command stdout is '{}' with stderr '{}'".format(
-                ex, ex.stdout, ex.stderr
-            )
-        )
-        raise CekitError("Could not fetch build {} from Brew".format(build_id), ex)
-
-    build = yaml.safe_load(json_build)
+    result = run_wrapper(
+        get_build_cmd, True, f"Could not fetch build {build_id} from Brew"
+    )
+    build = yaml.safe_load(result.stdout)
 
     build_states = ["BUILDING", "COMPLETE", "DELETED", "FAILED", "CANCELED"]
 
@@ -332,6 +317,36 @@ def copy_recursively(source_directory: str, destination_directory: str) -> None:
             dir_util.copy_tree(src, dst, preserve_symlinks=True)
         else:
             shutil.copy2(src, dst)
+
+
+def run_wrapper(
+    cmd: Sequence[str],
+    capture_output: bool,
+    exception_message: str = "Exception running subprocess",
+    check: bool = True,
+) -> subprocess.CompletedProcess:
+    """
+    Useful wrapper around subprocess.run
+
+    :param cmd: The command to execute
+    :param capture_output: Whether to capture the output or not
+    :param exception_message: An optional detailed exception message
+    :param check: Whether to check the return code (defaults to True)
+    :return: a CompletedProcess object
+    """
+    logger.debug("Executing '{}'.".format(" ".join(cmd)))
+    try:
+        result = subprocess.run(
+            cmd, capture_output=capture_output, check=check, text=True
+        )
+    except subprocess.CalledProcessError as ex:
+        logger.error(
+            "{} Command stdout is '{}' with stderr '{}'".format(
+                ex, ex.stdout, ex.stderr
+            )
+        )
+        raise CekitError(exception_message, ex)
+    return result
 
 
 class Chdir(object):
