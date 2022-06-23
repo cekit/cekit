@@ -142,8 +142,12 @@ def get_latest_image_version(image: str) -> str:
         "/usr/bin/skopeo",
         "inspect",
         "--config",
-        "docker://{}".format(image),
+        f"docker://{image}",
     ]
+    auth = os.getenv("REGISTRY_AUTH_FILE")
+    if auth:
+        inspect_cmd.extend(["--authfile", auth])
+
     logger.debug("Executing '{}'.".format(" ".join(inspect_cmd)))
     try:
         inspect_str = subprocess.check_output(inspect_cmd).strip().decode("utf-8")
@@ -156,6 +160,7 @@ def get_latest_image_version(image: str) -> str:
         raise CekitError("Could not inspect container {}".format(image), ex)
 
     inspect_json = yaml.safe_load(inspect_str)["config"]
+
     tag = get_tag_from_inspect_struct(inspect_json)
     logger.debug(f"Found new tag {tag} for {image}")
     return f'{image.split(":")[0]}:{tag}'
