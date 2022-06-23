@@ -15,6 +15,7 @@ jobs:
             #sudo sed -i -E 's/(unqualified-search-registries = [[])(.*)/\1"registry.fedoraproject.org", "registry.access.redhat.com", \2/g' /etc/containers/registries.conf
             echo "unqualified-search-registries = ['registry.fedoraproject.org', 'registry.access.redhat.com', 'registry.centos.org', 'docker.io']" | sudo tee -a /etc/containers/registries.conf > /dev/null
             echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
+            echo 'export REGISTRY_AUTH_FILE=/tmp/auth.json' >> $BASH_ENV
             mkdir -p $HOME/.local/bin
             cd ~/.local/bin && curl -L https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
       - checkout

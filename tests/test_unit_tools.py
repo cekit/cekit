@@ -1,8 +1,10 @@
 import logging
+import os
 import platform
 import subprocess
 import sys
 from contextlib import contextmanager
+from unittest import mock
 
 import pytest
 import yaml
@@ -464,6 +466,22 @@ def brew_call_removed(*args, **kwargs):
             "utf-8"
         )
     return "".encode("utf-8")
+
+
+@mock.patch.dict(
+    os.environ, {"REGISTRY_AUTH_FILE": "/tmp/e790b157-5023-47f5-b4ec-103b8985be0f.json"}
+)
+def test_get_image_version_with_registry(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("subprocess.check_output", side_effect=skopeo_call_ok)
+    image = tools.get_latest_image_version("registry.fedoraproject.org/firefox")
+    print(caplog.text)
+    assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
+    assert (
+        "Found new tag stable-3620220517114827.1 for registry.fedoraproject.org/firefox"
+        in caplog.text
+    )
+    assert "authfile /tmp/e790b157-5023-47f5-b4ec-103b8985be0f.json" in caplog.text
 
 
 def test_get_image_version(mocker, caplog):
