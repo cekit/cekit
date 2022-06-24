@@ -407,21 +407,15 @@ class DistGit(object):
         if os.path.exists(self.output):
             with Chdir(self.output):
                 LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
-                subprocess.check_call(["git", "fetch"])
-                # run_wrapper(["git", "fetch"], False)
+                run_wrapper(["git", "fetch"], False)
                 LOGGER.debug("Checking out {} branch...".format(self.branch))
-                subprocess.check_call(["git", "checkout", "-f", self.branch])
-                # run_wrapper(["git", "checkout", "-f", self.branch], False)
+                run_wrapper(["git", "checkout", "-f", self.branch], False)
                 LOGGER.debug("Resetting branch...")
-                subprocess.check_call(
-                    ["git", "reset", "--hard", "origin/%s" % self.branch]
+                run_wrapper(
+                    ["git", "reset", "--hard", "origin/%s" % self.branch], False
                 )
-                # run_wrapper(
-                #     ["git", "reset", "--hard", "origin/%s" % self.branch], False
-                # )
                 LOGGER.debug("Removing any untracked files or directories...")
-                subprocess.check_call(["git", "clean", "-fdx"])
-                # run_wrapper(["git", "clean", "-fdx"], False)
+                run_wrapper(["git", "clean", "-fdx"], False)
             LOGGER.debug("Changes pulled")
         else:
             LOGGER.info(
@@ -439,8 +433,7 @@ class DistGit(object):
                 cmd += ["--user", user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
             LOGGER.debug("Cloning: '{}'".format(" ".join(cmd)))
-            # run_wrapper(cmd, False)
-            subprocess.check_call(cmd)
+            run_wrapper(cmd, False)
             LOGGER.debug("Repository {} cloned".format(self.repo))
 
     def clean(self, artifacts):
@@ -472,13 +465,11 @@ class DistGit(object):
 
             if os.path.exists("fetch-artifacts-url.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")
-                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-url.yaml"])
-                # run_wrapper(["git", "rm", "-rf", "fetch-artifacts-url.yaml"], False)
+                run_wrapper(["git", "rm", "-rf", "fetch-artifacts-url.yaml"], False)
 
             if os.path.exists("fetch-artifacts-pnc.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-pnc.yaml' file")
-                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"])
-                # run_wrapper(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"], False)
+                run_wrapper(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"], False)
 
     def add(self, artifacts):
         LOGGER.debug("Adding files to git stage...")
@@ -511,8 +502,7 @@ class DistGit(object):
 
         # Commit the change
         LOGGER.info("Committing with message: '{}'".format(commit_msg))
-        # run_wrapper(["git", "commit", "-q", "-m", commit_msg], False)
-        subprocess.check_call(["git", "commit", "-q", "-m", commit_msg])
+        run_wrapper(["git", "commit", "-q", "-m", commit_msg], False)
         untracked = run_wrapper(
             ["git", "ls-files", "--others", "--exclude-standard"], True
         ).stdout
