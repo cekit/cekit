@@ -150,7 +150,7 @@ def get_brew_url(md5):
 
     try:
         json_archives = (
-            subprocess.check_output(list_archives_cmd).strip().decode("utf8")
+            subprocess.check_output(list_archives_cmd).strip().decode("utf-8")
         )
     except subprocess.CalledProcessError as ex:
         if ex.output is not None and "AuthError" in ex.output:
@@ -184,7 +184,7 @@ def get_brew_url(md5):
     logger.debug("Executing '{}'".format(" ".join(get_build_cmd)))
 
     try:
-        json_build = subprocess.check_output(get_build_cmd).strip().decode("utf8")
+        json_build = subprocess.check_output(get_build_cmd).strip().decode("utf-8")
     except subprocess.CalledProcessError as ex:
         logger.error(
             "{} Command stdout is '{}' with stderr '{}'".format(
