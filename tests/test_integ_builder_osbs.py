@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-
+import contextlib
 import logging
 import os
 import platform
@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+from enum import Enum, auto
 
 import pytest
 import yaml
@@ -43,6 +44,14 @@ def run_cekit(
         return result
 
 
+class OSBSTestFlags(Enum):
+    NONE = auto()
+    MULTI_ADD = auto()
+    TRIGGER_GIT_FAILURE = auto()
+    NO_SKIP_COMMITTING = auto()
+    RM_FETCH_FILE = auto()
+
+
 def run_osbs(
     descriptor,
     image_dir,
@@ -50,15 +59,18 @@ def run_osbs(
     return_code=0,
     build_command=None,
     general_command=None,
-    skip_committing=True,
-    multi_add=False,
-    trigger_git_failure=False,
+    flag: OSBSTestFlags = OSBSTestFlags.NONE,
 ) -> Mock:
     if build_command is None:
         build_command = ["build", "osbs"]
 
     if general_command is None:
         general_command = ["--redhat"]
+
+    if flag == OSBSTestFlags.NO_SKIP_COMMITTING:
+        skip_committing = False
+    else:
+        skip_committing = True
 
     # We are mocking it, so do not require it at test time
     mocker.patch("cekit.builders.osbs.OSBSBuilder.dependencies", return_value={})
@@ -77,16 +89,24 @@ def run_osbs(
             "", 0, "3b9283cb26b35511517ff5c0c3e11f490cba8feb"
         ),  # git rev-parse HEAD
         subprocess.CompletedProcess("ls-files", 0, ""),  # git ls-files .
-        # Required for all tests up to test_osbs_builder_with_fetch_artifacts_url_file_creation_1
-        subprocess.CompletedProcess("add", 0, ""),  # git add --all [Optional]
     ]
-    if multi_add:
-        side_affect.append(subprocess.CompletedProcess("add2", 0, ""))
+    if flag == OSBSTestFlags.RM_FETCH_FILE:
+        side_affect.append(subprocess.CompletedProcess("rm", 0, ""))
+
+    # Required for all tests up to test_osbs_builder_with_fetch_artifacts_url_file_creation_1
+    side_affect.append(
+        subprocess.CompletedProcess("add", 0, "")
+    )  # git add --all [Optional]
+
+    if flag == OSBSTestFlags.MULTI_ADD:
+        side_affect.append(subprocess.CompletedProcess("add", 0, ""))
+
     side_affect.extend(
         [
             subprocess.CompletedProcess(
                 "diff-index", int(skip_committing), ""
             ),  # git diff-index --quiet --cached
+            subprocess.CompletedProcess("commit", 0, ""),
             subprocess.CompletedProcess(
                 "", 0, ""
             ),  # git ls-files --others --exclude-standard
@@ -95,12 +115,13 @@ def run_osbs(
             ),  # git diff-files --name-only
         ]
     )
-    if trigger_git_failure:
+    if flag == OSBSTestFlags.TRIGGER_GIT_FAILURE:
         side_affect.append(
             subprocess.CalledProcessError(1, "git", output="A GIT ERROR")
         )
     else:
         side_affect.append(subprocess.CompletedProcess("push", 0, ""))  # git push -q
+
     side_affect.extend(
         [
             subprocess.CompletedProcess("", 0, ""),  # git status
@@ -118,10 +139,6 @@ def run_osbs(
         ]
     )
 
-    print(f"### skip_committing is {int(skip_committing)} and list {side_affect}")
-    logging.warning(
-        f"### skip_committing is {int(skip_committing)} and list {side_affect}"
-    )
     patched_run = mocker.patch.object(subprocess, "run", side_effect=side_affect)
 
     with open(os.path.join(image_dir, "image.yaml"), "w") as fd:
@@ -134,6 +151,18 @@ def run_osbs(
         + build_command,
         return_code=return_code,
     )
+
+    # Complete hack, but I can't get the side_effect to return CompletedProcess _and_ execute this rm.
+    if flag == OSBSTestFlags.RM_FETCH_FILE:
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(
+                os.path.join(image_dir, "osbs", "repo", "fetch-artifacts-url.yaml")
+            )
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(
+                os.path.join(image_dir, "osbs", "repo", "fetch-artifacts-pnc.yaml")
+            )
+
     return patched_run
 
 
@@ -144,8 +173,6 @@ def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
     # that depends on the decision. But in case the --assume-yes switch is used
     # we should not get to this point at all. If we get, the test should fail.
     mock_decision = mocker.patch("cekit.tools.decision", return_value=False)
-    mock_check_call = mocker.patch.object(subprocess, "check_call")
-    mocker.patch.object(subprocess, "call", return_value=1)
 
     source_dir = tmpdir.mkdir("source")
     source_dir.mkdir("osbs").mkdir("repo")
@@ -159,9 +186,10 @@ def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
     )
 
     mock_decision.assert_not_called()
-    print(f"#### check_call got {mock_check_call.mock_calls}")
-    print(f"#### run got {mock_run.mock_calls}")
-    print(caplog.text)
+
+    # DEBUG:
+    # print(f"#### run got {mock_run.mock_calls}")
+    # print(caplog.text)
 
     mock_run.assert_has_calls(
         [
@@ -177,21 +205,20 @@ def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
                 check=True,
                 text=True,
             ),
-        ],
-        any_order=True,
-    )
-    mock_check_call.assert_has_calls(
-        [
-            mocker.call(
+            call(
                 [
                     "git",
                     "commit",
                     "-q",
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
-                ]
+                ],
+                capture_output=False,
+                check=True,
+                text=True,
             ),
-        ]
+        ],
+        any_order=True,
     )
 
     assert (
@@ -208,8 +235,6 @@ def test_osbs_builder_with_process_error(tmpdir, mocker, caplog):
     # that depends on the decision. But in case the --assume-yes switch is used
     # we should not get to this point at all. If we get, the test should fail.
     mock_decision = mocker.patch("cekit.tools.decision", return_value=False)
-    mocker.patch.object(subprocess, "check_call")
-    mocker.patch.object(subprocess, "call", return_value=1)
 
     source_dir = tmpdir.mkdir("source")
     source_dir.mkdir("osbs").mkdir("repo")
@@ -220,7 +245,7 @@ def test_osbs_builder_with_process_error(tmpdir, mocker, caplog):
         mocker,
         1,
         ["build", "osbs", "--assume-yes"],
-        trigger_git_failure=True,
+        flag=OSBSTestFlags.TRIGGER_GIT_FAILURE,
     )
 
     mock_decision.assert_not_called()
@@ -240,8 +265,6 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
 
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch.object(subprocess, "call", return_value=1)
-    mock_check_call = mocker.patch.object(subprocess, "check_call")
 
     descriptor = image_descriptor.copy()
 
@@ -265,11 +288,6 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
                 check=True,
                 text=True,
             ),
-        ],
-        any_order=True,
-    )
-    mock_check_call.assert_has_calls(
-        [
             mocker.call(
                 [
                     "git",
@@ -277,9 +295,13 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
                     "-q",
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
-                ]
-            )
-        ]
+                ],
+                capture_output=False,
+                check=True,
+                text=True,
+            ),
+        ],
+        any_order=True,
     )
 
     assert (
@@ -307,7 +329,9 @@ def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
 
     descriptor = image_descriptor.copy()
 
-    mock_run = run_osbs(descriptor, str(source_dir), mocker, skip_committing=False)
+    mock_run = run_osbs(
+        descriptor, str(source_dir), mocker, flag=OSBSTestFlags.NO_SKIP_COMMITTING
+    )
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
 
@@ -338,8 +362,6 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
 
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch.object(subprocess, "call", return_value=1)
-    mock_check_call = mocker.patch.object(subprocess, "check_call")
 
     descriptor = image_descriptor.copy()
 
@@ -361,11 +383,6 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
                 check=True,
                 text=True,
             ),
-        ],
-        any_order=True,
-    )
-    mock_check_call.assert_has_calls(
-        [
             mocker.call(
                 [
                     "git",
@@ -373,9 +390,13 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
                     "-q",
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
-                ]
-            )
-        ]
+                ],
+                capture_output=False,
+                check=True,
+                text=True,
+            ),
+        ],
+        any_order=True,
     )
 
     assert (
@@ -401,7 +422,9 @@ def test_osbs_builder_add_help_file(tmpdir, mocker, caplog):
     descriptor = image_descriptor.copy()
     descriptor["help"] = {"add": True}
 
-    mock_run = run_osbs(descriptor, str(source_dir), mocker, skip_committing=False)
+    mock_run = run_osbs(
+        descriptor, str(source_dir), mocker, flag=OSBSTestFlags.NO_SKIP_COMMITTING
+    )
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
     assert os.path.exists(str(repo_dir.join("help.md"))) is True
@@ -447,14 +470,12 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
     mock_run = run_osbs(
-        image_descriptor, str(source_dir), mocker, skip_committing=False
+        image_descriptor, str(source_dir), mocker, flag=OSBSTestFlags.NO_SKIP_COMMITTING
     )
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
     assert os.path.exists(str(repo_dir.join("osbs_extra", "file_a"))) is True
     assert os.path.exists(str(repo_dir.join("osbs_extra", "file_b"))) is True
-
-    print(f"#### run got {mock_run.mock_calls}")
 
     assert (
         call(
@@ -525,14 +546,12 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
         str(source_dir),
         mocker,
         build_command=["build", "--overrides-file", "overrides.yaml", "osbs"],
-        skip_committing=False,
+        flag=OSBSTestFlags.NO_SKIP_COMMITTING,
     )
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
     assert os.path.exists(str(repo_dir.join("osbs_extra").join("file_a"))) is True
     assert os.path.exists(str(repo_dir.join("osbs_extra").join("file_b"))) is True
-
-    print(f"#### run got {mock_run.mock_calls}")
 
     assert (
         mocker.call(
@@ -614,8 +633,6 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(
     dist_dir.mkdir("child").join("other").write_text("Some content", "utf-8")
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
-
-    mocker.patch.object(subprocess, "call", return_value=0)
 
     overrides_descriptor = {
         "schema_version": 1,
@@ -704,8 +721,6 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
-    mocker.patch.object(subprocess, "call", return_value=0)
-
     mock_run = run_osbs(image_descriptor, str(source_dir), mocker)
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
@@ -776,8 +791,6 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
-    mocker.patch.object(subprocess, "call", return_value=0)
-
     descriptor = image_descriptor.copy()
 
     descriptor["osbs"]["extra_dir"] = "dist"
@@ -827,9 +840,6 @@ def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
 
     source_dir = tmpdir.mkdir("source")
 
-    mocker.patch.object(subprocess, "call", return_value=0)
-    mocker.patch.object(subprocess, "check_call")
-
     shutil.copytree(
         os.path.join(os.path.dirname(__file__), "modules"),
         os.path.join(str(source_dir), "tests", "modules"),
@@ -852,8 +862,6 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
     tmpdir, mocker, caplog
 ):
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch.object(subprocess, "call")
-    mock_check_call = mocker.patch.object(subprocess, "check_call")
 
     res = mocker.Mock()
     res.getcode.return_value = 200
@@ -876,21 +884,8 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
     ) as _file:
         _file.write("CONTENT")
 
-    mock_run = run_osbs(descriptor, str(tmpdir), mocker, multi_add=True)
+    mock_run = run_osbs(descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.MULTI_ADD)
 
-    calls = [
-        mocker.call(
-            [
-                "git",
-                "commit",
-                "-q",
-                "-m",
-                "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
-            ]
-        ),
-    ]
-
-    mock_check_call.assert_has_calls(calls, any_order=True)
     mock_run.assert_has_calls(
         [
             mocker.call(
@@ -911,10 +906,21 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
                 check=True,
                 text=True,
             ),
+            call(
+                [
+                    "git",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
+                ],
+                capture_output=False,
+                check=True,
+                text=True,
+            ),
         ],
         any_order=True,
     )
-    assert len(mock_check_call.mock_calls) == len(calls)
     assert "Skipping '.git' directory" in caplog.text
     assert "Staging 'manifests'..." in caplog.text
 
@@ -923,8 +929,6 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
     tmpdir, mocker, caplog
 ):
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch.object(subprocess, "call")
-    mock_check_call = mocker.patch.object(subprocess, "check_call")
 
     res = mocker.Mock()
     res.getcode.return_value = 200
@@ -951,21 +955,8 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
     ) as _file:
         _file.write("CONTENT")
 
-    mock_run = run_osbs(descriptor, str(tmpdir), mocker, multi_add=True)
+    mock_run = run_osbs(descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.MULTI_ADD)
 
-    calls = [
-        mocker.call(
-            [
-                "git",
-                "commit",
-                "-q",
-                "-m",
-                "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
-            ]
-        ),
-    ]
-
-    mock_check_call.assert_has_calls(calls, any_order=True)
     mock_run.assert_has_calls(
         [
             mocker.call(
@@ -986,10 +977,21 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
                 check=True,
                 text=True,
             ),
+            call(
+                [
+                    "git",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
+                ],
+                capture_output=False,
+                check=True,
+                text=True,
+            ),
         ],
         any_order=True,
     )
-    assert len(mock_check_call.mock_calls) == len(calls)
     assert "Skipping '.git' directory" in caplog.text
     assert "Staging 'manifests'..." in caplog.text
     assert "Removing old 'manifests' directory" in caplog.text
@@ -999,7 +1001,6 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
     tmpdir, mocker, caplog
 ):
     mocker.patch("cekit.tools.decision", return_value=True)
-    mock_check_call = mocker.patch.object(subprocess, "check_call")
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     res = mocker.Mock()
@@ -1021,24 +1022,8 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
 
     descriptor["artifacts"] = [{"url": "https://foo/bar.jar"}]
 
-    mock_run = run_osbs(descriptor, str(tmpdir), mocker, multi_add=True)
+    mock_run = run_osbs(descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.MULTI_ADD)
 
-    calls = [
-        mocker.call(
-            [
-                "git",
-                "commit",
-                "-q",
-                "-m",
-                "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
-            ]
-        ),
-    ]
-
-    print(f"#### check_call got {mock_check_call.mock_calls}")
-    print(f"#### run got {mock_run.mock_calls}")
-    print(caplog.text)
-    mock_check_call.assert_has_calls(calls, any_order=True)
     mock_run.assert_has_calls(
         [
             mocker.call(
@@ -1059,10 +1044,21 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
                 check=True,
                 text=True,
             ),
+            mocker.call(
+                [
+                    "git",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
+                ],
+                capture_output=False,
+                check=True,
+                text=True,
+            ),
         ],
         any_order=True,
     )
-    assert len(mock_check_call.mock_calls) == len(calls)
     assert "Skipping '.git' directory" in caplog.text
     with open(
         os.path.join(str(tmpdir), "target", "image", "fetch-artifacts-url.yaml"), "r"
@@ -1082,8 +1078,6 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
 def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch.object(subprocess, "call")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo").mkdir(".git").join("other").write_text(
         "Some content", "utf-8"
@@ -1102,8 +1096,6 @@ def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
 def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch.object(subprocess, "call")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo").mkdir(".git").join("other").write_text(
         "Some content", "utf-8"
@@ -1133,7 +1125,6 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch.object(subprocess, "check_output")
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
@@ -1143,9 +1134,9 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1184,14 +1175,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1236,14 +1226,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1281,14 +1270,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1331,14 +1319,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1373,7 +1360,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1394,9 +1380,9 @@ ssl_verify = False
         _file.write(cfgcontents)
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1464,14 +1450,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1515,14 +1500,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1566,14 +1550,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1622,14 +1605,13 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1690,11 +1672,11 @@ def test_osbs_builder_with_fetch_artifacts_url_file_removal(tmpdir, mocker, capl
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    run_osbs(image_descriptor, str(tmpdir), mocker)
+    run_osbs(image_descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.RM_FETCH_FILE)
 
     assert not os.path.exists(
         os.path.join(str(tmpdir), "osbs", "repo", "fetch-artifacts-url.yaml")
@@ -1724,11 +1706,11 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, capl
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-pnc.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    run_osbs(image_descriptor, str(tmpdir), mocker)
+    run_osbs(image_descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.RM_FETCH_FILE)
 
     assert not os.path.exists(
         os.path.join(str(tmpdir), "osbs", "repo", "fetch-artifacts-pnc.yaml")
@@ -1757,10 +1739,10 @@ def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["touch", "file"])
-        subprocess.call(["git", "add", "file"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["touch", "file"])
+        subprocess.run(["git", "add", "file"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -1792,16 +1774,15 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch.object(subprocess, "check_output")
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["touch", "file"])
-        subprocess.call(["git", "add", "file"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["touch", "file"])
+        subprocess.run(["git", "add", "file"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -2232,14 +2213,13 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-pnc.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -2270,14 +2250,13 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-pnc.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
@@ -2361,7 +2340,6 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
     mocker.patch("cekit.builders.osbs.DistGit.push")
-    mocker.patch.object(subprocess, "check_call")
 
     work_dir = str(tmpdir.mkdir("work_dir"))
     image_dir = str(tmpdir)
@@ -2379,9 +2357,9 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
     )
 
     with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.call(["git", "init"])
-        subprocess.call(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.call(["git", "commit", "-m", "Dummy"])
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
+        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = image_descriptor.copy()
 
