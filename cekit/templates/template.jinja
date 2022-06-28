@@ -184,10 +184,10 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% endfor %}
     {% endif %}
 
+{{ process_module(animage) }}
     {% for to_install in animage.modules.install %}
 {{ process_module(helper.module(to_install), animage) }}
     {% endfor %}
-{{ process_module(animage) }}
     {%if helper.cachito(animage) %}
     RUN rm -rf $REMOTE_SOURCE_DIR
     {% endif %}
