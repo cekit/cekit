@@ -1674,6 +1674,19 @@ redhat = True
     COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR
     WORKDIR $REMOTE_SOURCE_DIR/app
 
+###### START image 'operator-builder:7.11'
+###### \\
+        # Set 'operator-builder' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11"
+        # Set 'operator-builder' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator" \\
+            version="7.11"
+###### /
+###### END image 'operator-builder:7.11'
+
 ###### START module 'org.kie.kogito.builder:7.11'
 ###### \\
         # Copy 'org.kie.kogito.builder' module general artifacts to '/workspace/' destination
@@ -1687,19 +1700,6 @@ redhat = True
         RUN [ "sh", "-x", "/tmp/scripts/org.kie.kogito.builder/install.sh" ]
 ###### /
 ###### END module 'org.kie.kogito.builder:7.11'
-
-###### START image 'operator-builder:7.11'
-###### \\
-        # Set 'operator-builder' image defined environment variables
-        ENV \\
-            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11"
-        # Set 'operator-builder' image defined labels
-        LABEL \\
-            name="rhpam-7/rhpam-kogito-operator" \\
-            version="7.11"
-###### /
-###### END image 'operator-builder:7.11'
 
     RUN rm -rf $REMOTE_SOURCE_DIR
 
@@ -1863,6 +1863,19 @@ redhat = True
     FROM registry.access.redhat.com/ubi8/go-toolset:1.14.12 AS operator-builder-one
     USER root
 
+###### START image 'operator-builder-one:7.11'
+###### \\
+        # Set 'operator-builder-one' image defined environment variables
+        ENV \\
+            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
+            JBOSS_IMAGE_VERSION="7.11"
+        # Set 'operator-builder-one' image defined labels
+        LABEL \\
+            name="rhpam-7/rhpam-kogito-operator" \\
+            version="7.11"
+###### /
+###### END image 'operator-builder-one:7.11'
+
 ###### START module 'org.kie.kogito.builder:7.11'
 ###### \\
         # Copy 'org.kie.kogito.builder' module general artifacts to '/workspace/' destination
@@ -1876,19 +1889,6 @@ redhat = True
         RUN [ "sh", "-x", "/tmp/scripts/org.kie.kogito.builder/install.sh" ]
 ###### /
 ###### END module 'org.kie.kogito.builder:7.11'
-
-###### START image 'operator-builder-one:7.11'
-###### \\
-        # Set 'operator-builder-one' image defined environment variables
-        ENV \\
-            JBOSS_IMAGE_NAME="rhpam-7/rhpam-kogito-operator" \\
-            JBOSS_IMAGE_VERSION="7.11"
-        # Set 'operator-builder-one' image defined labels
-        LABEL \\
-            name="rhpam-7/rhpam-kogito-operator" \\
-            version="7.11"
-###### /
-###### END image 'operator-builder-one:7.11'
 
 
 ## /
