@@ -6,7 +6,7 @@ import yaml
 
 from cekit.descriptor import Image, Module, Overrides
 from cekit.errors import CekitError
-from cekit.generator.base import ModuleRegistry
+from cekit.generator.module_registry import ModuleRegistry
 from cekit.tools import Map
 
 
