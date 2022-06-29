@@ -13,6 +13,8 @@ build_images:
         - unzip
 
     modules:
+      repositories:
+        - path: ../../modules
       install:
         - name: zipped-resource
 
