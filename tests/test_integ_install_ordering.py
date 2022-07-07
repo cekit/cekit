@@ -1,5 +1,7 @@
+import platform
 import sys
 
+import pytest
 import yaml
 from click.testing import CliRunner
 
@@ -23,6 +25,9 @@ def run_cekit(image_dir, descriptor, args=None):
         return result
 
 
+@pytest.mark.skipif(
+    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
+)
 def test_module_uses_installed_package_in_execute_script(tmp_path):
     """Check that when a module has an install script that depends on packages that should be installed in an image,
     the install script succeeds.
