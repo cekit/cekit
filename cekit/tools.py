@@ -346,6 +346,8 @@ def run_wrapper(
             )
         )
         raise CekitError(exception_message, ex)
+    if result.stdout:
+        result.stdout = result.stdout.strip()
     return result
 
 

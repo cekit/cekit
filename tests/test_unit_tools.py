@@ -13,6 +13,7 @@ from cekit import tools
 from cekit.descriptor import Descriptor, Image, Module, Osbs, Overrides, Run
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
 from cekit.errors import CekitError
+from cekit.tools import run_wrapper
 
 rhel_7_os_release = '''NAME="Red Hat Enterprise Linux Server"
 VERSION="7.7 (Maipo)"
@@ -848,3 +849,15 @@ def test_handle_core_dependencies_with_certifi(mocker, caplog):
         in caplog.text
     )
     assert "Certificate Authority (CA) bundle in use: 'a/path.pem'" in caplog.text
+
+
+def test_run_wrapper_whitespace() -> None:
+    result = run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], True)
+    assert result.stdout == "true"
+    assert result.returncode == 0
+
+
+def test_run_wrapper_no_capture() -> None:
+    result = run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], False)
+    assert result.stdout is None
+    assert result.returncode == 0
