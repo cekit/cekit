@@ -195,15 +195,17 @@ def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
         [
             call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 ["git", "push", "-q", "origin", "branch"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 [
@@ -213,9 +215,10 @@ def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
                 ],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ],
         any_order=True,
@@ -278,15 +281,17 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
         [
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 ["git", "push", "-q", "origin", "branch"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 [
@@ -296,9 +301,10 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
                 ],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ],
         any_order=True,
@@ -339,9 +345,10 @@ def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
         [
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             )
         ]
     )
@@ -373,15 +380,17 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
         [
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 ["git", "push", "-q", "origin", "branch"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 [
@@ -391,9 +400,10 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
                 ],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ],
         any_order=True,
@@ -433,15 +443,17 @@ def test_osbs_builder_add_help_file(tmpdir, mocker, caplog):
         [
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 ["git", "add", "--all", "help.md"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ]
     )
@@ -480,18 +492,20 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     assert (
         call(
             ["git", "add", "--all", "Dockerfile"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         call(
             ["git", "add", "--all", "osbs_extra"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
@@ -556,27 +570,30 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     assert (
         mocker.call(
             ["git", "rm", "-rf", "osbs_extra"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "osbs_extra"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "osbs_extra"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
@@ -655,25 +672,31 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(
 
     assert (
         mocker.call(
-            ["git", "rm", "-rf", "foobar"], capture_output=False, check=True, text=True
+            ["git", "rm", "-rf", "foobar"],
+            stderr=None,
+            stdout=None,
+            check=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "foobar"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "Dockerfile"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
@@ -732,27 +755,30 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
     assert (
         mocker.call(
             ["git", "rm", "-rf", "osbs_extra"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "osbs_extra"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "Dockerfile"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
@@ -803,16 +829,21 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
 
     assert (
         mocker.call(
-            ["git", "add", "--all", "dist"], capture_output=False, check=True, text=True
+            ["git", "add", "--all", "dist"],
+            stderr=None,
+            stdout=None,
+            check=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
     assert (
         mocker.call(
             ["git", "add", "--all", "Dockerfile"],
-            capture_output=False,
+            stderr=None,
+            stdout=None,
             check=True,
-            text=True,
+            universal_newlines=True,
         )
         in mock_run.mock_calls
     )
@@ -890,21 +921,24 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
         [
             mocker.call(
                 ["git", "add", "--all", "manifests"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 ["git", "push", "-q", "origin", "branch"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 [
@@ -914,9 +948,10 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
                 ],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ],
         any_order=True,
@@ -961,21 +996,24 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
         [
             mocker.call(
                 ["git", "add", "--all", "manifests"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 ["git", "push", "-q", "origin", "branch"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 [
@@ -985,9 +1023,10 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
                 ],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ],
         any_order=True,
@@ -1028,21 +1067,24 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
         [
             mocker.call(
                 ["git", "add", "--all", "fetch-artifacts-url.yaml"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 ["git", "add", "--all", "Dockerfile"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 ["git", "push", "-q", "origin", "branch"],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             mocker.call(
                 [
@@ -1052,9 +1094,10 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
                     "-m",
                     "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
                 ],
-                capture_output=False,
+                stderr=None,
+                stdout=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
         ],
         any_order=True,

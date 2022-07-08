@@ -77,17 +77,20 @@ def test_git_clone(mocker):
         [
             call(
                 ["git", "clone", "http://host.com/url/path.git", "dir/path"],
-                capture_output=False,
+                stdout=None,
+                stderr=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
             call(
                 ["git", "checkout", "ref"],
-                capture_output=False,
+                stdout=None,
+                stderr=None,
                 check=True,
-                text=True,
+                universal_newlines=True,
             ),
-        ]
+        ],
+        any_order=True,
     )
 
 
