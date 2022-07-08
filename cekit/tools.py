@@ -1,9 +1,9 @@
+import importlib
 import logging
 import os
 import shutil
 import ssl
 import subprocess
-import sys
 from distutils import dir_util
 from typing import Mapping, Sequence
 from urllib.parse import urlparse
@@ -336,8 +336,22 @@ def run_wrapper(
     """
     logger.debug("Executing '{}'.".format(" ".join(cmd)))
     try:
+        # While it would be nicer to use
+        #   result = subprocess.run(
+        #        cmd, capture_output=capture_output, check=check, text=True
+        #   )
+        # capture_output and text are not available on Python 3.6
+        stdout_capture = None
+        stderr_capture = None
+        if capture_output:
+            stdout_capture = subprocess.PIPE
+            stderr_capture = subprocess.PIPE
         result = subprocess.run(
-            cmd, capture_output=capture_output, check=check, text=True
+            cmd,
+            stdout=stdout_capture,
+            stderr=stderr_capture,
+            check=check,
+            universal_newlines=True,
         )
     except subprocess.CalledProcessError as ex:
         logger.error(
@@ -348,6 +362,8 @@ def run_wrapper(
         raise CekitError(exception_message, ex)
     if result.stdout:
         result.stdout = result.stdout.strip()
+    if result.stderr:
+        result.stderr = result.stderr.strip()
     return result
 
 
@@ -514,19 +530,8 @@ class DependencyHandler(object):
     def _check_for_library(self, library):
         library_found = False
 
-        if sys.version_info[0] < 3:
-            import imp
-
-            try:
-                imp.find_module(library)
-                library_found = True
-            except ImportError:
-                pass
-        else:
-            import importlib
-
-            if importlib.util.find_spec(library):
-                library_found = True
+        if importlib.util.find_spec(library):
+            library_found = True
 
         return library_found
 
