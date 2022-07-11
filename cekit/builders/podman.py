@@ -1,9 +1,8 @@
 import logging
 import os
-import subprocess
 
 from cekit.builder import Builder
-from cekit.errors import CekitError
+from cekit.tools import run_wrapper
 
 LOGGER = logging.getLogger("cekit")
 
@@ -50,15 +49,8 @@ class PodmanBuilder(Builder):
 
         cmd.append(os.path.join(self.target, "image"))
 
-        LOGGER.debug("Running Podman build: '{}'".format(" ".join(cmd)))
+        run_wrapper(cmd, False, f"Could not run podman {cmd}")
 
-        try:
-            subprocess.check_call(cmd)
-
-            LOGGER.info(
-                "Image built and available under following tags: {}".format(
-                    ", ".join(tags)
-                )
-            )
-        except Exception:
-            raise CekitError("Image build failed, see logs above.")
+        LOGGER.info(
+            "Image built and available under following tags: {}".format(", ".join(tags))
+        )

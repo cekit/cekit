@@ -97,6 +97,10 @@ class Generator(object):
 
         if CONFIG.get("common", "redhat"):
             deps["brew"] = {"package": "brewkoji", "executable": "/usr/bin/brew"}
+            # FOLLOW_TAG requires both version and release labels ; these are generally
+            # only added consistently within RH and Fedora repos so currently this annotation
+            # is only supported under the RH flag.
+            deps["skopeo"] = {"package": "skopeo", "executable": "/usr/bin/skopeo"}
 
         return deps
 
@@ -160,7 +164,7 @@ class Generator(object):
         # Add build labels
         self.add_build_labels()
 
-    def generate(self, builder):
+    def generate(self):
         self.copy_modules()
         self.prepare_artifacts()
         self.prepare_repositories()
@@ -575,7 +579,7 @@ class Generator(object):
         return False
 
     def _prepare_repository_rpm(self, repo):
-        raise NotImplementedError("RPM repository injection was not implemented!")
+        pass
 
     def prepare_artifacts(self):
         raise NotImplementedError("Artifacts handling is not implemented")

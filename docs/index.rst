@@ -34,7 +34,7 @@ See the `releases page <https://github.com/cekit/cekit/releases>`__ for latest r
 Contact
 ----------------
 
-* Please join the `#cekit IRC channel on Freenode <irc://freenode.net/#cekit>`__
+* Issues and discussions at https://github.com/cekit/cekit
 * You can always mail us at: *cekit* ``at`` *cekit* ``dot`` *io*
 
 Documentation

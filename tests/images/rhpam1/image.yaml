@@ -2,6 +2,7 @@
   name: "operator-builder"
   version: "7.11"
   from: "registry.access.redhat.com/ubi8/go-toolset:1.14.12"
+  follow_tag: "registry.access.redhat.com/ubi8/go-toolset:1.14.12"
   description: "Golang builder image for the RHPAM Kogito Operator"
 
   modules:
@@ -27,6 +28,7 @@
   version: "7.11"
   from: "registry.access.redhat.com/ubi8/ubi-minimal:latest"
   description: "Runtime Image for the RHPAM Kogito Operator"
+  follow_tag: "registry.access.redhat.com/ubi8/ubi-minimal"
 
   labels:
     - name: maintainer

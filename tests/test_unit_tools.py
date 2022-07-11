@@ -1,7 +1,10 @@
 import logging
+import os
+import platform
 import subprocess
 import sys
 from contextlib import contextmanager
+from unittest import mock
 
 import pytest
 import yaml
@@ -10,6 +13,7 @@ from cekit import tools
 from cekit.descriptor import Descriptor, Image, Module, Osbs, Overrides, Run
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
 from cekit.errors import CekitError
+from cekit.tools import Chdir, run_wrapper
 
 rhel_7_os_release = '''NAME="Red Hat Enterprise Linux Server"
 VERSION="7.7 (Maipo)"
@@ -290,9 +294,40 @@ def test_merge_run_cmd():
     assert override["user"] == "foo"
 
 
-def brew_call_ok(*args, **kwargs):
+def skopeo_call_ok(*args, **kwargs) -> subprocess.CompletedProcess:
+    return subprocess.CompletedProcess(
+        args[0],
+        0,
+        """{
+        "created": "2022-05-18T06:03:59Z",
+        "architecture": "amd64",
+        "os": "linux",
+        "config": {
+            "Labels": {
+                "architecture": "x86_64",
+                "authoritative-source-url": "registry.fedoraproject.org",
+                "build-date": "2022-05-18T06:01:29.868653",
+                "com.redhat.build-host": "osbs-node02.iad2.fedoraproject.org",
+                "com.redhat.component": "firefox",
+                "distribution-scope": "public",
+                "name": "firefox",
+                "release": "3620220517114827.1",
+                "vcs-ref": "56d470cf382a40ed44cc0ca57979683ca6a782d4",
+                "vcs-type": "git",
+                "vendor": "Fedora Project",
+                "version": "stable"
+            }
+        },
+    }""",
+    )
+
+
+def brew_call_ok(*args, **kwargs) -> subprocess.CompletedProcess:
     if "listArchives" in args[0]:
-        return """
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             [
             {
                 "build_id": 179262,
@@ -314,11 +349,13 @@ def brew_call_ok(*args, **kwargs):
                 "id": 105858,
                 "size": 44209
             }
-            ]""".encode(
-            "utf8"
+            ]""",
         )
-    if "getBuild" in args[0]:
-        return """
+    elif "getBuild" in args[0]:
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             {
             "package_name": "net.oauth.core-oauth",
             "extra": null,
@@ -345,15 +382,17 @@ def brew_call_ok(*args, **kwargs):
             "volume_name": "rhel-7",
             "release": "1"
             }
-            """.encode(
-            "utf8"
+            """,
         )
-    return "".encode("utf8")
+    return subprocess.CompletedProcess(args[0], 0, "")
 
 
-def brew_call_ok_with_dot(*args, **kwargs):
+def brew_call_ok_with_dot(*args, **kwargs) -> subprocess.CompletedProcess:
     if "listArchives" in args[0]:
-        return """
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             [
             {
                 "build_id": 410568,
@@ -375,11 +414,13 @@ def brew_call_ok_with_dot(*args, **kwargs):
                 "id": 863130,
                 "size": 85147
             }
-            ]""".encode(
-            "utf8"
+            ]""",
         )
-    if "getBuild" in args[0]:
-        return """
+    elif "getBuild" in args[0]:
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
             {
             "package_name": "org.glassfish-javax.json",
             "extra": null,
@@ -406,15 +447,17 @@ def brew_call_ok_with_dot(*args, **kwargs):
             "volume_name": "rhel-7",
             "release": "1"
             }
-            """.encode(
-            "utf8"
+            """,
         )
-    return "".encode("utf8")
+    return subprocess.CompletedProcess(args[0], 0, "")
 
 
-def brew_call_removed(*args, **kwargs):
+def brew_call_removed(*args, **kwargs) -> subprocess.CompletedProcess:
     if "listArchives" in args[0]:
-        return """
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
         [
           {
             "build_id": "build_id",
@@ -423,24 +466,79 @@ def brew_call_removed(*args, **kwargs):
             "artifact_id": "artifact_id",
             "version": "version",
           }
-        ]""".encode(
-            "utf8"
+        ]""",
         )
-    if "getBuild" in args[0]:
-        return """
+    elif "getBuild" in args[0]:
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            """
         {
           "package_name": "package_name",
           "release": "release",
           "state": 2
         }
-        """.encode(
-            "utf8"
+        """,
         )
-    return "".encode("utf8")
+    return subprocess.CompletedProcess(args[0], 0, "")
+
+
+@mock.patch.dict(
+    os.environ, {"REGISTRY_AUTH_FILE": "/tmp/e790b157-5023-47f5-b4ec-103b8985be0f.json"}
+)
+def test_get_image_version_with_registry(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("subprocess.run", side_effect=skopeo_call_ok)
+    image = tools.get_latest_image_version("registry.fedoraproject.org/firefox")
+    print(caplog.text)
+    assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
+    assert (
+        "Found new tag stable-3620220517114827.1 for registry.fedoraproject.org/firefox"
+        in caplog.text
+    )
+    assert "authfile /tmp/e790b157-5023-47f5-b4ec-103b8985be0f.json" in caplog.text
+
+
+def test_get_image_version(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("subprocess.run", side_effect=skopeo_call_ok)
+    image = tools.get_latest_image_version("registry.fedoraproject.org/firefox")
+    assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
+    assert (
+        "Found new tag stable-3620220517114827.1 for registry.fedoraproject.org/firefox"
+        in caplog.text
+    )
+
+
+def test_get_image_version_with_floating(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("subprocess.run", side_effect=skopeo_call_ok)
+    image = tools.get_latest_image_version("registry.fedoraproject.org/firefox:latest")
+    assert image == "registry.fedoraproject.org/firefox:stable-3620220517114827.1"
+    assert (
+        "Found new tag stable-3620220517114827.1 for registry.fedoraproject.org/firefox"
+        in caplog.text
+    )
+
+
+@pytest.mark.skipif(
+    platform.system() == "Darwin", reason="Disabled on macOS, cannot run skopeo"
+)
+def test_get_image_version_fails(caplog):
+    with pytest.raises(CekitError) as excinfo:
+        tools.get_latest_image_version("registry.fedoraproject.org/firefoxnotexist")
+    assert (
+        "reading manifest latest in registry.fedoraproject.org/firefoxnotexist: manifest unknown"
+        in caplog.text
+    )
+    assert (
+        "Could not inspect container registry.fedoraproject.org/firefoxnotexist"
+        in str(excinfo.value)
+    )
 
 
 def test_get_brew_url(mocker):
-    mocker.patch("subprocess.check_output", side_effect=brew_call_ok)
+    mocker.patch("subprocess.run", side_effect=brew_call_ok)
     url = tools.get_brew_url("aa")
     assert (
         url
@@ -449,7 +547,7 @@ def test_get_brew_url(mocker):
 
 
 def test_get_brew_url_when_build_was_removed(mocker):
-    mocker.patch("subprocess.check_output", side_effect=brew_call_removed)
+    mocker.patch("subprocess.run", side_effect=brew_call_removed)
 
     with pytest.raises(CekitError) as excinfo:
         tools.get_brew_url("aa")
@@ -469,7 +567,7 @@ def test_get_brew_url_no_kerberos(mocker, caplog):
         "2019-05-06 14:58:44,502 [ERROR] koji: AuthError: unable to obtain a session"
     )
 
-    mocker.patch("subprocess.check_output", side_effect=kerberos_error)
+    mocker.patch("subprocess.run", side_effect=kerberos_error)
 
     with pytest.raises(CekitError) as excinfo:
         tools.get_brew_url("aa")
@@ -483,7 +581,7 @@ def test_get_brew_url_no_kerberos(mocker, caplog):
 
 # https://github.com/cekit/cekit/issues/531
 def test_get_brew_url_with_artifact_containing_dot(mocker):
-    mocker.patch("subprocess.check_output", side_effect=brew_call_ok_with_dot)
+    mocker.patch("subprocess.run", side_effect=brew_call_ok_with_dot)
     url = tools.get_brew_url("aa")
     assert (
         url
@@ -751,3 +849,29 @@ def test_handle_core_dependencies_with_certifi(mocker, caplog):
         in caplog.text
     )
     assert "Certificate Authority (CA) bundle in use: 'a/path.pem'" in caplog.text
+
+
+def test_run_wrapper_whitespace() -> None:
+    result = run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], True)
+    assert result.stdout == "true"
+    assert result.returncode == 0
+
+
+def test_run_wrapper_no_capture() -> None:
+    result = run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], False)
+    assert result.stdout is None
+    assert result.returncode == 0
+
+
+def test_run_wrapper_capture_error(tmpdir) -> None:
+    with Chdir(str(tmpdir)):
+        # Under tox, the tmpdir is inside the cloned CEKit so create a fake
+        # file to break git.
+        with open(".git", "w") as f:
+            f.write("break git")
+        result = run_wrapper(
+            ["git", "rev-parse", "--is-inside-work-tree"], True, check=False
+        )
+        assert result.stdout == ""
+        assert not result.stderr.endswith("\n")
+        assert result.returncode == 128

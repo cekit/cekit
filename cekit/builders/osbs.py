@@ -20,7 +20,7 @@ from cekit.descriptor.resource import (
     _UrlResource,
 )
 from cekit.errors import CekitError
-from cekit.tools import Chdir, copy_recursively
+from cekit.tools import Chdir, copy_recursively, run_wrapper
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -224,19 +224,14 @@ class OSBSBuilder(Builder):
         }
 
         # Get information about the task
-        try:
-            json_info = (
-                subprocess.check_output(
-                    [self._koji, "call", "--json-output", "getTaskInfo", task_id]
-                )
-                .strip()
-                .decode("utf8")
-            )
-        except subprocess.CalledProcessError as ex:
-            raise CekitError("Could not check the task {} result".format(task_id), ex)
+        result = run_wrapper(
+            [self._koji, "call", "--json-output", "getTaskInfo", task_id],
+            True,
+            f"Could not check the task {task_id} result",
+        )
 
         # Parse the returned JSON
-        info = json.loads(json_info)
+        info = json.loads(result.stdout)
 
         # Task is closed which means that it was successfully finished
         if info["state"] == states["closed"]:
@@ -280,9 +275,8 @@ class OSBSBuilder(Builder):
             cmd += ["--user", self.params.user]
         cmd += ["new-sources"] + cache_artifacts
 
-        LOGGER.debug("Executing '{}'".format(cmd))
         with Chdir(self.dist_git_dir):
-            subprocess.check_output(cmd)
+            run_wrapper(cmd, False)
 
         LOGGER.info("Update finished.")
 
@@ -302,17 +296,13 @@ class OSBSBuilder(Builder):
 
         with Chdir(self.dist_git_dir):
             # Get the url of the repository
-            url = (
-                subprocess.check_output(["git", "config", "--get", "remote.origin.url"])
-                .strip()
-                .decode("utf8")
-            )
+            url = run_wrapper(
+                ["git", "config", "--get", "remote.origin.url"], True
+            ).stdout
+
             # Get the latest commit hash
-            commit = (
-                subprocess.check_output(["git", "rev-parse", "HEAD"])
-                .strip()
-                .decode("utf8")
-            )
+            commit = run_wrapper(["git", "rev-parse", "HEAD"], True).stdout
+
             # Parse the dist-git repository url
             url = urlparse(url)
             # Construct the url again, with a hash and removed username and password, if any
@@ -346,7 +336,7 @@ class OSBSBuilder(Builder):
                     "Executing {} container build in OSBS...".format(build_type)
                 )
 
-                task_id = subprocess.check_output(cmd).strip().decode("utf8")
+                task_id = run_wrapper(cmd, True).stdout
 
                 LOGGER.info(
                     "Task {0} was submitted, you can watch the progress here: {1}/taskinfo?taskID={0}".format(
@@ -370,32 +360,21 @@ class DistGit(object):
 
         with Chdir(path):
             if (
-                subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
-                .strip()
-                .decode("utf8")
+                run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], True).stdout
                 != "true"
             ):
-
                 raise Exception(
                     "Directory {} doesn't seem to be a git repository. "
                     "Please make sure you specified correct path.".format(path)
                 )
 
             name = os.path.basename(
-                subprocess.check_output(["git", "rev-parse", "--show-toplevel"])
-                .strip()
-                .decode("utf8")
+                run_wrapper(["git", "rev-parse", "--show-toplevel"], True).stdout
             )
-            branch = (
-                subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
-                .strip()
-                .decode("utf8")
-            )
-            commit = (
-                subprocess.check_output(["git", "rev-parse", "HEAD"])
-                .strip()
-                .decode("utf8")
-            )
+            branch = run_wrapper(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], True
+            ).stdout
+            commit = run_wrapper(["git", "rev-parse", "HEAD"], True).stdout
 
         return name, branch, commit
 
@@ -417,7 +396,9 @@ class DistGit(object):
     def stage_modified(self):
         # Check if there are any files in stage (return code 1). If there are no files
         # (return code 0) it means that this is a rebuild, so skip committing
-        if subprocess.call(["git", "diff-index", "--quiet", "--cached", "HEAD"]):
+        if run_wrapper(
+            ["git", "diff-index", "--quiet", "--cached", "HEAD"], False, check=False
+        ).returncode:
             return True
 
         return False
@@ -426,15 +407,15 @@ class DistGit(object):
         if os.path.exists(self.output):
             with Chdir(self.output):
                 LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
-                subprocess.check_call(["git", "fetch"])
+                run_wrapper(["git", "fetch"], False)
                 LOGGER.debug("Checking out {} branch...".format(self.branch))
-                subprocess.check_call(["git", "checkout", "-f", self.branch])
+                run_wrapper(["git", "checkout", "-f", self.branch], False)
                 LOGGER.debug("Resetting branch...")
-                subprocess.check_call(
-                    ["git", "reset", "--hard", "origin/%s" % self.branch]
+                run_wrapper(
+                    ["git", "reset", "--hard", "origin/%s" % self.branch], False
                 )
                 LOGGER.debug("Removing any untracked files or directories...")
-                subprocess.check_call(["git", "clean", "-fdx"])
+                run_wrapper(["git", "clean", "-fdx"], False)
             LOGGER.debug("Changes pulled")
         else:
             LOGGER.info(
@@ -452,7 +433,7 @@ class DistGit(object):
                 cmd += ["--user", user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
             LOGGER.debug("Cloning: '{}'".format(" ".join(cmd)))
-            subprocess.check_call(cmd)
+            run_wrapper(cmd, False)
             LOGGER.debug("Repository {} cloned".format(self.repo))
 
     def clean(self, artifacts):
@@ -467,33 +448,28 @@ class DistGit(object):
                 directory_artifacts.append(artifact)
 
         with Chdir(self.output):
-            git_files = (
-                subprocess.check_output(["git", "ls-files", "."])
-                .strip()
-                .decode("utf8")
-                .splitlines()
-            )
+            git_files = run_wrapper(["git", "ls-files", "."], True).stdout.splitlines()
 
             for d in ["repos", "modules"] + directory_artifacts:
                 LOGGER.info("Removing old '{}' directory".format(d))
                 shutil.rmtree(d, ignore_errors=True)
 
                 if d in git_files:
-                    subprocess.check_call(["git", "rm", "-rf", d])
+                    run_wrapper(["git", "rm", "-rf", d], False)
 
             if os.path.exists(self.osbs_extra):
                 LOGGER.info(
                     "Removing old osbs extra directory : {}".format(self.osbs_extra)
                 )
-                subprocess.check_call(["git", "rm", "-rf", self.osbs_extra])
+                run_wrapper(["git", "rm", "-rf", self.osbs_extra], False)
 
             if os.path.exists("fetch-artifacts-url.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-url.yaml' file")
-                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-url.yaml"])
+                run_wrapper(["git", "rm", "-rf", "fetch-artifacts-url.yaml"], False)
 
             if os.path.exists("fetch-artifacts-pnc.yaml"):
                 LOGGER.info("Removing old 'fetch-artifacts-pnc.yaml' file")
-                subprocess.check_call(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"])
+                run_wrapper(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"], False)
 
     def add(self, artifacts):
         LOGGER.debug("Adding files to git stage...")
@@ -512,7 +488,7 @@ class DistGit(object):
 
             LOGGER.debug("Staging '{}'...".format(obj))
 
-            subprocess.check_call(["git", "add", "--all", obj])
+            run_wrapper(["git", "add", "--all", obj], False)
 
     def commit(self, commit_msg):
         if not commit_msg:
@@ -526,12 +502,10 @@ class DistGit(object):
 
         # Commit the change
         LOGGER.info("Committing with message: '{}'".format(commit_msg))
-        subprocess.check_call(["git", "commit", "-q", "-m", commit_msg])
-
-        untracked = subprocess.check_output(
-            ["git", "ls-files", "--others", "--exclude-standard"]
-        ).decode("utf8")
-
+        run_wrapper(["git", "commit", "-q", "-m", commit_msg], False)
+        untracked = run_wrapper(
+            ["git", "ls-files", "--others", "--exclude-standard"], True
+        ).stdout
         if untracked:
             LOGGER.warning(
                 "There are following untracked files: {}. Please review your commit.".format(
@@ -539,10 +513,7 @@ class DistGit(object):
                 )
             )
 
-        diffs = subprocess.check_output(["git", "diff-files", "--name-only"]).decode(
-            "utf8"
-        )
-
+        diffs = run_wrapper(["git", "diff-files", "--name-only"], True).stdout
         if diffs:
             LOGGER.warning(
                 "There are uncommitted changes in following files: '{}'. "
@@ -550,8 +521,8 @@ class DistGit(object):
             )
 
         if not self.noninteractive:
-            subprocess.call(["git", "status"])
-            subprocess.call(["git", "show"])
+            run_wrapper(["git", "status"], False)
+            run_wrapper(["git", "show"], False)
 
         if not (self.noninteractive or tools.decision("Are you ok with the changes?")):
             LOGGER.info(
@@ -573,7 +544,7 @@ class DistGit(object):
             LOGGER.info("Pushing change to the upstream repository...")
             cmd = ["git", "push", "-q", "origin", self.branch]
             LOGGER.debug("Running command '{}'".format(" ".join(cmd)))
-            subprocess.check_call(cmd)
+            run_wrapper(cmd, False)
             LOGGER.info("Change pushed.")
         else:
             LOGGER.info("Changes are not pushed, exiting")

@@ -33,7 +33,7 @@ class OSBSGenerator(Generator):
             lambda contents, file, **kwargs: file.write(contents), "gating.yaml"
         )
 
-    def generate(self, builder):
+    def generate(self):
         # If extra directory exists (by default named 'osbs_extra') next to
         # the image descriptor, copy it contents to the target directory.
         #
@@ -44,7 +44,7 @@ class OSBSGenerator(Generator):
             ),
             os.path.join(self.target, os.path.join("image", self.image.osbs.extra_dir)),
         )
-        super(OSBSGenerator, self).generate(builder)
+        super(OSBSGenerator, self).generate()
 
     def _prepare_content_sets(self, content_sets):
         content_sets_f = os.path.join(self.target, "image", "content_sets.yml")
@@ -91,10 +91,6 @@ class OSBSGenerator(Generator):
             os.makedirs(os.path.dirname(config_path))
         with open(config_path, "w") as _file:
             writer(all_configs[0], _file, default_flow_style=False)
-
-    def _prepare_repository_rpm(self, repo):
-        # no special handling is needed here, everything is in template
-        pass
 
     def prepare_artifacts(self):
         """Goes through artifacts section of image descriptor

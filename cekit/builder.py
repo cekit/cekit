@@ -106,7 +106,7 @@ class Builder(Command):
         self.generator.init()
 
     def generate(self):
-        self.generator.generate(self.build_engine)
+        self.generator.generate()
 
     def before_build(self):
         LOGGER.debug("Checking CEKit build dependencies...")

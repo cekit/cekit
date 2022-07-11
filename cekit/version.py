@@ -1,2 +1,2 @@
-__version__ = "4.1.1"
-schema_version = 2
+__version__ = "4.2.0"
+schema_version = 1

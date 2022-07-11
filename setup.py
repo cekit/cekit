@@ -22,7 +22,7 @@ setup(
     author="CEKit team",
     author_email="cekit@cekit.io",
     description="Container image creation tool",
-    long_description=codecs.open("README.rst", encoding="utf8").read(),
+    long_description=codecs.open("README.rst", encoding="utf-8").read(),
     license="MIT",
     entry_points={
         "console_scripts": ["cekit=cekit.cli:cli", "cekit-cache=cekit.cache.cli:cli"],

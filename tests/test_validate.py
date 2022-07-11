@@ -1,7 +1,6 @@
 import os
 import platform
 import shutil
-import subprocess
 import sys
 import uuid
 
@@ -60,15 +59,6 @@ simple_image_descriptor = {
     "version": "1.0",
 }
 
-feature_label_test = """
-@test
-Feature: Test test
-
-  Scenario: Check label foo
-    When container is started as uid 0 with process sleep
-    then the image should contain label foo with value bar
-"""
-
 feature_label_test_overriden = """
 @test
 Feature: Test test
@@ -80,7 +70,6 @@ Feature: Test test
 
 
 def run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor):
-    mocker.patch.object(subprocess, "check_output", return_value=odcs_fake_resp)
     mocker.patch.object(Repository, "fetch")
 
     copy_repos(image_dir)
@@ -271,31 +260,6 @@ def test_simple_image_build(tmpdir):
     run_cekit(image_dir, ["-v", "build", "podman"])
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
-)
-@pytest.mark.skipif(
-    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
-)
-def test_simple_image_test(tmpdir):
-    image_dir = str(tmpdir.mkdir("source"))
-    copy_repos(image_dir)
-
-    feature_files = os.path.join(image_dir, "tests", "features", "test.feature")
-
-    os.makedirs(os.path.dirname(feature_files))
-
-    with open(feature_files, "w") as fd:
-        fd.write(feature_label_test)
-
-    with open(os.path.join(image_dir, "image.yaml"), "w") as fd:
-        yaml.dump(image_descriptor, fd, default_flow_style=False)
-
-    run_cekit(image_dir, ["-v", "test", "--image", "test/image:1.0", "behave"])
-
-    assert not os.path.exists(os.path.join(image_dir, "target", "image", "Dockerfile"))
-
-
 def test_image_generate_with_multiple_overrides(tmpdir):
     override1 = "{'labels': [{'name': 'foo', 'value': 'bar'}]}"
 
@@ -367,7 +331,6 @@ def test_image_test_with_override(tmpdir):
         image_dir, ["-v", "build", "--overrides-file", "overrides.yaml", "docker"]
     )
 
-    effective_image = {}
     with open(os.path.join(image_dir, "target", "image.yaml"), "r") as file_:
         effective_image = yaml.safe_load(file_)
 

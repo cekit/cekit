@@ -36,7 +36,7 @@ jobs:
       if: startsWith(matrix.os,'ubuntu')
       run: |
         sudo apt-get update
-        sudo apt-get -y install libkrb5-dev software-properties-common containerd runc podman docker.io
+        sudo apt-get -y install libkrb5-dev software-properties-common containerd runc podman docker.io skopeo
         # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
         sudo systemctl unmask docker
         sudo systemctl start docker

@@ -1,10 +1,11 @@
+import importlib
 import logging
 import os
 import shutil
 import ssl
 import subprocess
-import sys
 from distutils import dir_util
+from typing import Mapping, Sequence
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
@@ -33,7 +34,7 @@ class Map(dict):
 SafeRepresenter.add_representer(Map, SafeRepresenter.represent_dict)
 
 
-def download_file(url, destination):
+def download_file(url: str, destination: str) -> None:
     logger.debug("Downloading from '{}' as {}".format(url, destination))
 
     parsed_url = urlparse(url)
@@ -93,7 +94,7 @@ def download_file(url, destination):
         raise CekitError("Unsupported URL scheme: {}".format(url))
 
 
-def load_descriptor(descriptor):
+def load_descriptor(descriptor: str) -> dict:
     """parses descriptor and validate it against requested schema type
 
     Args:
@@ -136,7 +137,61 @@ def decision(question):
     return click.confirm(question, show_default=True)
 
 
-def get_brew_url(md5):
+def get_latest_image_version(image: str) -> str:
+    inspect_cmd = [
+        "/usr/bin/skopeo",
+        "inspect",
+        "--config",
+        f"docker://{image}",
+    ]
+    auth = os.getenv("REGISTRY_AUTH_FILE")
+    if auth:
+        inspect_cmd.extend(["--authfile", auth])
+
+    result = run_wrapper(inspect_cmd, True, f"Could not inspect container {image}")
+    inspect_json = yaml.safe_load(result.stdout)["config"]
+    tag = get_tag_from_inspect_struct(inspect_json)
+    logger.debug(f"Found new tag {tag} for {image}")
+    return f'{image.split(":")[0]}:{tag}'
+
+
+def get_tag_from_inspect_struct(struct: Mapping) -> str:
+    """Get the tag of a component from it's inspect struct
+
+    An inspect struct is the parsed output of 'skopeo inspect'
+    Generally it's a dict that contains a 'Labels' key that maps
+    to a dict.
+
+    Given the nvr "ubi8-minimal-8.1-279", the resulting tag will be
+    "8.1-279".
+
+    :param struct: Information about a container image.
+
+    :return: The tag of the component.
+    """
+    labels = struct.get("Labels")
+    if not isinstance(labels, Mapping):
+        raise CekitError("Labels dict was not found in {}".format(struct))
+
+    required_labels = {}
+    missing_labels = []
+    for label in ("version", "release"):
+        if labels.get(label):
+            required_labels[label] = labels[label]
+        else:
+            missing_labels.append(label)
+
+    if missing_labels:
+        raise CekitError(
+            "The following labels, for image {}, were not set or empty".format(
+                missing_labels
+            )
+        )
+
+    return "{version}-{release}".format(**required_labels)
+
+
+def get_brew_url(md5: str) -> str:
     logger.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
     list_archives_cmd = [
         "/usr/bin/brew",
@@ -146,20 +201,25 @@ def get_brew_url(md5):
         "checksum={}".format(md5),
         "type=maven",
     ]
-    logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
 
+    logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
     try:
-        json_archives = (
-            subprocess.check_output(list_archives_cmd).strip().decode("utf8")
+        result = subprocess.run(
+            list_archives_cmd, capture_output=True, check=True, text=True
         )
     except subprocess.CalledProcessError as ex:
+        logger.error(
+            "{} Command stdout is '{}' with stderr '{}'".format(
+                ex, ex.stdout, ex.stderr
+            )
+        )
         if ex.output is not None and "AuthError" in ex.output:
             logger.warning(
                 "Brew authentication failed, please make sure you have a valid Kerberos ticket"
             )
         raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
 
-    archives = yaml.safe_load(json_archives)
+    archives = yaml.safe_load(result.stdout)
 
     if not archives:
         raise CekitError(
@@ -181,19 +241,10 @@ def get_brew_url(md5):
         "buildInfo={}".format(build_id),
     ]
 
-    logger.debug("Executing '{}'".format(" ".join(get_build_cmd)))
-
-    try:
-        json_build = subprocess.check_output(get_build_cmd).strip().decode("utf8")
-    except subprocess.CalledProcessError as ex:
-        logger.error(
-            "{} Command stdout is '{}' with stderr '{}'".format(
-                ex, ex.stdout, ex.stderr
-            )
-        )
-        raise CekitError("Could not fetch build {} from Brew".format(build_id), ex)
-
-    build = yaml.safe_load(json_build)
+    result = run_wrapper(
+        get_build_cmd, True, f"Could not fetch build {build_id} from Brew"
+    )
+    build = yaml.safe_load(result.stdout)
 
     build_states = ["BUILDING", "COMPLETE", "DELETED", "FAILED", "CANCELED"]
 
@@ -233,7 +284,7 @@ def get_brew_url(md5):
     )
 
 
-def copy_recursively(source_directory, destination_directory):
+def copy_recursively(source_directory: str, destination_directory: str) -> None:
     """
     Copies contents of a directory to selected target location (also a directory).
     the specific source file to destination.
@@ -266,6 +317,54 @@ def copy_recursively(source_directory, destination_directory):
             dir_util.copy_tree(src, dst, preserve_symlinks=True)
         else:
             shutil.copy2(src, dst)
+
+
+def run_wrapper(
+    cmd: Sequence[str],
+    capture_output: bool,
+    exception_message: str = "Exception running subprocess",
+    check: bool = True,
+) -> subprocess.CompletedProcess:
+    """
+    Useful wrapper around subprocess.run
+
+    :param cmd: The command to execute
+    :param capture_output: Whether to capture the output or not
+    :param exception_message: An optional detailed exception message
+    :param check: Whether to check the return code (defaults to True)
+    :return: a CompletedProcess object
+    """
+    logger.debug("Executing '{}'.".format(" ".join(cmd)))
+    try:
+        # While it would be nicer to use
+        #   result = subprocess.run(
+        #        cmd, capture_output=capture_output, check=check, text=True
+        #   )
+        # capture_output and text are not available on Python 3.6
+        stdout_capture = None
+        stderr_capture = None
+        if capture_output:
+            stdout_capture = subprocess.PIPE
+            stderr_capture = subprocess.PIPE
+        result = subprocess.run(
+            cmd,
+            stdout=stdout_capture,
+            stderr=stderr_capture,
+            check=check,
+            universal_newlines=True,
+        )
+    except subprocess.CalledProcessError as ex:
+        logger.error(
+            "{} Command stdout is '{}' with stderr '{}'".format(
+                ex, ex.stdout, ex.stderr
+            )
+        )
+        raise CekitError(exception_message, ex)
+    if result.stdout:
+        result.stdout = result.stdout.strip()
+    if result.stderr:
+        result.stderr = result.stderr.strip()
+    return result
 
 
 class Chdir(object):
@@ -431,19 +530,8 @@ class DependencyHandler(object):
     def _check_for_library(self, library):
         library_found = False
 
-        if sys.version_info[0] < 3:
-            import imp
-
-            try:
-                imp.find_module(library)
-                library_found = True
-            except ImportError:
-                pass
-        else:
-            import importlib
-
-            if importlib.util.find_spec(library):
-                library_found = True
+        if importlib.util.find_spec(library):
+            library_found = True
 
         return library_found
 
