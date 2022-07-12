@@ -26,7 +26,7 @@ Fedora
 -------------------
 
 .. note::
-    Supported versions: 34+.
+    Supported versions: 35+.
 
 CEKit is available from regular Fedora repositories.
 
@@ -46,6 +46,17 @@ CEKit is available from the `EPEL repository <https://fedoraproject.org/wiki/EPE
 
     yum install epel-release
     yum install cekit
+
+.. note::
+
+   ``odcs-client`` is a runtime requirement when using ``content_sets`` but it is
+   not available under Python 3 as an RPM for EPEL 7. Therefore the
+   recommendation is to install it via Pip e.g.
+   ::
+
+      yum install python3-devel gcc krb5-devel
+      pip install odcs
+
 
 Other systems
 -------------------

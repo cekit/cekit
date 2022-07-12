@@ -2,7 +2,12 @@ import logging
 import os
 import sys
 
-import colorlog
+# CentOS 7 does not have colorlog RPM for Python3
+no_color = False
+try:
+    import colorlog
+except ImportError:
+    no_color = True
 
 
 # Source: http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
@@ -26,7 +31,7 @@ def setup_logging(color=True):
     handler_out.addFilter(SingleLevelFilter(logging.INFO, False))
     handler_err.addFilter(SingleLevelFilter(logging.INFO, True))
 
-    if not color or os.environ.get("NO_COLOR"):
+    if no_color or not color or os.environ.get("NO_COLOR"):
         formatter = logging.Formatter(
             "%(asctime)s %(filename)s:%(lineno)-10s %(levelname)-5s %(message)s"
         )
