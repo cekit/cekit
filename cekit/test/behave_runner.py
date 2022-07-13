@@ -23,8 +23,7 @@ class BehaveTestRunner(object):
 
         deps["python-behave"] = {
             "library": "behave",
-            "package": "python2-behave",
-            "fedora": {"package": "python3-behave"},
+            "package": "python3-behave",
         }
 
         return deps

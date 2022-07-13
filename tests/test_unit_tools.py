@@ -590,7 +590,27 @@ def test_get_brew_url_with_artifact_containing_dot(mocker):
 
 
 @contextmanager
-def mocked_dependency_handler(mocker, data="ID=fedora\nNAME=somefedora\nVERSION=123"):
+def mocked_dependency_handler_centos(
+    mocker, data="ID=centos\nNAME=somecentos\nVERSION=7 (Core)\nVERSION_ID=7"
+):
+    dh = None
+
+    with mocker.mock_module.patch("cekit.tools.os.path.exists") as exists_mock:
+        exists_mock.return_value = True
+        with mocker.mock_module.patch(
+            "cekit.tools.open", mocker.mock_open(read_data=data)
+        ):
+            dh = tools.DependencyHandler()
+    try:
+        yield dh
+    finally:
+        pass
+
+
+@contextmanager
+def mocked_dependency_handler(
+    mocker, data="ID=fedora\nNAME=somefedora\nVERSION=123 (Test)\nVERSION_ID=123"
+):
     dh = None
 
     with mocker.mock_module.patch("cekit.tools.os.path.exists") as exists_mock:
@@ -746,6 +766,33 @@ def test_dependency_handler_handle_dependencies_with_executable_and_package_on_k
 
         handler._check_for_executable.assert_called_once_with(
             "xyz", "xyz-aaa", "python-xyz-aaa"
+        )
+
+    assert "Checking if 'xyz' dependency is provided..." in caplog.text
+    assert "All dependencies provided!" in caplog.text
+
+
+def test_dependency_handler_handle_dependencies_with_platform_and_version_specific_package(
+    mocker, caplog
+):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    deps = {}
+
+    deps["xyz"] = {
+        "executable": "xyz-aaa",
+        "package": "python-xyz-aaa",
+        "centos7": {"package": "python-centos-xyz-aaa"},
+    }
+
+    with mocked_dependency_handler_centos(mocker) as handler:
+        mocker.patch.object(handler, "_check_for_executable")
+        mocker.spy(handler, "_check_for_executable")
+        handler._handle_dependencies(deps)
+
+        print(caplog.text)
+        handler._check_for_executable.assert_called_once_with(
+            "xyz", "xyz-aaa", "python-centos-xyz-aaa"
         )
 
     assert "Checking if 'xyz' dependency is provided..." in caplog.text

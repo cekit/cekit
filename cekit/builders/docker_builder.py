@@ -53,8 +53,8 @@ class DockerBuilder(Builder):
 
         deps["python-docker"] = {
             "library": "docker",
-            "package": "python-docker-py",
-            "fedora": {"package": "python3-docker"},
+            "package": "python3-docker",
+            "centos7": {"package": "python36-docker"},
         }
 
         if params is not None and not params.no_squash:
