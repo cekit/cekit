@@ -38,7 +38,7 @@ CentOS / RHEL
 -------------------
 
 .. note::
-    Supported versions: 7.x
+    Supported versions: 7.x, 8.x
 
 CEKit is available from the `EPEL repository <https://fedoraproject.org/wiki/EPEL>`_.
 

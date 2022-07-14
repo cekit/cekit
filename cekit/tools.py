@@ -4,7 +4,7 @@ import os
 import shutil
 import ssl
 import subprocess
-from distutils import dir_util
+import sys
 from typing import Mapping, Sequence
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -312,9 +312,14 @@ def copy_recursively(source_directory: str, destination_directory: str) -> None:
         if os.path.islink(src):
             os.symlink(os.readlink(src), dst)
         elif os.path.isdir(src):
-            # Prefer dir_util over shutil as it doesn't throw an exception for existing
-            # directories (which we can't handle on pre Python 3.8 versions)
-            dir_util.copy_tree(src, dst, preserve_symlinks=True)
+            if sys.version_info[1] < 8:
+                # Under pre Python 3.8 prefer dir_util over shutil as it doesn't throw an
+                # exception for existing directories.
+                from distutils import dir_util
+
+                dir_util.copy_tree(src, dst, preserve_symlinks=True)
+            else:
+                shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True)
         else:
             shutil.copy2(src, dst)
 
