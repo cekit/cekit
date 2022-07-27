@@ -9,3 +9,4 @@ to succeed with CEKit.
 
     merging
     versioning
+    image_order

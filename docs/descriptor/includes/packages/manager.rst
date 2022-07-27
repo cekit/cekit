@@ -15,6 +15,10 @@ Currently available options are ``yum``, ``dnf``, ``microdnf``, ``apt-get`` and 
     If you do not specify this key the default value is ``yum``.
     If your image requires different package manager you need to specify it.
 
+    It is only possible to define a single package manager for an image (although multi-stage images may have
+    different package managers). A package manager may be defined in a module or in an image (the latter takes
+    precedence).
+
     The default ``yum`` value will work fine on Fedora and RHEL images because
     OS maintains a symlink to the proper package manager.
 
