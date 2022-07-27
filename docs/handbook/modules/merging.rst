@@ -7,6 +7,7 @@ Module processing
 .. note::
     This chapter applies to :doc:`builder engines </handbook/building/builder-engines>` that use Dockerfile as the input.
 
+
 Understanding how modules are merged together is important. This knowledge will let you
 introduce modules that work better together and make rebuilds faster which is an important
 aspect of the image and module development.
@@ -93,6 +94,11 @@ would slow subsequent package manager executions. You should also not worry abou
 because every image is squashed (depends on builder though).
 
 Package installation is executed as ``root`` user.
+
+.. note::
+    It is only possible to define a single package manager for an image (although multi-stage images may have
+    different package managers). A package manager may be defined in a module or in an image (the latter takes
+    precedence).
 
 Environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^
