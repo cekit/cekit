@@ -18,7 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
-        os: [macos-latest, ubuntu-20.04]
+        os: [macos-latest, ubuntu-20.04, ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+          - container: "fedora:35"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
