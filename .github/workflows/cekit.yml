@@ -21,7 +21,7 @@ jobs:
         os: [macos-latest, ubuntu-20.04, ubuntu-latest]
         include:
           - os: ubuntu-latest
-          - container: "fedora:35"
+            container: "fedora:35"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
