@@ -388,6 +388,7 @@ class Image(Descriptor):
         self.packages._descriptor["repositories"] = list(
             self._package_repositories.values()
         )
+
         # final 'run' value
         if self.run:
             self.run = self.run.merge(self._module_run)
@@ -396,7 +397,7 @@ class Image(Descriptor):
 
     def process_install_list(
         self, source, to_install_list, install_list, module_registry
-    ):
+    ) -> None:
         module_overrides = self._image_overrides["modules"]
         artifact_overrides = self._image_overrides["artifacts"]
         for to_install in to_install_list:
@@ -456,6 +457,13 @@ class Image(Descriptor):
                 name = repo.name
                 if name not in self._package_repositories:
                     self._package_repositories[name] = repo
+
+            # collect package manager
+            if not self.packages.manager and module.packages.manager:
+                logger.debug(
+                    f"Applying module package manager of {module.packages.manager} to image"
+                )
+                self.packages._descriptor["manager"] = module.packages.manager
 
             # incorporate run specification contributed by module
             if module.run:

@@ -4,7 +4,7 @@ import os
 import shutil
 import ssl
 import subprocess
-from distutils import dir_util
+import sys
 from typing import Mapping, Sequence
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -312,9 +312,14 @@ def copy_recursively(source_directory: str, destination_directory: str) -> None:
         if os.path.islink(src):
             os.symlink(os.readlink(src), dst)
         elif os.path.isdir(src):
-            # Prefer dir_util over shutil as it doesn't throw an exception for existing
-            # directories (which we can't handle on pre Python 3.8 versions)
-            dir_util.copy_tree(src, dst, preserve_symlinks=True)
+            if sys.version_info[1] < 8:
+                # Under pre Python 3.8 prefer dir_util over shutil as it doesn't throw an
+                # exception for existing directories.
+                from distutils import dir_util
+
+                dir_util.copy_tree(src, dst, preserve_symlinks=True)
+            else:
+                shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True)
         else:
             shutil.copy2(src, dst)
 
@@ -400,6 +405,7 @@ class DependencyHandler(object):
     def __init__(self):
         self.os_release = {}
         self.platform = None
+        self.version = None
 
         os_release_path = "/etc/os-release"
 
@@ -425,6 +431,7 @@ class DependencyHandler(object):
             or "ID" not in self.os_release
             or "NAME" not in self.os_release
             or "VERSION" not in self.os_release
+            or "VERSION_ID" not in self.os_release
         ):
             logger.warning(
                 "You are running CEKit on an unknown platform. External dependencies suggestions may not work!"
@@ -432,6 +439,7 @@ class DependencyHandler(object):
             return
 
         self.platform = self.os_release["ID"]
+        self.version = self.os_release["VERSION_ID"]
 
         if self.os_release["ID"] not in DependencyHandler.KNOWN_OPERATING_SYSTEMS:
             logger.warning(
@@ -448,7 +456,7 @@ class DependencyHandler(object):
             )
         )
 
-    def _handle_dependencies(self, dependencies):
+    def _handle_dependencies(self, dependencies: dict) -> None:
         """
         The dependencies provided is expected to be a dict in following format:
 
@@ -456,7 +464,7 @@ class DependencyHandler(object):
             PACKAGE_ID: { 'package': PACKAGE_NAME, 'command': COMMAND_TO_TEST_FOR_PACKACGE_EXISTENCE },
         }
 
-        Additionally every package can contain platform specific information, for example:
+        Additionally, every package can contain platform specific information, for example:
 
         {
             'git': {
@@ -470,6 +478,7 @@ class DependencyHandler(object):
 
         If the platform on which CEKit is currently running is available, it takes precedence before
         defaults.
+        The platform may be a simple name like e.g. 'fedora' or combined with the OS version e.g. 'centos7'
         """
 
         if not dependencies:
@@ -487,6 +496,13 @@ class DependencyHandler(object):
                 package = current_dependency[self.platform].get("package", package)
                 library = current_dependency[self.platform].get("library", library)
                 executable = current_dependency[self.platform].get(
+                    "executable", executable
+                )
+            platform_release = f"{self.platform}{self.version}"
+            if platform_release in current_dependency:
+                package = current_dependency[platform_release].get("package", package)
+                library = current_dependency[platform_release].get("library", library)
+                executable = current_dependency[platform_release].get(
                     "executable", executable
                 )
 
@@ -527,6 +543,7 @@ class DependencyHandler(object):
 
         logger.debug("All dependencies provided!")
 
+    # noinspection PyMethodMayBeStatic
     def _check_for_library(self, library):
         library_found = False
 
@@ -597,7 +614,7 @@ class DependencyHandler(object):
         except ImportError:
             pass
 
-    def handle(self, o, params):
+    def handle(self, o, params) -> None:
         """
         Handles dependencies from selected object. If the object has 'dependencies' method,
         it will be called to retrieve a set of dependencies to check for.
