@@ -87,7 +87,7 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
     mocker.patch("cekit.builders.osbs.OSBSBuilder.dependencies")
     target = str(tmpdir.mkdir("target"))
     generate(target, ["--redhat", "build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(target, exp_regex)
+    assert_dockerfile_contains_regex(target, exp_regex)
 
 
 def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
@@ -106,7 +106,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     }
 
     generate(target, ["--redhat", "build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(target, "repos/content_sets_odcs.repo")
+    assert_dockerfile_contains_regex(target, "repos/content_sets_odcs.repo")
 
 
 def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
@@ -132,7 +132,7 @@ def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
 
     generate(target, ["build", "--dry-run", "osbs"], desc_part)
 
-    regex_dockerfile(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
+    assert_dockerfile_contains_regex(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
 
 
 def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
@@ -152,15 +152,15 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     }
 
     generate(target, ["build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm",
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
     )
-    regex_dockerfile(target, "rpm -q a b")
+    assert_dockerfile_contains_regex(target, "rpm -q a b")
 
 
 def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_1(tmpdir, mocker):
@@ -181,9 +181,9 @@ def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_1(tmpdir, mocker):
     }
 
     generate(target, ["build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(target, "RUN microdnf  install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN microdnf  install -y a b")
-    regex_dockerfile(target, "rpm -q a b")
+    assert_dockerfile_contains_regex(target, "RUN microdnf  install -y foo-repo.rpm")
+    assert_dockerfile_contains_regex(target, "RUN microdnf  install -y a b")
+    assert_dockerfile_contains_regex(target, "rpm -q a b")
 
 
 def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_2(tmpdir, mocker):
@@ -204,11 +204,11 @@ def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_2(tmpdir, mocker):
     }
 
     generate(target, ["build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target, "RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm"
     )
-    regex_dockerfile(target, "RUN microdnf --setopt=tsflags=nodocs install -y a b")
-    regex_dockerfile(target, "rpm -q a b")
+    assert_dockerfile_contains_regex(target, "RUN microdnf --setopt=tsflags=nodocs install -y a b")
+    assert_dockerfile_contains_regex(target, "rpm -q a b")
 
 
 def test_dockerfile_osbs_odcs_pulp(tmpdir, mocker):
@@ -348,7 +348,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
         },
     )
 
-    regex_dockerfile(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
+    assert_dockerfile_contains_regex(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
 
 
 # https://github.com/cekit/cekit/issues/400
@@ -389,9 +389,9 @@ def test_default_package_manager(tmpdir):
         },
     )
 
-    regex_dockerfile(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN yum --setopt=tsflags=nodocs install -y a")
-    regex_dockerfile(target, "rpm -q a")
+    assert_dockerfile_contains_regex(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
+    assert_dockerfile_contains_regex(target, "RUN yum --setopt=tsflags=nodocs install -y a")
+    assert_dockerfile_contains_regex(target, "rpm -q a")
 
 
 # https://github.com/cekit/cekit/issues/400
@@ -417,16 +417,16 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
             "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
         },
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm",
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
     )
-    regex_dockerfile(target, "rpm -q a")
-    regex_dockerfile(target, "RUN microdnf clean all")
+    assert_dockerfile_contains_regex(target, "rpm -q a")
+    assert_dockerfile_contains_regex(target, "RUN microdnf clean all")
 
 
 # https://github.com/cekit/cekit/issues/462
@@ -452,10 +452,10 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
             "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
         },
     )
-    regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y a b")
-    regex_dockerfile(target, "rpm -q a")
-    regex_dockerfile(target, "RUN dnf clean all")
+    assert_dockerfile_contains_regex(target, "RUN dnf --setopt=tsflags=nodocs install -y foo-repo.rpm")
+    assert_dockerfile_contains_regex(target, "RUN dnf --setopt=tsflags=nodocs install -y a b")
+    assert_dockerfile_contains_regex(target, "rpm -q a")
+    assert_dockerfile_contains_regex(target, "RUN dnf clean all")
 
 
 # https://github.com/cekit/cekit/issues/400
@@ -474,15 +474,15 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
             "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
         },
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm",
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a",
     )
-    regex_dockerfile(target, "rpm -q a")
+    assert_dockerfile_contains_regex(target, "rpm -q a")
 
 
 # https://github.com/cekit/cekit/issues/400
@@ -505,9 +505,9 @@ def test_supported_package_managers(tmpdir, manager):
     flags = "--setopt=tsflags=nodocs"
     if "microdnf" in manager:
         flags = "--setopt=install_weak_deps=0 " + flags
-    regex_dockerfile(target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
-    regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
-    regex_dockerfile(target, "rpm -q a")
+    assert_dockerfile_contains_regex(target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
+    assert_dockerfile_contains_regex(target, "RUN {} {} install -y a".format(manager, flags))
+    assert_dockerfile_contains_regex(target, "rpm -q a")
 
 
 def test_supported_package_managers_apk(tmpdir, caplog):
@@ -524,8 +524,8 @@ def test_supported_package_managers_apk(tmpdir, caplog):
             }
         },
     )
-    regex_dockerfile(target, "RUN apk  add a")
-    regex_dockerfile(target, "apk info -e a")
+    assert_dockerfile_contains_regex(target, "RUN apk  add a")
+    assert_dockerfile_contains_regex(target, "apk info -e a")
     assert (
         "Package manager apk does not support defining repositories, skipping all repositories"
         in caplog.text
@@ -546,10 +546,10 @@ def test_supported_package_managers_apt(tmpdir, caplog):
             }
         },
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target, "RUN apt-get update && apt-get --no-install-recommends install -y a"
     )
-    regex_dockerfile(target, "dpkg-query --list a")
+    assert_dockerfile_contains_regex(target, "dpkg-query --list a")
     assert (
         "Package manager apt-get does not support defining repositories, skipping all repositories"
         in caplog.text
@@ -560,7 +560,7 @@ def test_supported_package_managers_apt(tmpdir, caplog):
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir("target"))
     generate(target, ["build", "--dry-run", "podman"])
-    regex_dockerfile(target, "^((?!COPY modules /tmp/scripts/))")
+    assert_dockerfile_contains_regex(target, "^((?!COPY modules /tmp/scripts/))")
 
 
 # https://github.com/cekit/cekit/issues/406
@@ -589,7 +589,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
         },
     )
 
-    regex_dockerfile(target, "COPY modules/foo /tmp/scripts/foo")
+    assert_dockerfile_contains_regex(target, "COPY modules/foo /tmp/scripts/foo")
 
 
 def test_dockerfile_destination_of_artifact(mocker, tmpdir):
@@ -629,23 +629,23 @@ def test_dockerfile_destination_of_artifact(mocker, tmpdir):
             ]
         },
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         """# Copy 'testimage' image general artifacts to '/tmp/artifacts/' destination""",
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target, r"^\s+COPY \\\s+abc \\\s+one \\\s+111 \\\s+/tmp/artifacts/$"
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target,
         """# Copy 'testimage' image general artifacts to '/tmp/custom/' destination""",
     )
-    regex_dockerfile(target, r"^\s+COPY \\\s+def \\\s+two \\\s+222 \\\s+/tmp/custom/$")
-    regex_dockerfile(target, """# Copy 'testimage' image stage artifacts""")
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(target, r"^\s+COPY \\\s+def \\\s+two \\\s+222 \\\s+/tmp/custom/$")
+    assert_dockerfile_contains_regex(target, """# Copy 'testimage' image stage artifacts""")
+    assert_dockerfile_contains_regex(
         target, r"^\s+COPY --from=image-name /some/path.jar /tmp/artifacts/aaa$"
     )
-    regex_dockerfile(
+    assert_dockerfile_contains_regex(
         target, r"^\s+COPY --from=image-name /some/other-path.jar /tmp/custom/bbb$"
     )
 
@@ -671,10 +671,34 @@ def test_overrides_applied_to_all_multi_stage_images(tmpdir):
         ],
         descriptor,
     )
-    regex_dockerfile(target, "^###### START image 'builderimage:SNAPSHOT'$")
-    regex_dockerfile(target, "^###### END image 'builderimage:SNAPSHOT'$")
-    regex_dockerfile(target, "^###### START image 'targetimage:SNAPSHOT'$")
-    regex_dockerfile(target, "^###### END image 'targetimage:SNAPSHOT'$")
+    assert_dockerfile_contains_regex(target, "^###### START image 'builderimage:SNAPSHOT'$")
+    assert_dockerfile_contains_regex(target, "^###### END image 'builderimage:SNAPSHOT'$")
+    assert_dockerfile_contains_regex(target, "^###### START image 'targetimage:SNAPSHOT'$")
+    assert_dockerfile_contains_regex(target, "^###### END image 'targetimage:SNAPSHOT'$")
+
+
+def test_dockerfile_contains_multi_stage_build(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    descriptor = [
+        {"release": 1, "version": 1, "from": "fromimage", "name": "builderimage"},
+        {"release": 1, "version": 1, "from": "fromimage", "name": "targetimage"},
+    ]
+
+    generate(
+        target,
+        [
+            "-v",
+            "build",
+            "--dry-run",
+            "docker",
+        ],
+        descriptor,
+    )
+    assert_dockerfile_contains_regex(target, "^###### START image 'builderimage:1'$")
+    assert_dockerfile_contains_regex(target, "^###### END image 'builderimage:1'$")
+    assert_dockerfile_contains_regex(target, "^###### START image 'targetimage:1'$")
+    assert_dockerfile_contains_regex(target, "^###### END image 'targetimage:1'$")
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):
@@ -705,7 +729,7 @@ def generate(image_dir, command, descriptor=None, exit_code=0):
             return yaml.safe_load(desc)
 
 
-def regex_dockerfile(image_dir, exp_regex):
+def assert_dockerfile_contains_regex(image_dir, exp_regex):
     with open(os.path.join(image_dir, "target", "image", "Dockerfile"), "r") as fd:
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)

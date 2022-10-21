@@ -1,7 +1,9 @@
+from typing import List
+
 import yaml
 
 from cekit.descriptor import Descriptor
-from cekit.descriptor.resource import create_resource
+from cekit.descriptor.resource import create_resource, Resource
 
 modules_schema = yaml.safe_load(
     """
@@ -35,11 +37,11 @@ class Modules(Descriptor):
         ]
 
     @property
-    def repositories(self):
+    def repositories(self) -> List[Resource]:
         return self.get("repositories")
 
     @property
-    def install(self):
+    def install(self) -> List['Install']:
         return self.get("install")
 
 

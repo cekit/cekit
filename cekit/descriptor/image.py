@@ -196,7 +196,7 @@ class Image(Descriptor):
         return self.get("artifacts", [])
 
     @property
-    def modules(self):
+    def modules(self) -> Modules:
         return self.get("modules", Modules({}, self._artifact_dir))
 
     @property

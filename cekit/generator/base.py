@@ -6,18 +6,20 @@ import platform
 import re
 import shutil
 import tempfile
+from typing import List
 from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader
-from packaging.version import LegacyVersion
-from packaging.version import parse as parse_version
 
 from cekit.config import Config
-from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
+from cekit.descriptor import Env, Label, Module, Overrides, Repository
 from cekit.errors import CekitError
 from cekit.template_helper import TemplateHelper
-from cekit.tools import download_file, load_descriptor
+from cekit.tools import download_file, load_yaml
 from cekit.version import __version__ as cekit_version
+from cekit.descriptor import Image
+from cekit.generator.module_registry import ModuleRegistry
+from cekit.generator.resolvers import ImageResolver, CollectorData, CollectedImage
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -28,6 +30,9 @@ try:
     from odcs.client.odcs import ODCS, AuthMech
 except ImportError:
     pass
+
+
+
 
 
 class Generator(object):
@@ -50,8 +55,8 @@ class Generator(object):
         self._fetch_repos = False
         self._module_registry = ModuleRegistry()
         self.image = None
-        self.builder_images = []
-        self.images = []
+        self.builder_images: List[Image] = []
+        self.images: List[Image] = []
 
         # If descriptor has been passed in from standard input its not a path so use current working directory
         if "-" == descriptor_path:
@@ -67,7 +72,7 @@ class Generator(object):
                     download_file(override, tmpfile.name)
                     self._overrides.append(
                         Overrides(
-                            load_descriptor(tmpfile.name), os.path.dirname(tmpfile.name)
+                            load_yaml(tmpfile.name), os.path.dirname(tmpfile.name)
                         )
                     )
                 else:
@@ -78,7 +83,7 @@ class Generator(object):
                             os.path.abspath(descriptor_path)
                         )
                     self._overrides.append(
-                        Overrides(load_descriptor(override), override_artifact_dir)
+                        Overrides(load_yaml(override), override_artifact_dir)
                     )
 
         LOGGER.info("Initializing image descriptor...")
@@ -106,13 +111,34 @@ class Generator(object):
         Initializes the image object.
         """
 
-        LOGGER.debug("Removing old target directory")
-        shutil.rmtree(self.target, ignore_errors=True)
-        os.makedirs(os.path.join(self.target, "image"))
+        self._clean_target_directory()
 
-        # Read the main image descriptor and create an Image object from it
-        descriptor = load_descriptor(self._descriptor_path)
+        collected = self._load_main_image_descriptor()
 
+        self.image = collected.image
+        self.builder_images = collected.build_images
+        self._module_registry = collected.module_registry
+
+        # Construct list of all images (builder images + main one)
+        self.images = [self.image] + self.builder_images
+
+        for image in self.images:
+            # Process included modules
+            image.apply_module_overrides(self._module_registry)
+            # image.process_defaults()
+
+        # Add build labels
+        self.add_build_labels()
+
+    def _load_main_image_descriptor(self):
+
+        image_resolver = ImageResolver(CollectorData(self.target))
+
+        registry = ModuleRegistry()
+        build_images = list()
+        # Read the main image descriptor and create an Image object from it, while also collecting any build images
+        # defined in the image descriptor (i.e. multi-stage build).
+        descriptor = load_yaml(self._descriptor_path)
         if isinstance(descriptor, list):
             LOGGER.info(
                 "Descriptor contains multiple elements, assuming multi-stage image"
@@ -126,43 +152,34 @@ class Generator(object):
             # Iterate over images defined in image descriptor and
             # create Image objects out of them
             for image_descriptor in descriptor[:-1]:
-                self.builder_images.append(
-                    Image(
-                        image_descriptor,
-                        os.path.dirname(os.path.abspath(self._descriptor_path)),
-                    )
+                build_image = Image(
+                    image_descriptor,
+                    os.path.dirname(os.path.abspath(self._descriptor_path)),
                 )
 
-            descriptor = descriptor[-1]
+                collected = image_resolver.resolve(build_image, self._overrides)
+                registry.merge(collected.module_registry)
+                build_images.append(build_image)
+                build_images.extend(collected.build_images)
 
-        self.image = Image(
+            descriptor = descriptor[-1]
+        image = Image(
             descriptor, os.path.dirname(os.path.abspath(self._descriptor_path))
         )
+        collected = image_resolver.resolve(image, self._overrides)
+        registry.merge(collected.module_registry)
+        build_images.extend(collected.build_images)
 
-        # Construct list of all images (builder images + main one)
-        self.images = [self.image] + self.builder_images
+        return CollectedImage(image, registry, build_images)
 
-        for image in self.images:
-            # Apply overrides to all image definitions:
-            # intermediate (builder) images and target image as well
-            # It is required to build the module registry
-            image.apply_image_overrides(self._overrides)
 
-        # Load definitions of modules
-        # We need to load it after we apply overrides so that any changes to modules
-        # will be reflected there as well
-        self.build_module_registry()
-
-        for image in self.images:
-            # Process included modules
-            image.apply_module_overrides(self._module_registry)
-            image.process_defaults()
-
-        # Add build labels
-        self.add_build_labels()
+    def _clean_target_directory(self):
+        LOGGER.debug("Removing old target directory")
+        shutil.rmtree(self.target, ignore_errors=True)
+        os.makedirs(os.path.join(self.target, "image"))
 
     def generate(self):
-        self.copy_modules()
+        self.copy_modules(self._modules())
         self.prepare_artifacts()
         self.prepare_repositories()
         self.image.remove_none_keys()
@@ -227,46 +244,17 @@ class Generator(object):
         for module in self._modules():
             for repo in module.repositories:
                 if repo in repositories:
+                    # If the repository already exists, skip it
                     LOGGER.warning(
                         (
-                            "Module repository '{0}' already added, please check your image configuration, "
-                            + "skipping module repository '{0}'"
+                                "Module repository '{0}' already added, please check your image configuration, "
+                                + "skipping module repository '{0}'"
                         ).format(repo.name)
                     )
                     continue
-                # If the repository already exists, skip it
                 repositories.append(repo)
 
         return repositories
-
-    def build_module_registry(self):
-        base_dir = os.path.join(self.target, "repo")
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
-        for repo in self._module_repositories():
-            LOGGER.debug("Downloading module repository: '{}'".format(repo.name))
-            repo.copy(base_dir)
-            self.load_repository(os.path.join(base_dir, repo.target))
-
-    def load_repository(self, repo_dir):
-        for modules_dir, _, files in os.walk(repo_dir):
-            if "module.yaml" in files:
-
-                module_descriptor_path = os.path.abspath(
-                    os.path.expanduser(
-                        os.path.normcase(os.path.join(modules_dir, "module.yaml"))
-                    )
-                )
-
-                module = Module(
-                    load_descriptor(module_descriptor_path),
-                    modules_dir,
-                    os.path.dirname(module_descriptor_path),
-                )
-                LOGGER.debug(
-                    "Adding module '{}', path: '{}'".format(module.name, module.path)
-                )
-                self._module_registry.add_module(module)
 
     def get_tags(self):
         return [
@@ -274,7 +262,7 @@ class Generator(object):
             "%s:latest" % self.image["name"],
         ]
 
-    def copy_modules(self):
+    def copy_modules(self, modules):
         """Prepare module to be used for Dockerfile generation.
         This means:
 
@@ -284,16 +272,16 @@ class Generator(object):
 
         modules_to_install = []
 
-        for module in self._modules():
-            if module.install:
-                modules_to_install += module.install
+        for image_module_list in modules:
+            for module_key in image_module_list.install:
+                module: Module = self._module_registry.get_module(
+                    module_key.name, module_key.version, suppress_warnings=True
+                )
+                modules_to_install.append(module)
 
         target = os.path.join(self.target, "image", "modules")
 
         for module in modules_to_install:
-            module = self._module_registry.get_module(
-                module.name, module.version, suppress_warnings=True
-            )
             LOGGER.debug(
                 "Copying module '{}' required by '{}'.".format(
                     module.name, self.image.name
@@ -310,6 +298,7 @@ class Generator(object):
 
     def get_redhat_overrides(self):
         class RedHatOverrides(Overrides):
+
             def __init__(self, generator):
                 super(RedHatOverrides, self).__init__({}, None)
                 self._generator = generator
@@ -477,9 +466,9 @@ class Generator(object):
 
         compose = (
             self.image.get("osbs", {})
-            .get("configuration", {})
-            .get("container", {})
-            .get("compose", {})
+                .get("configuration", {})
+                .get("container", {})
+                .get("compose", {})
         )
 
         if compose.get(Generator.ODCS_HIDDEN_REPOS_FLAG, False):
@@ -582,145 +571,3 @@ class Generator(object):
         raise NotImplementedError("Artifacts handling is not implemented")
 
 
-class ModuleRegistry(object):
-    def __init__(self):
-        self._modules = {}
-        self._defaults = {}
-
-    def get_module(self, name, version=None, suppress_warnings=False):
-        """
-        Returns the module available in registry based on the name and version requested.
-
-        If no modules are found for the requested name, an error is thrown. If version
-        requirement could not be satisfied, an error is thrown too.
-
-        If there is a version mismatch, default version is returned. See 'add_module'
-        for more information how default versions are defined.
-
-        Args:
-            name (str): module name
-            version (float or str): module version
-            suppress_warnings: whether to suppress warnings
-
-        Returns:
-            Module object.
-
-        Raises:
-            CekitError: If a module is not found or version requirement is not satisfied
-        """
-
-        # Get all modules for specied nam
-        modules = self._modules.get(name, {})
-
-        # If there are no modules with the requested name, fail
-        if not modules:
-            raise CekitError(
-                "There are no modules with '{}' name available".format(name)
-            )
-
-        # If there is no module version requested, get default one
-        if version is None:
-            default_version = self._defaults.get(name)
-
-            if not default_version:
-                raise CekitError(
-                    "Internal error: default version for module '{}' could not be found, please report it".format(
-                        name
-                    )
-                )
-
-            default_module = self.get_module(name, default_version)
-
-            if not suppress_warnings and len(modules) > 1:
-                LOGGER.warning(
-                    "Module version not specified for '{}' module, using '{}' default version".format(
-                        name, default_version
-                    )
-                )
-
-            return default_module
-
-        # Finally, get the module for specified version
-        module = modules.get(version)
-
-        # If there is no such module, fail
-        if not module:
-            raise CekitError(
-                "Module '{}' with version '{}' could not be found, available versions: {}".format(
-                    name, version, ", ".join(list(modules.keys()))
-                )
-            )
-
-        return module
-
-    def add_module(self, module):
-        """
-        Adds provided module to registry.
-
-        If module of the same name and version already exists in registry,
-        an error is raised.
-
-        Module registry tracks default version for a particular module name.
-        For this purpose the current version is compared with what is currently defined as
-        the default version. If this newer, then the default version is replaced by the
-        module we currently add to registry. For version comparison the package module
-        (https://packaging.pypa.io/en/latest/) is used.
-
-        Args:
-            module (Module): module object to be added to registry
-
-        Raises:
-            CekitError: when module version is not provided or when a module with the same
-                name and version already exists in registry.
-        """
-
-        # If module version is not provided, fail because it is required
-        if not module.version:
-            raise CekitError(
-                (
-                    "Internal error: module '{}' does not have version specified, "
-                    "we cannot add it to registry, please report it"
-                ).format(module.name)
-            )
-
-        # Convert version to string, it can be float or int, or anything actually
-        version = str(module.version)
-
-        # Get all modules from registry with the name of the module we want to add
-        # There can be multiple versions of the same module
-        modules = self._modules.get(module.name)
-
-        # If there are no modules for the specified name this means
-        # that this is the first one, add it and set it as default
-        if not modules:
-            # Set it to be the default module version
-            self._defaults[module.name] = version
-            self._modules[module.name] = {version: module}
-            return
-
-        # If a module of specified name and version already exists in the registry - fail
-        if version in modules:
-            raise CekitError(
-                "Module '{}' with version '{}' already exists in module registry".format(
-                    module.name, version
-                )
-            )
-
-        default_version = parse_version(self._defaults.get(module.name))
-        current_version = parse_version(version)
-
-        if isinstance(current_version, LegacyVersion):
-            LOGGER.warning(
-                (
-                    "Module's '{}' version '{}' does not follow PEP 440 versioning scheme "
-                    "(https://www.python.org/dev/peps/pep-0440), "
-                    "we suggest follow this versioning scheme in modules"
-                ).format(module.name, version)
-            )
-
-        # If current module version is never, we need to make it the new default
-        if current_version > default_version:
-            self._defaults[module.name] = version
-
-        # Finally add the module to registry
-        modules[version] = module
