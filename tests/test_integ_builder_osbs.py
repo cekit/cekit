@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 import contextlib
+import copy
 import logging
 import os
 import platform
@@ -178,7 +179,7 @@ def test_osbs_builder_with_assume_yes(tmpdir, mocker, caplog):
     source_dir.mkdir("osbs").mkdir("repo")
 
     mock_run = run_osbs(
-        image_descriptor.copy(),
+        copy.deepcopy(image_descriptor),
         str(source_dir),
         mocker,
         0,
@@ -243,7 +244,7 @@ def test_osbs_builder_with_process_error(tmpdir, mocker, caplog):
     source_dir.mkdir("osbs").mkdir("repo")
 
     run_osbs(
-        image_descriptor.copy(),
+        copy.deepcopy(image_descriptor),
         str(source_dir),
         mocker,
         1,
@@ -269,7 +270,7 @@ def test_osbs_builder_with_push_with_sync_only(tmpdir, mocker, caplog):
 
     mocker.patch("cekit.tools.decision", return_value=True)
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     mock_run = run_osbs(
         descriptor, str(source_dir), mocker, 0, ["build", "osbs", "--sync-only"]
@@ -333,7 +334,7 @@ def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
     source_dir = tmpdir.mkdir("source")
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     mock_run = run_osbs(
         descriptor, str(source_dir), mocker, flag=OSBSTestFlags.NO_SKIP_COMMITTING
@@ -359,8 +360,7 @@ def test_osbs_builder_kick_build_without_push(tmpdir, mocker, caplog):
 
 def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
     """
-    Does not push sources to dist-git. This is the case when the
-    generated files are the same as already existing in dist-git
+    Does push sources to dist-git.
     """
 
     caplog.set_level(logging.DEBUG, logger="cekit")
@@ -370,7 +370,7 @@ def test_osbs_builder_kick_build_with_push(tmpdir, mocker, caplog):
 
     mocker.patch("cekit.tools.decision", return_value=True)
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     mock_run = run_osbs(descriptor, str(source_dir), mocker)
 
@@ -429,7 +429,7 @@ def test_osbs_builder_add_help_file(tmpdir, mocker, caplog):
     source_dir = tmpdir.mkdir("source")
     repo_dir = source_dir.mkdir("osbs").mkdir("repo")
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
     descriptor["help"] = {"add": True}
 
     mock_run = run_osbs(
@@ -817,7 +817,7 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
 
     os.symlink("/etc", str(dist_dir.join("a_symlink")))
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["osbs"]["extra_dir"] = "dist"
 
@@ -876,7 +876,7 @@ def test_osbs_builder_extra_default(tmpdir, mocker, caplog):
         os.path.join(str(source_dir), "tests", "modules"),
     )
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     del descriptor["osbs"]
 
@@ -900,7 +900,7 @@ def test_osbs_builder_add_files_to_dist_git_when_it_is_a_directory(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [{"path": "manifests", "dest": "/manifests"}]
 
@@ -971,7 +971,7 @@ def test_osbs_builder_add_artifact_directory_to_dist_git_when_it_already_exists(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [{"path": "manifests", "dest": "/manifests"}]
 
@@ -1057,7 +1057,7 @@ def test_osbs_builder_add_files_to_dist_git_without_dotgit_directory(
         .write_text("Some content", "utf-8")
     )
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [{"url": "https://foo/bar.jar"}]
 
@@ -1126,7 +1126,7 @@ def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
         "Some content", "utf-8"
     )
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     run_osbs(descriptor, str(tmpdir), mocker)
 
@@ -1144,7 +1144,7 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
         "Some content", "utf-8"
     )
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["osbs"]["koji_target"] = "some-target"
 
@@ -1181,7 +1181,7 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [{"name": "artifact_name", "md5": "123456"}]
 
@@ -1226,7 +1226,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {
@@ -1277,7 +1277,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"name": "artifact_name", "sha1": "123456", "url": "https://foo/bar.jar"}
@@ -1321,7 +1321,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"name": "artifact_name", "sha256": "123456", "url": "https://foo/bar.jar"}
@@ -1370,7 +1370,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [{"url": "https://foo/bar.jar"}]
 
@@ -1427,7 +1427,7 @@ ssl_verify = False
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {
@@ -1501,7 +1501,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"sha256": "123456", "md5": "123456", "url": "https://foo/bar.jar"}
@@ -1551,7 +1551,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"name": "myfile.jar", "sha256": "123456", "url": "https://foo/bar.jar"}
@@ -1601,7 +1601,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {
@@ -1656,7 +1656,7 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {
@@ -1787,7 +1787,7 @@ def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
         subprocess.run(["git", "add", "file"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["osbs"]["configuration"] = {
         "container": {"compose": {"pulp_repos": True}}
@@ -1827,7 +1827,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
         subprocess.run(["git", "add", "file"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["osbs"]["configuration"] = {
         "container": {
@@ -2264,7 +2264,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
         subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"pnc_build_id": "123456", "pnc_artifact_id": "54321", "name": "foo.jar"}
@@ -2301,7 +2301,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
         subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"target": "boo.jar", "pnc_build_id": "123456", "pnc_artifact_id": "00001"},
@@ -2404,7 +2404,7 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
         subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
         subprocess.run(["git", "commit", "-m", "Dummy"])
 
-    descriptor = image_descriptor.copy()
+    descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [{"name": "artifact_name", "sha256": "123456"}]
 
@@ -2451,3 +2451,68 @@ def test_osbs_builder_with_follow_tag_non_rh(tmpdir):
         message="follow_tag annotation only supported with redhat flag",
         return_code=1,
     )
+
+
+def test_osbs_builder_kick_build_with_tag(tmpdir, mocker, caplog):
+    """
+    Does push sources to dist-git and tags afterwards.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    source_dir = tmpdir.mkdir("source")
+    repo_dir = source_dir.mkdir("osbs").mkdir("repo")
+
+    mocker.patch("cekit.tools.decision", return_value=True)
+
+    descriptor = copy.deepcopy(image_descriptor)
+
+    mock_run = run_osbs(
+        descriptor,
+        str(source_dir),
+        mocker,
+        # flag=OSBSTestFlags.NO_SKIP_COMMITTING,
+        build_command=["build", "osbs", "--tag", "FOOBAR"],
+    )
+
+    assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
+
+    mock_run.assert_has_calls(
+        [
+            mocker.call(
+                ["git", "add", "--all", "Dockerfile"],
+                stderr=None,
+                stdout=None,
+                check=True,
+                universal_newlines=True,
+            ),
+            mocker.call(
+                ["git", "push", "-q", "origin", "branch"],
+                stderr=None,
+                stdout=None,
+                check=True,
+                universal_newlines=True,
+            ),
+            mocker.call(
+                [
+                    "git",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
+                ],
+                stderr=None,
+                stdout=None,
+                check=True,
+                universal_newlines=True,
+            ),
+        ],
+        any_order=True,
+    )
+
+    assert (
+        "Committing with message: 'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb'"
+        in caplog.text
+    )
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Tagging dist-git repository with FOOBAR" in caplog.text

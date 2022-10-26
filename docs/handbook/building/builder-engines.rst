@@ -134,7 +134,7 @@ Input format
     Dockerfile
 Parameters
     ``--release``
-        Perform an OSBS release build
+        Perform an OSBS release build (default is a scratch build)
     ``--user``
         Alternative user passed to build task
     ``--nowait``
@@ -143,6 +143,9 @@ Parameters
         Use stage environment
     ``--commit-message``
         Custom commit message for dist-git
+    ``--tag``
+        A tag to be applied to the dist-git repository after a successful build
+        .. versionadded:: 4.4.0
     ``--sync-only``
         .. versionadded:: 3.4
 

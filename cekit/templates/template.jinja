@@ -156,7 +156,6 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  #
  # 1. Sets user to 'root'
  # 2. Adds any custom repositories
- # TODO XXX
  #}
 {%- macro process_image(animage) %}
     {% if animage.from != 'scratch' %}

@@ -226,7 +226,7 @@ def build_podman(ctx, pull, no_squash, tags, platform):
 @click.option("--release", help="Execute a release build.", is_flag=True)
 @click.option("--user", metavar="USER", help="User used to kick the build as.")
 @click.option("--nowait", help="Do not wait for the task to finish.", is_flag=True)
-@click.option("--stage", help="Use stage environmen.", is_flag=True)
+@click.option("--stage", help="Use stage environment.", is_flag=True)
 @click.option(
     "--sync-only",
     help="Generate files and sync with dist-git, but do not execute build.",
@@ -236,11 +236,17 @@ def build_podman(ctx, pull, no_squash, tags, platform):
     "--commit-message", metavar="MESSAGE", help="Custom dist-git commit message."
 )
 @click.option(
+    "--tag",
+    "tag",
+    metavar="TAG",
+    help="Use specified tag to tag the dist-git repository after build",
+)
+@click.option(
     "--assume-yes", "-y", help="Execute build in non-interactive mode.", is_flag=True
 )
 @click.pass_context
 def build_osbs(
-    ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes
+    ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes, tag
 ):
     """
     DESCRIPTION
