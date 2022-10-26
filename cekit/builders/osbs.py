@@ -1,14 +1,13 @@
-import glob
 import json
 import logging
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
 import time
+from typing import List
 from urllib.parse import urlparse
-
-import yaml
 
 from cekit import tools
 from cekit.builder import Builder
@@ -32,10 +31,10 @@ class OSBSBuilder(Builder):
     def __init__(self, params):
         super(OSBSBuilder, self).__init__("osbs", params)
 
-        self._rhpkg_set_url_repos = []
-        self.dist_git = None
-        self.dist_git_dir = None
-        self.artifacts = []
+        self._rhpkg_set_url_repos: List[str] = []
+        self.artifacts: List[str] = []
+        self.dist_git: DistGit
+        self.dist_git_dir: pathlib.Path
 
         if CONFIG.get("common", "redhat"):
             if self.params.get("stage"):
@@ -115,7 +114,6 @@ class OSBSBuilder(Builder):
             )
         ]
         # When plain artifact was handled using lookaside cache, we need to add it too
-        # TODO Rewrite this!
         self.artifacts += [
             a.target
             for a in all_artifacts
@@ -175,30 +173,9 @@ class OSBSBuilder(Builder):
             else:
                 LOGGER.info("No changes made to the code, committing skipped")
 
-    # TODO: Only used by test code - move this?
-    def _merge_container_yaml(self, src, dest):
-        # FIXME - this is temporary needs to be refactored to proper merging
-        with open(src, "r") as _file:
-            generated = yaml.safe_load(_file)
-
-        target = {}
-        if os.path.exists(dest):
-            with open(dest, "r") as _file:
-                target = yaml.safe_load(_file)
-
-        target.update(generated)
-        # FIXME - run x86-build if there is *repo commited to dist-git
-        if glob.glob(os.path.join(self.dist_git_dir, "repos", "*.repo")):
-
-            if "platforms" in target:
-                target["platforms"]["only"] = ["x86_64"]
-            else:
-                target["platforms"] = {"only": ["x86_64"]}
-
-        with open(dest, "w") as _file:
-            yaml.dump(target, _file, default_flow_style=False)
-
-    def _wait_for_osbs_task(self, task_id, current_time=0, timeout=7200):
+    def _wait_for_osbs_task(
+        self, task_id: str, current_time: int = 0, timeout: int = 7200
+    ):
         """Default timeout is 2hrs"""
 
         LOGGER.debug("Checking if task {} is finished...".format(task_id))
@@ -351,13 +328,17 @@ class OSBSBuilder(Builder):
 
                 LOGGER.info("Image was built successfully in OSBS!")
 
+                if self.params.tag:
+                    LOGGER.debug(f"Tagging repository with {self.params.tag}")
+                    self.dist_git.tag(self.params.tag)
+                    self.dist_git.push(True)
+
 
 class DistGit(object):
     """Git support for osbs repositories"""
 
     @staticmethod
     def repo_info(path):
-
         with Chdir(path):
             if (
                 run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], True).stdout
@@ -393,7 +374,7 @@ class DistGit(object):
             self.source_repo_commit,
         ) = DistGit.repo_info(source)
 
-    def stage_modified(self):
+    def stage_modified(self) -> bool:
         # Check if there are any files in stage (return code 1). If there are no files
         # (return code 0) it means that this is a rebuild, so skip committing
         if run_wrapper(
@@ -403,7 +384,7 @@ class DistGit(object):
 
         return False
 
-    def prepare(self, stage, user=None):
+    def prepare(self, stage, user=None) -> None:
         if os.path.exists(self.output):
             with Chdir(self.output):
                 LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
@@ -436,7 +417,7 @@ class DistGit(object):
             run_wrapper(cmd, False)
             LOGGER.debug("Repository {} cloned".format(self.repo))
 
-    def clean(self, artifacts):
+    def clean(self, artifacts: List[str]) -> None:
         """
         Removes old generated scripts, repos and modules directories
         as well as all directories that are defined as artifacts.
@@ -471,8 +452,8 @@ class DistGit(object):
                 LOGGER.info("Removing old 'fetch-artifacts-pnc.yaml' file")
                 run_wrapper(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"], False)
 
-    def add(self, artifacts):
-        LOGGER.debug("Adding files to git stage...")
+    def add(self, artifacts: List[str]) -> None:
+        LOGGER.debug("Adding files to git...")
 
         for obj in os.listdir("."):
             if obj == ".git":
@@ -482,15 +463,14 @@ class DistGit(object):
             # If the artifact to add is a directory do not skip it
             if obj in artifacts and not os.path.isdir(obj):
                 LOGGER.debug(
-                    "Skipping staging '{}' in git because it is an artifact".format(obj)
+                    f"Skipping staging '{obj}' in git because it is an artifact"
                 )
                 continue
 
-            LOGGER.debug("Staging '{}'...".format(obj))
-
+            LOGGER.debug(f"Staging '{obj}'...")
             run_wrapper(["git", "add", "--all", obj], False)
 
-    def commit(self, commit_msg):
+    def commit(self, commit_msg: str) -> None:
         if not commit_msg:
             commit_msg = "Sync"
 
@@ -538,12 +518,18 @@ class DistGit(object):
                 },
             )
 
-    def push(self):
+    def tag(self, tag: str) -> None:
+        LOGGER.info(f"Tagging dist-git repository with {tag}")
+        run_wrapper(["git", "tag", tag], False)
+
+    def push(self, tag: bool = False) -> None:
         if self.noninteractive or tools.decision("Do you want to push the commit?"):
             print("")
             LOGGER.info("Pushing change to the upstream repository...")
-            cmd = ["git", "push", "-q", "origin", self.branch]
-            LOGGER.debug("Running command '{}'".format(" ".join(cmd)))
+            if tag:
+                cmd = ["git", "push", "--tags"]
+            else:
+                cmd = ["git", "push", "-q", "origin", self.branch]
             run_wrapper(cmd, False)
             LOGGER.info("Change pushed.")
         else:
