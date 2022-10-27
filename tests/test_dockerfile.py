@@ -547,7 +547,8 @@ def test_supported_package_managers_apt(tmpdir, caplog):
         },
     )
     regex_dockerfile(
-        target, "RUN apt-get update && apt-get --no-install-recommends install -y a b=1.0.0"
+        target,
+        "RUN apt-get update && apt-get --no-install-recommends install -y a b=1.0.0",
     )
     regex_dockerfile(target, "dpkg-query --list a b")
     assert (
