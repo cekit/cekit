@@ -43,7 +43,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if pkg_manager == 'microdnf' %}
             && {{ pkg_manager }} clean all \
     {% endif %}
-            && {{ helper.package_manager_query(pkg_manager) }}{% for package in packages %} {{ package }}{% endfor %}
+            && {{ helper.package_manager_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %}
     {% endif %}
 {%- endmacro -%}
 
