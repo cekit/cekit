@@ -16,6 +16,9 @@ test-py39: prepare
 test-py310: prepare
 	tox -e py310 -- tests
 
+test-py311: prepare
+	tox -e py311 -- tests
+
 test-unit: prepare
 	tox -- tests/test_unit*
 
