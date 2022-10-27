@@ -541,15 +541,15 @@ def test_supported_package_managers_apt(tmpdir, caplog):
         descriptor={
             "packages": {
                 "manager": "apt-get",
-                "install": ["a"],
+                "install": ["a", "b=1.0.0"],
                 "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
             }
         },
     )
     regex_dockerfile(
-        target, "RUN apt-get update && apt-get --no-install-recommends install -y a"
+        target, "RUN apt-get update && apt-get --no-install-recommends install -y a b=1.0.0"
     )
-    regex_dockerfile(target, "dpkg-query --list a")
+    regex_dockerfile(target, "dpkg-query --list a b")
     assert (
         "Package manager apt-get does not support defining repositories, skipping all repositories"
         in caplog.text
