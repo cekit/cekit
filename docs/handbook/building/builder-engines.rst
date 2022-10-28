@@ -143,9 +143,14 @@ Parameters
         Use stage environment
     ``--commit-message``
         Custom commit message for dist-git
-    ``--tag``
-        A tag to be applied to the dist-git repository after a successful build
+    ``--tag`` <tag-name>
         .. versionadded:: 4.4.0
+
+        An optional tag to be applied to the dist-git repository after a successful build.
+        If the tag parameter is **not** specified then it will be constructed from the image
+        name (with ``/`` changed to ``-``) and the image version. The tag name may be constructed
+        using Jinja template e.g. ``{{name}}-{{version}}`` referencing the keys in the image
+        descriptor.
     ``--sync-only``
         .. versionadded:: 3.4
 

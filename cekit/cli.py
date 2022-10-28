@@ -237,7 +237,8 @@ def build_podman(ctx, pull, no_squash, tags, platform):
 )
 @click.option(
     "--tag",
-    "tag",
+    is_flag=False,
+    flag_value="{{name}}-{{version}}",
     metavar="TAG",
     help="Use specified tag to tag the dist-git repository after build",
 )

@@ -9,6 +9,8 @@ import time
 from typing import List
 from urllib.parse import urlparse
 
+from jinja2 import Template
+
 from cekit import tools
 from cekit.builder import Builder
 from cekit.config import Config
@@ -329,8 +331,11 @@ class OSBSBuilder(Builder):
                 LOGGER.info("Image was built successfully in OSBS!")
 
                 if self.params.tag:
-                    LOGGER.debug(f"Tagging repository with {self.params.tag}")
-                    self.dist_git.tag(self.params.tag)
+                    tag = Template(self.params.tag).render(self.generator.image)
+                    if "/" in tag:
+                        LOGGER.debug(f"Replacing / in tag with - for {tag}")
+                        tag = tag.replace("/", "-")
+                    self.dist_git.tag(tag)
                     self.dist_git.push(True)
 
 
