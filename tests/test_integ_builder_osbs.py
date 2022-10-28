@@ -2453,7 +2453,7 @@ def test_osbs_builder_with_follow_tag_non_rh(tmpdir):
     )
 
 
-def test_osbs_builder_kick_build_with_tag(tmpdir, mocker, caplog):
+def test_osbs_builder_kick_build_with_tag_1(tmpdir, mocker, caplog):
     """
     Does push sources to dist-git and tags afterwards.
     """
@@ -2471,7 +2471,6 @@ def test_osbs_builder_kick_build_with_tag(tmpdir, mocker, caplog):
         descriptor,
         str(source_dir),
         mocker,
-        # flag=OSBSTestFlags.NO_SKIP_COMMITTING,
         build_command=["build", "osbs", "--tag", "FOOBAR"],
     )
 
@@ -2516,3 +2515,67 @@ def test_osbs_builder_kick_build_with_tag(tmpdir, mocker, caplog):
     )
     assert "Image was built successfully in OSBS!" in caplog.text
     assert "Tagging dist-git repository with FOOBAR" in caplog.text
+
+
+def test_osbs_builder_kick_build_with_tag_2(tmpdir, mocker, caplog):
+    """
+    Does push sources to dist-git and tags afterwards.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    source_dir = tmpdir.mkdir("source")
+    repo_dir = source_dir.mkdir("osbs").mkdir("repo")
+
+    mocker.patch("cekit.tools.decision", return_value=True)
+
+    descriptor = copy.deepcopy(image_descriptor)
+
+    mock_run = run_osbs(
+        descriptor,
+        str(source_dir),
+        mocker,
+        build_command=["build", "osbs", "--tag"],
+    )
+
+    assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
+
+    mock_run.assert_has_calls(
+        [
+            mocker.call(
+                ["git", "add", "--all", "Dockerfile"],
+                stderr=None,
+                stdout=None,
+                check=True,
+                universal_newlines=True,
+            ),
+            mocker.call(
+                ["git", "push", "-q", "origin", "branch"],
+                stderr=None,
+                stdout=None,
+                check=True,
+                universal_newlines=True,
+            ),
+            mocker.call(
+                [
+                    "git",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb",
+                ],
+                stderr=None,
+                stdout=None,
+                check=True,
+                universal_newlines=True,
+            ),
+        ],
+        any_order=True,
+    )
+
+    assert (
+        "Committing with message: 'Sync with path, commit 3b9283cb26b35511517ff5c0c3e11f490cba8feb'"
+        in caplog.text
+    )
+    assert "Image was built successfully in OSBS!" in caplog.text
+    assert "Tagging dist-git repository with test-image-1.0" in caplog.text
