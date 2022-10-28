@@ -230,7 +230,7 @@ def test_resource_verify(mocker):
     mock = mocker.patch("cekit.descriptor.resource.check_sum")
     res = create_resource({"url": "dummy", "sha256": "justamocksum"})
     res._Resource__verify("dummy")
-    mock.assert_called_with("dummy", "sha256", "justamocksum", "dummy")
+    mock.assert_called_with("dummy", "sha256", "justamocksum")
 
 
 def test_generated_url_with_cacher():
