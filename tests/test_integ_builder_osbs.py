@@ -1221,11 +1221,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
-
     descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
@@ -1270,18 +1265,13 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
     mocker.patch("cekit.tools.urlopen")
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
-    tmpdir.mkdir("osbs").mkdir("repo")
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
-
     descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
         {"name": "artifact_name", "sha1": "123456", "url": "https://foo/bar.jar"}
     ]
+
+    tmpdir.mkdir("osbs").mkdir("repo")
 
     run_osbs(descriptor, str(tmpdir), mocker)
 
@@ -1315,11 +1305,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -1364,11 +1349,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -1421,11 +1401,6 @@ ssl_verify = False
     cfgfile = os.path.join(str(tmpdir), "config")
     with open(cfgfile, "w") as _file:
         _file.write(cfgcontents)
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -1496,11 +1471,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
-
     descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
@@ -1546,11 +1516,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
-
     descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
@@ -1595,11 +1560,6 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -1650,11 +1610,6 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -1714,17 +1669,208 @@ def test_osbs_builder_with_fetch_artifacts_url_file_removal(tmpdir, mocker, capl
         "Some content", "utf-8"
     )
 
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
-
     run_osbs(image_descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.RM_FETCH_FILE)
 
     assert not os.path.exists(
         os.path.join(str(tmpdir), "osbs", "repo", "fetch-artifacts-url.yaml")
     )
     assert "Removing old 'fetch-artifacts-url.yaml' file" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_source_fail(tmpdir, mocker, caplog):
+    """
+    Checks whether the process fails if the source-url is missing checksums.
+    """
+    mocker.patch("cekit.tools.decision", return_value=True)
+    mocker.patch("cekit.tools.urlopen")
+    mocker.patch("cekit.builders.osbs.DistGit.push")
+
+    tmpdir.mkdir("osbs").mkdir("repo")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b"test", None]
+    res.getheader.return_value = 0
+
+    mocker.patch("cekit.tools.urlopen", return_value=res)
+
+    cfgcontents = """
+[common]
+fetch_artifact_domains = https://foo.domain, http://another.domain/path/name
+ssl_verify = False
+    """
+    cfgfile = os.path.join(str(tmpdir), "config")
+    with open(cfgfile, "w") as _file:
+        _file.write(cfgcontents)
+
+    descriptor = copy.deepcopy(image_descriptor)
+
+    descriptor["artifacts"] = [
+        {
+            "name": "artifact_name",
+            "sha256": "123456",
+            "url": "https://foo.domain/bar.jar",
+            "source-url": "https://foo.domain/bar-source.jar",
+        },
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker, return_code=1)
+
+    assert "Unable to add source-url for artifact" in caplog.text
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_source_1(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with source-url.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch("cekit.tools.decision", return_value=True)
+    mocker.patch("cekit.tools.urlopen")
+    mocker.patch("cekit.builders.osbs.DistGit.push")
+
+    tmpdir.mkdir("osbs").mkdir("repo")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b"test", None]
+    res.getheader.return_value = 0
+
+    mocker.patch("cekit.tools.urlopen", return_value=res)
+
+    cfgcontents = """
+[common]
+ssl_verify = False
+    """
+    cfgfile = os.path.join(str(tmpdir), "config")
+    with open(cfgfile, "w") as _file:
+        _file.write(cfgcontents)
+
+    descriptor = copy.deepcopy(image_descriptor)
+
+    descriptor["artifacts"] = [
+        {
+            "name": "artifact_name",
+            "sha256": "123456",
+            "url": "https://foo.domain/bar.jar",
+            "source-url": "https://foo.domain/bar-source.jar",
+            "source-sha256": "123",
+        },
+        {
+            "name": "another_artifact_name",
+            "sha256": "654321",
+            "url": "http://another.domain/path/name/bar.jar",
+        },
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(
+        os.path.join(str(tmpdir), "target", "image", "fetch-artifacts-url.yaml"), "r"
+    ) as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 2
+    assert fetch_artifacts[0] == {
+        "sha256": "123456",
+        "target": "artifact_name",
+        "url": "https://foo.domain/bar.jar",
+        "source-url": "https://foo.domain/bar-source.jar",
+        "source-sha256": "123",
+    }
+    assert fetch_artifacts[1] == {
+        "sha256": "654321",
+        "target": "another_artifact_name",
+        "url": "http://another.domain/path/name/bar.jar",
+    }
+
+    assert (
+        "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml"
+        in caplog.text
+    )
+    assert (
+        "Found source-url https://foo.domain/bar-source.jar and checksum markers of ['source-sha256']"
+        in caplog.text
+    )
+
+
+def test_osbs_builder_with_fetch_artifacts_url_file_source_2(tmpdir, mocker, caplog):
+    """
+    Checks whether the fetch-artifacts-url.yaml file is generated with source-url and multiple checksums.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    mocker.patch("cekit.tools.decision", return_value=True)
+    mocker.patch("cekit.tools.urlopen")
+    mocker.patch("cekit.builders.osbs.DistGit.push")
+
+    tmpdir.mkdir("osbs").mkdir("repo")
+
+    res = mocker.Mock()
+    res.getcode.return_value = 200
+    res.read.side_effect = [b"test", None]
+    res.getheader.return_value = 0
+
+    mocker.patch("cekit.tools.urlopen", return_value=res)
+
+    cfgcontents = """
+[common]
+ssl_verify = False
+    """
+    cfgfile = os.path.join(str(tmpdir), "config")
+    with open(cfgfile, "w") as _file:
+        _file.write(cfgcontents)
+
+    descriptor = copy.deepcopy(image_descriptor)
+
+    descriptor["artifacts"] = [
+        {
+            "name": "artifact_name",
+            "sha256": "123456",
+            "url": "https://foo.domain/bar.jar",
+            "source-url": "https://foo.domain/bar-source.jar",
+            "source-sha256": "123",
+            "source-md5": "456",
+        },
+        {
+            "name": "another_artifact_name",
+            "sha256": "654321",
+            "url": "http://another.domain/path/name/bar.jar",
+        },
+    ]
+
+    run_osbs(descriptor, str(tmpdir), mocker)
+
+    with open(
+        os.path.join(str(tmpdir), "target", "image", "fetch-artifacts-url.yaml"), "r"
+    ) as _file:
+        fetch_artifacts = yaml.safe_load(_file)
+
+    assert len(fetch_artifacts) == 2
+    assert fetch_artifacts[0] == {
+        "sha256": "123456",
+        "target": "artifact_name",
+        "url": "https://foo.domain/bar.jar",
+        "source-url": "https://foo.domain/bar-source.jar",
+        "source-sha256": "123",
+        "source-md5": "456",
+    }
+    assert fetch_artifacts[1] == {
+        "sha256": "654321",
+        "target": "another_artifact_name",
+        "url": "http://another.domain/path/name/bar.jar",
+    }
+
+    assert (
+        "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml"
+        in caplog.text
+    )
+    assert (
+        "Found source-url https://foo.domain/bar-source.jar and checksum markers of ['source-sha256', 'source-md5']"
+        in caplog.text
+    )
 
 
 def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, caplog):
@@ -1747,11 +1893,6 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, capl
     tmpdir.join("osbs").join("repo").join("fetch-artifacts-pnc.yaml").write_text(
         "Some content", "utf-8"
     )
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     run_osbs(image_descriptor, str(tmpdir), mocker, flag=OSBSTestFlags.RM_FETCH_FILE)
 
@@ -2259,11 +2400,6 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
-
     descriptor = copy.deepcopy(image_descriptor)
 
     descriptor["artifacts"] = [
@@ -2295,11 +2431,6 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
     mocker.patch("cekit.builders.osbs.DistGit.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-pnc.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -2398,11 +2529,6 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
     tmpdir.join("osbs").join("repo").join("fetch-artifacts-url.yaml").write_text(
         "Some content", "utf-8"
     )
-
-    with Chdir(os.path.join(str(tmpdir), "osbs", "repo")):
-        subprocess.run(["git", "init"])
-        subprocess.run(["git", "add", "fetch-artifacts-url.yaml"])
-        subprocess.run(["git", "commit", "-m", "Dummy"])
 
     descriptor = copy.deepcopy(image_descriptor)
 
