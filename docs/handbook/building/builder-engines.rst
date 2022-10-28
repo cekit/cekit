@@ -24,8 +24,10 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
-    ``--tag``
-        An image tag used to build image (can be specified multiple times)
+    ``--tag`` <tag-name>
+        Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
+        then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
+        descriptor.
     ``--no-squash``
         Do not squash the image after build is done.
     ``--platform``
@@ -182,8 +184,10 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
-    ``--tag``
-        An image tag used to build image (can be specified multiple times)
+    ``--tag`` <tag-name>
+        Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
+        then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
+        descriptor.
     ``--no-squash``
         Do not squash the image after build is done.
     ``--platform``
@@ -240,8 +244,10 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
-    ``--tag``
-        An image tag used to build image (can be specified multiple times)
+    ``--tag`` <tag-name>
+        Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
+        then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
+        descriptor.
     ``--no-squash``
         Do not squash the image after build is done.
     ``--platform``
