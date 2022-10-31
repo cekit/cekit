@@ -168,8 +168,19 @@ provided by some (internal) systems.
           md5: 75e5b5ba0b804cd9def9f20a70af649f
           target: jolokia.tar.gz
 
+    artifacts:
+        - name: jolokia
+          md5: 75e5b5ba0b804cd9def9f20a70af649f
+          target: jolokia.tar.gz
+          source-url: https://www.foo.com/jolokia-source.jar
+          source-md5: 123456789
+
+
 As you can see, the definition does not define from where the artifact should be fetched.
 This approach relies on :doc:`/handbook/caching` to provide the artifact.
+
+The ``source-url`` and source checksum (which may be ``source-md5``, ``source-sha1`` or
+``source-sha256`` are optional and denote where the sources may be found.
 
 .. note::
 
@@ -205,6 +216,15 @@ artifact should be fetched from.
           md5: "75e5b5ba0b804cd9def9f20a70af649f"
           # Final name of the downloaded artifact
           target: "jolokia.tar.gz"
+          source-url: https://www.foo.com/jolokia-source.jar
+          source-md5: 123456789
+
+
+As you can see, the definition does not define from where the artifact should be fetched.
+This approach relies on :doc:`/handbook/caching` to provide the artifact.
+
+The ``source-url`` and source checksum (which may be ``source-md5``, ``source-sha1`` or
+``source-sha256`` are optional and denote where the sources may be found.
 
 Path artifacts
 ******************

@@ -5,13 +5,19 @@ import sys
 import tempfile
 from collections import OrderedDict
 from contextlib import closing
+from typing import Dict, List
 from urllib.parse import urlparse
 
 import yaml
 
 from cekit import crypto, version
 from cekit.config import Config
-from cekit.descriptor.resource import _PlainResource, _PncResource, _UrlResource
+from cekit.descriptor.resource import (
+    Resource,
+    _PlainResource,
+    _PncResource,
+    _UrlResource,
+)
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import copy_recursively, get_brew_url
@@ -99,9 +105,9 @@ class OSBSGenerator(Generator):
 
         logger.info("Handling artifacts for OSBS...")
         target_dir = os.path.join(self.target, "image")
-        fetch_artifacts_url = []
+        fetch_artifacts_url: List[Dict[str, str]] = []
         fetch_artifacts_pnc = OrderedDict()
-        file_comments = {}
+        file_comments: Dict[str, str] = {}
 
         fetch_domains = config.get("common", "fetch_artifact_domains")
 
@@ -170,6 +176,7 @@ class OSBSGenerator(Generator):
                         fetch_artifacts_url[len(fetch_artifacts_url) - 1].update(
                             {c: artifact[c]}
                         )
+                    patch_source_url(artifact, fetch_artifacts_url)
                     if "description" in artifact:
                         file_comments[artifact["url"]] = artifact["description"]
                     logger.debug(
@@ -198,6 +205,8 @@ class OSBSGenerator(Generator):
                                 "target": os.path.join(artifact["target"]),
                             }
                         )
+                        patch_source_url(artifact, fetch_artifacts_url)
+
                         logger.debug(
                             "Artifact '{}' (as plain) added to fetch-artifacts-url.yaml".format(
                                 artifact["target"]
@@ -273,9 +282,9 @@ class OSBSGenerator(Generator):
 
 
 # Used to modify either the fetch-artifact or fetch-pnc files to add extra human readable information.
-def patch_file(file_comments, file):
+def patch_file(file_comments: Dict[str, str], file: str) -> None:
     # Can't use it as a context manager with plain with as that is >= 3.2
-    with closing(fileinput.input(file, inplace=1)) as input_list:
+    with closing(fileinput.input(file, inplace=True)) as input_list:
         for line in input_list:
             r = [
                 line.replace("\n", " # " + value + "\n")
@@ -286,3 +295,24 @@ def patch_file(file_comments, file):
                 sys.stdout.write(r[0])
             else:
                 sys.stdout.write(line)
+
+
+def patch_source_url(
+    artifact: Resource, fetch_artifacts_url: List[Dict[str, str]]
+) -> None:
+    if "source-url" in artifact:
+        intersected_source_hash = [
+            x for x in crypto.SUPPORTED_SOURCE_HASH_ALGORITHMS if x in artifact
+        ]
+        if not intersected_source_hash:
+            raise CekitError(
+                f"Unable to add source-url for artifact {artifact} as no checksum defined"
+            )
+        logger.debug(
+            f"Found source-url {artifact['source-url']} and checksum markers of {intersected_source_hash}"
+        )
+        fetch_artifacts_url[len(fetch_artifacts_url) - 1].update(
+            {"source-url": artifact["source-url"]}
+        )
+        for c in intersected_source_hash:
+            fetch_artifacts_url[len(fetch_artifacts_url) - 1].update({c: artifact[c]})

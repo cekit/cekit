@@ -266,7 +266,7 @@ class Resource(Descriptor):
             return True
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in self and self[algorithm]:
-                if not check_sum(target, algorithm, self[algorithm], self["name"]):
+                if not check_sum(target, algorithm, self[algorithm]):
                     return False
         return True
 
@@ -402,6 +402,19 @@ class _UrlResource(Resource):
             "sha1": {"type": "str", "desc": "The sha1 checksum of the resource"},
             "sha256": {"type": "str", "desc": "The sha256 checksum of the resource"},
             "sha512": {"type": "str", "desc": "The sha512 checksum of the resource"},
+            "source-url": {"type": "str", "desc": "The source of the resource"},
+            "source-md5": {
+                "type": "str",
+                "desc": "The md5 checksum of the source resource",
+            },
+            "source-sha1": {
+                "type": "str",
+                "desc": "The sha1 checksum of the source resource",
+            },
+            "source-sha256": {
+                "type": "str",
+                "desc": "The sha256 checksum of the source resource",
+            },
         }
     }
 
@@ -503,6 +516,19 @@ class _PlainResource(Resource):
             "sha1": {"type": "str", "desc": "The sha1 checksum of the resource"},
             "sha256": {"type": "str", "desc": "The sha256 checksum of the resource"},
             "sha512": {"type": "str", "desc": "The sha512 checksum of the resource"},
+            "source-url": {"type": "str", "desc": "The source of the resource"},
+            "source-md5": {
+                "type": "str",
+                "desc": "The md5 checksum of the source resource",
+            },
+            "source-sha1": {
+                "type": "str",
+                "desc": "The sha1 checksum of the source resource",
+            },
+            "source-sha256": {
+                "type": "str",
+                "desc": "The sha256 checksum of the source resource",
+            },
         }
     }
 

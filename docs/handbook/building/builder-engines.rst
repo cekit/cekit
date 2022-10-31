@@ -24,8 +24,10 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
-    ``--tag``
-        An image tag used to build image (can be specified multiple times)
+    ``--tag`` <tag-name>
+        Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
+        then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
+        descriptor.
     ``--no-squash``
         Do not squash the image after build is done.
     ``--platform``
@@ -134,7 +136,7 @@ Input format
     Dockerfile
 Parameters
     ``--release``
-        Perform an OSBS release build
+        Perform an OSBS release build (default is a scratch build)
     ``--user``
         Alternative user passed to build task
     ``--nowait``
@@ -143,6 +145,14 @@ Parameters
         Use stage environment
     ``--commit-message``
         Custom commit message for dist-git
+    ``--tag`` <tag-name>
+        .. versionadded:: 4.4.0
+
+        An optional tag to be applied to the dist-git repository after a successful build.
+        If the tag parameter is **not** specified then it will be constructed from the image
+        name (with ``/`` changed to ``-``) and the image version. The tag name may be constructed
+        using Jinja template e.g. ``{{name}}-{{version}}`` referencing the keys in the image
+        descriptor.
     ``--sync-only``
         .. versionadded:: 3.4
 
@@ -182,8 +192,10 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
-    ``--tag``
-        An image tag used to build image (can be specified multiple times)
+    ``--tag`` <tag-name>
+        Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
+        then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
+        descriptor.
     ``--no-squash``
         Do not squash the image after build is done.
     ``--platform``
@@ -240,8 +252,10 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
-    ``--tag``
-        An image tag used to build image (can be specified multiple times)
+    ``--tag`` <tag-name>
+        Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
+        then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
+        descriptor.
     ``--no-squash``
         Do not squash the image after build is done.
     ``--platform``

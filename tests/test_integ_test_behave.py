@@ -232,3 +232,63 @@ def test_simple_image_test(build_image):
     assert "1 scenario passed, 0 failed, 0 skipped" in test_result.output
     assert "2 steps passed, 0 failed, 0 skipped, 0 undefined" in test_result.output
     assert os.path.exists(os.path.join(image_dir, "target", "image", "Dockerfile"))
+
+
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
+def test_execute_simple_behave_test_with_env(build_image):
+    feature = """@test @image
+Feature: Basic tests
+
+  Scenario: Check env
+    When container is started with env
+  | variable                         | value                                                        |
+      | RESOURCE_ADAPTERS                | TEST_1                                                       |
+      | TEST_1_ID                        | fileQS                                                       |
+      | TEST_1_MODULE_SLOT               | main                                                         |
+      | TEST_1_MODULE_ID                 | org.jboss.teiid.resource-adapter.file                        |
+      | TEST_1_CONNECTION_CLASS          | org.teiid.resource.adapter.file.FileManagedConnectionFactory |
+      | TEST_1_CONNECTION_JNDI           | java:/marketdata-file                                        |
+      | TEST_1_PROPERTY_ParentDirectory  | /home/jboss/source/injected/injected-files/data              |
+      | TEST_1_PROPERTY_AllowParentPaths | true                                                         |
+      | TEST_1_POOL_MIN_SIZE             | 1                                                            |
+      | TEST_1_POOL_MAX_SIZE             | 5                                                            |
+      | TEST_1_POOL_PREFILL              | false                                                        |
+      | TEST_1_POOL_FLUSH_STRATEGY       | EntirePool                                                   |
+      | TEST_1_TRACKING                  | false                                                        |
+    """
+
+    test_image_dir = build_image()
+
+    features_dir = os.path.join(test_image_dir, "tests", "features")
+
+    os.makedirs(features_dir)
+
+    with open(os.path.join(features_dir, "basic.feature"), "w") as fd:
+        fd.write(feature)
+
+    with Chdir(test_image_dir):
+        result = CliRunner().invoke(
+            cli, ["-v", "test", "behave"], catch_exceptions=False
+        )
+
+    sys.stdout.write("\n")
+    sys.stdout.write(result.output)
+
+    assert result.exit_code == 0
+    assert "1 feature passed, 0 failed, 0 skipped" in result.output
+    assert "1 scenario passed, 0 failed, 0 skipped" in result.output
+    assert "1 step passed, 0 failed, 0 skipped, 0 undefined" in result.output
+    assert (
+        "Creating docker container with arguments and image: -e RESOURCE_ADAPTERS=TEST_1 -e TEST_1_ID=fileQS -e "
+        "TEST_1_MODULE_SLOT=main -e TEST_1_MODULE_ID=org.jboss.teiid.resource-adapter.file -e "
+        "TEST_1_CONNECTION_CLASS=org.teiid.resource.adapter.file.FileManagedConnectionFactory -e "
+        "TEST_1_CONNECTION_JNDI=java:/marketdata-file -e "
+        "TEST_1_PROPERTY_ParentDirectory=/home/jboss/source/injected/injected-files/data -e "
+        "TEST_1_PROPERTY_AllowParentPaths=true -e TEST_1_POOL_MIN_SIZE=1 -e TEST_1_POOL_MAX_SIZE=5 -e "
+        "TEST_1_POOL_PREFILL=false -e TEST_1_POOL_FLUSH_STRATEGY=EntirePool -e TEST_1_TRACKING=false "
+        in result.output
+    )
+
+    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
