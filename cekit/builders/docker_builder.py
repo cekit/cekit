@@ -5,6 +5,7 @@ import traceback
 
 from cekit.builder import Builder
 from cekit.errors import CekitError
+from cekit.types import DependencyDefinition
 
 LOGGER = logging.getLogger("cekit")
 
@@ -48,7 +49,7 @@ class DockerBuilder(Builder):
         super(DockerBuilder, self).__init__("docker", params)
 
     @staticmethod
-    def dependencies(params=None):
+    def dependencies(params=None) -> DependencyDefinition:
         deps = {}
 
         deps["python-docker"] = {
@@ -111,6 +112,7 @@ class DockerBuilder(Builder):
 
         except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
+            # TODO: exc_info should probably be True rather than 1.
             LOGGER.debug(
                 "Caught ConnectionError attempting to communicate with Docker ",
                 exc_info=1,

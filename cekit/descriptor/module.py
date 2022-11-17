@@ -1,5 +1,8 @@
+from typing import List
+
 from cekit.descriptor import Execute, Image
 from cekit.descriptor.image import get_image_schema
+from cekit.types import RawDescriptor
 
 overrides_schema = get_image_schema()
 overrides_schema["map"]["execute"] = {"type": "any"}
@@ -12,7 +15,7 @@ class Module(Image):
     descriptor_path: A path to module descriptor file.
     """
 
-    def __init__(self, descriptor, path, artifact_dir):
+    def __init__(self, descriptor: RawDescriptor, path, artifact_dir):
         self._artifact_dir = artifact_dir
         self.path = path
         self.schema = overrides_schema.copy()
@@ -27,5 +30,5 @@ class Module(Image):
         ]
 
     @property
-    def execute(self):
+    def execute(self) -> List[Execute]:
         return self.get("execute")

@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING, Optional, Type
 
 import click
 
@@ -13,6 +14,9 @@ from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map
 from cekit.version import __version__
+
+if TYPE_CHECKING:
+    from cekit.builder import Command
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -348,7 +352,7 @@ def test_behave(ctx, steps_url, wip, names):
     run_test(ctx, "behave")
 
 
-def prepare_params(ctx, params=None):
+def prepare_params(ctx, params: Optional[Map] = None) -> Map:
 
     if params is None:
         params = Map({})
@@ -361,8 +365,8 @@ def prepare_params(ctx, params=None):
     return params
 
 
-def run_command(ctx, clazz):
-    params = prepare_params(ctx)
+def run_command(ctx, clazz: Type["Command"]):
+    params: Map = prepare_params(ctx)
     Cekit(params).run(clazz)
 
 
@@ -405,8 +409,8 @@ def run_build(ctx, builder):
 class Cekit(object):
     """Main application"""
 
-    def __init__(self, params):
-        self.params = params
+    def __init__(self, params: Map):
+        self.params: Map = params
 
     def init(self):
         """Initialize logging"""
@@ -455,7 +459,7 @@ class Cekit(object):
                 except Exception:
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
-    def run(self, clazz):
+    def run(self, clazz: Type["Command"]):
         """Main application entry"""
 
         self.init()

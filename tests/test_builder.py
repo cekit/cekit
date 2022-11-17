@@ -174,6 +174,7 @@ class DistGitMock(object):
 def create_builder_object(
     mocker, builder, params, common_params={"target": "something"}
 ):
+    # TODO: Remove mutable default argument
     if "docker" == builder:
         from cekit.builders.docker_builder import DockerBuilder as BuilderImpl
     elif "osbs" == builder:

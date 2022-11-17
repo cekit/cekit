@@ -2,6 +2,8 @@ import hashlib
 import logging
 from typing import List
 
+from cekit.types import PathType
+
 logger = logging.getLogger("cekit")
 
 SUPPORTED_HASH_ALGORITHMS: List[str] = ["sha512", "sha256", "sha1", "md5"]
@@ -12,7 +14,7 @@ SUPPORTED_SOURCE_HASH_ALGORITHMS: List[str] = [
 ]
 
 
-def get_sum(target, algorithm):
+def get_sum(target: PathType, algorithm: str) -> str:
     hash_function = getattr(hashlib, algorithm)()
 
     logger.debug("Computing {} checksum for '{}' file".format(algorithm, target))
@@ -23,7 +25,7 @@ def get_sum(target, algorithm):
     return hash_function.hexdigest()
 
 
-def check_sum(target, algorithm, expected):
+def check_sum(target: PathType, algorithm: str, expected: str) -> bool:
     """Check that file checksum is correct
     Args:
       alg - algorithm which will be used for digest

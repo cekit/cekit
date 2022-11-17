@@ -1,6 +1,7 @@
 import copy
 import logging
 from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Union
 
 import yaml
 
@@ -17,9 +18,15 @@ from cekit.descriptor import (
     Run,
     Volume,
 )
-from cekit.descriptor.resource import create_resource
+from cekit.descriptor.resource import Resource, create_resource
 from cekit.errors import CekitError
 from cekit.tools import get_latest_image_version
+from cekit.types import _T, RawDescriptor
+
+if TYPE_CHECKING:
+    from cekit.descriptor.modules import Install
+    from cekit.descriptor.overrides import Overrides
+    from cekit.generator.base import ModuleRegistry
 
 logger = logging.getLogger("cekit")
 config = Config()
@@ -50,20 +57,27 @@ map:
 )
 
 
+class ImageOverrides(NamedTuple):
+    artifacts: Dict[str, "Resource"]
+    modules: Dict[str, "Install"]
+
+
 def get_image_schema():
     return copy.deepcopy(_image_schema)
 
 
 class Image(Descriptor):
-    def __init__(self, descriptor, artifact_dir):
-        self._artifact_dir = artifact_dir
-        self.path = artifact_dir
+    def __init__(self, descriptor: RawDescriptor, artifact_dir: str):
+        self._artifact_dir: str = artifact_dir
+        self.path: str = artifact_dir
         self.schema = _image_schema.copy()
         super(Image, self).__init__(descriptor)
         self.skip_merging = ["description", "version", "name", "release"]
         self._prepare()
 
     def _prepare(self):
+        # TODO: Separating raw image descriptor from a higher level Image class would change this
+        # confusing code into a connector/factory.
         self._descriptor["labels"] = [
             Label(x) for x in self._descriptor.get("labels", [])
         ]
@@ -87,11 +101,12 @@ class Image(Descriptor):
         ]
 
         # make sure image declarations override any module definitions
-        self._image_overrides = {
-            "artifacts": Image._to_dict(self.artifacts),
-            "modules": Image._to_dict(self.modules.install),
-        }
-        self._all_artifacts = Image._to_dict(self.artifacts)
+        # TODO: Make into a NamedTuple to make types easier to reason about.
+        self._image_overrides = ImageOverrides(
+            artifacts=Image._to_dict(self.artifacts),
+            modules=Image._to_dict(self.modules.install),
+        )
+        self._all_artifacts: Dict[str, Resource] = Image._to_dict(self.artifacts)
 
     def process_defaults(self):
         """Prepares default values before rendering"""
@@ -120,106 +135,108 @@ class Image(Descriptor):
             self.base = get_latest_image_version(self.follow)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.get("name")
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         self._descriptor["name"] = value
 
     @property
-    def version(self):
+    def version(self) -> Any:
+        # TODO: Convert to string up front to simplify
         return self.get("version")
 
     @version.setter
-    def version(self, value):
+    def version(self, value: Any):
         self._descriptor["version"] = value
 
+    # TODO: release is undocumented.
     @property
-    def release(self):
+    def release(self) -> str:
         return self.get("release")
 
     @release.setter
-    def release(self, value):
+    def release(self, value: str):
         self._descriptor["release"] = value
 
     @property
-    def base(self):
+    def base(self) -> str:
         return self.get("from")
 
     @base.setter
-    def base(self, value):
+    def base(self, value: str):
         self._descriptor["from"] = value
 
     @property
-    def follow(self):
+    def follow(self) -> str:
         return self.get("follow_tag")
 
     @follow.setter
-    def follow(self, value):
+    def follow(self, value: str):
         self._descriptor["follow_tag"] = value
 
     @property
-    def description(self):
+    def description(self) -> str:
         return self.get("description")
 
     @description.setter
-    def description(self, value):
+    def description(self, value: str) -> None:
         self._descriptor["description"] = value
 
     @property
-    def labels(self):
+    def labels(self) -> List[Label]:
         return self.get("labels", [])
 
     @property
-    def envs(self):
+    def envs(self) -> List[Env]:
         return self.get("envs", [])
 
     @property
-    def ports(self):
+    def ports(self) -> List[Port]:
         return self.get("ports", [])
 
     @property
-    def run(self):
+    def run(self) -> Run:
         return self.get("run")
 
     @run.setter
-    def run(self, value):
+    def run(self, value: Run):
         self._descriptor["run"] = value
 
     @property
-    def all_artifacts(self):
+    def all_artifacts(self) -> Iterable[Resource]:
         return self._all_artifacts.values()
 
     @property
-    def artifacts(self):
+    def artifacts(self) -> List[Resource]:
         return self.get("artifacts", [])
 
     @property
-    def modules(self):
+    def modules(self) -> Modules:
         return self.get("modules", Modules({}, self._artifact_dir))
 
     @property
-    def packages(self):
+    def packages(self) -> Packages:
         return self.get("packages", Packages({}, self.path))
 
     @property
-    def osbs(self):
+    def osbs(self) -> Osbs:
         return self.get("osbs")
 
     @osbs.setter
-    def osbs(self, value):
+    def osbs(self, value: Osbs):
         self._descriptor["osbs"] = value
 
     @property
-    def volumes(self):
+    def volumes(self) -> List[Volume]:
         return self.get("volumes", [])
 
     @property
-    def help(self):
+    def help(self) -> dict:
         return self.get("help", {})
 
-    def apply_image_overrides(self, overrides):
+    def apply_image_overrides(self, overrides: List["Overrides"]):
         """
         Applies overrides to the image descriptor.
         """
@@ -292,7 +309,7 @@ class Image(Descriptor):
                 if package not in self.packages.install:
                     self.packages.install.append(package)
 
-            artifact_overrides = self._image_overrides["artifacts"]
+            artifact_overrides = self._image_overrides.artifacts
             image_artifacts = Image._to_dict(self.artifacts)
             for i, artifact in enumerate(override.artifacts):
                 name = artifact.name
@@ -340,7 +357,7 @@ class Image(Descriptor):
                 )
             self._descriptor["artifacts"] = list(image_artifacts.values())
 
-            module_overrides = self._image_overrides["modules"]
+            module_overrides = self._image_overrides.modules
             image_modules = Image._to_dict(self.modules.install)
             for module in override.modules.install:
                 name = module.name
@@ -358,7 +375,7 @@ class Image(Descriptor):
                 else:
                     self.run = override.run
 
-    def apply_module_overrides(self, module_registry):
+    def apply_module_overrides(self, module_registry: "ModuleRegistry"):
         """
         Applies overrides to included modules.  This includes:
             Artifact definitions
@@ -368,7 +385,7 @@ class Image(Descriptor):
             Package repository definitions
             Required artifacts
         """
-        install_list = OrderedDict()
+        install_list: Dict[str, "Install"] = OrderedDict()
 
         # index by name for easier access
         self._package_repositories = Image._to_dict(self.packages.repositories)
@@ -396,10 +413,15 @@ class Image(Descriptor):
             self.run = self._module_run
 
     def process_install_list(
-        self, source, to_install_list, install_list, module_registry
+        self,
+        source: Union["Image"],
+        to_install_list: List["Install"],
+        install_list: Dict[str, "Install"],
+        module_registry: "ModuleRegistry",
     ) -> None:
-        module_overrides = self._image_overrides["modules"]
-        artifact_overrides = self._image_overrides["artifacts"]
+        # TODO: Return value is passed as parameter in `install_list`
+        module_overrides = self._image_overrides.modules
+        artifact_overrides = self._image_overrides.artifacts
         for to_install in to_install_list:
             logger.debug(
                 "Preparing module '{}' required by '{}'.".format(
@@ -484,7 +506,9 @@ class Image(Descriptor):
 
     # helper to simplify merging lists of objects
     @classmethod
-    def _to_dict(cls, named_items, key="name"):
+    def _to_dict(cls, named_items: Iterable[_T], key="name") -> Dict[str, _T]:
+        # TODO: `key` argument is never used?
+        # TODO: This assumes that `name` is always a string, but in fact it isn't for Port
         dictionary = OrderedDict()
         for item in named_items:
             dictionary[item[key]] = item

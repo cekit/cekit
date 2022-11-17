@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import List
 
 import yaml
 
@@ -7,6 +8,7 @@ from cekit.config import Config
 from cekit.descriptor import Descriptor
 from cekit.descriptor.resource import create_resource
 from cekit.errors import CekitError
+from cekit.types import ContentSetType
 
 logger = logging.getLogger("cekit")
 config = Config()
@@ -99,6 +101,7 @@ class Packages(Descriptor):
         else:
             self._descriptor["repositories"] = [Repository(x) for x in repositories]
 
+        # TODO: This looks like a no-op?!
         self._descriptor["install"] = self._descriptor.get("install", [])
 
     @property
@@ -110,15 +113,16 @@ class Packages(Descriptor):
         return self.get("manager_flags")
 
     @property
-    def repositories(self):
+    def repositories(self) -> List["Repository"]:
         return self.get("repositories")
 
     @property
-    def install(self):
+    def install(self) -> List[str]:
         return self.get("install")
 
     @property
-    def content_sets(self):
+    def content_sets(self) -> ContentSetType:
+        # TODO: content_sets seems to be undocumented?! Not sure what this is.
         return self.get("content_sets")
 
     @content_sets.setter
