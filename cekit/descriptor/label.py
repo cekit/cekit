@@ -19,30 +19,30 @@ class Label(Descriptor):
       descriptor - yaml object with Label
     """
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: dict):
         self.schema = label_schemas
         super(Label, self).__init__(descriptor)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.get("name")
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         self._descriptor["name"] = value
 
     @property
-    def value(self):
+    def value(self) -> str:
         return self.get("value")
 
     @value.setter
-    def value(self, value):
+    def value(self, value: str):
         self._descriptor["value"] = value
 
     @property
-    def description(self):
+    def description(self) -> str:
         return self.get("description")
 
     @description.setter
-    def description(self, value):
+    def description(self, value: str):
         self._descriptor["description"] = value

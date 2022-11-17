@@ -1,8 +1,13 @@
 import logging
+from typing import TYPE_CHECKING, Optional
 
 from cekit.config import Config
 from cekit.errors import CekitError
-from cekit.tools import DependencyHandler
+from cekit.tools import DependencyHandler, Map
+from cekit.types import PathType
+
+if TYPE_CHECKING:
+    from cekit.generator.base import Generator
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -12,12 +17,12 @@ class Command(object):
     TYPE_BUILDER = "builder"
     TYPE_TESTER = "tester"
 
-    def __init__(self, command, command_type):
-        self._command = command
-        self._type = command_type
+    def __init__(self, command: str, command_type: str) -> None:
+        self._command: str = command
+        self._type: str = command_type
 
         # Initialize dependency handler
-        self.dependency_handler = DependencyHandler()
+        self.dependency_handler: DependencyHandler = DependencyHandler()
 
         LOGGER.debug("Checking CEKit core dependencies...")
         self.dependency_handler.handle_core_dependencies()
@@ -42,16 +47,16 @@ class Builder(Command):
     Class representing generic builder - if it's instantiated it returns proper builder
     """
 
-    def __init__(self, build_engine, params):
+    def __init__(self, build_engine: str, params: Map) -> None:
         self.params = params
-        self.build_engine = build_engine
+        self.build_engine: str = build_engine
 
-        self.target = self.params.target
-        self.generator = None
+        self.target: PathType = self.params.target
+        self.generator: Optional[Generator] = None
 
         super(Builder, self).__init__(self.build_engine, Command.TYPE_BUILDER)
 
-    def execute(self):
+    def execute(self) -> None:
         self.prepare()
         self.before_generate()
 
@@ -72,7 +77,7 @@ class Builder(Command):
         self.before_build()
         self.run()
 
-    def prepare(self):
+    def prepare(self) -> None:
         if (
             self.build_engine == "docker"
             or self.build_engine == "buildah"
@@ -98,16 +103,16 @@ class Builder(Command):
             # Add the redhat specific stuff after everything else
             self.generator.add_redhat_overrides()
 
-    def before_generate(self):
+    def before_generate(self) -> None:
         # Handle dependencies for selected generator, if any
         LOGGER.debug("Checking CEKit generate dependencies...")
         self.dependency_handler.handle(self.generator, self.params)
 
         self.generator.init()
 
-    def generate(self):
+    def generate(self) -> None:
         self.generator.generate()
 
-    def before_build(self):
+    def before_build(self) -> None:
         LOGGER.debug("Checking CEKit build dependencies...")
         self.dependency_handler.handle(self, self.params)

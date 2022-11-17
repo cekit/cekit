@@ -1,8 +1,10 @@
 import logging
 import os
+from typing import List
 
 from cekit.builder import Builder
 from cekit.tools import run_wrapper
+from cekit.types import DependencyDefinition
 
 LOGGER = logging.getLogger("cekit")
 
@@ -14,7 +16,7 @@ class PodmanBuilder(Builder):
         super(PodmanBuilder, self).__init__("podman", params)
 
     @staticmethod
-    def dependencies(params=None):
+    def dependencies(params=None) -> DependencyDefinition:
         deps = {}
 
         deps["podman"] = {"package": "podman", "executable": "podman"}
@@ -23,8 +25,8 @@ class PodmanBuilder(Builder):
 
     def run(self):
         """Build container image using podman."""
-        tags = self.params.tags
-        cmd = ["/usr/bin/podman", "build"]
+        tags: List[str] = self.params.tags
+        cmd: List[str] = ["/usr/bin/podman", "build"]
 
         if not tags:
             tags = self.generator.get_tags()

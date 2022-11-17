@@ -3,6 +3,7 @@ import os
 
 from cekit.builder import Builder
 from cekit.tools import run_wrapper
+from cekit.types import DependencyDefinition
 
 LOGGER = logging.getLogger("cekit")
 
@@ -14,14 +15,14 @@ class BuildahBuilder(Builder):
         super(BuildahBuilder, self).__init__("buildah", params)
 
     @staticmethod
-    def dependencies(params=None):
+    def dependencies(params=None) -> DependencyDefinition:
         deps = {}
 
         deps["buildah"] = {"package": "buildah", "executable": "buildah"}
 
         return deps
 
-    def run(self):
+    def run(self) -> None:
         """Build container image using buildah."""
         tags = self.params.tags
         cmd = ["/usr/bin/buildah", "build-using-dockerfile"]

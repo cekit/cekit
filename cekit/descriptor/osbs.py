@@ -1,10 +1,12 @@
 import logging
 import os
+from typing import Any, Callable
 
 import yaml
 
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
+from cekit.types import PathType
 
 osbs_schema = yaml.safe_load(
     """
@@ -60,7 +62,8 @@ class Osbs(Descriptor):
             self._descriptor.get("repository", {}), self.descriptor_path
         )
 
-    def merge(self, descriptor):
+    # TODO: Unclear why merge is overridden here with a different implementation.
+    def merge(self, descriptor: "Osbs") -> "Osbs":
         if not descriptor:
             return self
         for k2, v2 in descriptor.items():
@@ -69,51 +72,51 @@ class Osbs(Descriptor):
         return self
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.get("name")
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         self._descriptor["name"] = value
 
     @property
-    def branch(self):
+    def branch(self) -> str:
         return self.get("branch")
 
     @branch.setter
-    def branch(self, value):
+    def branch(self, value: str):
         self._descriptor["branch"] = value
 
     @property
-    def configuration(self):
+    def configuration(self) -> "Configuration":
         return self.get("configuration")
 
     @property
-    def extra_dir(self):
+    def extra_dir(self) -> PathType:
         return self.get("extra_dir")
 
     @extra_dir.setter
-    def extra_dir(self, value):
+    def extra_dir(self, value: PathType):
         self._descriptor["extra_dir"] = value
 
     @property
-    def extra_dir_target(self):
+    def extra_dir_target(self) -> PathType:
         return self.get("extra_dir_target")
 
     @extra_dir_target.setter
-    def extra_dir_target(self, value):
+    def extra_dir_target(self, value: PathType):
         self._descriptor["extra_dir_target"] = value
 
     @property
-    def koji_target(self):
+    def koji_target(self) -> str:
         return self.get("koji_target")
 
     @koji_target.setter
-    def koji_target(self, value):
+    def koji_target(self, value: str):
         self._descriptor["koji_target"] = value
 
     @property
-    def repository(self):
+    def repository(self) -> "Repository":
         return self.get("repository")
 
 
@@ -123,9 +126,9 @@ class Configuration(Descriptor):
     Args:
       descriptor - yaml containing OSBS configuration"""
 
-    def __init__(self, descriptor, descriptor_path):
+    def __init__(self, descriptor: Any, descriptor_path: str):
         self.schema = configuration_schema
-        self.descriptor_path = descriptor_path
+        self.descriptor_path: str = descriptor_path
         super(Configuration, self).__init__(descriptor)
 
         self._process_osbs_config_files(yaml.safe_load, "container", "container_file")
@@ -137,7 +140,9 @@ class Configuration(Descriptor):
         if remote_source:
             logger.debug("Cachito definition is {}".format(remote_source))
 
-    def _process_osbs_config_files(self, loader, text, filename):
+    def _process_osbs_config_files(
+        self, loader: Callable[[Any], Any], text: str, filename: str
+    ) -> None:
         if text in self and filename in self:
             raise CekitError(
                 "You cannot specify %s and %s together!" % (text, filename)

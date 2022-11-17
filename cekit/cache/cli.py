@@ -151,7 +151,7 @@ class CacheCli:
         else:
             click.echo("No artifacts cached!")
 
-    def rm(self, uuid):
+    def rm(self, uuid: str):
         artifact_cache = ArtifactCache()
 
         try:
