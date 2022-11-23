@@ -305,6 +305,8 @@ def test(image, overrides):
     show_default=True,
 )
 @click.option("--wip", help="Run test scenarios tagged with @wip only.", is_flag=True)
+@click.option("--include-re", help="Run only those features which match this regex")
+@click.option("--exclude-re", help="Do not run those features which match this regex")
 @click.option(
     "--name",
     "names",
@@ -312,7 +314,7 @@ def test(image, overrides):
     multiple=True,
 )
 @click.pass_context
-def test_behave(ctx, steps_url, wip, names):
+def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
     """
     DESCRIPTION
 
@@ -337,6 +339,18 @@ def test_behave(ctx, steps_url, wip, names):
 
     if wip and names:
         raise click.UsageError("Parameters --name and --wip cannot be used together")
+    if include_re and exclude_re:
+        raise click.UsageError(
+            "Parameters --include-re and --exclude-re cannot be used together"
+        )
+    if names and (include_re or exclude_re):
+        raise click.UsageError(
+            "Parameters --names cannot be used with --include-re or --exclude-re"
+        )
+    if wip and (include_re or exclude_re):
+        raise click.UsageError(
+            "Parameters --wip cannot be used with --include-re or --exclude-re"
+        )
 
     run_test(ctx, "behave")
 

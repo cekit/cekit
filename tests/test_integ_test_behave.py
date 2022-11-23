@@ -154,6 +154,86 @@ Feature: Basic tests
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
+def test_execute_simple_behave_test_with_inclusion(build_image):
+    feature = """@test @image
+Feature: Basic tests
+
+  Scenario: Check that the labels are correctly set
+    Given image is built
+    Then the image should contain label foo with value bar
+     And the image should contain label labela with value a
+    """
+
+    test_image_dir = build_image()
+
+    features_dir = os.path.join(test_image_dir, "tests", "features")
+
+    os.makedirs(features_dir)
+
+    with open(os.path.join(features_dir, "basic.feature"), "w") as fd:
+        fd.write(feature)
+
+    with Chdir(test_image_dir):
+        result = CliRunner().invoke(
+            cli,
+            ["-v", "test", "behave", "--include-re", "basic.feature"],
+            catch_exceptions=False,
+        )
+
+    sys.stdout.write("\n")
+    sys.stdout.write(result.output)
+
+    assert result.exit_code == 0
+    assert "1 feature passed, 0 failed, 0 skipped" in result.output
+    assert "1 scenario passed, 0 failed, 0 skipped" in result.output
+    assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
+
+    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
+
+
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
+def test_execute_simple_behave_test_with_exclusion(build_image):
+    feature = """@test @image
+Feature: Basic tests
+
+  Scenario: Check that the labels are correctly set
+    Given image is built
+    Then the image should contain label foo with value bar
+     And the image should contain label labela with value a
+    """
+
+    test_image_dir = build_image()
+
+    features_dir = os.path.join(test_image_dir, "tests", "features")
+
+    os.makedirs(features_dir)
+
+    with open(os.path.join(features_dir, "basic.feature"), "w") as fd:
+        fd.write(feature)
+
+    with Chdir(test_image_dir):
+        result = CliRunner().invoke(
+            cli,
+            ["-v", "test", "behave", "--exclude-re", "basic.feature"],
+            catch_exceptions=False,
+        )
+
+    sys.stdout.write("\n")
+    sys.stdout.write(result.output)
+
+    assert result.exit_code == 0
+    assert "0 features passed, 0 failed, 0 skipped" in result.output
+    assert "0 scenarios passed, 0 failed, 0 skipped" in result.output
+    assert "0 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
+
+    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
+
+
+@pytest.mark.skipif(
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
+)
 def test_execute_behave_test_from_module():
 
     # given: (image is built)
