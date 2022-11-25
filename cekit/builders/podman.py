@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from typing import List
 
 from cekit.builder import Builder
@@ -25,8 +26,12 @@ class PodmanBuilder(Builder):
 
     def run(self):
         """Build container image using podman."""
+
+        podman = shutil.which("podman")
+        if podman is None:
+            raise RuntimeError("podman binary was not found in the system.")
         tags: List[str] = self.params.tags
-        cmd: List[str] = ["/usr/bin/podman", "build"]
+        cmd: List[str] = [podman, "build"]
 
         if not tags:
             tags = self.generator.get_tags()
