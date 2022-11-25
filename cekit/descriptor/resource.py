@@ -4,12 +4,12 @@ import os
 import shutil
 from typing import Any, Dict, Optional, overload
 
+from cekit.cekit_types import _T, PathType
 from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
 from cekit.tools import Chdir, Map, download_file, get_brew_url, run_wrapper
-from cekit.types import _T, PathType
 
 logger = logging.getLogger("cekit")
 config = Config()

@@ -2,7 +2,7 @@ import hashlib
 import logging
 from typing import List
 
-from cekit.types import PathType
+from cekit.cekit_types import PathType
 
 logger = logging.getLogger("cekit")
 

@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import yaml
 
 from cekit import crypto, version
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.descriptor.resource import (
     Resource,
@@ -21,7 +22,6 @@ from cekit.descriptor.resource import (
 from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import copy_recursively, get_brew_url
-from cekit.types import PathType
 
 if TYPE_CHECKING:
     from cekit.descriptor import Repository

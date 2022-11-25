@@ -2,9 +2,9 @@ import logging
 import os
 from typing import List
 
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.generator.base import Generator
-from cekit.types import PathType
 
 logger = logging.getLogger("cekit")
 config = Config()

@@ -13,9 +13,9 @@ import click
 import yaml
 from yaml.representer import SafeRepresenter
 
+from cekit.cekit_types import DependencyDefinition, PathType
 from cekit.config import Config
 from cekit.errors import CekitError
-from cekit.types import DependencyDefinition, PathType
 
 logger = logging.getLogger("cekit")
 config = Config()

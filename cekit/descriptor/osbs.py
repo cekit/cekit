@@ -4,9 +4,9 @@ from typing import Any, Callable
 
 import yaml
 
+from cekit.cekit_types import PathType
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
-from cekit.types import PathType
 
 osbs_schema = yaml.safe_load(
     """

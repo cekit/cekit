@@ -13,6 +13,7 @@ from jinja2 import Template
 
 from cekit import tools
 from cekit.builder import Builder
+from cekit.cekit_types import DependencyDefinition, PathType
 from cekit.config import Config
 from cekit.descriptor.resource import (
     Resource,
@@ -23,7 +24,6 @@ from cekit.descriptor.resource import (
 )
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively, run_wrapper
-from cekit.types import DependencyDefinition, PathType
 
 if TYPE_CHECKING:
     from cekit.descriptor.osbs import Repository

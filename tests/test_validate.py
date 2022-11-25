@@ -1479,7 +1479,7 @@ def test_simple_image_build_error_connection_error_remote_docker_with_custom_doc
 
 # https://github.com/cekit/cekit/issues/538
 @pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
+    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
 )
 def test_proper_decoding(tmpdir, caplog):
     image_dir = str(tmpdir.mkdir("source"))

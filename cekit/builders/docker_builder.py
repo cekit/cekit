@@ -4,8 +4,8 @@ import re
 import traceback
 
 from cekit.builder import Builder
+from cekit.cekit_types import DependencyDefinition
 from cekit.errors import CekitError
-from cekit.types import DependencyDefinition
 
 LOGGER = logging.getLogger("cekit")
 

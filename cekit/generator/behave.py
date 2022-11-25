@@ -1,7 +1,7 @@
 from typing import List
 
+from cekit.cekit_types import PathType
 from cekit.generator.base import Generator
-from cekit.types import PathType
 
 
 class BehaveGenerator(Generator):

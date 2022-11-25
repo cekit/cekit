@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-from cekit.types import PathType
+from cekit.cekit_types import PathType
 
 default_work_dir = "~/.cekit"
 

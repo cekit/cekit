@@ -1,9 +1,9 @@
 import copy
 from typing import Optional
 
+from cekit.cekit_types import RawDescriptor
 from cekit.descriptor import Image
 from cekit.descriptor.image import get_image_schema
-from cekit.types import RawDescriptor
 
 overrides_schema = get_image_schema()
 overrides_schema["map"]["name"] = {"type": "str"}

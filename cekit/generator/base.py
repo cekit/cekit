@@ -13,6 +13,7 @@ from jinja2 import Environment, FileSystemLoader
 from packaging.version import LegacyVersion
 from packaging.version import parse as parse_version
 
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.descriptor import (
     Env,
@@ -27,7 +28,6 @@ from cekit.descriptor import (
 from cekit.errors import CekitError
 from cekit.template_helper import TemplateHelper
 from cekit.tools import DependencyDefinition, Map, download_file, load_descriptor
-from cekit.types import PathType
 from cekit.version import __version__ as cekit_version
 
 if TYPE_CHECKING:

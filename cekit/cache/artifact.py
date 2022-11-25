@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any, Dict, Union
 
 import yaml
 
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, get_sum
 from cekit.errors import CekitError
-from cekit.types import PathType
 
 if TYPE_CHECKING:
     from cekit.descriptor import Resource
