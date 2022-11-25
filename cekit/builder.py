@@ -1,10 +1,10 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.errors import CekitError
 from cekit.tools import DependencyHandler, Map
-from cekit.types import PathType
 
 if TYPE_CHECKING:
     from cekit.generator.base import Generator

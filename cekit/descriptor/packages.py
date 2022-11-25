@@ -4,11 +4,11 @@ from typing import List
 
 import yaml
 
+from cekit.cekit_types import ContentSetType
 from cekit.config import Config
 from cekit.descriptor import Descriptor
 from cekit.descriptor.resource import create_resource
 from cekit.errors import CekitError
-from cekit.types import ContentSetType
 
 logger = logging.getLogger("cekit")
 config = Config()

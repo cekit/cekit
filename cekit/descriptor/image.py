@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Union
 import yaml
 
 import cekit
+from cekit.cekit_types import _T, RawDescriptor
 from cekit.config import Config
 from cekit.descriptor import (
     Descriptor,
@@ -21,7 +22,6 @@ from cekit.descriptor import (
 from cekit.descriptor.resource import Resource, create_resource
 from cekit.errors import CekitError
 from cekit.tools import get_latest_image_version
-from cekit.types import _T, RawDescriptor
 
 if TYPE_CHECKING:
     from cekit.descriptor.modules import Install
