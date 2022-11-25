@@ -480,7 +480,7 @@ class DistGit(object):
         LOGGER.debug("Adding files to git...")
 
         # TODO: Rename obj to something specific
-        for obj in os.listdir("."):
+        for obj in sorted(os.listdir(".")):
             if obj == ".git":
                 LOGGER.debug("Skipping '.git' directory")
                 continue
