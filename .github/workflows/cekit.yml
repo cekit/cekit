@@ -54,6 +54,10 @@ jobs:
       if: startsWith(matrix.os,'macos')
       run: |
         pip install tox
+        brew install podman
+        podman machine init
+        podman machine start
+        podman info
     - name: Run tests
       run: |
         PV=${{ matrix.python-version }}

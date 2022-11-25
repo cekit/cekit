@@ -3,10 +3,8 @@
 from __future__ import print_function
 
 import os
-import platform
 import shutil
 
-import pytest
 from click.testing import CliRunner
 
 from cekit.cli import cli
@@ -26,9 +24,6 @@ def run_cekit(image_dir, args=None, env=None):
         return result
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_podman_builder_with_alpine_image(tmpdir):
     tmpdir = str(tmpdir)
 
@@ -42,9 +37,6 @@ def test_podman_builder_with_alpine_image(tmpdir):
     run_cekit(os.path.join(tmpdir, "alpine"), env={"BUILDAH_LAYERS": "false"})
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_podman_from_scratch(tmpdir):
     tmpdir = str(tmpdir)
 
@@ -58,9 +50,6 @@ def test_podman_from_scratch(tmpdir):
     run_cekit(os.path.join(tmpdir, "scratch"), env={"BUILDAH_LAYERS": "false"})
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_podman_operator_metadata(tmpdir):
     tmpdir = str(tmpdir)
 

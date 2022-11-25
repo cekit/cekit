@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 
 import pytest
@@ -26,9 +25,6 @@ def run_cekit(image_dir, descriptor, args=None):
         return result
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
-)
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
@@ -75,9 +71,6 @@ def test_module_uses_installed_package_in_execute_script(tmp_path, caplog):
     assert "Applying module package manager of apk to image" in caplog.text
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
-)
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
