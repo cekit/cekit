@@ -39,8 +39,7 @@ class OSBSBuilder(Builder):
         super(OSBSBuilder, self).__init__("osbs", params)
 
         self._rhpkg_set_url_repos: List[str] = []
-        # TODO: artifacts is used as two different, incompatible types here
-        self.artifacts: List[Resource] = []
+        self.artifacts: List[str] = []
         self.dist_git: DistGit
         self.dist_git_dir: pathlib.Path
 
@@ -117,7 +116,7 @@ class OSBSBuilder(Builder):
             all_artifacts += image.all_artifacts
 
         # First get all artifacts that are not plain/url artifacts (the latter is added to fetch-artifacts.yaml)
-        self.artifacts: List[Resource] = [
+        self.artifacts: List[str] = [
             a.target
             for a in all_artifacts
             if not isinstance(
@@ -166,7 +165,6 @@ class OSBSBuilder(Builder):
         )
 
         self.dist_git.prepare(self.params.stage, self.params.user)
-        # TODO: There is a type error here that need resolving.
         self.dist_git.clean(self.artifacts)
 
     def _copy_to_dist_git(self):
@@ -251,7 +249,7 @@ class OSBSBuilder(Builder):
 
         for artifact in self.artifacts:
             # In case the artifact is a directory, we don't want to add it.
-            # Instead it will be staged.
+            # Instead, it will be staged.
             if os.path.isdir(artifact):
                 continue
 
@@ -479,21 +477,20 @@ class DistGit(object):
     def add(self, artifacts: List[str]) -> None:
         LOGGER.debug("Adding files to git...")
 
-        # TODO: Rename obj to something specific
-        for obj in sorted(os.listdir(".")):
-            if obj == ".git":
+        for file in sorted(os.listdir(".")):
+            if file == ".git":
                 LOGGER.debug("Skipping '.git' directory")
                 continue
 
             # If the artifact to add is a directory do not skip it
-            if obj in artifacts and not os.path.isdir(obj):
+            if file in artifacts and not os.path.isdir(file):
                 LOGGER.debug(
-                    f"Skipping staging '{obj}' in git because it is an artifact"
+                    f"Skipping staging '{file}' in git because it is an artifact"
                 )
                 continue
 
-            LOGGER.debug(f"Staging '{obj}'...")
-            run_wrapper(["git", "add", "--all", obj], False)
+            LOGGER.debug(f"Staging '{file}'...")
+            run_wrapper(["git", "add", "--all", file], False)
 
     def commit(self, commit_msg: str) -> None:
         if not commit_msg:
