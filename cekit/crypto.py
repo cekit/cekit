@@ -1,12 +1,20 @@
 import hashlib
 import logging
+from typing import List
+
+from cekit.cekit_types import PathType
 
 logger = logging.getLogger("cekit")
 
-SUPPORTED_HASH_ALGORITHMS = ["sha512", "sha256", "sha1", "md5"]
+SUPPORTED_HASH_ALGORITHMS: List[str] = ["sha512", "sha256", "sha1", "md5"]
+SUPPORTED_SOURCE_HASH_ALGORITHMS: List[str] = [
+    "source-sha1",
+    "source-sha256",
+    "source-md5",
+]
 
 
-def get_sum(target, algorithm):
+def get_sum(target: PathType, algorithm: str) -> str:
     hash_function = getattr(hashlib, algorithm)()
 
     logger.debug("Computing {} checksum for '{}' file".format(algorithm, target))
@@ -17,14 +25,12 @@ def get_sum(target, algorithm):
     return hash_function.hexdigest()
 
 
-def check_sum(target, algorithm, expected, name=None):
+def check_sum(target: PathType, algorithm: str, expected: str) -> bool:
     """Check that file checksum is correct
     Args:
-      alg - algorithm which will be used for diget
-      expected_chksum - checksum which artifact must match
+      alg - algorithm which will be used for digest
+      expected_checksum - checksum which artifact must match
     """
-    if not name:
-        name = target
     logger.debug("Checking '{}' {} hash...".format(target, algorithm))
 
     checksum = get_sum(target, algorithm)

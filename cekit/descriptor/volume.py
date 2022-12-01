@@ -23,7 +23,7 @@ class Volume(Descriptor):
       descriptor - yaml file containing volume object
     """
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: dict):
         self.schema = volume_schema
         super(Volume, self).__init__(descriptor)
         if "name" not in self._descriptor:

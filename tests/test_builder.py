@@ -1,6 +1,7 @@
 import glob
 import logging
 import os
+import shutil
 import subprocess
 import time
 
@@ -21,13 +22,33 @@ except ImportError:
 from cekit.builders.docker_builder import DockerBuilder
 from cekit.config import Config
 
+config = Config()
+
 
 @pytest.fixture(autouse=True)
 def reset_config():
     config.cfg["common"] = {}
 
 
-config = Config()
+def merge_container_yaml(dist_git_dir, src, dest):
+    # FIXME - this is temporary needs to be refactored to proper merging
+    with open(src, "r") as _file:
+        generated = yaml.safe_load(_file)
+
+    target = {}
+    if os.path.exists(dest):
+        with open(dest, "r") as _file:
+            target = yaml.safe_load(_file)
+
+    target.update(generated)
+    if glob.glob(os.path.join(dist_git_dir, "repos", "*.repo")):
+        if "platforms" in target:
+            target["platforms"]["only"] = ["x86_64"]
+        else:
+            target["platforms"] = {"only": ["x86_64"]}
+
+    with open(dest, "w") as _file:
+        yaml.dump(target, _file, default_flow_style=False)
 
 
 def test_osbs_builder_defaults(mocker):
@@ -100,7 +121,7 @@ def test_merge_container_yaml_no_limit_arch(mocker, tmpdir):
     with open(source, "w") as file_:
         yaml.dump({"tags": ["foo"]}, file_)
 
-    builder._merge_container_yaml(source, container_yaml_f)
+    merge_container_yaml(builder.dist_git_dir, source, container_yaml_f)
 
     with open(container_yaml_f, "r") as file_:
         container_yaml = yaml.safe_load(file_)
@@ -122,7 +143,7 @@ def test_merge_container_yaml_limit_arch(mocker, tmpdir):
     with open(source, "w") as file_:
         yaml.dump({"tags": ["foo"]}, file_)
 
-    builder._merge_container_yaml(source, container_yaml_f)
+    merge_container_yaml(builder.dist_git_dir, source, container_yaml_f)
 
     with open(container_yaml_f, "r") as file_:
         container_yaml = yaml.safe_load(file_)
@@ -154,6 +175,7 @@ class DistGitMock(object):
 def create_builder_object(
     mocker, builder, params, common_params={"target": "something"}
 ):
+    # TODO: Remove mutable default argument
     if "docker" == builder:
         from cekit.builders.docker_builder import DockerBuilder as BuilderImpl
     elif "osbs" == builder:
@@ -948,7 +970,7 @@ def test_podman_builder_run(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--squash",
             "-t",
@@ -972,7 +994,7 @@ def test_podman_builder_run_pull(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--pull-always",
             "--squash",
@@ -1001,7 +1023,7 @@ def test_podman_builder_run_platform(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--pull-always",
             "--squash",
@@ -1046,7 +1068,7 @@ def test_podman_builder_run_with_generator(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--squash",
             "-t",
@@ -1134,7 +1156,7 @@ def test_podman_builder_with_squashing_disabled(mocker):
     builder.run()
 
     run.assert_called_once_with(
-        ["/usr/bin/podman", "build", "-t", "foo", "-t", "bar", "something/image"],
+        [shutil.which("podman"), "build", "-t", "foo", "-t", "bar", "something/image"],
         stderr=None,
         stdout=None,
         check=True,

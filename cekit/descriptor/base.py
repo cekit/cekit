@@ -1,6 +1,7 @@
 import logging
 import os
 from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, Any, Dict, Optional, TypeVar
 
 import yaml
 from pykwalify.core import Core
@@ -8,7 +9,12 @@ from pykwalify.errors import SchemaError
 
 from cekit.errors import CekitError
 
+if TYPE_CHECKING:
+    from cekit.descriptor import Label
+
 logger = logging.getLogger("cekit")
+
+TextendsDescriptor = TypeVar("TextendsDescriptor", bound="Descriptor")
 
 
 class Descriptor(MutableMapping):
@@ -31,12 +37,12 @@ class Descriptor(MutableMapping):
 
     """
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: Dict[str, Any]):
         self.skip_merging = []
-        self._descriptor = descriptor
+        self._descriptor: Dict[str, Any] = descriptor
         self.__validate()
 
-    def __validate(self):
+    def __validate(self) -> None:
         if not self.schema:
             return
 
@@ -54,10 +60,10 @@ class Descriptor(MutableMapping):
             )
 
     @classmethod
-    def to_yaml(cls, representer, node):
+    def to_yaml(cls, representer: yaml.representer.BaseRepresenter, node) -> yaml.Node:
         return representer.represent_data(node._descriptor)
 
-    def write(self, path):
+    def write(self, path: str) -> None:
         directory = os.path.dirname(path)
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -70,13 +76,16 @@ class Descriptor(MutableMapping):
                 Dumper=yaml.SafeDumper,
             )
 
-    def label(self, key):
+    # TODO: This should appear only on descriptors where a label makes sense, i.e Image
+    def label(self, key) -> Optional["Label"]:
         for ll in self._descriptor["labels"]:
             if ll["name"] == key:
                 return ll
         return None
 
-    def merge(self, descriptor):
+    def merge(
+        self: TextendsDescriptor, descriptor: Optional["Descriptor"]
+    ) -> TextendsDescriptor:
         """Merges two descriptors in a way, that arrays are appended
         and duplicate values are kept
         Args:
@@ -146,10 +155,10 @@ class Descriptor(MutableMapping):
     def get(self, k, default=None):
         return self._descriptor.get(k, default)
 
-    def process_defaults(self):
+    def process_defaults(self) -> None:
         pass
 
-    def remove_none_keys(self):
+    def remove_none_keys(self) -> None:
         if isinstance(self, Descriptor):
             _remove_none_keys(self)
         else:
@@ -170,7 +179,9 @@ def _remove_none_keys(desc):
             del desc[key]
 
 
-def _merge_descriptors(desc1, desc2):
+def _merge_descriptors(
+    desc1: TextendsDescriptor, desc2: Descriptor
+) -> TextendsDescriptor:
     """
     Merges two descriptors with handling embedded lists and
     descriptors.

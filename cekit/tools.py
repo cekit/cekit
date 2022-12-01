@@ -5,7 +5,7 @@ import shutil
 import ssl
 import subprocess
 import sys
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Optional, Sequence
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
@@ -13,6 +13,7 @@ import click
 import yaml
 from yaml.representer import SafeRepresenter
 
+from cekit.cekit_types import DependencyDefinition, PathType
 from cekit.config import Config
 from cekit.errors import CekitError
 
@@ -95,6 +96,7 @@ def download_file(url: str, destination: str) -> None:
 
 
 def load_descriptor(descriptor: str) -> dict:
+    # TODO: The docstring mentions validation, but this doesn't appear to validate.
     """parses descriptor and validate it against requested schema type
 
     Args:
@@ -132,7 +134,7 @@ def load_descriptor(descriptor: str) -> dict:
     return data
 
 
-def decision(question):
+def decision(question: str) -> bool:
     """Asks user for a question returning True/False answered"""
     return click.confirm(question, show_default=True)
 
@@ -284,7 +286,9 @@ def get_brew_url(md5: str) -> str:
     )
 
 
-def copy_recursively(source_directory: str, destination_directory: str) -> None:
+def copy_recursively(
+    source_directory: PathType, destination_directory: PathType
+) -> None:
     """
     Copies contents of a directory to selected target location (also a directory).
     the specific source file to destination.
@@ -375,7 +379,7 @@ def run_wrapper(
 class Chdir(object):
     """Context manager for changing the current working directory"""
 
-    def __init__(self, new_path):
+    def __init__(self, new_path: PathType):
         self.newPath = os.path.expanduser(new_path)
         self.savedPath = None
 
@@ -402,7 +406,7 @@ class DependencyHandler(object):
     # Format is defined below, in the handle_dependencies() method
     EXTERNAL_CORE_DEPENDENCIES = {"git": {"package": "git", "executable": "git"}}
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.os_release = {}
         self.platform = None
         self.version = None
@@ -456,7 +460,7 @@ class DependencyHandler(object):
             )
         )
 
-    def _handle_dependencies(self, dependencies: dict) -> None:
+    def _handle_dependencies(self, dependencies: DependencyDefinition) -> None:
         """
         The dependencies provided is expected to be a dict in following format:
 
@@ -544,7 +548,7 @@ class DependencyHandler(object):
         logger.debug("All dependencies provided!")
 
     # noinspection PyMethodMayBeStatic
-    def _check_for_library(self, library):
+    def _check_for_library(self, library: str) -> bool:
         library_found = False
 
         if importlib.util.find_spec(library):
@@ -552,7 +556,9 @@ class DependencyHandler(object):
 
         return library_found
 
-    def _check_for_executable(self, dependency, executable, package=None):
+    def _check_for_executable(
+        self, dependency: str, executable: str, package: None = None
+    ) -> Optional[bool]:
         if os.path.isabs(executable):
             if self._is_program(executable):
                 return True
@@ -586,7 +592,7 @@ class DependencyHandler(object):
 
         raise CekitError(msg)
 
-    def _is_program(self, path):
+    def _is_program(self, path: str) -> bool:
         if (
             os.path.exists(path)
             and os.access(path, os.F_OK | os.X_OK)
@@ -596,7 +602,7 @@ class DependencyHandler(object):
 
         return False
 
-    def handle_core_dependencies(self):
+    def handle_core_dependencies(self) -> None:
         self._handle_dependencies(DependencyHandler.EXTERNAL_CORE_DEPENDENCIES)
 
         try:
@@ -614,11 +620,11 @@ class DependencyHandler(object):
         except ImportError:
             pass
 
-    def handle(self, o, params) -> None:
+    # TODO: Use either structural typing or a base class to make this logic simpler.
+    def handle(self, o: Any, params: Map) -> None:
         """
         Handles dependencies from selected object. If the object has 'dependencies' method,
         it will be called to retrieve a set of dependencies to check for.
-        :param params:
         """
 
         if not o:

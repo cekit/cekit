@@ -1,3 +1,6 @@
+from typing import List
+
+from cekit.cekit_types import RawDescriptor
 from cekit.descriptor import Execute, Image
 from cekit.descriptor.image import get_image_schema
 
@@ -12,7 +15,7 @@ class Module(Image):
     descriptor_path: A path to module descriptor file.
     """
 
-    def __init__(self, descriptor, path, artifact_dir):
+    def __init__(self, descriptor: RawDescriptor, path, artifact_dir):
         self._artifact_dir = artifact_dir
         self.path = path
         self.schema = overrides_schema.copy()
@@ -27,5 +30,5 @@ class Module(Image):
         ]
 
     @property
-    def execute(self):
+    def execute(self) -> List[Execute]:
         return self.get("execute")

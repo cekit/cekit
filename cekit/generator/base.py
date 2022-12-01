@@ -6,18 +6,32 @@ import platform
 import re
 import shutil
 import tempfile
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader
 from packaging.version import LegacyVersion
 from packaging.version import parse as parse_version
 
+from cekit.cekit_types import PathType
 from cekit.config import Config
-from cekit.descriptor import Env, Image, Label, Module, Overrides, Repository
+from cekit.descriptor import (
+    Env,
+    Image,
+    Label,
+    Module,
+    Modules,
+    Overrides,
+    Repository,
+    Resource,
+)
 from cekit.errors import CekitError
 from cekit.template_helper import TemplateHelper
-from cekit.tools import download_file, load_descriptor
+from cekit.tools import DependencyDefinition, Map, download_file, load_descriptor
 from cekit.version import __version__ as cekit_version
+
+if TYPE_CHECKING:
+    from cekit.descriptor.modules import Install
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -43,15 +57,17 @@ class Generator(object):
 
     ODCS_HIDDEN_REPOS_FLAG = "include_unpublished_pulp_repos"
 
-    def __init__(self, descriptor_path, target, overrides):
-        self._descriptor_path = descriptor_path
-        self._overrides = []
-        self.target = target
+    def __init__(
+        self, descriptor_path: PathType, target: PathType, overrides: List[str]
+    ):
+        self._descriptor_path: PathType = descriptor_path
+        self._overrides: List[Overrides] = []
+        self.target: PathType = target
         self._fetch_repos = False
-        self._module_registry = ModuleRegistry()
-        self.image = None
-        self.builder_images = []
-        self.images = []
+        self._module_registry: ModuleRegistry = ModuleRegistry()
+        self.image: Optional[Image] = None
+        self.builder_images: List[Image] = []
+        self.images: List[Image] = []
 
         # If descriptor has been passed in from standard input its not a path so use current working directory
         if "-" == descriptor_path:
@@ -84,7 +100,7 @@ class Generator(object):
         LOGGER.info("Initializing image descriptor...")
 
     @staticmethod
-    def dependencies(params=None):
+    def dependencies(params: Map = None) -> DependencyDefinition:
         deps = {}
 
         deps["odcs-client"] = {
@@ -203,13 +219,13 @@ class Generator(object):
                 Label({"name": "summary", "value": description["value"]})
             )
 
-    def _modules(self):
+    def _modules(self) -> List["Modules"]:
         """
         Returns list of modules used in all builder images as well
         as the target image.
         """
 
-        modules = []
+        modules: List["Modules"] = []
 
         for image in self.images:
             if image.modules:
@@ -217,12 +233,12 @@ class Generator(object):
 
         return modules
 
-    def _module_repositories(self):
+    def _module_repositories(self) -> List["Resource"]:
         """
         Prepares list of all module repositories. This includes repositories
         defined in builder images as well as target image.
         """
-        repositories = []
+        repositories: List["Resource"] = []
 
         for module in self._modules():
             for repo in module.repositories:
@@ -239,7 +255,7 @@ class Generator(object):
 
         return repositories
 
-    def build_module_registry(self):
+    def build_module_registry(self) -> None:
         base_dir = os.path.join(self.target, "repo")
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
@@ -248,7 +264,7 @@ class Generator(object):
             repo.copy(base_dir)
             self.load_repository(os.path.join(base_dir, repo.target))
 
-    def load_repository(self, repo_dir):
+    def load_repository(self, repo_dir: str) -> None:
         for modules_dir, _, files in os.walk(repo_dir):
             if "module.yaml" in files:
 
@@ -268,13 +284,13 @@ class Generator(object):
                 )
                 self._module_registry.add_module(module)
 
-    def get_tags(self):
+    def get_tags(self) -> List[str]:
         return [
             "%s:%s" % (self.image["name"], self.image["version"]),
             "%s:latest" % self.image["name"],
         ]
 
-    def copy_modules(self):
+    def copy_modules(self) -> None:
         """Prepare module to be used for Dockerfile generation.
         This means:
 
@@ -282,7 +298,7 @@ class Generator(object):
 
         """
 
-        modules_to_install = []
+        modules_to_install: List["Install"] = []
 
         for module in self._modules():
             if module.install:
@@ -291,7 +307,7 @@ class Generator(object):
         target = os.path.join(self.target, "image", "modules")
 
         for module in modules_to_install:
-            module = self._module_registry.get_module(
+            module: "Module" = self._module_registry.get_module(
                 module.name, module.version, suppress_warnings=True
             )
             LOGGER.debug(
@@ -308,7 +324,7 @@ class Generator(object):
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
 
-    def get_redhat_overrides(self):
+    def get_redhat_overrides(self) -> Overrides:
         class RedHatOverrides(Overrides):
             def __init__(self, generator):
                 super(RedHatOverrides, self).__init__({}, None)
@@ -348,7 +364,7 @@ class Generator(object):
 
         return RedHatOverrides(self)
 
-    def render_dockerfile(self):
+    def render_dockerfile(self) -> None:
         """Renders Dockerfile to $target/image/Dockerfile"""
         LOGGER.info("Rendering Dockerfile...")
 
@@ -371,7 +387,7 @@ class Generator(object):
             f.write(template.render(self.image).encode("utf-8"))
         LOGGER.debug("Dockerfile rendered")
 
-    def render_help(self):
+    def render_help(self) -> None:
         """
         If requested, renders image help page based on the image descriptor.
         It is generated to the $target/image/help.md file.
@@ -413,19 +429,20 @@ class Generator(object):
 
         LOGGER.debug("help.md rendered")
 
-    def prepare_repositories(self):
+    def prepare_repositories(self) -> None:
         """Prepare repositories for build time injection."""
         if "packages" not in self.image:
             return
 
+        # TODO: Replace gets with the equivalent actual properties
         if self.image.get("packages").get("content_sets"):
             LOGGER.warning(
                 "The image has ContentSets repositories specified, all other repositories are removed!"
             )
             self.image["packages"]["repositories"] = []
-        repos = self.image.get("packages").get("repositories", [])
+        repos: List[Repository] = self.image.get("packages").get("repositories", [])
 
-        injected_repos = []
+        injected_repos: List[Repository] = []
 
         for repo in repos:
             if self._handle_repository(repo):
@@ -449,7 +466,7 @@ class Generator(object):
         else:
             self.image["packages"]["set_url"] = injected_repos
 
-    def _prepare_content_sets(self, content_sets):
+    def _prepare_content_sets(self, content_sets: Repository):
         if not content_sets:
             return False
 
@@ -541,7 +558,7 @@ class Generator(object):
 
         return repofile
 
-    def _handle_repository(self, repo):
+    def _handle_repository(self, repo: Repository):
         """Process and prepares all v2 repositories.
 
         Args:
@@ -584,10 +601,10 @@ class Generator(object):
 
 class ModuleRegistry(object):
     def __init__(self):
-        self._modules = {}
-        self._defaults = {}
+        self._modules: Dict[str, Dict[str, Module]] = {}
+        self._defaults: Dict[str, str] = {}
 
-    def get_module(self, name, version=None, suppress_warnings=False):
+    def get_module(self, name, version: Any = None, suppress_warnings=False) -> Module:
         """
         Returns the module available in registry based on the name and version requested.
 
@@ -653,7 +670,7 @@ class ModuleRegistry(object):
 
         return module
 
-    def add_module(self, module):
+    def add_module(self, module: Module):
         """
         Adds provided module to registry.
 

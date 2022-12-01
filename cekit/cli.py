@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING, Optional, Type
 
 import click
 
@@ -13,6 +14,9 @@ from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map
 from cekit.version import __version__
+
+if TYPE_CHECKING:
+    from cekit.builder import Command
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -226,7 +230,7 @@ def build_podman(ctx, pull, no_squash, tags, platform):
 @click.option("--release", help="Execute a release build.", is_flag=True)
 @click.option("--user", metavar="USER", help="User used to kick the build as.")
 @click.option("--nowait", help="Do not wait for the task to finish.", is_flag=True)
-@click.option("--stage", help="Use stage environmen.", is_flag=True)
+@click.option("--stage", help="Use stage environment.", is_flag=True)
 @click.option(
     "--sync-only",
     help="Generate files and sync with dist-git, but do not execute build.",
@@ -236,11 +240,18 @@ def build_podman(ctx, pull, no_squash, tags, platform):
     "--commit-message", metavar="MESSAGE", help="Custom dist-git commit message."
 )
 @click.option(
+    "--tag",
+    is_flag=False,
+    flag_value="{{name}}-{{version}}",
+    metavar="TAG",
+    help="Use specified tag to tag the dist-git repository after build",
+)
+@click.option(
     "--assume-yes", "-y", help="Execute build in non-interactive mode.", is_flag=True
 )
 @click.pass_context
 def build_osbs(
-    ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes
+    ctx, release, user, nowait, stage, sync_only, commit_message, assume_yes, tag
 ):
     """
     DESCRIPTION
@@ -355,7 +366,7 @@ def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
     run_test(ctx, "behave")
 
 
-def prepare_params(ctx, params=None):
+def prepare_params(ctx, params: Optional[Map] = None) -> Map:
 
     if params is None:
         params = Map({})
@@ -368,8 +379,8 @@ def prepare_params(ctx, params=None):
     return params
 
 
-def run_command(ctx, clazz):
-    params = prepare_params(ctx)
+def run_command(ctx, clazz: Type["Command"]):
+    params: Map = prepare_params(ctx)
     Cekit(params).run(clazz)
 
 
@@ -412,8 +423,8 @@ def run_build(ctx, builder):
 class Cekit(object):
     """Main application"""
 
-    def __init__(self, params):
-        self.params = params
+    def __init__(self, params: Map):
+        self.params: Map = params
 
     def init(self):
         """Initialize logging"""
@@ -462,7 +473,7 @@ class Cekit(object):
                 except Exception:
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
-    def run(self, clazz):
+    def run(self, clazz: Type["Command"]):
         """Main application entry"""
 
         self.init()

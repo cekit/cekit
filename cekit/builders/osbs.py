@@ -1,19 +1,22 @@
-import glob
 import json
 import logging
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
 import time
+from typing import TYPE_CHECKING, List, Optional, Tuple
 from urllib.parse import urlparse
 
-import yaml
+from jinja2 import Template
 
 from cekit import tools
 from cekit.builder import Builder
+from cekit.cekit_types import DependencyDefinition, PathType
 from cekit.config import Config
 from cekit.descriptor.resource import (
+    Resource,
     _ImageContentResource,
     _PlainResource,
     _PncResource,
@@ -21,6 +24,9 @@ from cekit.descriptor.resource import (
 )
 from cekit.errors import CekitError
 from cekit.tools import Chdir, copy_recursively, run_wrapper
+
+if TYPE_CHECKING:
+    from cekit.descriptor.osbs import Repository
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -32,10 +38,11 @@ class OSBSBuilder(Builder):
     def __init__(self, params):
         super(OSBSBuilder, self).__init__("osbs", params)
 
-        self._rhpkg_set_url_repos = []
-        self.dist_git = None
-        self.dist_git_dir = None
-        self.artifacts = []
+        self._rhpkg_set_url_repos: List[str] = []
+        # TODO: artifacts is used as two different, incompatible types here
+        self.artifacts: List[Resource] = []
+        self.dist_git: DistGit
+        self.dist_git_dir: pathlib.Path
 
         if CONFIG.get("common", "redhat"):
             if self.params.get("stage"):
@@ -52,7 +59,7 @@ class OSBSBuilder(Builder):
             self._koji_url = "https://koji.fedoraproject.org/koji"
 
     @staticmethod
-    def dependencies(params=None):
+    def dependencies(params=None) -> DependencyDefinition:
         deps = {}
 
         if CONFIG.get("common", "redhat"):
@@ -75,7 +82,7 @@ class OSBSBuilder(Builder):
 
         return deps
 
-    def before_build(self):
+    def before_build(self) -> None:
         """Prepares dist-git repository for OSBS build."""
 
         super(OSBSBuilder, self).before_build()
@@ -85,9 +92,12 @@ class OSBSBuilder(Builder):
         self._sync_with_dist_git()
 
     def _prepare_dist_git(self):
-        repository_key = self.generator.image.get("osbs", {}).get("repository", {})
-        repository = repository_key.get("name")
-        branch = repository_key.get("branch")
+        # TODO: Replace with actual type-safe getters.
+        repository_key: "Repository" = self.generator.image.get("osbs", {}).get(
+            "repository", {}
+        )
+        repository: str = repository_key.get("name")
+        branch: str = repository_key.get("branch")
 
         if not (repository and branch):
             raise CekitError(
@@ -101,13 +111,13 @@ class OSBSBuilder(Builder):
 
         # We need to prepare a list of all artifacts in every image (in case
         # of multi-stage builds) and in every module.
-        all_artifacts = []
+        all_artifacts: List[Resource] = []
 
         for image in self.generator.images:
             all_artifacts += image.all_artifacts
 
         # First get all artifacts that are not plain/url artifacts (the latter is added to fetch-artifacts.yaml)
-        self.artifacts = [
+        self.artifacts: List[Resource] = [
             a.target
             for a in all_artifacts
             if not isinstance(
@@ -115,7 +125,6 @@ class OSBSBuilder(Builder):
             )
         ]
         # When plain artifact was handled using lookaside cache, we need to add it too
-        # TODO Rewrite this!
         self.artifacts += [
             a.target
             for a in all_artifacts
@@ -138,7 +147,7 @@ class OSBSBuilder(Builder):
                 for x in self.generator.image["packages"]["set_url"]
             ]
 
-        self.dist_git_dir = os.path.join(
+        self.dist_git_dir: PathType = os.path.join(
             os.path.expanduser(CONFIG.get("common", "work_dir")), osbs_dir, repository
         )
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
@@ -151,11 +160,13 @@ class OSBSBuilder(Builder):
             self.target,
             repository,
             branch,
+            # TODO: default result, dict, doesn't have attribute `extra_dir`
             self.generator.image.get("osbs", {}).extra_dir,
             self.params.assume_yes,
         )
 
         self.dist_git.prepare(self.params.stage, self.params.user)
+        # TODO: There is a type error here that need resolving.
         self.dist_git.clean(self.artifacts)
 
     def _copy_to_dist_git(self):
@@ -175,30 +186,9 @@ class OSBSBuilder(Builder):
             else:
                 LOGGER.info("No changes made to the code, committing skipped")
 
-    # TODO: Only used by test code - move this?
-    def _merge_container_yaml(self, src, dest):
-        # FIXME - this is temporary needs to be refactored to proper merging
-        with open(src, "r") as _file:
-            generated = yaml.safe_load(_file)
-
-        target = {}
-        if os.path.exists(dest):
-            with open(dest, "r") as _file:
-                target = yaml.safe_load(_file)
-
-        target.update(generated)
-        # FIXME - run x86-build if there is *repo commited to dist-git
-        if glob.glob(os.path.join(self.dist_git_dir, "repos", "*.repo")):
-
-            if "platforms" in target:
-                target["platforms"]["only"] = ["x86_64"]
-            else:
-                target["platforms"] = {"only": ["x86_64"]}
-
-        with open(dest, "w") as _file:
-            yaml.dump(target, _file, default_flow_style=False)
-
-    def _wait_for_osbs_task(self, task_id, current_time=0, timeout=7200):
+    def _wait_for_osbs_task(
+        self, task_id: str, current_time: int = 0, timeout: int = 7200
+    ):
         """Default timeout is 2hrs"""
 
         LOGGER.debug("Checking if task {} is finished...".format(task_id))
@@ -351,13 +341,20 @@ class OSBSBuilder(Builder):
 
                 LOGGER.info("Image was built successfully in OSBS!")
 
+                if self.params.tag:
+                    tag = Template(self.params.tag).render(self.generator.image)
+                    if "/" in tag:
+                        LOGGER.debug(f"Replacing / in tag with - for {tag}")
+                        tag = tag.replace("/", "-")
+                    self.dist_git.tag(tag)
+                    self.dist_git.push(True)
+
 
 class DistGit(object):
     """Git support for osbs repositories"""
 
     @staticmethod
-    def repo_info(path):
-
+    def repo_info(path) -> Tuple[str, str, str]:
         with Chdir(path):
             if (
                 run_wrapper(["git", "rev-parse", "--is-inside-work-tree"], True).stdout
@@ -368,24 +365,32 @@ class DistGit(object):
                     "Please make sure you specified correct path.".format(path)
                 )
 
-            name = os.path.basename(
+            name: str = os.path.basename(
                 run_wrapper(["git", "rev-parse", "--show-toplevel"], True).stdout
             )
-            branch = run_wrapper(
+            branch: str = run_wrapper(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"], True
             ).stdout
-            commit = run_wrapper(["git", "rev-parse", "HEAD"], True).stdout
+            commit: str = run_wrapper(["git", "rev-parse", "HEAD"], True).stdout
 
         return name, branch, commit
 
-    def __init__(self, output, source, repo, branch, osbs_extra, noninteractive=False):
-        self.output = output
-        self.source = source
-        self.repo = repo
-        self.branch = branch
-        self.osbs_extra = osbs_extra
-        self.dockerfile = os.path.join(self.output, "Dockerfile")
-        self.noninteractive = noninteractive
+    def __init__(
+        self,
+        output: PathType,
+        source: PathType,
+        repo: str,
+        branch: str,
+        osbs_extra: PathType,
+        noninteractive: bool = False,
+    ):
+        self.output: PathType = output
+        self.source: PathType = source
+        self.repo: str = repo
+        self.branch: str = branch
+        self.osbs_extra: PathType = osbs_extra
+        self.dockerfile: PathType = os.path.join(self.output, "Dockerfile")
+        self.noninteractive: bool = noninteractive
 
         (
             self.source_repo_name,
@@ -393,7 +398,7 @@ class DistGit(object):
             self.source_repo_commit,
         ) = DistGit.repo_info(source)
 
-    def stage_modified(self):
+    def stage_modified(self) -> bool:
         # Check if there are any files in stage (return code 1). If there are no files
         # (return code 0) it means that this is a rebuild, so skip committing
         if run_wrapper(
@@ -403,7 +408,7 @@ class DistGit(object):
 
         return False
 
-    def prepare(self, stage, user=None):
+    def prepare(self, stage, user: Optional[str] = None) -> None:
         if os.path.exists(self.output):
             with Chdir(self.output):
                 LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
@@ -436,7 +441,7 @@ class DistGit(object):
             run_wrapper(cmd, False)
             LOGGER.debug("Repository {} cloned".format(self.repo))
 
-    def clean(self, artifacts):
+    def clean(self, artifacts: List[str]) -> None:
         """
         Removes old generated scripts, repos and modules directories
         as well as all directories that are defined as artifacts.
@@ -471,10 +476,11 @@ class DistGit(object):
                 LOGGER.info("Removing old 'fetch-artifacts-pnc.yaml' file")
                 run_wrapper(["git", "rm", "-rf", "fetch-artifacts-pnc.yaml"], False)
 
-    def add(self, artifacts):
-        LOGGER.debug("Adding files to git stage...")
+    def add(self, artifacts: List[str]) -> None:
+        LOGGER.debug("Adding files to git...")
 
-        for obj in os.listdir("."):
+        # TODO: Rename obj to something specific
+        for obj in sorted(os.listdir(".")):
             if obj == ".git":
                 LOGGER.debug("Skipping '.git' directory")
                 continue
@@ -482,15 +488,14 @@ class DistGit(object):
             # If the artifact to add is a directory do not skip it
             if obj in artifacts and not os.path.isdir(obj):
                 LOGGER.debug(
-                    "Skipping staging '{}' in git because it is an artifact".format(obj)
+                    f"Skipping staging '{obj}' in git because it is an artifact"
                 )
                 continue
 
-            LOGGER.debug("Staging '{}'...".format(obj))
-
+            LOGGER.debug(f"Staging '{obj}'...")
             run_wrapper(["git", "add", "--all", obj], False)
 
-    def commit(self, commit_msg):
+    def commit(self, commit_msg: str) -> None:
         if not commit_msg:
             commit_msg = "Sync"
 
@@ -538,12 +543,18 @@ class DistGit(object):
                 },
             )
 
-    def push(self):
+    def tag(self, tag: str) -> None:
+        LOGGER.info(f"Tagging dist-git repository with {tag}")
+        run_wrapper(["git", "tag", tag], False)
+
+    def push(self, tag: bool = False) -> None:
         if self.noninteractive or tools.decision("Do you want to push the commit?"):
             print("")
             LOGGER.info("Pushing change to the upstream repository...")
-            cmd = ["git", "push", "-q", "origin", self.branch]
-            LOGGER.debug("Running command '{}'".format(" ".join(cmd)))
+            if tag:
+                cmd = ["git", "push", "--tags"]
+            else:
+                cmd = ["git", "push", "-q", "origin", self.branch]
             run_wrapper(cmd, False)
             LOGGER.info("Change pushed.")
         else:

@@ -13,6 +13,7 @@ execute_schemas = yaml.safe_load(
           user: {type: text}"""
 )
 
+# TODO: This seems unused?
 container_schemas = yaml.safe_load(
     """
         seq:
@@ -34,25 +35,25 @@ class Execute(Descriptor):
             descriptor["name"] = "{}/{}".format(module_name, descriptor["script"])
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.get("name")
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         self._descriptor["name"] = value
 
     @property
-    def script(self):
+    def script(self) -> str:
         return self.get("script")
 
     @script.setter
-    def script(self, value):
+    def script(self, value: str):
         self._descriptor["script"] = value
 
     @property
-    def user(self):
+    def user(self) -> str:
         return self.get("user", cekit.DEFAULT_USER)
 
     @user.setter
-    def user(self, value):
+    def user(self, value: str):
         self._descriptor["user"] = value

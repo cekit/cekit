@@ -3,10 +3,8 @@
 from __future__ import print_function
 
 import os
-import platform
 import shutil
 
-import pytest
 import yaml
 from click.testing import CliRunner
 
@@ -47,9 +45,6 @@ def run_cekit(image_dir, args=None, env=None):
         return result
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_multi_stage_single_image_in_list(tmpdir):
     """
     Build simple image which is a regular image, but the
@@ -67,9 +62,6 @@ def test_multi_stage_single_image_in_list(tmpdir):
     assert check_file_text(tmpdir, "ADD help.md /") is False
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_multi_stage_proper_image(tmpdir):
     """
     Build multi-stage image.
@@ -90,9 +82,6 @@ def test_multi_stage_proper_image(tmpdir):
     )
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_multi_stage_with_scratch_target_image(tmpdir):
     """
     Build multi-stage image. Resulting image uses a "scratch" base image and
