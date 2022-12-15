@@ -27,12 +27,12 @@ def main(check: bool, verbose: bool) -> None:
     """
     setup_logging()
     options = []
-    verbose = []
+    verbose_opt = []
     if check:
         options.append("--check")
     if verbose:
         logger.setLevel(logging.DEBUG)
-        verbose.append("--verbose")
+        verbose_opt.append("--verbose")
     else:
         logger.setLevel(logging.INFO)
 
@@ -46,7 +46,7 @@ def main(check: bool, verbose: bool) -> None:
     ]:
         try:
             with Chdir(repo_root):
-                run(formatter + options + verbose + ["."], check=True)
+                run(formatter + options + verbose_opt + ["."], check=True)
         except CalledProcessError as err:
             sys.exit(err.returncode)
 
@@ -56,7 +56,8 @@ def main(check: bool, verbose: bool) -> None:
     ]:
         try:
             with Chdir(repo_root):
-                run(formatter + verbose + ["."], check=True)
+                output = run(formatter + verbose_opt + ["."], check=True)
+                logger.info(output)
         except CalledProcessError as err:
             sys.exit(err.returncode)
 

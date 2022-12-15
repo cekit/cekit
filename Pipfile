@@ -18,7 +18,7 @@ autopep8 = "*"
 "zest.releaser" = "*"
 isort = "*"
 black = "*"
-flake8 = "*"
+flake8 = ">3.6.0"
 
 [packages]
 pykwalify = ">=1.6.0"
