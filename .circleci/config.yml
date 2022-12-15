@@ -36,7 +36,7 @@ jobs:
             pyenv install -s 3.7.13
             pyenv install -s 3.10.3
             pyenv local 3.7.13 3.10.3
-            pip install tox
+            pip install "tox<4.0.0"
       - run: git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
       - run: |
          if [[ "${CIRCLE_NODE_INDEX}" == 1 ]]; then

@@ -44,7 +44,7 @@ jobs:
         docker info
         podman version
         podman info
-        pip install tox
+        pip install "tox<4.0.0"
         git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
         echo "$HOME/.local/bin" >> $GITHUB_PATH
         mkdir -p $HOME/.local/bin
@@ -53,7 +53,7 @@ jobs:
     - name: Setup MacOS
       if: startsWith(matrix.os,'macos')
       run: |
-        pip install tox
+        pip install "tox<4.0.0"
         brew install podman
         podman machine init
         podman machine start
