@@ -20,6 +20,8 @@ The automated process uses https://pypi.org/project/zest.releaser to perform the
 
     .. note:: It is recommended to use a 3 digit version specification when prompted (e.g. ``3.9.10``, ``3.10.2``).
 
+    .. note:: The variable ``TYPE`` may be used to denote the type of release i.e. ``TYPE=--breaking`` (for a major), ``TYPE=--feature`` (for a minor) or ``TYPE=""`` for a micro. The default is ``--feature``. For example ``make TYPE=--breaking release``
+
 Manual Process (reference only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
