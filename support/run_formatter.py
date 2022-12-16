@@ -56,8 +56,7 @@ def main(check: bool, verbose: bool) -> None:
     ]:
         try:
             with Chdir(repo_root):
-                output = run(formatter + verbose_opt + ["."], check=True)
-                logger.info(output)
+                run(formatter + verbose_opt + ["."], check=True)
         except CalledProcessError as err:
             sys.exit(err.returncode)
 
