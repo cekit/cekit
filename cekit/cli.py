@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING, Optional, Type
 
 import click
 
@@ -13,6 +14,9 @@ from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map
 from cekit.version import __version__
+
+if TYPE_CHECKING:
+    from cekit.builder import Command
 
 LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
@@ -312,6 +316,8 @@ def test(image, overrides):
     show_default=True,
 )
 @click.option("--wip", help="Run test scenarios tagged with @wip only.", is_flag=True)
+@click.option("--include-re", help="Run only those features which match this regex")
+@click.option("--exclude-re", help="Do not run those features which match this regex")
 @click.option(
     "--name",
     "names",
@@ -319,7 +325,7 @@ def test(image, overrides):
     multiple=True,
 )
 @click.pass_context
-def test_behave(ctx, steps_url, wip, names):
+def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
     """
     DESCRIPTION
 
@@ -344,11 +350,23 @@ def test_behave(ctx, steps_url, wip, names):
 
     if wip and names:
         raise click.UsageError("Parameters --name and --wip cannot be used together")
+    if include_re and exclude_re:
+        raise click.UsageError(
+            "Parameters --include-re and --exclude-re cannot be used together"
+        )
+    if names and (include_re or exclude_re):
+        raise click.UsageError(
+            "Parameters --names cannot be used with --include-re or --exclude-re"
+        )
+    if wip and (include_re or exclude_re):
+        raise click.UsageError(
+            "Parameters --wip cannot be used with --include-re or --exclude-re"
+        )
 
     run_test(ctx, "behave")
 
 
-def prepare_params(ctx, params=None):
+def prepare_params(ctx, params: Optional[Map] = None) -> Map:
 
     if params is None:
         params = Map({})
@@ -361,8 +379,8 @@ def prepare_params(ctx, params=None):
     return params
 
 
-def run_command(ctx, clazz):
-    params = prepare_params(ctx)
+def run_command(ctx, clazz: Type["Command"]):
+    params: Map = prepare_params(ctx)
     Cekit(params).run(clazz)
 
 
@@ -405,8 +423,8 @@ def run_build(ctx, builder):
 class Cekit(object):
     """Main application"""
 
-    def __init__(self, params):
-        self.params = params
+    def __init__(self, params: Map):
+        self.params: Map = params
 
     def init(self):
         """Initialize logging"""
@@ -455,7 +473,7 @@ class Cekit(object):
                 except Exception:
                     raise CekitError("Unable to clean directory '{}'".format(directory))
 
-    def run(self, clazz):
+    def run(self, clazz: Type["Command"]):
         """Main application entry"""
 
         self.init()

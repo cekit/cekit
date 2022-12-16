@@ -13,18 +13,18 @@ except ImportError:
 # Source: http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
 # Adjusted
 class SingleLevelFilter(logging.Filter):
-    def __init__(self, passlevel, reject):
+    def __init__(self, passlevel: int, reject: bool) -> None:
         self.passlevel = passlevel
         self.reject = reject
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         if self.reject:
             return record.levelno > self.passlevel
         else:
             return record.levelno <= self.passlevel
 
 
-def setup_logging(color=True):
+def setup_logging(color: bool = True) -> None:
     handler_out = logging.StreamHandler(sys.stdout)
     handler_err = logging.StreamHandler(sys.stderr)
 

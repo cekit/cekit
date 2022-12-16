@@ -28,7 +28,7 @@ class BehaveTestRunner(object):
 
         return deps
 
-    def run(self, image, run_tags, test_names):
+    def run(self, image, run_tags, test_names, include_regex, exclude_regex):
         """Run test suite"""
         test_path = os.path.join(self.target, "test")
         logger.debug("Running behave in '{}'.".format(test_path))
@@ -66,6 +66,16 @@ class BehaveTestRunner(object):
             if getpass.getuser() != "jenkins":
                 args.append("-t")
                 args.append("~ci ")
+
+        if include_regex:
+            args.append("-i")
+            args.append("%s" % include_regex)
+
+        if exclude_regex:
+            args.append("-e")
+            args.append("%s" % exclude_regex)
+
+        logger.debug("Running behave tests with args '{}'.".format(args))
 
         try:
             with Chdir(os.path.join(self.target, "test")):

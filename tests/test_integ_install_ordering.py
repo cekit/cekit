@@ -1,4 +1,4 @@
-import platform
+import os
 import sys
 
 import pytest
@@ -26,7 +26,7 @@ def run_cekit(image_dir, descriptor, args=None):
 
 
 @pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
 def test_module_uses_installed_package_in_execute_script(tmp_path, caplog):
     """Check that when a module has an install script that depends on packages that should be installed in an image,
@@ -72,7 +72,7 @@ def test_module_uses_installed_package_in_execute_script(tmp_path, caplog):
 
 
 @pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
+    os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
 def test_module_uses_installed_package_in_execute_script_manager_precedence(
     tmp_path, caplog

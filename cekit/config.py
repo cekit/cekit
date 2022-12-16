@@ -1,7 +1,10 @@
 import configparser
 import os
+from typing import Any, Dict, Optional
 
 import yaml
+
+from cekit.cekit_types import PathType
 
 default_work_dir = "~/.cekit"
 
@@ -12,12 +15,12 @@ class Config(object):
     cfg = {}
 
     @classmethod
-    def configure(cls, config_path, cmdline_args):
+    def configure(cls, config_path: PathType, cmdline_args: Dict[str, Any]) -> None:
         cls._load_cfg(config_path)
         cls._override_config(cmdline_args)
 
     @classmethod
-    def _override_config(cls, cmdline_args):
+    def _override_config(cls, cmdline_args: Dict[str, Any]) -> None:
         # Only allow command line overriding of these values if they are not the default value.
         if cmdline_args.get("redhat"):
             cls.cfg["common"]["redhat"] = cmdline_args.get("redhat")
@@ -28,7 +31,7 @@ class Config(object):
             cls.cfg["common"]["work_dir"] = cmdline_args.get("work_dir")
 
     @classmethod
-    def _load_cfg(cls, config_path):
+    def _load_cfg(cls, config_path: PathType) -> None:
         """Loads configuration from cekit config file
 
         params:
@@ -36,6 +39,7 @@ class Config(object):
         """
         config_parser = configparser.ConfigParser()
         config_parser.read(os.path.expanduser(config_path))
+        # TODO: Fix this reference to protected member of class we don't control!
         cls.cfg = config_parser._sections
         cls.cfg["common"] = cls.cfg.get("common", {})
         cls.cfg["common"]["work_dir"] = cls.cfg.get("common").get(
@@ -49,7 +53,7 @@ class Config(object):
         )
 
     @classmethod
-    def get(cls, *args):
+    def get(cls, *args) -> Optional[str]:
         """Returns key value located by path of *args,
         None if Key doesn't exists,
 

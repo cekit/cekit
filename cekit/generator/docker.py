@@ -1,6 +1,8 @@
 import logging
 import os
+from typing import List
 
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.generator.base import Generator
 
@@ -9,7 +11,9 @@ config = Config()
 
 
 class DockerGenerator(Generator):
-    def __init__(self, descriptor_path, target, overrides):
+    def __init__(
+        self, descriptor_path: PathType, target: PathType, overrides: List[str]
+    ):
         super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
         self._fetch_repos = True
 

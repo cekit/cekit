@@ -5,12 +5,13 @@ import sys
 import tempfile
 from collections import OrderedDict
 from contextlib import closing
-from typing import Dict, List
+from typing import TYPE_CHECKING, Callable, Dict, List
 from urllib.parse import urlparse
 
 import yaml
 
 from cekit import crypto, version
+from cekit.cekit_types import PathType
 from cekit.config import Config
 from cekit.descriptor.resource import (
     Resource,
@@ -22,12 +23,17 @@ from cekit.errors import CekitError
 from cekit.generator.base import Generator
 from cekit.tools import copy_recursively, get_brew_url
 
+if TYPE_CHECKING:
+    from cekit.descriptor import Repository
+
 logger = logging.getLogger("cekit")
 config = Config()
 
 
 class OSBSGenerator(Generator):
-    def __init__(self, descriptor_path, target, overrides):
+    def __init__(
+        self, descriptor_path: PathType, target: PathType, overrides: List[str]
+    ):
         self._wipe = True
         super(OSBSGenerator, self).__init__(descriptor_path, target, overrides)
 
@@ -35,6 +41,7 @@ class OSBSGenerator(Generator):
         super(OSBSGenerator, self).init()
 
         self._prepare_osbs_config_file(yaml.safe_dump, "container.yaml")
+        # TODO: Why do we use file.write here and yaml.dump above?
         self._prepare_osbs_config_file(
             lambda contents, file, **kwargs: file.write(contents), "gating.yaml"
         )
@@ -52,7 +59,7 @@ class OSBSGenerator(Generator):
         )
         super(OSBSGenerator, self).generate()
 
-    def _prepare_content_sets(self, content_sets):
+    def _prepare_content_sets(self, content_sets: "Repository"):
         content_sets_f = os.path.join(self.target, "image", "content_sets.yml")
 
         if not os.path.exists(os.path.dirname(content_sets_f)):
@@ -61,11 +68,14 @@ class OSBSGenerator(Generator):
         with open(content_sets_f, "w") as _file:
             yaml.safe_dump(content_sets, _file, default_flow_style=False)
 
-    def _prepare_osbs_config_file(self, writer, config_file):
+    def _prepare_osbs_config_file(
+        self, writer: Callable[..., None], config_file: PathType
+    ) -> None:
         config_path = os.path.join(self.target, "image", config_file)
         config_name = config_file.split(".")[0]
         all_configs = []
 
+        # TODO: Replace `.get` with actual type-safe getters.
         if self.image.get("osbs", {}).get("configuration", {}).get(config_name):
             all_configs.append(
                 self.image.get("osbs", {}).get("configuration", {}).get(config_name)
@@ -98,7 +108,7 @@ class OSBSGenerator(Generator):
         with open(config_path, "w") as _file:
             writer(all_configs[0], _file, default_flow_style=False)
 
-    def prepare_artifacts(self):
+    def prepare_artifacts(self) -> None:
         """Goes through artifacts section of image descriptor
         and fetches all of them
         """

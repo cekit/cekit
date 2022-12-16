@@ -1,7 +1,9 @@
+from typing import Any, List
+
 import yaml
 
 from cekit.descriptor import Descriptor
-from cekit.descriptor.resource import create_resource
+from cekit.descriptor.resource import Resource, create_resource
 
 modules_schema = yaml.safe_load(
     """
@@ -35,11 +37,11 @@ class Modules(Descriptor):
         ]
 
     @property
-    def repositories(self):
+    def repositories(self) -> List[Resource]:
         return self.get("repositories")
 
     @property
-    def install(self):
+    def install(self) -> List["Install"]:
         return self.get("install")
 
 
@@ -49,17 +51,18 @@ class Install(Descriptor):
         super(Install, self).__init__(descriptor)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.get("name")
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         self._descriptor["name"] = value
 
     @property
-    def version(self):
+    def version(self) -> Any:
+        # TODO: convert to string up front to simplify things.
         return self.get("version")
 
     @version.setter
-    def version(self, value):
+    def version(self, value: Any):
         self._descriptor["version"] = value

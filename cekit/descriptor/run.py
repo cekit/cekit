@@ -1,3 +1,5 @@
+from typing import Optional
+
 import yaml
 
 from cekit.descriptor import Descriptor
@@ -24,14 +26,16 @@ class Run(Descriptor):
        descriptor - a yaml containing descriptor object
     """
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: dict):
         self.schema = run_schema
         super(Run, self).__init__(descriptor)
         if "name" not in self._descriptor:
             self._descriptor["name"] = "run"
+        # TODO: skip_merging is ignored because we override merge...
         self.skip_merging = ["cmd", "entrypoint"]
 
-    def merge(self, descriptor):
+    # TODO: Justify or remove this alternate implementation of merge.
+    def merge(self, descriptor: Optional["Run"]) -> "Run":
         if not descriptor:
             return self
         for k2, v2 in descriptor.items():

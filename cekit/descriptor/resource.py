@@ -2,7 +2,9 @@ import json
 import logging
 import os
 import shutil
+from typing import Any, Dict, Optional, overload
 
+from cekit.cekit_types import _T, PathType
 from cekit.config import Config
 from cekit.crypto import SUPPORTED_HASH_ALGORITHMS, check_sum
 from cekit.descriptor import Descriptor
@@ -12,10 +14,12 @@ from cekit.tools import Chdir, Map, download_file, get_brew_url, run_wrapper
 logger = logging.getLogger("cekit")
 config = Config()
 
+RawResourceDescriptor = Dict[str, Any]
+
 artifact_dest = "/tmp/artifacts/"
 
 
-def create_resource(descriptor, **kwargs):
+def create_resource(descriptor: RawResourceDescriptor, **kwargs) -> "Resource":
     """
     Module method responsible for instantiating proper resource object
     based on the provided descriptor.
@@ -70,7 +74,7 @@ class Resource(Descriptor):
 
     CHECK_INTEGRITY = True
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: RawResourceDescriptor):
         # Schema must be provided by the implementing class
         if not self.schema:
             raise CekitError(
@@ -94,7 +98,20 @@ class Resource(Descriptor):
         # forwarded import to prevent circular imports
         from cekit.cache.artifact import ArtifactCache
 
-        self.cache = ArtifactCache()
+        # TODO: This does not appear to be a circular import.
+
+        self.cache: ArtifactCache = ArtifactCache()
+
+    # TODO: Make `name` a property (probably on a parent class)
+
+    # TODO: This seems to unnecessarily use name mangling
+    @overload
+    def __to_map(self, dictionary: dict) -> Map:
+        pass
+
+    @overload
+    def __to_map(self, dictionary: _T) -> _T:
+        pass
 
     def __to_map(self, dictionary):
         """
@@ -131,7 +148,7 @@ class Resource(Descriptor):
             return not self["name"] == other["name"]
         return NotImplemented
 
-    def _ensure_name(self, descriptor):
+    def _ensure_name(self, descriptor: RawResourceDescriptor):
         """
         Makes sure the 'name' attribute exists.
 
@@ -164,13 +181,13 @@ class Resource(Descriptor):
 
         descriptor["name"] = default
 
-    def _ensure_target(self, descriptor):
+    def _ensure_target(self, descriptor: RawResourceDescriptor) -> None:
         if descriptor.get("target") is not None:
             return
 
         descriptor["target"] = self._get_default_target_value(descriptor)
 
-    def _normalize_dest(self, descriptor):
+    def _normalize_dest(self, descriptor: RawResourceDescriptor) -> None:
         """
         Make sure that the 'dest' value, if provided, does end with a single slash.
         """
@@ -178,7 +195,7 @@ class Resource(Descriptor):
         if descriptor.get("dest") is not None:
             descriptor["dest"] = os.path.normpath(descriptor.get("dest")) + "/"
 
-    def _get_default_name_value(self, descriptor):
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Returns default identifier value for particular class.
 
@@ -186,12 +203,14 @@ class Resource(Descriptor):
         Returned should be a string that will be be a unique identifier
         of the resource across thw whole image.
         """
+        # TODO: This is an abstract method, and hence should return NotImplementedError()
         return None
 
-    def _get_default_target_value(self, descriptor):
+    def _get_default_target_value(self, descriptor: RawResourceDescriptor) -> str:
         return os.path.basename(descriptor.get("name"))
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
+        # TODO: Return value is never used.
         raise NotImplementedError(
             "Implement _copy_impl() for Resource: "
             + self.__module__
@@ -199,7 +218,7 @@ class Resource(Descriptor):
             + type(self).__name__
         )
 
-    def copy(self, target=os.getcwd()):
+    def copy(self, target: PathType = os.getcwd()) -> PathType:
 
         if os.path.isdir(target):
             target = os.path.join(target, self.target)
@@ -225,7 +244,7 @@ class Resource(Descriptor):
             except ValueError:
                 return self.guarded_copy(target)
 
-    def guarded_copy(self, target):
+    def guarded_copy(self, target: PathType) -> PathType:
         try:
             self._copy_impl(target)
         except Exception as ex:
@@ -251,7 +270,7 @@ class Resource(Descriptor):
 
         return target
 
-    def __verify(self, target):
+    def __verify(self, target: PathType) -> bool:
         """Checks all defined check_sums for an artifact"""
         if not set(SUPPORTED_HASH_ALGORITHMS).intersection(self):
             logger.debug(
@@ -270,7 +289,8 @@ class Resource(Descriptor):
                     return False
         return True
 
-    def __substitute_cache_url(self, url):
+    # TODO: This seems to unnecessarily use name mangling.
+    def __substitute_cache_url(self, url: str) -> str:
         cache = config.get("common", "cache_url")
 
         if not cache:
@@ -292,7 +312,9 @@ class Resource(Descriptor):
 
         return url
 
-    def _download_file(self, url, destination, use_cache=True):
+    def _download_file(
+        self, url: Optional[str], destination: PathType, use_cache=True
+    ) -> None:
         """Downloads a file from url and save it as destination"""
         if use_cache:
             url = self.__substitute_cache_url(url)
@@ -330,7 +352,7 @@ class _PathResource(Resource):
         }
     }
 
-    def __init__(self, descriptor, directory):
+    def __init__(self, descriptor: RawResourceDescriptor, directory: PathType):
         self.schema = _PathResource.SCHEMA
 
         super(_PathResource, self).__init__(descriptor)
@@ -341,13 +363,13 @@ class _PathResource(Resource):
         if not os.path.isabs(path):
             self["path"] = os.path.join(directory, path)
 
-    def _get_default_name_value(self, descriptor):
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Default identifier is the last part (most probably file name) of the URL.
         """
         return os.path.basename(descriptor.get("path"))
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
         if not os.path.exists(self.path):
             cache = config.get("common", "cache_url")
 
@@ -418,7 +440,7 @@ class _UrlResource(Resource):
         }
     }
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: RawResourceDescriptor):
         self.schema = _UrlResource.SCHEMA
 
         super(_UrlResource, self).__init__(descriptor)
@@ -427,16 +449,16 @@ class _UrlResource(Resource):
         self["url"] = descriptor.get("url").strip()
 
     # Avoid protected access warning
-    def download_file(self, url, destination):
-        return self._download_file(url, destination, False)
+    def download_file(self, url: str, destination: PathType):
+        return self._download_file(url, destination, use_cache=False)
 
-    def _get_default_name_value(self, descriptor):
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Default identifier is the last part (most probably file name) of the URL.
         """
         return os.path.basename(descriptor.get("url"))
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
         try:
             self._download_file(self.url, target)
         except Exception:
@@ -450,6 +472,7 @@ class _UrlResource(Resource):
 
 
 class _GitResource(Resource):
+    # TODO: This resource type is undocumented.
 
     SCHEMA = {
         "map": {
@@ -479,10 +502,10 @@ class _GitResource(Resource):
 
         super(_GitResource, self).__init__(descriptor)
 
-    def _get_default_name_value(self, descriptor):
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor):
         return os.path.basename(descriptor.get("git", {}).get("url")).split(".", 1)[0]
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
         cmd = ["git", "clone", self.git.url, target]
         run_wrapper(cmd, False, f"Could not clone from {self.git.url}")
 
@@ -537,11 +560,11 @@ class _PlainResource(Resource):
 
         super(_PlainResource, self).__init__(descriptor)
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
         # First of all try to download the file using cacher if specified
         if config.get("common", "cache_url"):
             try:
-                self._download_file(None, target)
+                self._download_file(url=None, destination=target)
                 return target
             except Exception as e:
                 logger.debug(str(e))
@@ -610,18 +633,18 @@ class _ImageContentResource(Resource):
         }
     }
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: RawResourceDescriptor):
         self.schema = _ImageContentResource.SCHEMA
 
         super(_ImageContentResource, self).__init__(descriptor)
 
-    def _get_default_name_value(self, descriptor):
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Default identifier is the file name of the resource inside of the image.
         """
         return os.path.basename(descriptor.get("path"))
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
         """
         For stage artifacts, there is nothing to copy, because the artifact is located
         in an image that should be built in earlier stage of the image build process.
@@ -661,18 +684,18 @@ class _PncResource(Resource):
         }
     }
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor: RawResourceDescriptor):
         self.schema = _PncResource.SCHEMA
 
         super(_PncResource, self).__init__(descriptor)
 
-    def _get_default_name_value(self, descriptor):
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Default identifier is the target file name.
         """
         return descriptor.get("target")
 
-    def _copy_impl(self, target):
+    def _copy_impl(self, target: PathType) -> PathType:
         """
         For PNC artifacts there is nothing to copy as the artifact is held remotely on PNC.
         """

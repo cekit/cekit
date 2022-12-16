@@ -1,6 +1,7 @@
 import glob
 import logging
 import os
+import shutil
 import subprocess
 import time
 
@@ -174,6 +175,7 @@ class DistGitMock(object):
 def create_builder_object(
     mocker, builder, params, common_params={"target": "something"}
 ):
+    # TODO: Remove mutable default argument
     if "docker" == builder:
         from cekit.builders.docker_builder import DockerBuilder as BuilderImpl
     elif "osbs" == builder:
@@ -968,7 +970,7 @@ def test_podman_builder_run(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--squash",
             "-t",
@@ -992,7 +994,7 @@ def test_podman_builder_run_pull(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--pull-always",
             "--squash",
@@ -1021,7 +1023,7 @@ def test_podman_builder_run_platform(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--pull-always",
             "--squash",
@@ -1066,7 +1068,7 @@ def test_podman_builder_run_with_generator(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/podman",
+            shutil.which("podman"),
             "build",
             "--squash",
             "-t",
@@ -1154,7 +1156,7 @@ def test_podman_builder_with_squashing_disabled(mocker):
     builder.run()
 
     run.assert_called_once_with(
-        ["/usr/bin/podman", "build", "-t", "foo", "-t", "bar", "something/image"],
+        [shutil.which("podman"), "build", "-t", "foo", "-t", "bar", "something/image"],
         stderr=None,
         stdout=None,
         check=True,

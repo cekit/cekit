@@ -52,4 +52,4 @@ release: clean
 	git push
 
 	git checkout develop
-	postrelease -v
+	postrelease -v --feature

@@ -247,9 +247,6 @@ def copy_repos(dst):
     )
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
-)
 def test_simple_image_build(tmpdir):
     image_dir = str(tmpdir.mkdir("source"))
     copy_repos(image_dir)
@@ -993,9 +990,6 @@ def test_run_path_artifact_target(tmpdir):
     assert check_dockerfile_uniq(image_dir, "target_foo \\")
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_run_alpine(tmpdir):
     image_dir = str(tmpdir.mkdir("source"))
 
@@ -1016,9 +1010,6 @@ def test_run_alpine(tmpdir):
     )
 
 
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Podman"
-)
 def test_run_debian_slim(tmpdir):
     image_dir = str(tmpdir.mkdir("source"))
 
@@ -1477,10 +1468,6 @@ def test_simple_image_build_error_connection_error_remote_docker_with_custom_doc
     )
 
 
-# https://github.com/cekit/cekit/issues/538
-@pytest.mark.skipif(
-    platform.system() == "Darwin", reason="Disabled on macOS, cannot run Docker"
-)
 def test_proper_decoding(tmpdir, caplog):
     image_dir = str(tmpdir.mkdir("source"))
 

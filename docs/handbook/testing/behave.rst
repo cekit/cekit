@@ -123,6 +123,8 @@ Options
 * ``--wip`` -- Only run tests tagged with the ``@wip`` tag.
 * ``--steps-url`` -- A git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
 * ``--name`` -- *Scenario* name to be executed
+* ``--include-re`` -- Regex of feature files which will be executed only
+* ``--exclude-re`` -- Regex of feature files which will not be executed
 
 Examples
 ^^^^^^^^^
@@ -156,6 +158,24 @@ Then you can instruct CEKit to run this test in a following way:
 
     $ cekit test behave --name 'Check custom debug port is available'
 
+Running selected features
+*************************
+
+CEKit also makes it possible to run specific feature(s) only. To do that, you need to run CEKit
+tests with ``--include-re <regex of selected feature files'>`` command line argument.
+
+For example, if you have feature files with names like ``basic1.feature``, ``basic2.feature``, ``advance1.feature``
+and ``advance2.feature``, and you want to run only basic features, then you can instruct CEKit to run
+only the basic features in a following way:
+
+.. code-block:: bash
+
+    $ cekit test behave --include-re basic
+
+.. note::
+   Here, ``'basic'`` is the regex that tells CEKit to consider only those feature files which contain ``'basic'``
+   in their name, for ex. ``basic1.feature``.
+
 Skipping tests
 ***********************
 
@@ -187,6 +207,24 @@ You need to tag it with ``@ignore`` tag in a following way:
             | DEBUG      | true  |
             | DEBUG_PORT | 8798  |
         Then check that port 8798 is open
+
+Skipping selected features
+**************************
+
+CEKit also makes it possible to skip specific feature(s). To do that, you need to run CEKit
+tests with ``--exclude-re <regex of selected feature files'>`` command line argument.
+
+For example, if you have feature files with names like ``basic1.feature``, ``basic2.feature``, ``advance1.feature``
+and ``advance2.feature``, and you do not want to run the advance features, then you can instruct CEKit to skip
+the advance features in a following way:
+
+.. code-block:: bash
+
+    $ cekit test behave --exclude-re advance
+
+.. note::
+   Here, ``'advance'`` is the regex that tells CEKit to exclude those feature files which contain ``'advance'``
+   in their name, for ex. ``advance1.feature``.
 
 Test collection
 ----------------
