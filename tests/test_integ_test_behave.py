@@ -3,7 +3,6 @@
 import os
 import shutil
 import sys
-import tempfile
 
 import pytest
 import yaml
@@ -43,10 +42,10 @@ image_descriptors = [
 
 
 @pytest.fixture(scope="function", name="build_image", params=image_descriptors)
-def fixture_build_image(request):
+def fixture_build_image(tmpdir, request):
     def _build_image(overrides=None):
         image_descriptor = request.param
-        image_dir = tempfile.mkdtemp(prefix="tmp-cekit-test")
+        image_dir = tmpdir.mkdir("tmp-cekit-test")
 
         with open(os.path.join(image_dir, "image.yaml"), "w") as fd:
             yaml.dump(image_descriptor, fd, default_flow_style=False)
@@ -106,8 +105,6 @@ Feature: Basic tests
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
     assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
 
-    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
-
 
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
@@ -148,8 +145,6 @@ Feature: Basic tests
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
     assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
 
-    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
-
 
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
@@ -187,8 +182,6 @@ Feature: Basic tests
     assert "1 feature passed, 0 failed, 0 skipped" in result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
     assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
-
-    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
 
 
 @pytest.mark.skipif(
@@ -228,16 +221,14 @@ Feature: Basic tests
     assert "0 scenarios passed, 0 failed, 0 skipped" in result.output
     assert "0 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
 
-    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
-
 
 @pytest.mark.skipif(
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
-def test_execute_behave_test_from_module():
+def test_execute_behave_test_from_module(tmpdir):
 
     # given: (image is built)
-    image_dir = os.path.join(tempfile.mkdtemp(prefix="tmp-cekit-test"), "project")
+    image_dir = os.path.join(tmpdir, "tmp-cekit-test")
 
     shutil.copytree(
         os.path.join(os.path.dirname(__file__), "images", "module-tests"), image_dir
@@ -370,5 +361,3 @@ Feature: Basic tests
         "TEST_1_POOL_PREFILL=false -e TEST_1_POOL_FLUSH_STRATEGY=EntirePool -e TEST_1_TRACKING=false "
         in result.output
     )
-
-    shutil.rmtree(os.path.join(test_image_dir, "target"), ignore_errors=True)
