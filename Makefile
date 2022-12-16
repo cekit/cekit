@@ -26,6 +26,7 @@ clean:
 prepare: clean
 	@mkdir target
 
+TYPE?="--feature"
 release: clean
 	git checkout develop
 	git reset --hard origin/develop
@@ -38,4 +39,4 @@ release: clean
 	git push
 
 	git checkout develop
-	postrelease -v --feature
+	postrelease -v $(TYPE)
