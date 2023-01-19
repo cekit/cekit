@@ -5,7 +5,7 @@ import shutil
 import ssl
 import subprocess
 import sys
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Sequence
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
@@ -299,7 +299,7 @@ def copy_recursively(
     The destination directory tree will be created if it does not exist.
     """
 
-    # If the source directory does not exists, return
+    # If the source directory does not exist, return
     if not os.path.isdir(source_directory):
         return
 
@@ -335,7 +335,7 @@ def run_wrapper(
     check: bool = True,
 ) -> subprocess.CompletedProcess:
     """
-    Useful wrapper around subprocess.run
+    Useful wrapper around 'subprocess.run'.
 
     :param cmd: The command to execute
     :param capture_output: Whether to capture the output or not
@@ -465,7 +465,7 @@ class DependencyHandler(object):
         The dependencies provided is expected to be a dict in following format:
 
         {
-            PACKAGE_ID: { 'package': PACKAGE_NAME, 'command': COMMAND_TO_TEST_FOR_PACKACGE_EXISTENCE },
+            PACKAGE_ID: { 'package': PACKAGE_NAME, 'command': COMMAND_TO_TEST_FOR_PACKAGE_EXISTENCE },
         }
 
         Additionally, every package can contain platform specific information, for example:
@@ -558,12 +558,14 @@ class DependencyHandler(object):
 
     def _check_for_executable(
         self, dependency: str, executable: str, package: None = None
-    ) -> Optional[bool]:
-        if os.path.isabs(executable):
-            if self._is_program(executable):
-                return True
-            else:
-                return False
+    ) -> None:
+        if os.path.isabs(executable) and self._is_program(executable):
+            logger.debug(
+                "CEKit dependency '{}' provided via the explicit '{}' executable.".format(
+                    dependency, executable
+                )
+            )
+            return
 
         path = os.environ.get("PATH", os.defpath)
         path = path.split(os.pathsep)
@@ -592,7 +594,8 @@ class DependencyHandler(object):
 
         raise CekitError(msg)
 
-    def _is_program(self, path: str) -> bool:
+    @staticmethod
+    def _is_program(path: str) -> bool:
         if (
             os.path.exists(path)
             and os.access(path, os.F_OK | os.X_OK)
@@ -608,6 +611,10 @@ class DependencyHandler(object):
         try:
             import certifi
 
+            # If the certificate bundle ends up resolving e.g. /usr/local/lib/python3.7/site-packages/certifi/cacert.pem
+            # rather than /etc/pki/tls/certs/ca-bundle.crt or /etc/ssl/certs/ca-bundle.crt this can cause issues
+            # hence printing the warning. A user workaround is to export REQUESTS_CA_BUNDLE to point to the correct
+            # certificates
             logger.warning(
                 (
                     "The certifi library (https://certifi.io/) was found, depending on the operating "
