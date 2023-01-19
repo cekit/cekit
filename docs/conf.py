@@ -12,7 +12,7 @@ from cekit.version import __version__ as cekit_version  # noqa: E402
 
 
 def setup(app):
-    app.add_stylesheet("css/custom.css")
+    app.add_css_file("css/custom.css")
 
 
 # Add any Sphinx extension module names here, as strings. They can be
