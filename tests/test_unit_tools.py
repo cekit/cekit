@@ -843,6 +843,24 @@ def test_dependency_handler_check_for_executable_with_executable_only(
     )
 
 
+def test_dependency_handler_check_for_executable_with_explicit_executable_only(
+    mocker, caplog, monkeypatch
+):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    with mocked_dependency_handler(mocker) as handler:
+        monkeypatch.setenv("PATH", "/abc:/def")
+        mocker.patch("os.path.exists").side_effect = [True]
+        mocker.patch("os.access").return_value = True
+        mocker.patch("os.path.isdir").return_value = False
+        handler._check_for_executable("xyz", "/def/xyz-aaa")
+
+    assert (
+        "CEKit dependency 'xyz' provided via the explicit '/def/xyz-aaa' executable."
+        in caplog.text
+    )
+
+
 def test_dependency_handler_check_for_executable_with_executable_fail(
     mocker, monkeypatch
 ):
