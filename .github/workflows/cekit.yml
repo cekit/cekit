@@ -40,6 +40,7 @@ jobs:
         # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
         sudo systemctl unmask docker
         sudo systemctl start docker
+        sudo ln -s /usr/bin/true /usr/bin/brew
         docker version
         docker info
         podman version

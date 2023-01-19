@@ -12,6 +12,7 @@ jobs:
             source /etc/os-release
             sudo apt-get update
             sudo DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes libkrb5-dev software-properties-common podman docker skopeo
+            sudo ln -s /usr/bin/true /usr/bin/brew
             #sudo sed -i -E 's/(unqualified-search-registries = [[])(.*)/\1"registry.fedoraproject.org", "registry.access.redhat.com", \2/g' /etc/containers/registries.conf
             echo "unqualified-search-registries = ['registry.fedoraproject.org', 'registry.access.redhat.com', 'registry.centos.org', 'docker.io']" | sudo tee -a /etc/containers/registries.conf > /dev/null
             echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
