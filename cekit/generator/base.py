@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader
-from packaging.version import LegacyVersion
+from packaging.version import InvalidVersion, Version
 from packaging.version import parse as parse_version
 
 from cekit.cekit_types import PathType
@@ -26,6 +26,7 @@ from cekit.descriptor import (
     Resource,
 )
 from cekit.errors import CekitError
+from cekit.generator import legacy_version
 from cekit.template_helper import TemplateHelper
 from cekit.tools import DependencyDefinition, Map, download_file, load_descriptor
 from cekit.version import __version__ as cekit_version
@@ -723,21 +724,27 @@ class ModuleRegistry(object):
                 )
             )
 
-        default_version = parse_version(self._defaults.get(module.name))
-        current_version = parse_version(version)
-
-        if isinstance(current_version, LegacyVersion):
-            LOGGER.warning(
-                (
-                    "Module's '{}' version '{}' does not follow PEP 440 versioning scheme "
-                    "(https://www.python.org/dev/peps/pep-0440), "
-                    "we suggest follow this versioning scheme in modules"
-                ).format(module.name, version)
+        default_version: Version = parse_version(self._defaults.get(module.name))
+        try:
+            current_version: Version = parse_version(version)
+            # This if block is only for Python3.6 compatibility which still might return
+            # a LegacyVersion and not throw an exception. LegacyVersion does not have
+            # that field so can be used to differentiate.
+            if not hasattr(current_version, "major"):
+                raise InvalidVersion
+            # If current module version is newer, we need to make it the new default
+            if current_version > default_version:
+                self._defaults[module.name] = version
+        except InvalidVersion:
+            LOGGER.error(
+                f"Module's '{module.name}' version '{version}' does not follow PEP 440 versioning scheme "
+                "(https://www.python.org/dev/peps/pep-0440) which should be followed in modules."
             )
 
-        # If current module version is never, we need to make it the new default
-        if current_version > default_version:
-            self._defaults[module.name] = version
+            if legacy_version.parse(version) > legacy_version.parse(
+                self._defaults.get(module.name)
+            ):
+                self._defaults[module.name] = version
 
         # Finally add the module to registry
         modules[version] = module
