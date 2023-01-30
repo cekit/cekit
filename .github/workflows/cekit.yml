@@ -40,16 +40,16 @@ jobs:
         # https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1844894
         sudo systemctl unmask docker
         sudo systemctl start docker
-        sudo ln -s /usr/bin/true /usr/bin/brew
         docker version
         docker info
         podman version
         podman info
         pip install "tox<4.0.0"
         git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        mkdir -p $HOME/.local/bin
-        cd $HOME/.local/bin && curl -sL https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
+        echo "$HOME/bin" >> $GITHUB_PATH
+        mkdir $HOME/bin
+        ln -s /usr/bin/true $HOME/bin/brew
+        cd $HOME/bin && curl -sL https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
         PV=${{ matrix.python-version }}
     - name: Setup MacOS
       if: startsWith(matrix.os,'macos')
@@ -59,6 +59,10 @@ jobs:
         podman machine init
         podman machine start
         podman info
+        echo "$HOME/bin" >> $GITHUB_PATH
+        mkdir $HOME/bin
+        ln -s /usr/bin/true $HOME/bin/brew
+        ln -s /usr/bin/true $HOME/bin/skopeo
     - name: Run tests
       run: |
         PV=${{ matrix.python-version }}

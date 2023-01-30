@@ -141,7 +141,7 @@ def decision(question: str) -> bool:
 
 def get_latest_image_version(image: str) -> str:
     inspect_cmd = [
-        "/usr/bin/skopeo",
+        "skopeo",
         "inspect",
         "--config",
         f"docker://{image}",
@@ -196,7 +196,7 @@ def get_tag_from_inspect_struct(struct: Mapping) -> str:
 def get_brew_url(md5: str) -> str:
     logger.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
     list_archives_cmd = [
-        "/usr/bin/brew",
+        "brew",
         "call",
         "--json-output",
         "listArchives",
@@ -355,6 +355,9 @@ def run_wrapper(
         if capture_output:
             stdout_capture = subprocess.PIPE
             stderr_capture = subprocess.PIPE
+        # subprocess.run uses Popen: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+        # which uses https://docs.python.org/3/library/os.html#os.execvpe like behaviour
+        # to locate the executable if its relative on POSIX.
         result = subprocess.run(
             cmd,
             stdout=stdout_capture,

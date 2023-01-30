@@ -56,8 +56,8 @@ def test_osbs_builder_defaults(mocker):
 
     builder = create_builder_object(mocker, "osbs", {})
 
-    assert builder._fedpkg == "/usr/bin/fedpkg"
-    assert builder._koji == "/usr/bin/koji"
+    assert builder._fedpkg == "fedpkg"
+    assert builder._koji == "koji"
     assert builder._koji_url == "https://koji.fedoraproject.org/koji"
 
 
@@ -67,8 +67,8 @@ def test_osbs_builder_redhat(mocker):
 
     builder = create_builder_object(mocker, "osbs", {})
 
-    assert builder._fedpkg == "/usr/bin/rhpkg"
-    assert builder._koji == "/usr/bin/brew"
+    assert builder._fedpkg == "rhpkg"
+    assert builder._koji == "brew"
     assert builder._koji_url == "https://brewweb.engineering.redhat.com/brew"
 
 
@@ -78,8 +78,8 @@ def test_osbs_builder_use_rhpkg_stage(mocker):
 
     builder = create_builder_object(mocker, "osbs", {"stage": True})
 
-    assert builder._fedpkg == "/usr/bin/rhpkg-stage"
-    assert builder._koji == "/usr/bin/brew-stage"
+    assert builder._fedpkg == "rhpkg-stage"
+    assert builder._koji == "brew-stage"
     assert builder._koji_url == "https://brewweb.stage.engineering.redhat.com/brew"
 
 
@@ -238,7 +238,7 @@ def test_osbs_builder_run_brew_stage(mocker):
             ),
             call(
                 [
-                    "/usr/bin/brew-stage",
+                    "brew-stage",
                     "call",
                     "--python",
                     "buildContainer",
@@ -297,7 +297,7 @@ def test_osbs_builder_run_brew(mocker):
             ),
             call(
                 [
-                    "/usr/bin/brew",
+                    "brew",
                     "call",
                     "--python",
                     "buildContainer",
@@ -356,7 +356,7 @@ def test_osbs_builder_run_koji(mocker):
             ),
             call(
                 [
-                    "/usr/bin/koji",
+                    "koji",
                     "call",
                     "--python",
                     "buildContainer",
@@ -426,7 +426,7 @@ def test_osbs_builder_run_brew_user(mocker):
 
     run.assert_called_with(
         [
-            "/usr/bin/brew",
+            "brew",
             "--user",
             "Foo",
             "call",
@@ -469,7 +469,7 @@ def test_osbs_builder_run_brew_target_defined_in_descriptor(mocker):
 
     run.assert_called_with(
         [
-            "/usr/bin/brew",
+            "brew",
             "call",
             "--python",
             "buildContainer",
@@ -513,7 +513,7 @@ def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
     assert builder._wait_for_osbs_task("12345") is True
 
     run.assert_called_with(
-        ["/usr/bin/brew", "call", "--json-output", "getTaskInfo", "12345"],
+        ["brew", "call", "--json-output", "getTaskInfo", "12345"],
         stderr=-1,
         stdout=-1,
         check=True,
@@ -569,14 +569,14 @@ def test_osbs_wait_for_osbs_task_in_progress(mocker):
     run.assert_has_calls(
         [
             call(
-                ["/usr/bin/brew", "call", "--json-output", "getTaskInfo", "12345"],
+                ["brew", "call", "--json-output", "getTaskInfo", "12345"],
                 stderr=-1,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
             ),
             call(
-                ["/usr/bin/brew", "call", "--json-output", "getTaskInfo", "12345"],
+                ["brew", "call", "--json-output", "getTaskInfo", "12345"],
                 stderr=-1,
                 stdout=-1,
                 check=True,
@@ -621,7 +621,7 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
         builder._wait_for_osbs_task("12345")
 
     run.assert_called_with(
-        ["/usr/bin/brew", "call", "--json-output", "getTaskInfo", "12345"],
+        ["brew", "call", "--json-output", "getTaskInfo", "12345"],
         stderr=-1,
         stdout=-1,
         check=True,
@@ -895,7 +895,7 @@ def test_buildah_builder_run(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/buildah",
+            "buildah",
             "build-using-dockerfile",
             "--squash",
             "-t",
@@ -919,7 +919,7 @@ def test_buildah_builder_run_platform(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/buildah",
+            "buildah",
             "build-using-dockerfile",
             "--squash",
             "--platform",
@@ -945,7 +945,7 @@ def test_buildah_builder_run_pull(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/buildah",
+            "buildah",
             "build-using-dockerfile",
             "--squash",
             "--pull-always",
@@ -1110,7 +1110,7 @@ def test_buildah_builder_run_with_generator(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/buildah",
+            "buildah",
             "build-using-dockerfile",
             "--squash",
             "-t",
@@ -1134,7 +1134,7 @@ def test_buildah_builder_with_squashing_disabled(mocker):
 
     run.assert_called_once_with(
         [
-            "/usr/bin/buildah",
+            "buildah",
             "build-using-dockerfile",
             "-t",
             "foo",
