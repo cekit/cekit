@@ -619,10 +619,12 @@ class DependencyHandler(object):
             # hence printing the warning. A user workaround is to export REQUESTS_CA_BUNDLE to point to the correct
             # certificates
             logger.warning(
-                (
-                    "The certifi library (https://certifi.io/) was found, depending on the operating "
-                    + "system configuration this may result in certificate validation issues"
-                )
+                "The certifi library (https://certifi.io/) was found, depending on the operating system configuration"
+                " this may result in certificate validation issues. "
+            )
+            logger.warning(
+                "You can use REQUESTS_CA_BUNDLE environment variable to point to a different certificate bundle if "
+                "using the certifi provided bundle doesn't work."
             )
             logger.warning(
                 "Certificate Authority (CA) bundle in use: '{}'".format(certifi.where())
