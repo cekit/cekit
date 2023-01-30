@@ -1131,7 +1131,7 @@ def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(tmpdir), mocker)
 
     assert (
-        "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
+        "About to execute 'brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
         in caplog.text
     )
 
@@ -1151,7 +1151,7 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(tmpdir), mocker)
 
     assert (
-        "About to execute '/usr/bin/brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
+        "About to execute 'brew call --python buildContainer --kwargs {'src': 'git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
         in caplog.text
     )
 
@@ -1445,7 +1445,7 @@ ssl_verify = False
         "Ignoring http://another.domain/wrong.jar as restricted to ['https://foo.domain', 'http://another.domain/path/name']"
         in caplog.text
     )
-    assert "Executing '/usr/bin/rhpkg new-sources not_allowed_in_fetch'" in caplog.text
+    assert "Executing 'rhpkg new-sources not_allowed_in_fetch'" in caplog.text
     assert (
         "Artifact 'artifact_name' (as URL) added to fetch-artifacts-url.yaml"
         in caplog.text
@@ -2413,7 +2413,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
     ) as _file:
         fetch_artifacts = yaml.safe_load(_file)
 
-    assert "Executing '['/usr/bin/rhpkg', 'new-sources', 'foo.jar']'" not in caplog.text
+    assert "Executing '['rhpkg', 'new-sources', 'foo.jar']'" not in caplog.text
     assert fetch_artifacts["builds"] == [
         {"build_id": "123456", "artifacts": [{"id": "54321", "target": "foo.jar"}]}
     ]

@@ -45,16 +45,16 @@ class OSBSBuilder(Builder):
 
         if CONFIG.get("common", "redhat"):
             if self.params.get("stage"):
-                self._fedpkg = "/usr/bin/rhpkg-stage"
-                self._koji = "/usr/bin/brew-stage"
+                self._fedpkg = "rhpkg-stage"
+                self._koji = "brew-stage"
                 self._koji_url = "https://brewweb.stage.engineering.redhat.com/brew"
             else:
-                self._fedpkg = "/usr/bin/rhpkg"
-                self._koji = "/usr/bin/brew"
+                self._fedpkg = "rhpkg"
+                self._koji = "brew"
                 self._koji_url = "https://brewweb.engineering.redhat.com/brew"
         else:
-            self._fedpkg = "/usr/bin/fedpkg"
-            self._koji = "/usr/bin/koji"
+            self._fedpkg = "fedpkg"
+            self._koji = "koji"
             self._koji_url = "https://koji.fedoraproject.org/koji"
 
     @staticmethod
@@ -65,15 +65,15 @@ class OSBSBuilder(Builder):
             if CONFIG.get("common", "stage"):
                 fedpkg = "rhpkg-stage"
                 koji = "brewkoji-stage"
-                koji_executable = "/usr/bin/brew-stage"
+                koji_executable = "brew-stage"
             else:
                 fedpkg = "rhpkg"
                 koji = "brewkoji"
-                koji_executable = "/usr/bin/brew"
+                koji_executable = "brew"
         else:
             fedpkg = "fedpkg"
             koji = "koji"
-            koji_executable = "/usr/bin/koji"
+            koji_executable = "koji"
 
         deps[fedpkg] = {"package": fedpkg, "executable": fedpkg}
 
