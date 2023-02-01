@@ -367,7 +367,6 @@ def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
 
 
 def prepare_params(ctx, params: Optional[Map] = None) -> Map:
-
     if params is None:
         params = Map({})
 

@@ -76,7 +76,6 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
-
                 LOGGER.debug("Loading override '{}'".format(override))
                 if urlparse(override).scheme in ["http", "https", "file"]:
                     # HTTP Handling
@@ -268,7 +267,6 @@ class Generator(object):
     def load_repository(self, repo_dir: str) -> None:
         for modules_dir, _, files in os.walk(repo_dir):
             if "module.yaml" in files:
-
                 module_descriptor_path = os.path.abspath(
                     os.path.expanduser(
                         os.path.normcase(os.path.join(modules_dir, "module.yaml"))

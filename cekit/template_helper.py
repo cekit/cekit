@@ -2,7 +2,6 @@ import os
 
 
 class TemplateHelper(object):
-
     SUPPORTED_PACKAGE_MANAGERS = ["yum", "dnf", "microdnf", "apk", "apt-get"]
 
     def __init__(self, module_registry):

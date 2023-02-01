@@ -226,7 +226,6 @@ Feature: Basic tests
     os.path.exists("/var/run/docker.sock") is False, reason="No Docker available"
 )
 def test_execute_behave_test_from_module(tmpdir):
-
     # given: (image is built)
     image_dir = os.path.join(tmpdir, "tmp-cekit-test")
 
