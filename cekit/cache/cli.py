@@ -78,7 +78,6 @@ class CacheCli:
         return CacheCli(Map(click.get_current_context().parent.params))
 
     def __init__(self, args):
-
         # TODO: logging is used only when adding the artifact, we need to find out if it would be possible to do it better
         if args.verbose:
             LOGGER.setLevel(logging.DEBUG)
