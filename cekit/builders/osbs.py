@@ -387,7 +387,6 @@ class DistGit(object):
         self.repo: str = repo
         self.branch: str = branch
         self.osbs_extra: PathType = osbs_extra
-        self.dockerfile: PathType = os.path.join(self.output, "Dockerfile")
         self.noninteractive: bool = noninteractive
 
         (

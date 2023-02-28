@@ -1046,7 +1046,7 @@ def test_podman_builder_run_with_generator(mocker):
     params = Map({"tags": []})
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
-    builder.generator = DockerGenerator("", "", {})
+    builder.generator = DockerGenerator("", "", "", {})
     builder.generator.image = Image(
         yaml.safe_load(
             """
@@ -1088,7 +1088,7 @@ def test_buildah_builder_run_with_generator(mocker):
     params = Map({"tags": []})
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "buildah", params)
-    builder.generator = DockerGenerator("", "", {})
+    builder.generator = DockerGenerator("", "", "", {})
     builder.generator.image = Image(
         yaml.safe_load(
             """

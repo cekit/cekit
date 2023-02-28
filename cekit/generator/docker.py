@@ -12,9 +12,15 @@ config = Config()
 
 class DockerGenerator(Generator):
     def __init__(
-        self, descriptor_path: PathType, target: PathType, overrides: List[str]
+        self,
+        descriptor_path: PathType,
+        target: PathType,
+        container_file: str,
+        overrides: List[str],
     ):
-        super(DockerGenerator, self).__init__(descriptor_path, target, overrides)
+        super(DockerGenerator, self).__init__(
+            descriptor_path, target, container_file, overrides
+        )
         self._fetch_repos = True
 
     def prepare_artifacts(self):

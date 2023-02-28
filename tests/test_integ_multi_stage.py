@@ -24,7 +24,7 @@ image_descriptor = {
 template_teststr = "This string does not occur in the default help.md template."
 
 
-def check_file_text(image_dir, match, filename="Dockerfile"):
+def check_file_text(image_dir, match, filename="Containerfile"):
     with open(os.path.join(image_dir, "target", "image", filename), "r") as fd:
         file_content = fd.read()
         if match in file_content:
@@ -58,7 +58,9 @@ def test_multi_stage_single_image_in_list(tmpdir):
 
     run_cekit(tmpdir, ["-v", "build", "podman"], env={"BUILDAH_LAYERS": "false"})
 
-    assert os.path.exists(os.path.join(tmpdir, "target", "image", "Dockerfile")) is True
+    assert (
+        os.path.exists(os.path.join(tmpdir, "target", "image", "Containerfile")) is True
+    )
     assert check_file_text(tmpdir, "ADD help.md /") is False
 
 

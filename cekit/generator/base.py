@@ -59,7 +59,11 @@ class Generator(object):
     ODCS_HIDDEN_REPOS_FLAG = "include_unpublished_pulp_repos"
 
     def __init__(
-        self, descriptor_path: PathType, target: PathType, overrides: List[str]
+        self,
+        descriptor_path: PathType,
+        target: PathType,
+        container_file: str,
+        overrides: List[str],
     ):
         self._descriptor_path: PathType = descriptor_path
         self._overrides: List[Overrides] = []
@@ -69,6 +73,7 @@ class Generator(object):
         self.image: Optional[Image] = None
         self.builder_images: List[Image] = []
         self.images: List[Image] = []
+        self.container_file: str = container_file
 
         # If descriptor has been passed in from standard input its not a path so use current working directory
         if "-" == descriptor_path:
@@ -183,7 +188,7 @@ class Generator(object):
         self.prepare_repositories()
         self.image.remove_none_keys()
         self.image.write(os.path.join(self.target, "image.yaml"))
-        self.render_dockerfile()
+        self.render_image_file()
         self.render_help()
 
     def add_redhat_overrides(self):
@@ -363,9 +368,9 @@ class Generator(object):
 
         return RedHatOverrides(self)
 
-    def render_dockerfile(self) -> None:
-        """Renders Dockerfile to $target/image/Dockerfile"""
-        LOGGER.info("Rendering Dockerfile...")
+    def render_image_file(self) -> None:
+        """Renders Containerfile/Dockerfile to $target/image/Dockerfile or $target/image/Containerfile"""
+        LOGGER.info(f"Rendering {self.container_file}...")
 
         template_file = os.path.join(
             os.path.dirname(__file__), "..", "templates", "template.jinja"
@@ -378,13 +383,13 @@ class Generator(object):
 
         template = env.get_template(os.path.basename(template_file))
 
-        dockerfile = os.path.join(self.target, "image", "Dockerfile")
+        dockerfile = os.path.join(self.target, "image", self.container_file)
         if not os.path.exists(os.path.dirname(dockerfile)):
             os.makedirs(os.path.dirname(dockerfile))
 
         with open(dockerfile, "wb") as f:
             f.write(template.render(self.image).encode("utf-8"))
-        LOGGER.debug("Dockerfile rendered")
+        LOGGER.debug(f"{self.container_file} rendered")
 
     def render_help(self) -> None:
         """

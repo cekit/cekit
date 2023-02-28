@@ -30,7 +30,10 @@ class BehaveTester(Command):
 
     def prepare(self):
         self.generator = BehaveGenerator(
-            self.params.descriptor, self.params.target, self.params.overrides
+            self.params.descriptor,
+            self.params.target,
+            "Dockerfile",
+            self.params.overrides,
         )
 
         # Handle dependencies for selected generator, if any
