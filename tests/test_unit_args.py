@@ -24,6 +24,7 @@ def _get_class_by_name(clazz):
             ["--redhat", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -45,6 +46,7 @@ def _get_class_by_name(clazz):
             ["--target", "custom-target", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -66,6 +68,7 @@ def _get_class_by_name(clazz):
             ["--work-dir", "custom-workdir", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -87,6 +90,7 @@ def _get_class_by_name(clazz):
             ["--config", "custom-config", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -108,6 +112,7 @@ def _get_class_by_name(clazz):
             ["build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -129,6 +134,7 @@ def _get_class_by_name(clazz):
             ["build", "--overrides", "foo", "--overrides-file", "bar", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -150,6 +156,7 @@ def _get_class_by_name(clazz):
             ["build", "osbs"],
             "cekit.builders.osbs.OSBSBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -175,6 +182,7 @@ def _get_class_by_name(clazz):
             ["build", "osbs", "--user", "SOMEUSER"],
             "cekit.builders.osbs.OSBSBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -200,6 +208,7 @@ def _get_class_by_name(clazz):
             ["build", "osbs", "--stage"],
             "cekit.builders.osbs.OSBSBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -225,6 +234,7 @@ def _get_class_by_name(clazz):
             ["build", "osbs", "--nowait"],
             "cekit.builders.osbs.OSBSBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -269,6 +279,7 @@ def _get_class_by_name(clazz):
             ["build", "docker", "--pull"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -289,6 +300,7 @@ def _get_class_by_name(clazz):
             ["build", "osbs"],
             "cekit.builders.osbs.OSBSBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -313,6 +325,7 @@ def _get_class_by_name(clazz):
             ["build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,
@@ -333,6 +346,7 @@ def _get_class_by_name(clazz):
             ["build", "buildah"],
             "cekit.builders.buildah.BuildahBuilder",
             {
+                "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
                 "nocolor": False,

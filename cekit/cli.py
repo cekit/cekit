@@ -98,6 +98,12 @@ def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):
     is_flag=True,
 )
 @click.option(
+    "--container-file",
+    type=click.Choice(["Containerfile", "Dockerfile"]),
+    help="Override the name of the generated file for image creation. Defaults to Dockerfile for "
+    "OSBS and Docker and Containerfile for Podman and Buildah.",
+)
+@click.option(
     "--overrides",
     metavar="JSON",
     help="Inline overrides in JSON format.",
@@ -110,7 +116,7 @@ def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):
     help="Path to overrides file in YAML format.",
     multiple=True,
 )
-def build(validate, dry_run, overrides):
+def build(validate, dry_run, container_file, overrides):
     """
     DESCRIPTION
 

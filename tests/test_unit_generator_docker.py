@@ -73,7 +73,7 @@ def docker_generator(tmpdir, overrides=None):
 
     image_dir = str(tmpdir)
     target_dir = os.path.join(image_dir, "target")
-    yield DockerGenerator(image_dir, target_dir, overrides)
+    yield DockerGenerator(image_dir, target_dir, "", overrides)
 
 
 def setup_function():
