@@ -1306,7 +1306,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     expected_packages_order_install = """
 ###### START module 'packages_module:1.0'
 ###### \\
-        # Switch to 'root' user to install 'packages_module' module defined packages
+        # Switch to 'root' user for package management for 'packages_module' module defined packages
         USER root
         # Install packages defined in the 'packages_module' module
         RUN yum --setopt=tsflags=nodocs install -y kernel java-1.8.0-openjdk \\
@@ -1316,7 +1316,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 
 ###### START module 'packages_module_1:1.0'
 ###### \\
-        # Switch to 'root' user to install 'packages_module_1' module defined packages
+        # Switch to 'root' user for package management for 'packages_module_1' module defined packages
         USER root
         # Install packages defined in the 'packages_module_1' module
         RUN yum --setopt=tsflags=nodocs install -y wget mc \\
@@ -1345,7 +1345,6 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_install = """
-        # Switch to 'root' user to install 'test/image' image defined packages
         USER root
         # Install packages defined in the 'test/image' image
         RUN yum --setopt=tsflags=nodocs install -y wget mc \\
