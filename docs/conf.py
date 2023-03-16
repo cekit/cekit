@@ -46,7 +46,7 @@ version = ".".join(cekit_version.split(".")[0:2])
 # The full version, including alpha/beta/rc tags.
 release = cekit_version
 
-language = None
+language = "en"
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "venv"]
 

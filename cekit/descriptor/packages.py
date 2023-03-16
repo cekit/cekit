@@ -27,6 +27,9 @@ map:
   install:
     seq:
       - {type: any}
+  reinstall:
+    seq:
+      - {type: any}
   manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}
   manager_flags: {type: str}"""
 )
@@ -123,6 +126,10 @@ class Packages(Descriptor):
     @property
     def remove(self) -> List[str]:
         return self.get("remove")
+
+    @property
+    def reinstall(self) -> List[str]:
+        return self.get("reinstall")
 
     @property
     def content_sets(self) -> ContentSetType:

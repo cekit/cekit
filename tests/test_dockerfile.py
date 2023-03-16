@@ -705,7 +705,7 @@ def test_overrides_applied_to_all_multi_stage_images(tmpdir):
 
 
 # @pytest.mark.parametrize("manager", ["yum", "dnf", "microdnf"])
-def test_package_removal_and_install(tmpdir):
+def test_package_removal_and_install_and_reinstall(tmpdir):
     target = str(tmpdir.mkdir("target"))
 
     generate(
@@ -717,16 +717,27 @@ def test_package_removal_and_install(tmpdir):
                 "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
                 "install": ["a"],
                 "remove": ["b"],
+                "reinstall": ["t"],
             },
             "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
         },
     )
-    # flags = "--setopt=tsflags=nodocs"
-    # if "microdnf" in manager:
-    #     flags = "--setopt=install_weak_deps=0 " + flags
-    # regex_dockerfile(target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
-    # regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
     regex_dockerfile(target, "remove -y b")
+    with open(os.path.join(target, "target", "image", "Dockerfile"), "r") as _file:
+        dockerfile = _file.read()
+    assert (
+        """# Switch to 'root' user for package management for 'testimage' image defined packages
+        USER root
+        # Remove packages defined in the 'testimage' image
+        RUN dnf --setopt=tsflags=nodocs remove -y b
+        # Install packages defined in the 'testimage' image
+        RUN dnf --setopt=tsflags=nodocs install -y a \\
+            && rpm -q a
+        # Reinstall packages defined in the 'testimage' image
+        RUN dnf --setopt=tsflags=nodocs reinstall -y t \\
+            && rpm -q t"""
+        in dockerfile
+    )
 
 
 def test_package_removal_without_install(tmpdir):
@@ -744,12 +755,25 @@ def test_package_removal_without_install(tmpdir):
             "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
         },
     )
-    # flags = "--setopt=tsflags=nodocs"
-    # if "microdnf" in manager:
-    #     flags = "--setopt=install_weak_deps=0 " + flags
-    # regex_dockerfile(target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
-    # regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
     regex_dockerfile(target, "remove -y b")
+
+
+def test_package_reinstall(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor={
+            "packages": {
+                "manager": "dnf",
+                "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
+                "reinstall": ["tzdata"],
+            },
+            "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
+        },
+    )
+    regex_dockerfile(target, "reinstall -y tzdata")
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):
@@ -783,6 +807,5 @@ def generate(image_dir, command, descriptor=None, exit_code=0):
 def regex_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
     with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         dockerfile_content = fd.read()
-        print(dockerfile_content)
         regex = re.compile(exp_regex, re.MULTILINE)
         assert regex.search(dockerfile_content) is not None

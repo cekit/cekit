@@ -27,6 +27,21 @@ class TemplateHelper(object):
 
         return packages
 
+    def packages_to_reinstall(self, image):
+        """
+        Method that returns list of packages to be reinstalled by any of
+        modules or directly in the image
+        """
+        all_modules = self.modules(image)
+
+        packages = []
+
+        for module in all_modules:
+            if "packages" in module and "reinstall" in module.packages:
+                packages += module.packages.reinstall
+
+        return packages
+
     def packages_to_remove(self, image):
         """
         Method that returns list of packages to be removed by any of
@@ -145,6 +160,14 @@ class TemplateHelper(object):
             return "add"
         else:
             return "install -y"
+
+    def package_manager_reinstall(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            return "fix --reinstall"
+        elif "apt-get" in pkg_mgr:
+            return "--reinstall install -y"
+        else:
+            return "reinstall -y"
 
     def package_manager_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
