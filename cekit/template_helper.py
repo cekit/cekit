@@ -27,6 +27,21 @@ class TemplateHelper(object):
 
         return packages
 
+    def packages_to_remove(self, image):
+        """
+        Method that returns list of packages to be removed by any of
+        modules or directly in the image
+        """
+        all_modules = self.modules(image)
+
+        packages = []
+
+        for module in all_modules:
+            if "packages" in module and "remove" in module.packages:
+                packages += module.packages.remove
+
+        return packages
+
     def modules(self, image):
         all_modules = []
 
@@ -138,3 +153,9 @@ class TemplateHelper(object):
             return "dpkg-query --list"
         else:
             return "rpm -q"
+
+    def package_manager_remove(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            return "del"
+        else:
+            return "remove -y"

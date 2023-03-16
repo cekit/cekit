@@ -305,7 +305,12 @@ class Image(Descriptor):
             # Merge override osbs items into self.
             self.osbs = self.osbs.merge(override.osbs)
 
-            for package in override.packages.install:
+            # Using 'or []' to avoid having to set default value in packages.py for _descriptor["remove"]
+            for package in override.packages.remove or []:
+                if package not in self.packages.remove:
+                    self.packages.remove.append(package)
+
+            for package in override.packages.install or []:
                 if package not in self.packages.install:
                     self.packages.install.append(package)
 
