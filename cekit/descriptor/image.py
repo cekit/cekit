@@ -314,6 +314,10 @@ class Image(Descriptor):
                 if package not in self.packages.install:
                     self.packages.install.append(package)
 
+            for package in override.packages.reinstall or []:
+                if package not in self.packages.reinstall:
+                    self.packages.reinstall.append(package)
+
             artifact_overrides = self._image_overrides.artifacts
             image_artifacts = Image._to_dict(self.artifacts)
             for i, artifact in enumerate(override.artifacts):

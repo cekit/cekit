@@ -1,5 +1,7 @@
 .. include:: includes/packages/common.rst
 .. include:: includes/packages/install.rst
+.. include:: includes/packages/reinstall.rst
+.. include:: includes/packages/remove.rst
 .. include:: includes/packages/manager.rst
 .. include:: includes/packages/repositories/common.rst
 .. include:: includes/packages/repositories/plain.rst

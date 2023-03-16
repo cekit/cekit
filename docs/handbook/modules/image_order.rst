@@ -1,5 +1,5 @@
 Image Descriptor and Modules
-=========================
+============================
 
 .. contents::
     :backlinks: none

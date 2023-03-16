@@ -90,7 +90,7 @@ JDK8
          - java-1.8.0-openjdk-devel
 
 * An :doc:`environment variable</descriptor/includes/envs>` has been defined that will be present in the container after running the image.
-* :doc:`packages</descriptor/includes/packages>` have been used to add the JDK RPM.
+* :doc:`packages</descriptor/includes/image/packages>` have been used to add the JDK RPM.
 
 
 User
