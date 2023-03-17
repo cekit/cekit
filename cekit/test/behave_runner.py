@@ -50,7 +50,6 @@ class BehaveTestRunner(object):
                 args.append("%s" % name)
         else:
             for tag in run_tags:
-
                 # Remove anything after the colon, typically the docker tag.
                 tag = tag.partition(":")[0]
 

@@ -25,7 +25,7 @@ class BuildahBuilder(Builder):
     def run(self) -> None:
         """Build container image using buildah."""
         tags = self.params.tags
-        cmd = ["/usr/bin/buildah", "build-using-dockerfile"]
+        cmd = ["buildah", "build-using-dockerfile"]
 
         if not tags:
             tags = self.generator.get_tags()

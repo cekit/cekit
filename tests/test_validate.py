@@ -440,7 +440,9 @@ def test_image_test_with_override_yaml_on_cmd(tmpdir):
         image_dir,
         ["-v", "build", "--overrides", overrides_descriptor, "--dry-run", "podman"],
     )
-    with open(os.path.join(image_dir, "target", "image", "Dockerfile"), "r") as _file:
+    with open(
+        os.path.join(image_dir, "target", "image", "Containerfile"), "r"
+    ) as _file:
         dockerfile = _file.read()
     assert (
         """LABEL \\
@@ -480,9 +482,11 @@ def test_module_override(tmpdir):
     assert os.path.exists(os.path.join(module_dir, "overriden"))
 
     assert not os.path.exists(os.path.join(module_dir, "original"))
-    assert not check_dockerfile_text(image_dir, "not-there")
-    assert check_dockerfile(image_dir, 'foobar="dummy"')
-    assert check_dockerfile(image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/foo/script" ]')
+    assert not check_dockerfile_text(image_dir, "not-there", "Containerfile")
+    assert check_dockerfile(image_dir, 'foobar="dummy"', "Containerfile")
+    assert check_dockerfile(
+        image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/foo/script" ]', "Containerfile"
+    )
 
 
 # https://github.com/cekit/cekit/issues/489
@@ -522,13 +526,17 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
     )
 
     assert check_dockerfile(
-        image_dir, "RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\"
+        image_dir,
+        "RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\",
+        "Containerfile",
     )
     assert check_dockerfile(
-        image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]'
+        image_dir, 'RUN [ "sh", "-x", "/tmp/scripts/main/script_a" ]', "Containerfile"
     )
     assert check_dockerfile_text(
-        image_dir, "        COPY \\\n            test \\\n            /tmp/artifacts/"
+        image_dir,
+        "        COPY \\\n            test \\\n            /tmp/artifacts/",
+        "Containerfile",
     )
 
 
@@ -566,19 +574,19 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
     ]
 
     for match in required_matches:
-        assert check_dockerfile(image_dir, match)
+        assert check_dockerfile(image_dir, match, "Containerfile")
 
 
-def check_dockerfile(image_dir, match):
-    with open(os.path.join(image_dir, "target", "image", "Dockerfile"), "r") as fd:
+def check_dockerfile(image_dir, match, container_file="Dockerfile"):
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         for line in fd.readlines():
             if line.strip() == match.strip():
                 return True
     return False
 
 
-def check_dockerfile_text(image_dir, match):
-    with open(os.path.join(image_dir, "target", "image", "Dockerfile"), "r") as fd:
+def check_dockerfile_text(image_dir, match, container_file="Dockerfile"):
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         dockerfile = fd.read()
         print("MATCH:\n{}".format(match))
         print("DOCKERFILE:\n{}".format(dockerfile))
@@ -587,9 +595,9 @@ def check_dockerfile_text(image_dir, match):
     return False
 
 
-def check_dockerfile_uniq(image_dir, match):
+def check_dockerfile_uniq(image_dir, match, container_file="Dockerfile"):
     found = False
-    with open(os.path.join(image_dir, "target", "image", "Dockerfile"), "r") as fd:
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         for line in fd.readlines():
             if line.strip() == match.strip():
                 if found:
@@ -633,7 +641,7 @@ def test_run_override_user(tmpdir):
         ["-v", "build", "--dry-run", "--overrides-file", "overrides.yaml", "podman"],
     )
 
-    assert check_dockerfile(image_dir, "USER 4321")
+    assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
 
 
 def get_res(mocker):
@@ -667,7 +675,7 @@ def test_run_load_remote_override(tmpdir, mocker):
         ],
     )
 
-    assert check_dockerfile(image_dir, "USER 4321")
+    assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
     mock_urlopen.assert_called_with(
         "https://example.com/overrides.yaml", context=mocker.ANY
     )
@@ -700,7 +708,7 @@ def test_run_load_remote_file_override(tmpdir, mocker):
         ],
     )
 
-    assert check_dockerfile(image_dir, "USER 4321")
+    assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
 
 
 def test_run_override_artifact(tmpdir):
@@ -726,7 +734,7 @@ def test_run_override_artifact(tmpdir):
         ["-v", "build", "--dry-run", "--overrides-file", "overrides.yaml", "podman"],
     )
 
-    assert check_dockerfile_uniq(image_dir, "bar.jar \\")
+    assert check_dockerfile_uniq(image_dir, "bar.jar \\", "Containerfile")
 
 
 def test_run_override_artifact_with_custom_original_destination(tmpdir):
@@ -752,13 +760,16 @@ def test_run_override_artifact_with_custom_original_destination(tmpdir):
         ["-v", "build", "--dry-run", "--overrides-file", "overrides.yaml", "podman"],
     )
 
-    with open(
-        os.path.join(str(tmpdir), "source", "target", "image", "Dockerfile"), "r"
-    ) as _file:
-        dockerfile = _file.read()
-    assert "/tmp/artifacts/' destination" not in dockerfile
-    assert "/tmp/destination/' destination" in dockerfile
-    assert check_dockerfile_uniq(image_dir, "bar.jar \\")
+    assert (
+        check_dockerfile_text(
+            image_dir, "/tmp/artifacts/' destination", "Containerfile"
+        )
+        is False
+    )
+    assert check_dockerfile_text(
+        image_dir, "/tmp/destination/' destination", "Containerfile"
+    )
+    assert check_dockerfile_uniq(image_dir, "bar.jar \\", "Containerfile")
 
 
 def test_run_override_artifact_with_custom_override_destination(tmpdir):
@@ -787,13 +798,16 @@ def test_run_override_artifact_with_custom_override_destination(tmpdir):
         ["-v", "build", "--dry-run", "--overrides-file", "overrides.yaml", "podman"],
     )
 
-    with open(
-        os.path.join(str(tmpdir), "source", "target", "image", "Dockerfile"), "r"
-    ) as _file:
-        dockerfile = _file.read()
-    assert "/tmp/destination/' destination" not in dockerfile
-    assert "/tmp/new-destination/' destination" in dockerfile
-    assert check_dockerfile_uniq(image_dir, "bar.jar \\")
+    assert (
+        check_dockerfile_text(
+            image_dir, "/tmp/destination/' destination", "Containerfile"
+        )
+        is False
+    )
+    assert check_dockerfile_text(
+        image_dir, "/tmp/new-destination/' destination", "Containerfile"
+    )
+    assert check_dockerfile_uniq(image_dir, "bar.jar \\", "Containerfile")
 
 
 def test_run_override_artifact_with_custom_override_example1(tmpdir, mocker, caplog):
@@ -858,7 +872,7 @@ def test_run_override_artifact_with_custom_override_example1(tmpdir, mocker, cap
     )
 
     with open(
-        os.path.join(str(tmpdir), "source", "target", "image", "Dockerfile"), "r"
+        os.path.join(str(tmpdir), "source", "target", "image", "Containerfile"), "r"
     ) as _file:
         dockerfile = _file.read()
     assert "/tmp/destination/' destination" in dockerfile
@@ -929,7 +943,7 @@ def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, cap
     )
 
     with open(
-        os.path.join(str(tmpdir), "source", "target", "image", "Dockerfile"), "r"
+        os.path.join(str(tmpdir), "source", "target", "image", "Containerfile"), "r"
     ) as _file:
         dockerfile = _file.read()
     assert "/tmp/destination/' destination" in dockerfile
@@ -1292,7 +1306,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
     expected_packages_order_install = """
 ###### START module 'packages_module:1.0'
 ###### \\
-        # Switch to 'root' user to install 'packages_module' module defined packages
+        # Switch to 'root' user for package management for 'packages_module' module defined packages
         USER root
         # Install packages defined in the 'packages_module' module
         RUN yum --setopt=tsflags=nodocs install -y kernel java-1.8.0-openjdk \\
@@ -1302,7 +1316,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 
 ###### START module 'packages_module_1:1.0'
 ###### \\
-        # Switch to 'root' user to install 'packages_module_1' module defined packages
+        # Switch to 'root' user for package management for 'packages_module_1' module defined packages
         USER root
         # Install packages defined in the 'packages_module_1' module
         RUN yum --setopt=tsflags=nodocs install -y wget mc \\
@@ -1331,7 +1345,6 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
     run_cekit(image_dir)
 
     expected_packages_install = """
-        # Switch to 'root' user to install 'test/image' image defined packages
         USER root
         # Install packages defined in the 'test/image' image
         RUN yum --setopt=tsflags=nodocs install -y wget mc \\
@@ -1650,12 +1663,12 @@ def test_run_descriptor_stdin(tmpdir):
         input=str(image_descriptor),
     )
 
-    assert check_dockerfile(image_dir, "USER 4321")
+    assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
 
 
 def run_cekit(cwd, parameters=None, message=None, env=None, input=None):
     if parameters is None:
-        parameters = ["build", "--dry-run", "podman"]
+        parameters = ["build", "--dry-run", "--container-file", "Dockerfile", "podman"]
 
     if env is None:
         env = {}

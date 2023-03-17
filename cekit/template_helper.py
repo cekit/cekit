@@ -2,7 +2,6 @@ import os
 
 
 class TemplateHelper(object):
-
     SUPPORTED_PACKAGE_MANAGERS = ["yum", "dnf", "microdnf", "apk", "apt-get"]
 
     def __init__(self, module_registry):
@@ -25,6 +24,36 @@ class TemplateHelper(object):
         for module in all_modules:
             if "packages" in module and "install" in module.packages:
                 packages += module.packages.install
+
+        return packages
+
+    def packages_to_reinstall(self, image):
+        """
+        Method that returns list of packages to be reinstalled by any of
+        modules or directly in the image
+        """
+        all_modules = self.modules(image)
+
+        packages = []
+
+        for module in all_modules:
+            if "packages" in module and "reinstall" in module.packages:
+                packages += module.packages.reinstall
+
+        return packages
+
+    def packages_to_remove(self, image):
+        """
+        Method that returns list of packages to be removed by any of
+        modules or directly in the image
+        """
+        all_modules = self.modules(image)
+
+        packages = []
+
+        for module in all_modules:
+            if "packages" in module and "remove" in module.packages:
+                packages += module.packages.remove
 
         return packages
 
@@ -132,6 +161,14 @@ class TemplateHelper(object):
         else:
             return "install -y"
 
+    def package_manager_reinstall(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            return "fix --reinstall"
+        elif "apt-get" in pkg_mgr:
+            return "--reinstall install -y"
+        else:
+            return "reinstall -y"
+
     def package_manager_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "apk info -e"
@@ -139,3 +176,9 @@ class TemplateHelper(object):
             return "dpkg-query --list"
         else:
             return "rpm -q"
+
+    def package_manager_remove(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            return "del"
+        else:
+            return "remove -y"

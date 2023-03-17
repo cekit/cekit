@@ -21,7 +21,13 @@ map:
   repositories:
     seq:
       - {type: any}
+  remove:
+    seq:
+      - {type: any}
   install:
+    seq:
+      - {type: any}
+  reinstall:
     seq:
       - {type: any}
   manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}
@@ -101,9 +107,6 @@ class Packages(Descriptor):
         else:
             self._descriptor["repositories"] = [Repository(x) for x in repositories]
 
-        # TODO: This looks like a no-op?!
-        self._descriptor["install"] = self._descriptor.get("install", [])
-
     @property
     def manager(self):
         return self.get("manager")
@@ -119,6 +122,14 @@ class Packages(Descriptor):
     @property
     def install(self) -> List[str]:
         return self.get("install")
+
+    @property
+    def remove(self) -> List[str]:
+        return self.get("remove")
+
+    @property
+    def reinstall(self) -> List[str]:
+        return self.get("reinstall")
 
     @property
     def content_sets(self) -> ContentSetType:

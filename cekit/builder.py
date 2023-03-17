@@ -78,25 +78,32 @@ class Builder(Command):
         self.run()
 
     def prepare(self) -> None:
-        if (
-            self.build_engine == "docker"
-            or self.build_engine == "buildah"
-            or self.build_engine == "podman"
-        ):
+        if self.build_engine == "buildah" or self.build_engine == "podman":
             from cekit.generator.docker import DockerGenerator as generator_impl
 
-            LOGGER.info("Generating files for {} engine".format(self.build_engine))
+            container_file: str = "Containerfile"
+        elif self.build_engine == "docker":
+            from cekit.generator.docker import DockerGenerator as generator_impl
+
+            container_file: str = "Dockerfile"
         elif self.build_engine == "osbs":
             from cekit.generator.osbs import OSBSGenerator as generator_impl
 
-            LOGGER.info("Generating files for OSBS engine")
+            container_file: str = "Dockerfile"
         else:
             raise CekitError(
                 "Unsupported generator type: '{}'".format(self.build_engine)
             )
+        LOGGER.info("Generating files for {} engine".format(self.build_engine))
+
+        if self.params.container_file:
+            container_file: str = self.params.container_file
 
         self.generator = generator_impl(
-            self.params.descriptor, self.params.target, self.params.overrides
+            self.params.descriptor,
+            self.params.target,
+            container_file,
+            self.params.overrides,
         )
 
         if CONFIG.get("common", "redhat"):

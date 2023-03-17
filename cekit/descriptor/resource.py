@@ -219,7 +219,6 @@ class Resource(Descriptor):
         )
 
     def copy(self, target: PathType = os.getcwd()) -> PathType:
-
         if os.path.isdir(target):
             target = os.path.join(target, self.target)
 

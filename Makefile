@@ -19,27 +19,14 @@ test-py310: prepare
 test-py311: prepare
 	tox -e py311 -- tests
 
-test-unit: prepare
-	tox -- tests/test_unit*
-
-test-integ: prepare
-	tox -- tests/test_integ*
-
-ci-publish-junit:
-	@mkdir -p ${CIRCLE_TEST_REPORTS}
-	@cp target/junit*.xml ${CIRCLE_TEST_REPORTS}
-
 clean:
 	@find . -name "*.pyc" -exec rm -rf {} \;
 	@rm -rf target
-	@rm -rf dist
 
 prepare: clean
 	@mkdir target
 
-hook-gitter:
-	@curl -s -X POST -H "Content-Type: application/json" -d "{\"payload\":`curl -s -H "Accept: application/json" https://circleci.com/api/v1/project/goldmann/docker-scripts/${CIRCLE_BUILD_NUM}`}" ${GITTER_WEBHOOK_URL}
-
+TYPE?="--feature"
 release: clean
 	git checkout develop
 	git reset --hard origin/develop
@@ -52,4 +39,4 @@ release: clean
 	git push
 
 	git checkout develop
-	postrelease -v --feature
+	postrelease -v $(TYPE)

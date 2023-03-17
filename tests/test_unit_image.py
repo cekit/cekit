@@ -573,7 +573,7 @@ def test_module_processing_warning_when_a_module_version_cannot_be_parsed_as_pep
     module_registry.add_module(module_a1)
 
     assert (
-        "Module's 'org.test.module.a' version 'aa fs df' does not follow PEP 440 versioning scheme (https://www.python.org/dev/peps/pep-0440), we suggest follow this versioning scheme in modules"
+        "Module's 'org.test.module.a' version 'aa fs df' does not follow PEP 440 versioning scheme (https://www.python.org/dev/peps/pep-0440)"
         in caplog.text
     )
 

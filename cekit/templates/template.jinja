@@ -35,11 +35,33 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
 {%- endmacro -%}
 
 {#
+ # Removes packages using specified package manager.
+ #}
+{%- macro pkg_remove(pkg_manager, pkg_manager_flags, packages) -%}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_remove(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %}
+    {% endif %}
+{%- endmacro -%}
+
+{#
  # Installs packages using specified package manager.
  #}
 {%- macro pkg_install(pkg_manager, pkg_manager_flags, packages) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
 {{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
+    {% if pkg_manager == 'microdnf' %}
+            && {{ pkg_manager }} clean all \
+    {% endif %}
+            && {{ helper.package_manager_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %}
+    {% endif %}
+{%- endmacro -%}
+
+{#
+ # Reinstalls packages using specified package manager.
+ #}
+{%- macro pkg_reinstall(pkg_manager, pkg_manager_flags, packages) -%}
+    {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_reinstall(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
     {% if pkg_manager == 'microdnf' %}
             && {{ pkg_manager }} clean all \
     {% endif %}
@@ -102,11 +124,21 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         {% endif -%}
         {% endif -%}
 
-        {% if module.packages and module.packages.install %}
-        # Switch to 'root' user to install '{{ module.name }}' {{ module_type }} defined packages
+        {% if module.packages and module.packages.remove or module.packages.install or module.packages.reinstall %}
+        # Switch to 'root' user for package management for '{{ module.name }}' {{ module_type }} defined packages
         USER root
+        {% if module.packages and module.packages.remove %}
+        # Remove packages defined in the '{{ module.name }}' {{ module_type }}
+        RUN {{ pkg_remove(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.remove) }}
+        {% endif -%}
+        {% if module.packages and module.packages.install %}
         # Install packages defined in the '{{ module.name }}' {{ module_type }}
         RUN {{ pkg_install(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.install) }}
+        {% endif -%}
+        {% if module.packages and module.packages.reinstall %}
+        # Reinstall packages defined in the '{{ module.name }}' {{ module_type }}
+        RUN {{ pkg_reinstall(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.reinstall) }}
+        {% endif -%}
         {% endif -%}
 
         {% if module.envs|selectattr("value")|list|length > 0 %}
@@ -225,7 +257,8 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
     {% endif -%}
 
-    {% if helper.packages_to_install(image) and image.packages.manager in ['yum', 'dnf', 'microdnf'] %}
+    {% if helper.packages_to_install(image) or helper.packages_to_remove(image) or
+            helper.packages_to_reinstall(image) and image.packages.manager in ['yum', 'dnf', 'microdnf'] %}
     # Clear package manager metadata
     RUN {{ repo_clear_cache(image.packages.manager) }}
     {% endif -%}

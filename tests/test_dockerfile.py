@@ -87,7 +87,7 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
     mocker.patch("cekit.builders.osbs.OSBSBuilder.dependencies")
     target = str(tmpdir.mkdir("target"))
     generate(target, ["--redhat", "build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(target, exp_regex)
+    regex_dockerfile(target, exp_regex, "Containerfile")
 
 
 def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
@@ -106,7 +106,7 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
     }
 
     generate(target, ["--redhat", "build", "--dry-run", "podman"], desc_part)
-    regex_dockerfile(target, "repos/content_sets_odcs.repo")
+    regex_dockerfile(target, "repos/content_sets_odcs.repo", "Containerfile")
 
 
 def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):
@@ -151,7 +151,11 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
         }
     }
 
-    generate(target, ["build", "--dry-run", "podman"], desc_part)
+    generate(
+        target,
+        ["build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        desc_part,
+    )
     regex_dockerfile(
         target,
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y foo-repo.rpm",
@@ -180,7 +184,11 @@ def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_1(tmpdir, mocker):
         }
     }
 
-    generate(target, ["build", "--dry-run", "podman"], desc_part)
+    generate(
+        target,
+        ["build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        desc_part,
+    )
     regex_dockerfile(target, "RUN microdnf  install -y foo-repo.rpm")
     regex_dockerfile(target, "RUN microdnf  install -y a b")
     regex_dockerfile(target, "rpm -q a b")
@@ -203,7 +211,11 @@ def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_2(tmpdir, mocker):
         }
     }
 
-    generate(target, ["build", "--dry-run", "podman"], desc_part)
+    generate(
+        target,
+        ["build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        desc_part,
+    )
     regex_dockerfile(
         target, "RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm"
     )
@@ -338,7 +350,7 @@ def test_dockerfile_osbs_odcs_rpm(tmpdir, mocker):
 
     generate(
         target,
-        ["build", "--dry-run", "podman"],
+        ["build", "--dry-run", "--container-file", "Dockerfile", "podman"],
         descriptor={
             "packages": {
                 "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
@@ -379,7 +391,15 @@ def test_default_package_manager(tmpdir):
 
     generate(
         target,
-        ["--nocolor", "-v", "build", "--dry-run", "podman"],
+        [
+            "--nocolor",
+            "-v",
+            "build",
+            "--dry-run",
+            "--container-file",
+            "Dockerfile",
+            "podman",
+        ],
         descriptor={
             "packages": {
                 "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
@@ -406,6 +426,8 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
             "--overrides",
             '{"packages": {"install": ["b"]}}',
             "--dry-run",
+            "--container-file",
+            "Dockerfile",
             "podman",
         ],
         descriptor={
@@ -441,6 +463,8 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
             "--overrides",
             '{"packages": {"manager": "dnf", "install": ["b"]}}',
             "--dry-run",
+            "--container-file",
+            "Dockerfile",
             "podman",
         ],
         descriptor={
@@ -464,7 +488,7 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
 
     generate(
         target,
-        ["-v", "build", "--dry-run", "podman"],
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
         descriptor={
             "packages": {
                 "manager": "microdnf",
@@ -492,7 +516,7 @@ def test_supported_package_managers(tmpdir, manager):
 
     generate(
         target,
-        ["-v", "build", "--dry-run", "podman"],
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
         descriptor={
             "packages": {
                 "manager": manager,
@@ -515,7 +539,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
 
     generate(
         target,
-        ["-v", "build", "--dry-run", "podman"],
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
         descriptor={
             "packages": {
                 "manager": "apk",
@@ -537,7 +561,7 @@ def test_supported_package_managers_apt(tmpdir, caplog):
 
     generate(
         target,
-        ["-v", "build", "--dry-run", "podman"],
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
         descriptor={
             "packages": {
                 "manager": "apt-get",
@@ -561,7 +585,7 @@ def test_supported_package_managers_apt(tmpdir, caplog):
 def test_dockerfile_do_not_copy_modules_if_no_modules(tmpdir):
     target = str(tmpdir.mkdir("target"))
     generate(target, ["build", "--dry-run", "podman"])
-    regex_dockerfile(target, "^((?!COPY modules /tmp/scripts/))")
+    regex_dockerfile(target, "^((?!COPY modules /tmp/scripts/))", "Containerfile")
 
 
 # https://github.com/cekit/cekit/issues/406
@@ -590,7 +614,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
         },
     )
 
-    regex_dockerfile(target, "COPY modules/foo /tmp/scripts/foo")
+    regex_dockerfile(target, "COPY modules/foo /tmp/scripts/foo", "Containerfile")
 
 
 def test_dockerfile_destination_of_artifact(mocker, tmpdir):
@@ -599,7 +623,7 @@ def test_dockerfile_destination_of_artifact(mocker, tmpdir):
     target = str(tmpdir.mkdir("target"))
     generate(
         target,
-        ["-v", "build", "--dry-run", "podman"],
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
         descriptor={
             "artifacts": [
                 # URL artifact, default destination
@@ -668,6 +692,8 @@ def test_overrides_applied_to_all_multi_stage_images(tmpdir):
             "--overrides",
             '{"version": "SNAPSHOT"}',
             "--dry-run",
+            "--container-file",
+            "Dockerfile",
             "podman",
         ],
         descriptor,
@@ -676,6 +702,78 @@ def test_overrides_applied_to_all_multi_stage_images(tmpdir):
     regex_dockerfile(target, "^###### END image 'builderimage:SNAPSHOT'$")
     regex_dockerfile(target, "^###### START image 'targetimage:SNAPSHOT'$")
     regex_dockerfile(target, "^###### END image 'targetimage:SNAPSHOT'$")
+
+
+# @pytest.mark.parametrize("manager", ["yum", "dnf", "microdnf"])
+def test_package_removal_and_install_and_reinstall(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor={
+            "packages": {
+                "manager": "dnf",
+                "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
+                "install": ["a"],
+                "remove": ["b"],
+                "reinstall": ["t"],
+            },
+            "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
+        },
+    )
+    regex_dockerfile(target, "remove -y b")
+    with open(os.path.join(target, "target", "image", "Dockerfile"), "r") as _file:
+        dockerfile = _file.read()
+    assert (
+        """# Switch to 'root' user for package management for 'testimage' image defined packages
+        USER root
+        # Remove packages defined in the 'testimage' image
+        RUN dnf --setopt=tsflags=nodocs remove -y b
+        # Install packages defined in the 'testimage' image
+        RUN dnf --setopt=tsflags=nodocs install -y a \\
+            && rpm -q a
+        # Reinstall packages defined in the 'testimage' image
+        RUN dnf --setopt=tsflags=nodocs reinstall -y t \\
+            && rpm -q t"""
+        in dockerfile
+    )
+
+
+def test_package_removal_without_install(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor={
+            "packages": {
+                "manager": "dnf",
+                "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
+                "remove": ["b"],
+            },
+            "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
+        },
+    )
+    regex_dockerfile(target, "remove -y b")
+
+
+def test_package_reinstall(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor={
+            "packages": {
+                "manager": "dnf",
+                "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
+                "reinstall": ["tzdata"],
+            },
+            "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
+        },
+    )
+    regex_dockerfile(target, "reinstall -y tzdata")
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):
@@ -706,8 +804,8 @@ def generate(image_dir, command, descriptor=None, exit_code=0):
             return yaml.safe_load(desc)
 
 
-def regex_dockerfile(image_dir, exp_regex):
-    with open(os.path.join(image_dir, "target", "image", "Dockerfile"), "r") as fd:
+def regex_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)
         assert regex.search(dockerfile_content) is not None

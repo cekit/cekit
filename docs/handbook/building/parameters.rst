@@ -44,3 +44,7 @@ command.
     Read more about overrides in the :doc:`/handbook/overrides` chapter.
 
     This parameter can be specified multiple times.
+
+``--container-file``
+    Override the name of the generated file for image creation. Defaults to Dockerfile for
+    OSBS and Docker and Containerfile for Podman and Buildah.

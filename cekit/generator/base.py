@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import yaml
 
 from jinja2 import Environment, FileSystemLoader
-from packaging.version import LegacyVersion
+from packaging.version import InvalidVersion, Version
 from packaging.version import parse as parse_version
 
 from cekit.cekit_types import PathType
@@ -28,6 +28,7 @@ from cekit.descriptor import (
     Resource,
 )
 from cekit.errors import CekitError
+from cekit.generator import legacy_version
 from cekit.template_helper import TemplateHelper
 from cekit.tools import DependencyDefinition, Map, download_file, load_descriptor
 from cekit.version import __version__ as cekit_version
@@ -60,7 +61,11 @@ class Generator(object):
     ODCS_HIDDEN_REPOS_FLAG = "include_unpublished_pulp_repos"
 
     def __init__(
-        self, descriptor_path: PathType, target: PathType, overrides: List[str]
+        self,
+        descriptor_path: PathType,
+        target: PathType,
+        container_file: str,
+        overrides: List[str],
     ):
         self._descriptor_path: PathType = descriptor_path
         self._overrides: List[Overrides] = []
@@ -70,6 +75,7 @@ class Generator(object):
         self.image: Optional[Image] = None
         self.builder_images: List[Image] = []
         self.images: List[Image] = []
+        self.container_file: str = container_file
 
         # If descriptor has been passed in from standard input its not a path so use current working directory
         if "-" == descriptor_path:
@@ -77,7 +83,6 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
-
                 LOGGER.debug("Loading override '{}'".format(override))
                 if urlparse(override).scheme in ["http", "https", "file"]:
                     # HTTP Handling
@@ -111,11 +116,11 @@ class Generator(object):
         }
 
         if CONFIG.get("common", "redhat"):
-            deps["brew"] = {"package": "brewkoji", "executable": "/usr/bin/brew"}
+            deps["brew"] = {"package": "brewkoji", "executable": "brew"}
             # FOLLOW_TAG requires both version and release labels ; these are generally
             # only added consistently within RH and Fedora repos so currently this annotation
             # is only supported under the RH flag.
-            deps["skopeo"] = {"package": "skopeo", "executable": "/usr/bin/skopeo"}
+            deps["skopeo"] = {"package": "skopeo", "executable": "skopeo"}
 
         return deps
 
@@ -185,7 +190,7 @@ class Generator(object):
         self.prepare_repositories()
         self.image.remove_none_keys()
         self.image.write(os.path.join(self.target, "image.yaml"))
-        self.render_dockerfile()
+        self.render_image_file()
         self.render_help()
 
     def add_redhat_overrides(self):
@@ -269,7 +274,6 @@ class Generator(object):
     def load_repository(self, repo_dir: str) -> None:
         for modules_dir, _, files in os.walk(repo_dir):
             if "module.yaml" in files:
-
                 module_descriptor_path = os.path.abspath(
                     os.path.expanduser(
                         os.path.normcase(os.path.join(modules_dir, "module.yaml"))
@@ -366,9 +370,9 @@ class Generator(object):
 
         return RedHatOverrides(self)
 
-    def render_dockerfile(self) -> None:
-        """Renders Dockerfile to $target/image/Dockerfile"""
-        LOGGER.info("Rendering Dockerfile...")
+    def render_image_file(self) -> None:
+        """Renders Containerfile/Dockerfile to $target/image/Dockerfile or $target/image/Containerfile"""
+        LOGGER.info(f"Rendering {self.container_file}...")
 
         template_file = os.path.join(
             os.path.dirname(__file__), "..", "templates", "template.jinja"
@@ -381,13 +385,13 @@ class Generator(object):
 
         template = env.get_template(os.path.basename(template_file))
 
-        dockerfile = os.path.join(self.target, "image", "Dockerfile")
+        dockerfile = os.path.join(self.target, "image", self.container_file)
         if not os.path.exists(os.path.dirname(dockerfile)):
             os.makedirs(os.path.dirname(dockerfile))
 
         with open(dockerfile, "wb") as f:
             f.write(template.render(self.image).encode("utf-8"))
-        LOGGER.debug("Dockerfile rendered")
+        LOGGER.debug(f"{self.container_file} rendered")
 
     def render_help(self) -> None:
         """
@@ -725,21 +729,27 @@ class ModuleRegistry(object):
                 )
             )
 
-        default_version = parse_version(self._defaults.get(module.name))
-        current_version = parse_version(version)
-
-        if isinstance(current_version, LegacyVersion):
-            LOGGER.warning(
-                (
-                    "Module's '{}' version '{}' does not follow PEP 440 versioning scheme "
-                    "(https://www.python.org/dev/peps/pep-0440), "
-                    "we suggest follow this versioning scheme in modules"
-                ).format(module.name, version)
+        default_version: Version = parse_version(self._defaults.get(module.name))
+        try:
+            current_version: Version = parse_version(version)
+            # This if block is only for Python3.6 compatibility which still might return
+            # a LegacyVersion and not throw an exception. LegacyVersion does not have
+            # that field so can be used to differentiate.
+            if not hasattr(current_version, "major"):
+                raise InvalidVersion
+            # If current module version is newer, we need to make it the new default
+            if current_version > default_version:
+                self._defaults[module.name] = version
+        except InvalidVersion:
+            LOGGER.error(
+                f"Module's '{module.name}' version '{version}' does not follow PEP 440 versioning scheme "
+                "(https://www.python.org/dev/peps/pep-0440) which should be followed in modules."
             )
 
-        # If current module version is never, we need to make it the new default
-        if current_version > default_version:
-            self._defaults[module.name] = version
+            if legacy_version.parse(version) > legacy_version.parse(
+                self._defaults.get(module.name)
+            ):
+                self._defaults[module.name] = version
 
         # Finally add the module to registry
         modules[version] = module
