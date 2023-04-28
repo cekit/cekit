@@ -154,7 +154,7 @@ def test_merge_container_yaml_limit_arch(mocker, tmpdir):
     assert len(container_yaml["platforms"]["only"]) == 1
 
 
-class DistGitMock(object):
+class GitMock(object):
     def add(self, artifacts):
         pass
 
@@ -191,7 +191,7 @@ def create_builder_object(
 
     builder = BuilderImpl(Map(merge_dicts(common_params, params)))
     builder.dist_git_dir = "/tmp"
-    builder.dist_git = DistGitMock()
+    builder.git = GitMock()
     builder.artifacts = []
     return builder
 
@@ -217,7 +217,7 @@ def test_osbs_builder_run_brew_stage(mocker):
     builder = create_builder_object(mocker, "osbs", params)
     builder.generator = Map({"image": Map({})})
     mocker.patch.object(builder, "_wait_for_osbs_task")
-    builder.dist_git.branch = "some-branch"
+    builder.git.branch = "some-branch"
     builder.run()
 
     run.assert_has_calls(
@@ -276,7 +276,7 @@ def test_osbs_builder_run_brew(mocker):
     builder = create_builder_object(mocker, "osbs", {})
     builder.generator = Map({"image": Map({})})
     mocker.patch.object(builder, "_wait_for_osbs_task")
-    builder.dist_git.branch = "some-branch"
+    builder.git.branch = "some-branch"
     builder.run()
 
     run.assert_has_calls(
@@ -335,7 +335,7 @@ def test_osbs_builder_run_koji(mocker):
     )
     builder.generator = Map({"image": Map({})})
     mocker.patch.object(builder, "_wait_for_osbs_task")
-    builder.dist_git.branch = "some-branch"
+    builder.git.branch = "some-branch"
     builder.run()
 
     run.assert_has_calls(
@@ -394,7 +394,7 @@ def test_osbs_builder_run_brew_nowait(mocker):
     builder = create_builder_object(mocker, "osbs", params)
     builder.generator = Map({"image": Map({})})
     mocker.patch.object(builder, "_wait_for_osbs_task")
-    builder.dist_git.branch = "some-branch"
+    builder.git.branch = "some-branch"
     builder.run()
 
     builder._wait_for_osbs_task.assert_not_called()
@@ -421,7 +421,7 @@ def test_osbs_builder_run_brew_user(mocker):
     builder = create_builder_object(mocker, "osbs", params)
     builder.generator = Map({"image": Map({})})
     mocker.patch.object(builder, "_wait_for_osbs_task")
-    builder.dist_git.branch = "some-branch"
+    builder.git.branch = "some-branch"
     builder.run()
 
     run.assert_called_with(
@@ -464,7 +464,7 @@ def test_osbs_builder_run_brew_target_defined_in_descriptor(mocker):
         {"image": Map({"osbs": Map({"koji_target": "some-target"})})}
     )
     mocker.patch.object(builder, "_wait_for_osbs_task")
-    builder.dist_git.branch = "some-branch"
+    builder.git.branch = "some-branch"
     builder.run()
 
     run.assert_called_with(
@@ -668,8 +668,8 @@ def test_osbs_copy_artifacts_to_dist_git(mocker, tmpdir, artifact, src, target):
     mocker.patch("cekit.descriptor.resource.Resource.copy")
     copy_mock = mocker.patch("cekit.builders.osbs.shutil.copy2")
 
-    dist_git_class = mocker.patch("cekit.builders.osbs.DistGit")
-    dist_git_class.return_value = DistGitMock()
+    dist_git_class = mocker.patch("cekit.builders.osbs.Git")
+    dist_git_class.return_value = GitMock()
 
     config.cfg["common"] = {"redhat": True, "work_dir": str(tmpdir)}
     config.cfg["doc"] = {"addhelp": False}
