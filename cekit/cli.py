@@ -249,8 +249,8 @@ def build_podman(ctx, pull, no_squash, tags, platform):
     "--tag",
     is_flag=False,
     flag_value="{{name}}-{{version}}",
-    metavar="TAG",
-    help="Use specified tag to tag the dist-git repository after build",
+    metavar="<TAG>",
+    help="Tag the source and dist-git repositories after build. Default format if not supplied is {{name}}-{{version}}",
 )
 @click.option(
     "--assume-yes", "-y", help="Execute build in non-interactive mode.", is_flag=True

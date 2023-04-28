@@ -76,7 +76,7 @@ def run_osbs(
     # We are mocking it, so do not require it at test time
     mocker.patch("cekit.builders.osbs.OSBSBuilder.dependencies", return_value={})
     mocker.patch("cekit.builders.osbs.OSBSBuilder._wait_for_osbs_task")
-    mocker.patch("cekit.builders.osbs.DistGit.prepare")
+    mocker.patch("cekit.builders.osbs.Git.prepare")
 
     side_affect = [
         subprocess.CompletedProcess(
@@ -134,9 +134,20 @@ def run_osbs(
                 "", 0, "3b9283cb26b35511517ff5c0c3e11f490cba8feb"
             ),  # git rev-parse HEAD
             subprocess.CompletedProcess("", 0, "1234"),  # brew call --python...
-            subprocess.CompletedProcess("", 0, "UUU"),
-            # Extra needed for test_osbs_builder_with_fetch_artifacts_url_file_creation_5
-            subprocess.CompletedProcess("", 0, ""),  # git add --all [Optional]
+            # For git tagging
+            subprocess.CompletedProcess(
+                "", 0, """{"koji_builds": ["123456"]}"""
+            ),  # getTaskResult
+            subprocess.CompletedProcess(
+                "", 0, """{"nvr": "org.foo-foobar-1.0-1"}"""
+            ),  # getBuild
+            subprocess.CompletedProcess("", 0, ""),  # git tag [Optional]
+            subprocess.CompletedProcess("", 0, ""),  # git push [Optional]
+            subprocess.CompletedProcess(
+                "", 0, "https://my.cekit.repo/foo"
+            ),  # git config [Optional]
+            subprocess.CompletedProcess("", 0, ""),  # git tag [Optional]
+            subprocess.CompletedProcess("", 0, ""),  # git push [Optional]
         ]
     )
 
@@ -1168,7 +1179,7 @@ def test_osbs_builder_with_fetch_artifacts_plain_file_creation(tmpdir, mocker, c
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1217,7 +1228,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_1(
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1263,7 +1274,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_2(tmpdir, mocker, c
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     descriptor = copy.deepcopy(image_descriptor)
 
@@ -1302,7 +1313,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_3(tmpdir, mocker, c
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1346,7 +1357,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_4(tmpdir, mocker, c
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1382,7 +1393,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_5(tmpdir, mocker, c
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1467,7 +1478,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_multiple_hash(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1512,7 +1523,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1557,7 +1568,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_creation_naming_with_target(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1607,7 +1618,7 @@ def test_osbs_builder_with_fetch_artifacts_url_validate_dockerfile(
 
     mocker.patch("cekit.tools.urlopen", return_value=res)
     mocker.patch("cekit.tools.decision", return_value=True)
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1661,7 +1672,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_removal(tmpdir, mocker, capl
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1683,7 +1694,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_source_fail(tmpdir, mocker, 
     """
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1728,7 +1739,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_source_1(tmpdir, mocker, cap
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1804,7 +1815,7 @@ def test_osbs_builder_with_fetch_artifacts_url_file_source_2(tmpdir, mocker, cap
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1886,7 +1897,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_removal(tmpdir, mocker, capl
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1918,7 +1929,7 @@ def test_osbs_builder_container_yaml_existence(tmpdir, mocker, caplog, flag):
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -1958,7 +1969,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -2396,7 +2407,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, c
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -2428,7 +2439,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
 
     mocker.patch("cekit.tools.decision", return_value=True)
     mocker.patch("cekit.tools.urlopen")
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     tmpdir.mkdir("osbs").mkdir("repo")
 
@@ -2513,7 +2524,7 @@ def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
     mocker.patch(
         "cekit.generator.osbs.get_brew_url", return_value="http://random.url/path"
     )
-    mocker.patch("cekit.builders.osbs.DistGit.push")
+    mocker.patch("cekit.builders.osbs.Git.push")
 
     work_dir = str(tmpdir.mkdir("work_dir"))
     image_dir = str(tmpdir)
@@ -2640,7 +2651,14 @@ def test_osbs_builder_kick_build_with_tag_1(tmpdir, mocker, caplog):
         in caplog.text
     )
     assert "Image was built successfully in OSBS!" in caplog.text
-    assert "Tagging dist-git repository with FOOBAR" in caplog.text
+    assert (
+        "Tagging git repository (git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb) with FOOBAR-1 from build 123456"
+        in caplog.text
+    )
+    assert (
+        "Tagging git repository (https://my.cekit.repo/foo) with FOOBAR-1 from build 123456"
+        in caplog.text
+    )
 
 
 def test_osbs_builder_kick_build_with_tag_2(tmpdir, mocker, caplog):
@@ -2704,4 +2722,11 @@ def test_osbs_builder_kick_build_with_tag_2(tmpdir, mocker, caplog):
         in caplog.text
     )
     assert "Image was built successfully in OSBS!" in caplog.text
-    assert "Tagging dist-git repository with test-image-1.0" in caplog.text
+    assert (
+        "Tagging git repository (git://somehost.com/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb) with test-image-1.0-1 from build 123456"
+        in caplog.text
+    )
+    assert (
+        "Tagging git repository (https://my.cekit.repo/foo) with test-image-1.0-1 from build 123456"
+        in caplog.text
+    )

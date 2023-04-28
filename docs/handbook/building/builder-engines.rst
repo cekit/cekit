@@ -148,11 +148,15 @@ Parameters
     ``--tag`` <tag-name>
         .. versionadded:: 4.4.0
 
-        An optional tag to be applied to the dist-git repository after a successful build.
+        An optional annotated tag to be applied to **both** the source and the dist-git repository after a successful
+        non-scratch build.
+
         If the tag parameter is **not** specified then it will be constructed from the image
-        name (with ``/`` changed to ``-``) and the image version. The tag name may be constructed
-        using Jinja template e.g. ``{{name}}-{{version}}`` referencing the keys in the image
-        descriptor.
+        name (with ``/`` changed to ``-``) and the image version. Finally the release increment will be retrieved
+        from the OSBS Brew build and appended. The default tag name equates to the NVR.
+
+        The tag name may be constructed using Jinja template e.g. ``{{name}}-{{version}}`` referencing the
+        keys in the image descriptor.
     ``--sync-only``
         .. versionadded:: 3.4
 

@@ -40,7 +40,7 @@ class OSBSBuilder(Builder):
 
         self._rhpkg_set_url_repos: List[str] = []
         self.artifacts: List[str] = []
-        self.dist_git: DistGit
+        self.git: Git
         self.dist_git_dir: pathlib.Path
 
         if CONFIG.get("common", "redhat"):
@@ -154,7 +154,7 @@ class OSBSBuilder(Builder):
 
         LOGGER.debug("Using dist-git directory of {}".format(self.dist_git_dir))
 
-        self.dist_git = DistGit(
+        self.git = Git(
             self.dist_git_dir,
             self.target,
             repository,
@@ -164,8 +164,8 @@ class OSBSBuilder(Builder):
             self.params.assume_yes,
         )
 
-        self.dist_git.prepare(self.params.stage, self.params.user)
-        self.dist_git.clean(self.artifacts)
+        self.git.prepare(self.params.stage, self.params.user)
+        self.git.clean(self.artifacts)
 
     def _copy_to_dist_git(self):
         LOGGER.debug(
@@ -175,12 +175,12 @@ class OSBSBuilder(Builder):
 
     def _sync_with_dist_git(self):
         with Chdir(self.dist_git_dir):
-            self.dist_git.add(self.artifacts)
+            self.git.add(self.artifacts)
             self.update_lookaside_cache()
 
-            if self.dist_git.stage_modified():
-                self.dist_git.commit(self.params.commit_message)
-                self.dist_git.push()
+            if self.git.stage_modified():
+                self.git.commit(self.params.commit_message)
+                self.git.push()
             else:
                 LOGGER.info("No changes made to the code, committing skipped")
 
@@ -246,7 +246,6 @@ class OSBSBuilder(Builder):
         LOGGER.info("Updating lookaside cache...")
 
         cache_artifacts = []
-
         for artifact in self.artifacts:
             # In case the artifact is a directory, we don't want to add it.
             # Instead, it will be staged.
@@ -275,7 +274,9 @@ class OSBSBuilder(Builder):
             )
             return
 
-        cmd = [self._koji]
+        build_id: str = ""
+        git_tag: str = ""
+        cmd: List[str] = [self._koji]
 
         if self.params.user:
             cmd += ["--user", self.params.user]
@@ -301,7 +302,7 @@ class OSBSBuilder(Builder):
             # If target was not specified in the image descriptor
             if not target:
                 # Default to computed target based on branch
-                target = "{}-containers-candidate".format(self.dist_git.branch)
+                target = "{}-containers-candidate".format(self.git.branch)
 
             scratch = True
 
@@ -309,7 +310,7 @@ class OSBSBuilder(Builder):
                 scratch = False
 
             kwargs = "{{'src': '{}', 'target': '{}', 'opts': {{'scratch': {}, 'git_branch': '{}', 'yum_repourls': {}}}}}".format(
-                src, target, scratch, self.dist_git.branch, self._rhpkg_set_url_repos
+                src, target, scratch, self.git.branch, self._rhpkg_set_url_repos
             )
 
             cmd.append(kwargs)
@@ -340,15 +341,63 @@ class OSBSBuilder(Builder):
                 LOGGER.info("Image was built successfully in OSBS!")
 
                 if self.params.tag:
-                    tag = Template(self.params.tag).render(self.generator.image)
-                    if "/" in tag:
-                        LOGGER.debug(f"Replacing / in tag with - for {tag}")
-                        tag = tag.replace("/", "-")
-                    self.dist_git.tag(tag)
-                    self.dist_git.push(True)
+                    git_tag, build_id = self._establish_tag_name(task_id)
+                    if git_tag:
+                        self.git.tag(src, git_tag, build_id)
+                        self.git.push(git_tag)
+        if self.params.tag:
+            # This is a bit of code reuse cheat - if tagging is enabled this will also tag
+            # the image source repository (while the above block handles the dist-git source)
+            url = run_wrapper(
+                ["git", "config", "--get", "remote.origin.url"],
+                capture_output=True,
+                check=False,
+            ).stdout
+            if git_tag:
+                self.git.tag(url, git_tag, build_id)
+                self.git.push(git_tag)
+
+    def _establish_tag_name(self, task_id: str) -> Tuple[str, str]:
+        """This calls Brew to establish the NVR from the completed build in order to use that to tag the repositories
+
+        :param task_id: A task_id to use to look up the NVR
+        :returns a Tuple containing a tag and build_id. Maybe blank if the task was a scratch build.
+        """
+        tag: str = ""
+        build_id: str = ""
+
+        task_result = run_wrapper(
+            # Don't need to handle raise_fault as OSBS build must have completed successfully to get to here.
+            [self._koji, "call", "--json-output", "getTaskResult", task_id],
+            True,
+            f"Could not check the task {task_id} result",
+        )
+
+        koji_builds = json.loads(task_result.stdout)["koji_builds"]
+        if koji_builds:
+            build_id = koji_builds[0]
+            build_result = run_wrapper(
+                [self._koji, "call", "--json-output", "getBuild", build_id],
+                True,
+                f"Could not check the build {build_id} result",
+            )
+            nvr: str = json.loads(build_result.stdout)["nvr"]
+            release: str = nvr.rpartition("-")[2]
+            # The default rendered tag (name-version) with release equates to a NVR.
+            tag: str = Template(self.params.tag).render(self.generator.image)
+            if "/" in tag:
+                LOGGER.debug(f"Replacing / in tag with - for {tag}")
+                tag = tag.replace("/", "-")
+            tag = tag + "-" + release
+            LOGGER.info(f"Retrieved NVR {nvr} and generated {tag}")
+        else:
+            LOGGER.warning(
+                f"No koji build found - maybe {task_id} was a scratch build?"
+            )
+        return tag, build_id
 
 
-class DistGit(object):
+class Git(object):
     """Git support for osbs repositories"""
 
     @staticmethod
@@ -393,7 +442,7 @@ class DistGit(object):
             self.source_repo_name,
             self.source_repo_branch,
             self.source_repo_commit,
-        ) = DistGit.repo_info(source)
+        ) = Git.repo_info(source)
 
     def stage_modified(self) -> bool:
         # Check if there are any files in stage (return code 1). If there are no files
@@ -539,16 +588,27 @@ class DistGit(object):
                 },
             )
 
-    def tag(self, tag: str) -> None:
-        LOGGER.info(f"Tagging dist-git repository with {tag}")
-        run_wrapper(["git", "tag", tag], False)
+    def tag(self, url: str, tag: str, build_id) -> None:
+        LOGGER.info(f"Tagging git repository ({url}) with {tag} from build {build_id}")
+        # cgit requires annotated tags.
+        run_wrapper(
+            [
+                "git",
+                "tag",
+                "-a",
+                "-m",
+                f"CEKit automated tag from build {build_id}",
+                tag,
+            ],
+            False,
+        )
 
-    def push(self, tag: bool = False) -> None:
+    def push(self, tag: str = None) -> None:
         if self.noninteractive or tools.decision("Do you want to push the commit?"):
             print("")
             LOGGER.info("Pushing change to the upstream repository...")
             if tag:
-                cmd = ["git", "push", "--tags"]
+                cmd = ["git", "push", "origin", tag]
             else:
                 cmd = ["git", "push", "-q", "origin", self.branch]
             run_wrapper(cmd, False)
