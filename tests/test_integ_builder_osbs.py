@@ -2608,7 +2608,7 @@ def test_osbs_builder_kick_build_with_tag_1(tmpdir, mocker, caplog):
         descriptor,
         str(source_dir),
         mocker,
-        build_command=["build", "osbs", "--tag", "FOOBAR"],
+        build_command=["build", "osbs", "--release", "--tag", "FOOBAR"],
     )
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
@@ -2679,7 +2679,7 @@ def test_osbs_builder_kick_build_with_tag_2(tmpdir, mocker, caplog):
         descriptor,
         str(source_dir),
         mocker,
-        build_command=["build", "osbs", "--tag"],
+        build_command=["build", "osbs", "--release", "--tag"],
     )
 
     assert os.path.exists(str(repo_dir.join("Dockerfile"))) is True
@@ -2729,4 +2729,21 @@ def test_osbs_builder_kick_build_with_tag_2(tmpdir, mocker, caplog):
     assert (
         "Tagging git repository (https://my.cekit.repo/foo) with test-image-1.0-1 from build 123456"
         in caplog.text
+    )
+
+
+def test_osbs_builder_kick_build_with_tag_3(tmpdir):
+    """
+    Verify tag and release flags.
+    """
+    run_cekit(
+        str(tmpdir),
+        parameters=[
+            "-v",
+            "build",
+            "osbs",
+            "--tag",
+        ],
+        message="--tag requires --release as scratch builds cannot be tagged",
+        return_code=2,
     )
