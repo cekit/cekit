@@ -90,7 +90,7 @@ def test_dockerfile_rendering(tmpdir, mocker, name, desc_part, exp_regex):
     regex_dockerfile(target, exp_regex, "Containerfile")
 
 
-def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
+def test_dockerfile_docker_odcs_pulp(tmpdir, mocker, caplog):
     mocker.patch("odcs.client.odcs.ODCS.new_compose", return_value={"id": 12})
     mocker.patch(
         "odcs.client.odcs.ODCS.wait_for_compose",
@@ -107,6 +107,11 @@ def test_dockerfile_docker_odcs_pulp(tmpdir, mocker):
 
     generate(target, ["--redhat", "build", "--dry-run", "podman"], desc_part)
     regex_dockerfile(target, "repos/content_sets_odcs.repo", "Containerfile")
+    assert "Using Red Hat ODCS service to create composes" in caplog.text
+    caplog.clear()
+    generate(target, ["--redhat", "test", "behave"], desc_part)
+    assert "Using Red Hat ODCS service to create composes" not in caplog.text
+    assert "Running via Behave so not requesting ODCS compose" in caplog.text
 
 
 def test_dockerfile_docker_odcs_rpm(tmpdir, mocker):

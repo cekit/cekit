@@ -474,6 +474,12 @@ class Generator(object):
         if not content_sets:
             return False
 
+        from cekit.generator.behave import BehaveGenerator
+
+        if isinstance(self, BehaveGenerator):
+            LOGGER.warning("Running via Behave so not requesting ODCS compose")
+            return False
+
         arch = platform.machine()
 
         if arch not in content_sets:
