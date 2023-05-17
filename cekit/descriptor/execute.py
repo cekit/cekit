@@ -13,13 +13,6 @@ execute_schemas = yaml.safe_load(
           user: {type: text}"""
 )
 
-# TODO: This seems unused?
-container_schemas = yaml.safe_load(
-    """
-        seq:
-          - {type: any}"""
-)
-
 logger = logging.getLogger("cekit")
 
 

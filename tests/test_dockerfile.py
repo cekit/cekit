@@ -274,12 +274,7 @@ def test_dockerfile_osbs_odcs_pulp_no_redhat(tmpdir, mocker):
 
     target = str(tmpdir.mkdir("target"))
     desc_part = {
-        "packages": {
-            "repositories": [
-                {"name": "foo", "odcs": {"pulp": "rhel-7-server-rpms"}},
-            ],
-            "install": ["a"],
-        },
+        "packages": {"content_sets": {"x86_64": "foo"}, "install": ["a"]},
         "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
     }
 
