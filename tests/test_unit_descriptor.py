@@ -185,6 +185,9 @@ def test_image():
     envs:
       - name: env1
         value: env1val
+        metadata:
+            required: false
+            usage: build-time
     """
         ),
         "foo",
@@ -193,6 +196,7 @@ def test_image():
     assert image["name"] == "test/foo"
     assert type(image["labels"][0]) == Label
     assert image["labels"][0]["name"] == "test"
+    assert image["envs"][0]["metadata"]["required"] is False
 
 
 def test_image_missing_name():

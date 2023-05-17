@@ -73,6 +73,9 @@ def print_test_name(value):
                         "value": "set_value",
                         "example": "example_value",
                         "description": "This is a description",
+                        "metadata": [
+                            {"required": "true"},
+                        ],
                     },
                 ]
             },
