@@ -42,8 +42,8 @@ Environment variables can be divided into two types:
 
 .. note::
 
-    Both forms may have a ``metadata`` key under which arbitrary data may be nested. This can be useful for users
-    to aid in documenting their keys.
+    Both forms support adding arbitrary additional keys. These are ignored by
+    CEKit, but might be useful for documentation or other tooling.
 
 .. code-block:: yaml
 
@@ -64,10 +64,9 @@ Environment variables can be divided into two types:
             example: "application=eap-app"
             description: "Clustering labels selector."
 
-        # Both forms may have a metadata key
+        # Both forms may have arbitrary additional metadata keys
         - name: "OPENSHIFT_KUBE_PING_LABELS"
             example: "application=eap-app"
             description: "Clustering labels selector."
-            metadata:
-                required: True
-                execution-time: True
+            required: True
+            execution-time: True
