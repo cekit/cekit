@@ -40,6 +40,11 @@ Environment variables can be divided into two types:
     generated to the build source (the Dockerfile). These can be used instead as a
     source for generating documentation.
 
+.. note::
+
+    Both forms may have a ``metadata`` key under which arbitrary data may be nested. This can be useful for users
+    to aid in documenting their keys.
+
 .. code-block:: yaml
 
     envs:
@@ -58,3 +63,11 @@ Environment variables can be divided into two types:
         - name: "OPENSHIFT_KUBE_PING_LABELS"
             example: "application=eap-app"
             description: "Clustering labels selector."
+
+        # Both forms may have a metadata key
+        - name: "OPENSHIFT_KUBE_PING_LABELS"
+            example: "application=eap-app"
+            description: "Clustering labels selector."
+            metadata:
+                required: True
+                execution-time: True

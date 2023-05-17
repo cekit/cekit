@@ -10,7 +10,8 @@ map:
   name: {type: str, required: True}
   value: {type: any}
   example: {type: any}
-  description: {type: str}"""
+  description: {type: str}
+  metadata: {type: any}"""
 )
 
 
@@ -58,3 +59,11 @@ class Env(Descriptor):
     @description.setter
     def description(self, value: str):
         self._descriptor["description"] = value
+
+    @property
+    def metadata(self) -> Any:
+        return self.get("metadata")
+
+    @metadata.setter
+    def metadata(self, value: Any):
+        self._metadata["metadata"] = value
