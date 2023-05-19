@@ -45,10 +45,6 @@ map:
       repository: {type: str}
   rpm: {type: str}
   description: {type: str}
-  odcs:
-    map:
-     pulp: {type: str}
-  filename: {type: str}
   """
 )
 
@@ -162,19 +158,13 @@ class Repository(Descriptor):
         self.schema = repository_schema
         super(Repository, self).__init__(descriptor)
 
-        if not (
-            ("url" in descriptor)
-            ^ ("odcs" in descriptor)
-            ^ ("id" in descriptor)
-            ^ ("rpm" in descriptor)
-        ):
+        if not (("url" in descriptor) ^ ("id" in descriptor) ^ ("rpm" in descriptor)):
             raise CekitError(
                 "Repository '%s' is invalid, you can use only one of "
-                "['id', 'odcs', 'rpm', 'url']" % descriptor["name"]
+                "['id', 'rpm', 'url']" % descriptor["name"]
             )
 
-        if "filename" not in descriptor:
-            descriptor["filename"] = "%s.repo" % descriptor["name"].replace(" ", "_")
+        descriptor["filename"] = "%s.repo" % descriptor["name"].replace(" ", "_")
 
         if "url" not in descriptor:
             descriptor["url"] = {}
@@ -216,8 +206,6 @@ class Repository(Descriptor):
         self._descriptor["id"] = value
         self._descriptor.pop("url", None)
         self._descriptor.pop("rpm", None)
-        self._descriptor.pop("odcs", None)
-        self._descriptor.pop("filename", None)
 
     @property
     def url(self):
@@ -228,8 +216,6 @@ class Repository(Descriptor):
         self._descriptor["url"] = value
         self._descriptor.pop("id", None)
         self._descriptor.pop("rpm", None)
-        self._descriptor.pop("odcs", None)
-        self._descriptor.pop("filename", None)
 
     @property
     def rpm(self):
@@ -240,29 +226,3 @@ class Repository(Descriptor):
         self._descriptor["rpm"] = value
         self._descriptor.pop("id", None)
         self._descriptor.pop("url", None)
-        self._descriptor.pop("odcs", None)
-        self._descriptor.pop("filename", None)
-
-    @property
-    def odcs(self):
-        return self.get("odcs")
-
-    @odcs.setter
-    def odcs(self, value):
-        self._descriptor["odcs"] = value
-        self._descriptor.pop("id", None)
-        self._descriptor.pop("url", None)
-        self._descriptor.pop("rpm", None)
-        self._descriptor.pop("filename", None)
-
-    @property
-    def filename(self):
-        return self.get("filename")
-
-    @filename.setter
-    def filename(self, value):
-        self._descriptor["filename"] = value
-        self._descriptor.pop("id", None)
-        self._descriptor.pop("url", None)
-        self._descriptor.pop("rpm", None)
-        self._descriptor.pop("odcs", None)

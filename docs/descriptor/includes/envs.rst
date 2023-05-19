@@ -40,6 +40,11 @@ Environment variables can be divided into two types:
     generated to the build source (the Dockerfile). These can be used instead as a
     source for generating documentation.
 
+.. note::
+
+    Both forms support adding arbitrary additional keys. These are ignored by
+    CEKit, but might be useful for documentation or other tooling.
+
 .. code-block:: yaml
 
     envs:
@@ -58,3 +63,10 @@ Environment variables can be divided into two types:
         - name: "OPENSHIFT_KUBE_PING_LABELS"
             example: "application=eap-app"
             description: "Clustering labels selector."
+
+        # Both forms may have arbitrary additional metadata keys
+        - name: "OPENSHIFT_KUBE_PING_LABELS"
+            example: "application=eap-app"
+            description: "Clustering labels selector."
+            required: True
+            execution-time: True

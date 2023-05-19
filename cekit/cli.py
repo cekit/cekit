@@ -22,6 +22,14 @@ LOGGER = logging.getLogger("cekit")
 CONFIG = Config()
 
 
+def verify_release_passed(ctx, param, value):
+    if not ctx.params.get("release") and value:
+        raise click.UsageError(
+            "--tag requires --release as scratch builds cannot be tagged"
+        )
+    return value
+
+
 @click.group(context_settings=dict(max_content_width=100))
 @click.option(
     "--descriptor",
@@ -233,7 +241,7 @@ def build_podman(ctx, pull, no_squash, tags, platform):
 
 
 @build.command(name="osbs", short_help="Build using OSBS engine")
-@click.option("--release", help="Execute a release build.", is_flag=True)
+@click.option("--release", help="Execute a release build.", is_flag=True, is_eager=True)
 @click.option("--user", metavar="USER", help="User used to kick the build as.")
 @click.option("--nowait", help="Do not wait for the task to finish.", is_flag=True)
 @click.option("--stage", help="Use stage environment.", is_flag=True)
@@ -249,8 +257,9 @@ def build_podman(ctx, pull, no_squash, tags, platform):
     "--tag",
     is_flag=False,
     flag_value="{{name}}-{{version}}",
-    metavar="TAG",
-    help="Use specified tag to tag the dist-git repository after build",
+    metavar="<TAG>",
+    help="Tag the source and dist-git repositories after build. Default format if not supplied is {{name}}-{{version}}",
+    callback=verify_release_passed,
 )
 @click.option(
     "--assume-yes", "-y", help="Execute build in non-interactive mode.", is_flag=True

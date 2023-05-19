@@ -1,4 +1,4 @@
-sphinx>=1.7.6
+sphinx>=1.7.6,<7.0.0
 sphinx-autobuild==0.7.1
 https://github.com/guzzle/guzzle_sphinx_theme/archive/eefd45b79383b1b4aab1607444e41366fd1348a6.zip
 pykwalify>=1.6.0

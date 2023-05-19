@@ -476,6 +476,12 @@ class Generator(object):
         if not content_sets:
             return False
 
+        from cekit.generator.behave import BehaveGenerator
+
+        if isinstance(self, BehaveGenerator):
+            LOGGER.warning("Running via Behave so not requesting ODCS compose")
+            return False
+
         arch = platform.machine()
 
         if arch not in content_sets:
@@ -584,10 +590,6 @@ class Generator(object):
                 "inside the image as Cekit will not inject it.".format(repo["name"])
             )
             return False
-
-        if "content_sets" in repo:
-            self._fetch_repos = True
-            return self._prepare_content_sets(repo)
 
         elif "rpm" in repo:
             self._prepare_repository_rpm(repo)

@@ -343,7 +343,11 @@ def run_wrapper(
     :param check: Whether to check the return code (defaults to True)
     :return: a CompletedProcess object
     """
-    logger.debug("Executing '{}'.".format(" ".join(cmd)))
+    logger.debug(
+        "Executing '{}'.".format(
+            " ".join("'" + w + "'" if " " in w else w for w in cmd)
+        )
+    )
     try:
         # While it would be nicer to use
         #   result = subprocess.run(

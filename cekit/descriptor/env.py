@@ -6,7 +6,9 @@ from cekit.descriptor import Descriptor
 
 env_schema = yaml.safe_load(
     """
-map:
+type: map
+allowempty: True
+mapping:
   name: {type: str, required: True}
   value: {type: any}
   example: {type: any}
