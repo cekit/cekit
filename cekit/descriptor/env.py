@@ -12,8 +12,7 @@ mapping:
   name: {type: str, required: True}
   value: {type: any}
   example: {type: any}
-  description: {type: str}
-  metadata: {type: any}"""
+  description: {type: str}"""
 )
 
 
