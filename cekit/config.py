@@ -48,9 +48,6 @@ class Config(object):
         cls.cfg["common"]["redhat"] = yaml.safe_load(
             cls.cfg.get("common", {}).get("redhat", "False")
         )
-        cls.cfg["common"]["fetch_url_domains"] = cls.cfg.get("common").get(
-            "fetch_url_domains"
-        )
 
     @classmethod
     def get(cls, *args) -> Optional[str]:
