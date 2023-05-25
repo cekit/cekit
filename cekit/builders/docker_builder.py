@@ -112,10 +112,9 @@ class DockerBuilder(Builder):
 
         except requests.ConnectionError as ex:
             exception_chain = traceback.format_exc()
-            # TODO: exc_info should probably be True rather than 1.
             LOGGER.debug(
                 "Caught ConnectionError attempting to communicate with Docker ",
-                exc_info=1,
+                exc_info=True,
             )
 
             if "PermissionError" in exception_chain:
