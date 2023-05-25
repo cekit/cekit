@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+from abc import abstractmethod
 from typing import Any, Dict, Optional, overload
 
 from cekit.cekit_types import _T, PathType
@@ -195,6 +196,7 @@ class Resource(Descriptor):
         if descriptor.get("dest") is not None:
             descriptor["dest"] = os.path.normpath(descriptor.get("dest")) + "/"
 
+    @abstractmethod
     def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Returns default identifier value for particular class.
@@ -203,14 +205,18 @@ class Resource(Descriptor):
         Returned should be a string that will be be a unique identifier
         of the resource across thw whole image.
         """
-        # TODO: This is an abstract method, and hence should return NotImplementedError()
-        return None
+        raise NotImplementedError(
+            "Implement _get_default_name_value() for Resource: "
+            + self.__module__
+            + "."
+            + type(self).__name__
+        )
 
     def _get_default_target_value(self, descriptor: RawResourceDescriptor) -> str:
         return os.path.basename(descriptor.get("name"))
 
+    @abstractmethod
     def _copy_impl(self, target: PathType) -> PathType:
-        # TODO: Return value is never used.
         raise NotImplementedError(
             "Implement _copy_impl() for Resource: "
             + self.__module__
@@ -591,6 +597,9 @@ class _PlainResource(Resource):
                 )
 
         raise CekitError("Artifact {} could not be found".format(self.name))
+
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
+        return ""
 
 
 class _ImageContentResource(Resource):
