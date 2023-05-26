@@ -531,7 +531,7 @@ class Generator(object):
                         "Are you sure you have a valid Kerberos session?"
                     ).format(odcs_service_type)
                 )
-            raise CekitError("Could not create ODCS compose", ex)
+            raise CekitError("Could not create ODCS compose") from ex
 
         compose_id = compose.get("id", None)
 

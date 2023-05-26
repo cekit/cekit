@@ -233,6 +233,10 @@ class OSBSGenerator(Generator):
                             "artifacts", artifact["target"]
                         )
                     except Exception:
+                        logger.debug(
+                            "Caught exception when processing PlainResource",
+                            exc_info=True,
+                        )
                         logger.warning(
                             "Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".format(
                                 artifact["name"]

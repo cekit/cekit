@@ -265,8 +265,8 @@ class Resource(Descriptor):
 
             # exception is fatal we be logged before Cekit dies
             raise CekitError(
-                "Error copying resource: '%s'. See logs for more info." % self.name, ex
-            )
+                "Error copying resource: '%s'. See logs for more info." % self.name
+            ) from ex
 
         if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and not self.__verify(
             target
@@ -386,10 +386,9 @@ class _PathResource(Resource):
                     self._download_file(self.path, target)
                     return target
                 except Exception as ex:
-                    logger.exception(ex)
                     raise CekitError(
                         "Could not download resource '%s' from cache" % self.name
-                    )
+                    ) from ex
             else:
                 raise CekitError(
                     "Could not copy resource '%s', "
