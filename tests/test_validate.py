@@ -1,3 +1,4 @@
+import logging
 import os
 import platform
 import shutil
@@ -11,6 +12,7 @@ from click.testing import CliRunner
 from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
+from cekit.generator import base
 from cekit.tools import Chdir
 
 odcs_fake_resp = b"""Result:
@@ -1664,6 +1666,17 @@ def test_run_descriptor_stdin(tmpdir):
     )
 
     assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
+
+
+@pytest.mark.parametrize(
+    "value", ["EAP7.3.0-kie", "python3", "osbs", "16.0-openjdk11-kie"]
+)
+def test_parse_version(caplog, value):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+
+    base.internal_parse_version(value, "foo")
+
+    assert f"version '{value}' does not follow PEP 440" in caplog.text
 
 
 def run_cekit(cwd, parameters=None, message=None, env=None, input=None):
