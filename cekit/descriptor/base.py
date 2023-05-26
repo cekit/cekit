@@ -56,8 +56,8 @@ class Descriptor(MutableMapping):
             core.validate(raise_exception=True)
         except SchemaError as ex:
             raise CekitError(
-                "Cannot validate schema: {}".format(self.__class__.__name__), ex
-            )
+                "Cannot validate schema: {}".format(self.__class__.__name__)
+            ) from ex
 
     @classmethod
     def to_yaml(cls, representer: yaml.representer.BaseRepresenter, node) -> yaml.Node:
@@ -95,10 +95,9 @@ class Descriptor(MutableMapping):
             _merge_descriptors(self, descriptor)
             return self
         except KeyError as ex:
-            logger.debug(ex, exc_info=True)
             raise CekitError(
                 "Cannot merge descriptors, see log message for more information"
-            )
+            ) from ex
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
