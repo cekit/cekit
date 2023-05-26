@@ -705,7 +705,6 @@ def test_overrides_applied_to_all_multi_stage_images(tmpdir):
     regex_dockerfile(target, "^###### END image 'targetimage:SNAPSHOT'$")
 
 
-# @pytest.mark.parametrize("manager", ["yum", "dnf", "microdnf"])
 def test_package_removal_and_install_and_reinstall(tmpdir):
     target = str(tmpdir.mkdir("target"))
 
