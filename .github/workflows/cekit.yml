@@ -68,6 +68,11 @@ jobs:
         PV=${{ matrix.python-version }}
         echo "Running for Python version $PV ( ${PV/./} )"
         make test-py"${PV/./}"
+    - name: Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./target/cov.xml
+        verbose: true
 #    - name: Setup tmate session (only on failure)
 #      uses: mxschmitt/action-tmate@v3
 #      if: ${{ failure() }}
