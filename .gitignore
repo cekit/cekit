@@ -5,7 +5,6 @@ build
 .tox
 .coverage
 .cache
-htmlcov
 docs/_build
 .idea
 *.egg-info
