@@ -47,7 +47,7 @@ class OSBSGenerator(Generator):
         super(OSBSGenerator, self).init()
 
         self._prepare_osbs_config_file(yaml.safe_dump, "container.yaml")
-        # TODO: Why do we use file.write here and yaml.dump above?
+        # As the CVP gating.yaml might use non-standard yaml format use file.write not yaml.dump
         self._prepare_osbs_config_file(
             lambda contents, file, **kwargs: file.write(contents), "gating.yaml"
         )
@@ -233,6 +233,10 @@ class OSBSGenerator(Generator):
                             "artifacts", artifact["target"]
                         )
                     except Exception:
+                        logger.debug(
+                            "Caught exception when processing PlainResource",
+                            exc_info=True,
+                        )
                         logger.warning(
                             "Plain artifact {} could not be found in Brew, trying to handle it using lookaside cache".format(
                                 artifact["name"]

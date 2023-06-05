@@ -484,8 +484,10 @@ class Cekit(object):
                 LOGGER.debug("Removing dirty directory: '{}'".format(directory))
                 try:
                     shutil.rmtree(directory)
-                except Exception:
-                    raise CekitError("Unable to clean directory '{}'".format(directory))
+                except Exception as ex:
+                    raise CekitError(
+                        "Unable to clean directory '{}'".format(directory)
+                    ) from ex
 
     def run(self, clazz: Type["Command"]):
         """Main application entry"""

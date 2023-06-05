@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+from abc import abstractmethod
 from typing import Any, Dict, Optional, overload
 
 from cekit.cekit_types import _T, PathType
@@ -195,6 +196,7 @@ class Resource(Descriptor):
         if descriptor.get("dest") is not None:
             descriptor["dest"] = os.path.normpath(descriptor.get("dest")) + "/"
 
+    @abstractmethod
     def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         """
         Returns default identifier value for particular class.
@@ -203,14 +205,18 @@ class Resource(Descriptor):
         Returned should be a string that will be be a unique identifier
         of the resource across thw whole image.
         """
-        # TODO: This is an abstract method, and hence should return NotImplementedError()
-        return None
+        raise NotImplementedError(
+            "Implement _get_default_name_value() for Resource: "
+            + self.__module__
+            + "."
+            + type(self).__name__
+        )
 
     def _get_default_target_value(self, descriptor: RawResourceDescriptor) -> str:
         return os.path.basename(descriptor.get("name"))
 
+    @abstractmethod
     def _copy_impl(self, target: PathType) -> PathType:
-        # TODO: Return value is never used.
         raise NotImplementedError(
             "Implement _copy_impl() for Resource: "
             + self.__module__
@@ -259,8 +265,8 @@ class Resource(Descriptor):
 
             # exception is fatal we be logged before Cekit dies
             raise CekitError(
-                "Error copying resource: '%s'. See logs for more info." % self.name, ex
-            )
+                "Error copying resource: '%s'. See logs for more info." % self.name
+            ) from ex
 
         if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and not self.__verify(
             target
@@ -380,10 +386,9 @@ class _PathResource(Resource):
                     self._download_file(self.path, target)
                     return target
                 except Exception as ex:
-                    logger.exception(ex)
                     raise CekitError(
                         "Could not download resource '%s' from cache" % self.name
-                    )
+                    ) from ex
             else:
                 raise CekitError(
                     "Could not copy resource '%s', "
@@ -591,6 +596,9 @@ class _PlainResource(Resource):
                 )
 
         raise CekitError("Artifact {} could not be found".format(self.name))
+
+    def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
+        return ""
 
 
 class _ImageContentResource(Resource):

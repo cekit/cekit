@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import yaml
 
 from jinja2 import Environment, FileSystemLoader
-from packaging.version import InvalidVersion, Version
+from packaging.version import InvalidVersion, Version, _BaseVersion
 from packaging.version import parse as parse_version
 
 from cekit.cekit_types import PathType
@@ -29,6 +29,7 @@ from cekit.descriptor import (
 )
 from cekit.errors import CekitError
 from cekit.generator import legacy_version
+from cekit.generator.legacy_version import LegacyVersion
 from cekit.template_helper import TemplateHelper
 from cekit.tools import DependencyDefinition, Map, download_file, load_descriptor
 from cekit.version import __version__ as cekit_version
@@ -532,7 +533,7 @@ class Generator(object):
                         "Are you sure you have a valid Kerberos session?"
                     ).format(odcs_service_type)
                 )
-            raise CekitError("Could not create ODCS compose", ex)
+            raise CekitError("Could not create ODCS compose") from ex
 
         compose_id = compose.get("id", None)
 
@@ -731,27 +732,31 @@ class ModuleRegistry(object):
                 )
             )
 
-        default_version: Version = parse_version(self._defaults.get(module.name))
-        try:
-            current_version: Version = parse_version(version)
-            # This if block is only for Python3.6 compatibility which still might return
-            # a LegacyVersion and not throw an exception. LegacyVersion does not have
-            # that field so can be used to differentiate.
-            if not hasattr(current_version, "major"):
-                raise InvalidVersion
-            # If current module version is newer, we need to make it the new default
-            if current_version > default_version:
-                self._defaults[module.name] = version
-        except InvalidVersion:
-            LOGGER.error(
-                f"Module's '{module.name}' version '{version}' does not follow PEP 440 versioning scheme "
-                "(https://www.python.org/dev/peps/pep-0440) which should be followed in modules."
-            )
+        current_version: _BaseVersion = internal_parse_version(version, module.name)
+        default_version: _BaseVersion = internal_parse_version(
+            self._defaults.get(module.name), module.name
+        )
 
-            if legacy_version.parse(version) > legacy_version.parse(
-                self._defaults.get(module.name)
-            ):
-                self._defaults[module.name] = version
+        # If current module version is newer, we need to make it the new default
+        if current_version > default_version:
+            self._defaults[module.name] = version
 
         # Finally add the module to registry
         modules[version] = module
+
+
+def internal_parse_version(version: str, module_name: str) -> _BaseVersion:
+    try:
+        result: Version = parse_version(version)
+        # This if block is only for Python3.6 compatibility which still might return
+        # a LegacyVersion and not throw an exception. LegacyVersion does not have
+        # that field so can be used to differentiate.
+        if not hasattr(result, "major"):
+            raise InvalidVersion
+    except InvalidVersion:
+        LOGGER.error(
+            f"Module's '{module_name}' version '{version}' does not follow PEP 440 versioning "
+            "scheme (https://www.python.org/dev/peps/pep-0440) which should be followed in modules."
+        )
+        result: LegacyVersion = legacy_version.parse(version)
+    return result

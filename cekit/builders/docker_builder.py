@@ -110,12 +110,11 @@ class DockerBuilder(Builder):
                 if layer_id_match:
                     docker_layer_ids.append(layer_id_match.group(1))
 
-        except requests.ConnectionError as ex:
+        except requests.ConnectionError:
             exception_chain = traceback.format_exc()
-            # TODO: exc_info should probably be True rather than 1.
             LOGGER.debug(
                 "Caught ConnectionError attempting to communicate with Docker ",
-                exc_info=1,
+                exc_info=True,
             )
 
             if "PermissionError" in exception_chain:
@@ -129,10 +128,7 @@ class DockerBuilder(Builder):
             else:
                 message = "Unknown ConnectionError from docker ; is the daemon started and correctly setup?"
 
-            # Work-around for python 3 code - replicate exception(...) from None
-            cekit_exception = CekitError(message, ex)
-            cekit_exception.__cause__ = None
-            raise cekit_exception
+            raise CekitError(message) from None
 
         except Exception as ex:
             msg = "Image build failed, see logs above."
@@ -151,7 +147,7 @@ class DockerBuilder(Builder):
                     "definitions."
                 )
 
-            raise CekitError(msg, ex)
+            raise CekitError(msg) from ex
 
         return docker_layer_ids[-1]
 
@@ -209,7 +205,7 @@ class DockerBuilder(Builder):
                 "specified valid parameters in the 'DOCKER_HOST' environment variable, "
                 "examples: 'unix:///var/run/docker.sock', 'tcp://192.168.22.33:1234'"
             )
-            raise CekitError("Error while creating the Docker client", e)
+            raise CekitError("Error while creating the Docker client") from e
 
         if client and self._valid_docker_connection(client):
             LOGGER.debug("Docker client ready and working")

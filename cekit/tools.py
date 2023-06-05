@@ -114,7 +114,7 @@ def load_descriptor(descriptor: str) -> dict:
     try:
         data = yaml.safe_load(descriptor)
     except Exception as ex:
-        raise CekitError("Cannot load descriptor", ex)
+        raise CekitError("Cannot load descriptor") from ex
 
     if isinstance(data, str):
         logger.debug("Reading descriptor from '{}' file...".format(descriptor))
@@ -204,22 +204,16 @@ def get_brew_url(md5: str) -> str:
         "type=maven",
     ]
 
-    logger.debug("Executing '{}'.".format(" ".join(list_archives_cmd)))
     try:
-        result = subprocess.run(
-            list_archives_cmd, capture_output=True, check=True, text=True
-        )
-    except subprocess.CalledProcessError as ex:
-        logger.error(
-            "{} Command stdout is '{}' with stderr '{}'".format(
-                ex, ex.stdout, ex.stderr
-            )
-        )
-        if ex.output is not None and "AuthError" in ex.output:
+        result = run_wrapper(list_archives_cmd, capture_output=True, check=True)
+    except CekitError as ex:
+        # noinspection PyTypeChecker
+        nested: subprocess.CalledProcessError = ex.__cause__
+        if nested.output is not None and "AuthError" in nested.output:
             logger.warning(
                 "Brew authentication failed, please make sure you have a valid Kerberos ticket"
             )
-        raise CekitError("Could not fetch archives for checksum {}".format(md5), ex)
+        raise CekitError(f"Could not fetch archives for checksum {md5}") from ex
 
     archives = yaml.safe_load(result.stdout)
 
@@ -375,7 +369,7 @@ def run_wrapper(
                 ex, ex.stdout, ex.stderr
             )
         )
-        raise CekitError(exception_message, ex)
+        raise CekitError(exception_message) from ex
     if result.stdout:
         result.stdout = result.stdout.strip()
     if result.stderr:
