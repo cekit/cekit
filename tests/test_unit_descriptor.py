@@ -193,7 +193,7 @@ def test_image():
     )
 
     assert image["name"] == "test/foo"
-    assert type(image["labels"][0]) == Label
+    assert isinstance(image["labels"][0], Label)
     assert image["labels"][0]["name"] == "test"
     assert image["envs"][0]["required"] is False
 
@@ -256,7 +256,7 @@ def test_image_artifacts(caplog):
     )
 
     assert image["name"] == "test/foo"
-    assert type(image["labels"][0]) == Label
+    assert isinstance(image["labels"][0], Label)
     assert image["labels"][0]["name"] == "test"
     assert (
         'No value found for \'name\' in \'{"dest": "/tmp/artifacts/", "md5": "080075877a66adf52b7f6d0013fa9730", "url": "https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz"}\' artifact; using auto-generated value of \'apache-tomcat-8.5.24.tar.gz\''
@@ -436,5 +436,5 @@ def test_image_follow_tag():
     )
 
     assert image["name"] == "test/foo"
-    assert type(image["labels"][0]) == Label
+    assert isinstance(image["labels"][0], Label)
     assert image["labels"][0]["name"] == "test"
