@@ -22,3 +22,12 @@ as defined.
         # Then the redefine.sh file will be executed as jboss user
         - script: redefine.sh
           user: jboss
+
+This will be rendered as
+
+.. code-block:: sh
+
+    RUN [ "sh" "-x" "/tmp/scripts/install.sh" ]
+
+    USER jboss
+    RUN [ "sh" "-x" "/tmp/scripts/redefine.sh" ]

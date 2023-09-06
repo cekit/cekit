@@ -85,11 +85,12 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  # 2. Copies any defined stage artifacts (built in previous stages as part of multi-stage builds)
  # 3. Copies module content (if a module is processed, skipped on image)
  # 4. Installs any defined packages
- # 5. Sets environment variables
- # 6. Sets labels
- # 7. Exposes ports
- # 8. Executes any defined scripts
- # 9. Exposes any defined volumes
+ # 5. Add ARG variables
+ # 6. Sets environment variables
+ # 7. Sets labels
+ # 8. Exposes ports
+ # 9. Executes any defined scripts
+ # 10. Exposes any defined volumes
  #}
 {%- macro process_module(module, parent_image=None) %}
 {% set module_type = 'module' %}
@@ -139,6 +140,17 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
         # Reinstall packages defined in the '{{ module.name }}' {{ module_type }}
         RUN {{ pkg_reinstall(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.reinstall) }}
         {% endif -%}
+        {% endif -%}
+
+        {% if module.args|count > 0 %}
+        {% for arg in module.args|sort(attribute='name') %}
+        {% if 'value' in arg %}
+        ARG {{ arg.name }}="{{ arg.value }}"
+        {% else %}
+        ARG {{ arg.name }}
+        {% endif -%}
+        {% endfor %}
+
         {% endif -%}
 
         {% if module.envs|selectattr("value")|list|length > 0 %}
@@ -193,6 +205,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
     {% if animage.from != 'scratch' %}
     USER root
     {% endif -%}
+
     {#
      # Add Cachito support
      #}

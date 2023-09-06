@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 from cekit.config import Config
-from cekit.descriptor import Env, Image, Label, Osbs, Packages, Port, Volume
+from cekit.descriptor import Arg, Env, Image, Label, Osbs, Packages, Port, Volume
 from cekit.errors import CekitError
 
 config = Config()
@@ -20,6 +20,29 @@ def test_label():
     )
     assert label["name"] == "io.k8s.display-name"
     assert label["value"] == "JBoss A-MQ 6.2"
+
+
+def test_arg():
+    arg = Arg(
+        yaml.safe_load(
+            """
+      name: "io.k8s.display-name"
+      value: "JBoss A-MQ 6.2"
+"""
+        )
+    )
+    assert arg.name == "io.k8s.display-name"
+    assert arg.value == "JBoss A-MQ 6.2"
+
+    arg = Arg(
+        yaml.safe_load(
+            """
+        name: "QUARKUS_EXTENSIONS"
+"""
+        )
+    )
+    assert arg.name == "QUARKUS_EXTENSIONS"
+    assert arg.value is None
 
 
 def test_env():
