@@ -776,6 +776,31 @@ def test_package_reinstall(tmpdir):
     regex_dockerfile(target, "reinstall -y tzdata")
 
 
+def test_args(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor=[
+            {
+                "release": 1,
+                "version": 1,
+                "from": "fromimage",
+                "name": "targetimage",
+                "args": [{"name": "foo", "value": "bar"}, {"name": "labela"}],
+            },
+        ],
+    )
+    with open(os.path.join(target, "target", "image", "Dockerfile"), "r") as _file:
+        dockerfile = _file.read()
+    assert (
+        """        ARG foo="bar"
+        ARG labela"""
+        in dockerfile
+    )
+
+
 def generate(image_dir, command, descriptor=None, exit_code=0):
     desc = basic_config.copy()
 
