@@ -1142,7 +1142,7 @@ def test_osbs_builder_with_koji_target_based_on_branch(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(tmpdir), mocker)
 
     assert (
-        "About to execute 'brew call --python buildContainer --kwargs {'src': 'https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
+        "About to execute 'brew call --python buildContainer --kwargs {'src': 'git+https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
         in caplog.text
     )
 
@@ -1162,7 +1162,7 @@ def test_osbs_builder_with_koji_target_in_descriptor(tmpdir, mocker, caplog):
     run_osbs(descriptor, str(tmpdir), mocker)
 
     assert (
-        "About to execute 'brew call --python buildContainer --kwargs {'src': 'https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
+        "About to execute 'brew call --python buildContainer --kwargs {'src': 'git+https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'branch', 'yum_repourls': []}}'."
         in caplog.text
     )
 
@@ -2652,7 +2652,7 @@ def test_osbs_builder_kick_build_with_tag_1(tmpdir, mocker, caplog):
     )
     assert "Image was built successfully in OSBS!" in caplog.text
     assert (
-        "Tagging git repository (https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb) with FOOBAR-1 from build 123456"
+        "Tagging git repository (git+https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb) with FOOBAR-1 from build 123456"
         in caplog.text
     )
     assert (
@@ -2723,7 +2723,7 @@ def test_osbs_builder_kick_build_with_tag_2(tmpdir, mocker, caplog):
     )
     assert "Image was built successfully in OSBS!" in caplog.text
     assert (
-        "Tagging git repository (https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb) with test-image-1.0-1 from build 123456"
+        "Tagging git repository (git+https://somehost.com/git/containers/somerepo#3b9283cb26b35511517ff5c0c3e11f490cba8feb) with test-image-1.0-1 from build 123456"
         in caplog.text
     )
     assert (
