@@ -68,6 +68,7 @@ jobs:
         mkdir $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
         ln -s /usr/bin/true $HOME/bin/skopeo
+        ln -s /usr/bin/true $HOME/bin/buildah
     - name: Run tests
       run: |
         PV=${{ matrix.python-version }}

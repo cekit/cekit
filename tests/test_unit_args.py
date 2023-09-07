@@ -24,6 +24,7 @@ def _get_class_by_name(clazz):
             ["--redhat", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -47,6 +48,7 @@ def _get_class_by_name(clazz):
             ["--target", "custom-target", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -70,6 +72,7 @@ def _get_class_by_name(clazz):
             ["--work-dir", "custom-workdir", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -93,6 +96,7 @@ def _get_class_by_name(clazz):
             ["--config", "custom-config", "build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -116,6 +120,7 @@ def _get_class_by_name(clazz):
             ["build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -139,6 +144,7 @@ def _get_class_by_name(clazz):
             ["build", "--overrides", "foo", "--overrides-file", "bar", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -290,6 +296,7 @@ def _get_class_by_name(clazz):
             ["build", "docker", "--pull"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -338,6 +345,7 @@ def _get_class_by_name(clazz):
             ["build", "docker"],
             "cekit.builders.docker_builder.DockerBuilder",
             {
+                "args": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -374,6 +382,7 @@ def _get_class_by_name(clazz):
                 "overrides": (),
                 "pull": False,
                 "tags": (),
+                "args": (),
                 "platform": None,
                 "no_squash": False,
             },

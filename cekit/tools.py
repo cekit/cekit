@@ -377,6 +377,13 @@ def run_wrapper(
     return result
 
 
+def locate_binary(executable: str) -> str:
+    path = shutil.which(executable)
+    if path is None:
+        raise CekitError(f"{executable} binary was not found in the system.")
+    return path
+
+
 class Chdir(object):
     """Context manager for changing the current working directory"""
 

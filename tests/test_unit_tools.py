@@ -13,7 +13,7 @@ from cekit import tools
 from cekit.descriptor import Descriptor, Image, Module, Osbs, Overrides, Run
 from cekit.descriptor.base import _merge_descriptors, _merge_lists
 from cekit.errors import CekitError
-from cekit.tools import Chdir, run_wrapper
+from cekit.tools import Chdir, locate_binary, run_wrapper
 
 rhel_7_os_release = '''NAME="Red Hat Enterprise Linux Server"
 VERSION="7.7 (Maipo)"
@@ -940,3 +940,9 @@ def test_run_wrapper_capture_error(tmpdir) -> None:
         assert result.stdout == ""
         assert not result.stderr.endswith("\n")
         assert result.returncode == 128
+
+
+def test_locate_binary(caplog):
+    assert "/bin/ls" in locate_binary("ls")
+    with pytest.raises(CekitError):
+        locate_binary("no-ls")

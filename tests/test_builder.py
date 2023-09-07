@@ -895,7 +895,7 @@ def test_buildah_builder_run(mocker):
 
     run.assert_called_once_with(
         [
-            "buildah",
+            shutil.which("buildah"),
             "build-using-dockerfile",
             "--squash",
             "-t",
@@ -919,7 +919,7 @@ def test_buildah_builder_run_platform(mocker):
 
     run.assert_called_once_with(
         [
-            "buildah",
+            shutil.which("buildah"),
             "build-using-dockerfile",
             "--squash",
             "--platform",
@@ -945,7 +945,7 @@ def test_buildah_builder_run_pull(mocker):
 
     run.assert_called_once_with(
         [
-            "buildah",
+            shutil.which("buildah"),
             "build-using-dockerfile",
             "--squash",
             "--pull-always",
@@ -1110,7 +1110,7 @@ def test_buildah_builder_run_with_generator(mocker):
 
     run.assert_called_once_with(
         [
-            "buildah",
+            shutil.which("buildah"),
             "build-using-dockerfile",
             "--squash",
             "-t",
@@ -1134,7 +1134,7 @@ def test_buildah_builder_with_squashing_disabled(mocker):
 
     run.assert_called_once_with(
         [
-            "buildah",
+            shutil.which("buildah"),
             "build-using-dockerfile",
             "-t",
             "foo",
@@ -1149,14 +1149,91 @@ def test_buildah_builder_with_squashing_disabled(mocker):
     )
 
 
-def test_podman_builder_with_squashing_disabled(mocker):
-    params = {"tags": ["foo", "bar"], "no_squash": True}
+def test_buildah_builder_with_build_arg(mocker):
+    params = {"tags": ["foo", "bar"], "no_squash": True, "args": ["KEY=VALUE"]}
     run = mocker.patch.object(subprocess, "run")
-    builder = create_builder_object(mocker, "podman", params)
+    builder = create_builder_object(mocker, "buildah", params)
     builder.run()
 
     run.assert_called_once_with(
-        [shutil.which("podman"), "build", "-t", "foo", "-t", "bar", "something/image"],
+        [
+            shutil.which("buildah"),
+            "build-using-dockerfile",
+            "-t",
+            "foo",
+            "-t",
+            "bar",
+            "--build-arg=KEY=VALUE",
+            "something/image",
+        ],
+        stderr=None,
+        stdout=None,
+        check=True,
+        universal_newlines=True,
+    )
+
+
+def test_podman_builder_with_squashing_disabled(mocker):
+    params = {"no_squash": True}
+    run = mocker.patch.object(subprocess, "run")
+    builder = create_builder_object(mocker, "podman", params)
+    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator.image = Image(
+        yaml.safe_load(
+            """
+    name: foo
+    version: 1.9
+    """
+        ),
+        "foo",
+    )
+    builder.run()
+
+    run.assert_called_once_with(
+        [
+            shutil.which("podman"),
+            "build",
+            "-t",
+            "foo:1.9",
+            "-t",
+            "foo:latest",
+            "something/image",
+        ],
+        stderr=None,
+        stdout=None,
+        check=True,
+        universal_newlines=True,
+    )
+
+
+def test_podman_builder_with_build_arg(mocker):
+    params = {"args": ["KEY=VALUE"]}
+    run = mocker.patch.object(subprocess, "run")
+    builder = create_builder_object(mocker, "podman", params)
+    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator.image = Image(
+        yaml.safe_load(
+            """
+    name: foo
+    version: 1.9
+    """
+        ),
+        "foo",
+    )
+    builder.run()
+
+    run.assert_called_once_with(
+        [
+            shutil.which("podman"),
+            "build",
+            "--squash",
+            "-t",
+            "foo:1.9",
+            "-t",
+            "foo:latest",
+            "--build-arg=KEY=VALUE",
+            "something/image",
+        ],
         stderr=None,
         stdout=None,
         check=True,

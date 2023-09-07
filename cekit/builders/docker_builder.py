@@ -74,6 +74,15 @@ class DockerBuilder(Builder):
         docker_args["rm"] = True
         if self.params.platform:
             docker_args["platform"] = self.params.platform
+        if self.params.args:
+            buildargs = {}
+            for arg in self.params.args:
+                if "=" in arg:
+                    split = arg.split("=")
+                    buildargs.update({split[0]: split[1]})
+                else:
+                    buildargs.update({arg: None})
+            docker_args["buildargs"] = buildargs
 
         build_log = []
         docker_layer_ids = []
