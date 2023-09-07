@@ -295,7 +295,7 @@ class OSBSBuilder(Builder):
             # Parse the dist-git repository url
             url = urlparse(url)
             # Construct the url again, with a hash and removed username and password, if any
-            src = "git://{}{}#{}".format(url.hostname, url.path, commit)
+            src = "https://{}/git{}#{}".format(url.hostname, url.path, commit)
 
             target = self.generator.image.get("osbs", {}).get("koji_target")
 
