@@ -315,10 +315,10 @@ The ``tests`` directory is structured as follows:
         tests/steps/*.py
 
 The ``tests/features`` directory is the place where you can drop your `behave
-features. <https://behave.readthedocs.io/en/latest/tutorial.html#features>`__
+features. <https://behave.readthedocs.io/en/latest/tutorial/#features>`__
 
 The ``tests/steps`` directory is optional and contains custom `steps
-<https://behave.readthedocs.io/en/latest/tutorial.html#python-step-implementations>`__
+<https://behave.readthedocs.io/en/latest/tutorial/#python-step-implementations>`__
 for the specific image/module.
 
 Writing features
