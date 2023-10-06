@@ -260,6 +260,8 @@ class OSBSBuilder(Builder):
         cmd = [self._fedpkg]
         if self.params.user:
             cmd += ["--user", self.params.user]
+        if self.params.trace:
+            cmd += ["--debug"]
         cmd += ["new-sources"] + cache_artifacts
 
         with Chdir(self.dist_git_dir):
@@ -277,6 +279,9 @@ class OSBSBuilder(Builder):
         build_id: str = ""
         git_tag: str = ""
         cmd: List[str] = [self._koji]
+
+        if self.params.trace:
+            cmd += ["--debug"]
 
         if self.params.user:
             cmd += ["--user", self.params.user]

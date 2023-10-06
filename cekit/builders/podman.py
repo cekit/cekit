@@ -36,6 +36,9 @@ class PodmanBuilder(Builder):
         if not tags:
             tags = self.generator.get_tags()
 
+        if self.params.trace:
+            cmd += ["--log-level", "debug"]
+
         if self.params.pull:
             cmd.append("--pull-always")
 

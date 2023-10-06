@@ -33,6 +33,9 @@ class BuildahBuilder(Builder):
         if not self.params.no_squash:
             cmd.append("--squash")
 
+        if self.params.trace:
+            cmd += ["--log-level", "debug"]
+
         if self.params.pull:
             cmd.append("--pull-always")
 

@@ -39,6 +39,7 @@ def verify_release_passed(ctx, param, value):
     show_default=True,
 )
 @click.option("-v", "--verbose", help="Enable verbose output.", is_flag=True)
+@click.option("--trace", help="Enable trace output.", is_flag=True)
 @click.option("--nocolor", help="Disable color output.", is_flag=True)
 @click.option(
     "--work-dir",
@@ -67,7 +68,7 @@ def verify_release_passed(ctx, param, value):
     show_default=True,
 )
 @click.version_option(message="%(version)s", version=__version__)
-def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):
+def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target, trace):
     """
     ABOUT
 
