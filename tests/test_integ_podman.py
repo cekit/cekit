@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import shutil
 
+from _pytest.capture import CaptureResult
 from click.testing import CliRunner
 
 from cekit.cli import cli
@@ -50,7 +51,7 @@ def test_podman_from_scratch(tmpdir):
     run_cekit(os.path.join(tmpdir, "scratch"), env={"BUILDAH_LAYERS": "false"})
 
 
-def test_podman_operator_metadata(tmpdir):
+def test_podman_operator_metadata(tmpdir, capfd):
     tmpdir = str(tmpdir)
 
     shutil.copytree(
@@ -62,6 +63,14 @@ def test_podman_operator_metadata(tmpdir):
     # See: https://bugzilla.redhat.com/show_bug.cgi?id=1746022
     run_cekit(
         os.path.join(tmpdir, "operator-metadata"),
-        args=["--redhat", "build", "podman"],
+        args=["--redhat", "--trace", "build", "podman"],
         env={"BUILDAH_LAYERS": "false"},
+    )
+
+    output: CaptureResult = capfd.readouterr()
+    print(output.err)
+    assert 'level=debug msg="Called build.PersistentPreRunE' in output.err
+    assert (
+        "Successfully tagged localhost/amq7/amq-streams-rhel7-operator-metadata:latest"
+        in output.out
     )
