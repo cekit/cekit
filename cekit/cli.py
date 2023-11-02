@@ -13,7 +13,7 @@ from cekit.config import Config, default_work_dir
 from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map
-from cekit.version import __version__
+from cekit.version import __version__, schema_version
 
 if TYPE_CHECKING:
     from cekit.builder import Command
@@ -352,6 +352,12 @@ def test(image, overrides):
     default="https://github.com/cekit/behave-test-steps.git",
     show_default=True,
 )
+@click.option(
+    "--steps-ref",
+    help="Behave steps library reference (branch or tag)",
+    default="v%s" % schema_version,
+    show_default=True,
+)
 @click.option("--wip", help="Run test scenarios tagged with @wip only.", is_flag=True)
 @click.option("--include-re", help="Run only those features which match this regex")
 @click.option("--exclude-re", help="Do not run those features which match this regex")
@@ -362,7 +368,7 @@ def test(image, overrides):
     multiple=True,
 )
 @click.pass_context
-def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
+def test_behave(ctx, steps_url, steps_ref, wip, names, include_re, exclude_re):
     """
     DESCRIPTION
 

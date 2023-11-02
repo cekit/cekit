@@ -286,6 +286,7 @@ def _get_class_by_name(clazz):
                 "overrides": (),
                 "image": "image:1.0",
                 "steps_url": "https://github.com/cekit/behave-test-steps.git",
+                "steps_ref": "v1",
                 "wip": False,
                 "include_re": None,
                 "exclude_re": None,
