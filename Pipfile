@@ -27,6 +27,7 @@ PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
 click = ">=6.7"
 odcs = ">=0.2.10"
+"ruamel.yaml" = {version="<=0.18.3",python_version="<3.7"}
 
 [requires]
 python_version = "*"
