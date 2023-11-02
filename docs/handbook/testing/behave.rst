@@ -122,6 +122,7 @@ Options
 
 * ``--wip`` -- Only run tests tagged with the ``@wip`` tag.
 * ``--steps-url`` -- A git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
+* ``--steps-ref`` -- A reference (branch or tag) in the steps repository to check out
 * ``--name`` -- *Scenario* name to be executed
 * ``--include-re`` -- Regex of feature files which will be executed only
 * ``--exclude-re`` -- Regex of feature files which will not be executed
