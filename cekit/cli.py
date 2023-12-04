@@ -388,7 +388,7 @@ def test_behave(ctx, steps_url, steps_ref, wip, names, include_re, exclude_re):
 
         Execute specific scenario
 
-            $ cekit test --image example/app:1.0 behave --name 'Check that product labels are correctly set'
+            $ cekit [ --descriptor <image descriptor> ] test --image example/app:1.0 behave --name 'Check that product labels are correctly set'
     """
 
     if wip and names:
