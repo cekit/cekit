@@ -56,9 +56,7 @@ jobs:
       if: startsWith(matrix.os,'macos')
       run: |
         pip install "tox<4.0.0" setuptools
-        # Update qemu for https://github.com/containers/podman/issues/19708 / https://github.com/Homebrew/homebrew-core/issues/140244
-        brew update
-        brew upgrade qemu
+        echo "Checking qemu info... $(brew list --versions qemu)"
 
         brew install podman
         podman machine init
