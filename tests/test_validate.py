@@ -1364,7 +1364,7 @@ def test_nonexisting_image_descriptor(mocker, tmpdir, caplog):
     )
 
     assert (
-        "Descriptor could not be found on the 'nonexisting.yaml' path, please check your arguments!"
+        "Descriptor ('nonexisting.yaml') could not be found on the path, please check your arguments!"
         in caplog.text
     )
 
@@ -1383,7 +1383,7 @@ def test_nonexisting_override_file(mocker, tmpdir, caplog):
 
     assert "Loading override 'nonexisting.yaml'" in caplog.text
     assert (
-        "Descriptor could not be found on the 'nonexisting.yaml' path, please check your arguments!"
+        "Descriptor ('nonexisting.yaml') could not be found on the path, please check your arguments!"
         in caplog.text
     )
 

@@ -124,7 +124,7 @@ def load_descriptor(descriptor: str) -> dict:
                 return yaml.safe_load(fh)
 
         raise CekitError(
-            "Descriptor could not be found on the '{}' path, please check your arguments!".format(
+            "Descriptor ('{}') could not be found on the path, please check your arguments!".format(
                 descriptor
             )
         )
