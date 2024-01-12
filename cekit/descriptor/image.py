@@ -9,6 +9,7 @@ import cekit
 from cekit.cekit_types import _T, RawDescriptor
 from cekit.config import Config
 from cekit.descriptor import (
+    Arg,
     Descriptor,
     Env,
     Label,
@@ -41,6 +42,7 @@ map:
   from: {type: str}
   follow_tag: {type: str}
   description: {type: text}
+  args:  {type: any}
   labels: {type: any}
   envs:  {type: any}
   ports: {type: any}
@@ -191,6 +193,10 @@ class Image(Descriptor):
     @property
     def envs(self) -> List[Env]:
         return self.get("envs", [])
+
+    @property
+    def args(self) -> List[Arg]:
+        return self.get("args", [])
 
     @property
     def ports(self) -> List[Port]:

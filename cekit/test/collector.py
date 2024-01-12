@@ -41,7 +41,7 @@ class BehaveTestCollector(object):
 
     def _fetch_steps(self, version, url):
         """Method fetches common steps"""
-        logger.info("Fetching common steps from '{}'.".format(url))
+        logger.info("Fetching common steps from '{}', ref '{}'.".format(url, version))
         cmd = [
             "git",
             "clone",
@@ -50,7 +50,7 @@ class BehaveTestCollector(object):
             url,
             self.test_dir,
             "-b",
-            "v%s" % version,
+            "%s" % version,
         ]
         run_wrapper(cmd, False, f"Could not fetch steps from {url}")
 

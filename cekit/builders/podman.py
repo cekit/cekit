@@ -1,11 +1,10 @@
 import logging
 import os
-import shutil
 from typing import List
 
 from cekit.builder import Builder
 from cekit.cekit_types import DependencyDefinition
-from cekit.tools import run_wrapper
+from cekit.tools import locate_binary, run_wrapper
 
 LOGGER = logging.getLogger("cekit")
 
@@ -27,14 +26,15 @@ class PodmanBuilder(Builder):
     def run(self):
         """Build container image using podman."""
 
-        podman = shutil.which("podman")
-        if podman is None:
-            raise RuntimeError("podman binary was not found in the system.")
         tags: List[str] = self.params.tags
-        cmd: List[str] = [podman, "build"]
+        cmd: List[str] = [locate_binary("podman"), "build"]
+        args: List[str] = self.params.args
 
         if not tags:
             tags = self.generator.get_tags()
+
+        if self.params.trace:
+            cmd += ["--log-level", "debug"]
 
         if self.params.pull:
             cmd.append("--pull-always")
@@ -51,6 +51,10 @@ class PodmanBuilder(Builder):
 
         for tag in tags:
             cmd.extend(["-t", tag])
+
+        if args:
+            for arg in args:
+                cmd.extend(["--build-arg=" + arg])
 
         LOGGER.info("Building container image...")
 

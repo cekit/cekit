@@ -1,9 +1,10 @@
 import logging
 import os
+from typing import List
 
 from cekit.builder import Builder
 from cekit.cekit_types import DependencyDefinition
-from cekit.tools import run_wrapper
+from cekit.tools import locate_binary, run_wrapper
 
 LOGGER = logging.getLogger("cekit")
 
@@ -24,14 +25,18 @@ class BuildahBuilder(Builder):
 
     def run(self) -> None:
         """Build container image using buildah."""
-        tags = self.params.tags
-        cmd = ["buildah", "build-using-dockerfile"]
+        tags: List[str] = self.params.tags
+        cmd: List[str] = [locate_binary("buildah"), "build-using-dockerfile"]
+        args: List[str] = self.params.args
 
         if not tags:
             tags = self.generator.get_tags()
 
         if not self.params.no_squash:
             cmd.append("--squash")
+
+        if self.params.trace:
+            cmd += ["--log-level", "debug"]
 
         if self.params.pull:
             cmd.append("--pull-always")
@@ -45,6 +50,10 @@ class BuildahBuilder(Builder):
 
         for tag in tags:
             cmd.extend(["-t", tag])
+
+        if args:
+            for arg in args:
+                cmd.extend(["--build-arg=" + arg])
 
         LOGGER.info("Building container image...")
 

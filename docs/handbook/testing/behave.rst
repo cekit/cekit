@@ -122,6 +122,7 @@ Options
 
 * ``--wip`` -- Only run tests tagged with the ``@wip`` tag.
 * ``--steps-url`` -- A git repository url containing `steps <https://pythonhosted.org/behave/tutorial.html#python-step-implementations>`_ for tests.
+* ``--steps-ref`` -- A reference (branch or tag) in the steps repository to check out
 * ``--name`` -- *Scenario* name to be executed
 * ``--include-re`` -- Regex of feature files which will be executed only
 * ``--exclude-re`` -- Regex of feature files which will not be executed
@@ -315,10 +316,10 @@ The ``tests`` directory is structured as follows:
         tests/steps/*.py
 
 The ``tests/features`` directory is the place where you can drop your `behave
-features. <https://behave.readthedocs.io/en/latest/tutorial.html#features>`__
+features. <https://behave.readthedocs.io/en/latest/tutorial/#features>`__
 
 The ``tests/steps`` directory is optional and contains custom `steps
-<https://behave.readthedocs.io/en/latest/tutorial.html#python-step-implementations>`__
+<https://behave.readthedocs.io/en/latest/tutorial/#python-step-implementations>`__
 for the specific image/module.
 
 Writing features

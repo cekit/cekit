@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
+        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12' ]
         os: [macos-latest, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
@@ -29,9 +29,10 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     - name: Setup Linux
       if: startsWith(matrix.os,'ubuntu')
       run: |
@@ -44,7 +45,7 @@ jobs:
         docker info
         podman version
         podman info
-        pip install "tox<4.0.0"
+        pip install "tox<4.0.0" setuptools
         git config --global user.email "ci@dummy.com" && git config --global user.name "John Doe"
         echo "$HOME/bin" >> $GITHUB_PATH
         mkdir $HOME/bin
@@ -54,10 +55,8 @@ jobs:
     - name: Setup MacOS
       if: startsWith(matrix.os,'macos')
       run: |
-        pip install "tox<4.0.0"
-        # Update qemu for https://github.com/containers/podman/issues/19708 / https://github.com/Homebrew/homebrew-core/issues/140244
-        brew update
-        brew upgrade qemu
+        pip install "tox<4.0.0" setuptools
+        echo "Checking qemu info... $(brew list --versions qemu)"
 
         brew install podman
         podman machine init
@@ -67,6 +66,7 @@ jobs:
         mkdir $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
         ln -s /usr/bin/true $HOME/bin/skopeo
+        ln -s /usr/bin/true $HOME/bin/buildah
     - name: Run tests
       run: |
         PV=${{ matrix.python-version }}

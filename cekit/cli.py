@@ -13,7 +13,7 @@ from cekit.config import Config, default_work_dir
 from cekit.errors import CekitError
 from cekit.log import setup_logging
 from cekit.tools import Map
-from cekit.version import __version__
+from cekit.version import __version__, schema_version
 
 if TYPE_CHECKING:
     from cekit.builder import Command
@@ -39,6 +39,7 @@ def verify_release_passed(ctx, param, value):
     show_default=True,
 )
 @click.option("-v", "--verbose", help="Enable verbose output.", is_flag=True)
+@click.option("--trace", help="Enable trace output.", is_flag=True)
 @click.option("--nocolor", help="Disable color output.", is_flag=True)
 @click.option(
     "--work-dir",
@@ -67,7 +68,7 @@ def verify_release_passed(ctx, param, value):
     show_default=True,
 )
 @click.version_option(message="%(version)s", version=__version__)
-def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target):
+def cli(descriptor, verbose, nocolor, work_dir, config, redhat, target, trace):
     """
     ABOUT
 
@@ -167,11 +168,18 @@ def build(validate, dry_run, container_file, overrides):
     multiple=True,
 )
 @click.option(
+    "--build-arg",
+    "args",
+    metavar="ARG[=VALUE]",
+    help="Pass specified build-arg to the build process, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
     "--platform",
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_docker(ctx, pull, no_squash, tags, platform):
+def build_docker(ctx, pull, no_squash, tags, args, platform):
     """
     DESCRIPTION
 
@@ -197,11 +205,18 @@ def build_docker(ctx, pull, no_squash, tags, platform):
     multiple=True,
 )
 @click.option(
+    "--build-arg",
+    "args",
+    metavar="ARG[=VALUE]",
+    help="Pass specified build-arg to the build process, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
     "--platform",
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_buildah(ctx, pull, no_squash, tags, platform):
+def build_buildah(ctx, pull, no_squash, tags, args, platform):
     """
     DESCRIPTION
 
@@ -225,11 +240,18 @@ def build_buildah(ctx, pull, no_squash, tags, platform):
     multiple=True,
 )
 @click.option(
+    "--build-arg",
+    "args",
+    metavar="ARG[=VALUE]",
+    help="Pass specified build-arg to the build process, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
     "--platform",
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_podman(ctx, pull, no_squash, tags, platform):
+def build_podman(ctx, pull, no_squash, tags, args, platform):
     """
     DESCRIPTION
 
@@ -330,6 +352,12 @@ def test(image, overrides):
     default="https://github.com/cekit/behave-test-steps.git",
     show_default=True,
 )
+@click.option(
+    "--steps-ref",
+    help="Behave steps library reference (branch or tag)",
+    default="v%s" % schema_version,
+    show_default=True,
+)
 @click.option("--wip", help="Run test scenarios tagged with @wip only.", is_flag=True)
 @click.option("--include-re", help="Run only those features which match this regex")
 @click.option("--exclude-re", help="Do not run those features which match this regex")
@@ -340,7 +368,7 @@ def test(image, overrides):
     multiple=True,
 )
 @click.pass_context
-def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
+def test_behave(ctx, steps_url, steps_ref, wip, names, include_re, exclude_re):
     """
     DESCRIPTION
 
@@ -360,7 +388,7 @@ def test_behave(ctx, steps_url, wip, names, include_re, exclude_re):
 
         Execute specific scenario
 
-            $ cekit test --image example/app:1.0 behave --name 'Check that product labels are correctly set'
+            $ cekit [ --descriptor <image descriptor> ] test --image example/app:1.0 behave --name 'Check that product labels are correctly set'
     """
 
     if wip and names:
