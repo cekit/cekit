@@ -13,5 +13,5 @@ pykwalify>=1.6.0
 colorlog>=2.10.0
 click>=6.7
 packaging>=19.0
-odcs>=0.2.10
+odcs[client]>=0.2.10
 ruamel.yaml<=0.18.3 ; python_version<'3.7'
