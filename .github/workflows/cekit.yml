@@ -73,7 +73,7 @@ jobs:
         echo "Running for Python version $PV ( ${PV/./} )"
         make test-py"${PV/./}"
     - name: Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         files: ./target/cov.xml
         verbose: true
