@@ -826,6 +826,27 @@ def test_args_buildah(tmpdir):
     )
 
 
+# https://github.com/cekit/cekit/issues/886
+def test_cleanup_rpm_dnf_default_pkg_manager(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor={
+            "packages": {
+                "manager": "microdnf",
+                "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
+                "install": ["a"],
+            },
+            "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
+        },
+    )
+    regex_dockerfile(target, "rm -rf.*/var/cache/yum")
+    regex_dockerfile(target, "rm -rf.*/var/lib/rpm")
+    regex_dockerfile(target, "rm -rf.*/var/lib/dnf")
+
+
 def generate(image_dir, command, descriptor=None, exit_code=0):
     desc = basic_config.copy()
 
