@@ -843,6 +843,7 @@ def test_cleanup_rpm_dnf_default_pkg_manager(tmpdir):
     regex_dockerfile(target, "rm -rf.*/var/cache/yum")
     regex_dockerfile(target, "rm -rf.*/var/lib/rpm")
     regex_dockerfile(target, "rm -rf.*/var/lib/dnf")
+    regex_dockerfile(target, "rm -rf.*/var/cache/apt")
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):
