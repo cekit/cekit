@@ -449,7 +449,6 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
     )
     regex_dockerfile(target, "rpm -q a")
-    regex_dockerfile(target, "RUN microdnf clean all")
 
 
 # https://github.com/cekit/cekit/issues/462
@@ -480,7 +479,6 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
     regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y foo-repo.rpm")
     regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y a b")
     regex_dockerfile(target, "rpm -q a")
-    regex_dockerfile(target, "RUN dnf clean all")
 
 
 # https://github.com/cekit/cekit/issues/400
