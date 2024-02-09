@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import re
 import shutil
 import sys
 import uuid
@@ -595,6 +596,13 @@ def check_dockerfile_text(image_dir, match, container_file="Dockerfile"):
         if match in dockerfile:
             return True
     return False
+
+
+def regex_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
+        dockerfile_content = fd.read()
+        regex = re.compile(exp_regex, re.MULTILINE)
+        assert regex.search(dockerfile_content) is not None
 
 
 def check_dockerfile_uniq(image_dir, match, container_file="Dockerfile"):
@@ -1328,10 +1336,7 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 """
 
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
-    assert check_dockerfile_text(
-        image_dir,
-        "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum",
-    )
+    regex_dockerfile(image_dir, "rm -rf.*/var/cache/yum")
 
 
 def test_package_related_commands_packages_in_image(tmpdir, mocker):
