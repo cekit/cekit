@@ -2150,8 +2150,7 @@ redhat = True
 
     # Switch to 'root' user and remove artifacts and modules
     USER root
-    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
-    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    RUN rm -rf "/tmp/scripts" "/tmp/artifacts"
     # Define the user
     USER 1001
 ## /
@@ -2367,8 +2366,7 @@ redhat = True
 
     # Switch to 'root' user and remove artifacts and modules
     USER root
-    RUN [ ! -d /tmp/scripts ] || rm -rf /tmp/scripts
-    RUN [ ! -d /tmp/artifacts ] || rm -rf /tmp/artifacts
+    RUN rm -rf "/tmp/scripts" "/tmp/artifacts"
     # Define the user
     USER 1001
 ## /
