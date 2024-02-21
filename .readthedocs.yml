@@ -14,6 +14,7 @@ build:
     python: "3.11"
   apt_packages:
     - libkrb5-dev
+    - graphviz
 
 python:
   install:
