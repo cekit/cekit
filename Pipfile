@@ -4,30 +4,28 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+autopep8 = "*"
 behave = "*"
+black = "*"
+click = "*"
+docker = "*"
+docker-squash = "*"
+flake8 = ">3.6.0"
+isort = "*"
 lxml = "*"
 mock = "*"
+"odcs[client]" = ">=0.2.10"
+pylint = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-mock = "*"
-docker = "*"
-docker-squash = "*"
-click = "*"
-pylint = "*"
-autopep8 = "*"
 "zest.releaser" = "*"
-isort = "*"
-black = "*"
-flake8 = ">3.6.0"
-"odcs[client]" = ">=0.2.10"
 
 [packages]
-pykwalify = ">=1.6.0"
-colorlog = ">=2.10.0"
-PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
+PyYAML = ">=3.10"
 click = ">=6.7"
-"ruamel.yaml" = {version="<=0.18.3",python_version="<3.7"}
-
-[requires]
-python_version = "*"
+colorlog = ">=2.10.0"
+packaging = ">=19.0"
+pykwalify = ">=1.6.0"
+"ruamel.yaml" = {version="<=0.18.3",markers="python_version < '3.7'"}
