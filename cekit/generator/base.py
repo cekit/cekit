@@ -106,13 +106,15 @@ class Generator(object):
         LOGGER.info("Initializing image descriptor...")
 
     @staticmethod
-    def dependencies(params: Map = None) -> DependencyDefinition:
+    def dependencies(params: Map = None, image: Image = None) -> DependencyDefinition:
         deps = {}
 
-        deps["odcs-client"] = {
-            "package": "python3-odcs-client",
-            "library": "odcs",
-        }
+        # Only activate dependency requirement for odcs if we have content_sets
+        if image and image.get("packages").get("content_sets"):
+            deps["odcs-client"] = {
+                "package": "python3-odcs-client",
+                "library": "odcs",
+            }
 
         if CONFIG.get("common", "redhat"):
             deps["brew"] = {"package": "brewkoji", "executable": "brew"}

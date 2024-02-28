@@ -647,18 +647,11 @@ class DependencyHandler(object):
         if not o:
             return
 
-        # Get the class of the object
-        clazz = type(o)
+        if callable(getattr(o, "dependencies", None)):
+            from cekit.generator.base import Generator
 
-        for var in [clazz, o]:
-            # Check if a static method or variable 'dependencies' exists
-            dependencies = getattr(var, "dependencies", None)
-
-            if not dependencies:
-                continue
-
-            # Check if we have a method
-            if callable(dependencies):
-                # Execute that method to get list of dependencies and try to handle them
+            # Execute that method to get list of dependencies and try to handle them
+            if isinstance(o, Generator):
+                self._handle_dependencies(o.dependencies(params, o.image))
+            else:
                 self._handle_dependencies(o.dependencies(params))
-                return
