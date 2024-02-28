@@ -19,6 +19,7 @@ autopep8 = "*"
 isort = "*"
 black = "*"
 flake8 = ">3.6.0"
+"odcs[client]" = ">=0.2.10"
 
 [packages]
 pykwalify = ">=1.6.0"
@@ -26,7 +27,6 @@ colorlog = ">=2.10.0"
 PyYAML = ">=3.10"
 Jinja2 = ">=2.7"
 click = ">=6.7"
-"odcs[client]" = ">=0.2.10"
 "ruamel.yaml" = {version="<=0.18.3",python_version="<3.7"}
 
 [requires]

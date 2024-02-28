@@ -111,11 +111,11 @@ class Builder(Command):
             self.generator.add_redhat_overrides()
 
     def before_generate(self) -> None:
-        # Handle dependencies for selected generator, if any
-        LOGGER.debug("Checking CEKit generate dependencies...")
-        self.dependency_handler.handle(self.generator, self.params)
-
         self.generator.init()
+
+        LOGGER.debug("Checking CEKit generate dependencies...")
+        # Handle dependencies for selected generator, if any
+        self.dependency_handler.handle(self.generator, self.params)
 
     def generate(self) -> None:
         self.generator.generate()
