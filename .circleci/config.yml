@@ -72,7 +72,7 @@ jobs:
             mkdir -p ./venv
             virtualenv ./venv
             . venv/bin/activate
-            pip install -r ../requirements.txt -r requirements.txt
+            pip install -r requirements.txt
       - run:
           name: Generate documentation
           command: |
