@@ -1,8 +1,6 @@
 Repository guidelines
 ==========================
 
-.. contents::
-    :backlinks: none
 
 One of the biggest challenges we faced with CEKit is how to manage and define
 package repositories correctly. This section focuses on best practices around

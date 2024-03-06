@@ -1,8 +1,6 @@
 Image Descriptor and Modules
 ============================
 
-.. contents::
-    :backlinks: none
 
 .. note::
     This chapter applies to :doc:`builder engines </handbook/building/builder-engines>` that use Dockerfile as the input.

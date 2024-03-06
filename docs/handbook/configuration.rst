@@ -14,8 +14,6 @@ Example
 
         $ cekit --config ~/alternative_path build
 
-.. contents::
-    :backlinks: none
 
 Below you can find description of available sections together with options described in detail.
 

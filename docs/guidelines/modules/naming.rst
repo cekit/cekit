@@ -1,8 +1,6 @@
 Module naming
 ===================
 
-.. contents::
-    :backlinks: none
 
 In this section we will be talking about about best practices related to module naming.
 

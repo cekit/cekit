@@ -1,8 +1,6 @@
 Build process explained
 ========================
 
-.. contents::
-    :backlinks: none
 
 In this section we will go through the build process. You will learn what stages
 there are and what is done in every stage.

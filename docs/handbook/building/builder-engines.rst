@@ -1,8 +1,6 @@
 Supported builder engines
 ================================
 
-.. contents::
-    :backlinks: none
 
 CEKit supports following builder engines:
 

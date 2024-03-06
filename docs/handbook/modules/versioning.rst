@@ -1,8 +1,6 @@
 Module versioning
 ===================
 
-.. contents::
-    :backlinks: none
 
 Module versioning is an important aspect of image development process. Proper handling of versions makes it easy
 to control what exactly content should be part of the image.
