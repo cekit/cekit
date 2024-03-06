@@ -1,8 +1,6 @@
 Overrides
 =========
 
-.. contents::
-    :backlinks: none
 
 During an image life cycle there can be a need to do a slightly tweaked builds --
 using different base images, injecting newer libraries etc. We want to support such

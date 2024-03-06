@@ -15,8 +15,6 @@ package names to install (if available).
 
 Below you can see a summary of CEKit dependencies and when these are required.
 
-.. contents::
-    :backlinks: none
 
 Core dependencies
 ----------------------------------

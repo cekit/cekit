@@ -1,8 +1,6 @@
 Installation instructions
 =========================
 
-.. contents::
-    :backlinks: none
 
 
 Python versions >= 3.6 are supported. See the `GitHub Action <https://github.com/cekit/cekit/blob/develop/

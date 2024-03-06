@@ -1,8 +1,6 @@
 Artifact caching
 ================
 
-.. contents::
-    :backlinks: none
 
 In this chapter we will go through the caching feature of CEKit.
 

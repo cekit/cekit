@@ -1,8 +1,6 @@
 Artifact guidelines
 ==========================
 
-.. contents::
-    :backlinks: none
 
 Building container images without content doesn't make sense. You can add :ref:`packages <descriptor/image:Packages>`
 shipped with the operating system, you can add scripts with :doc:`modules </handbook/modules/index>`, but

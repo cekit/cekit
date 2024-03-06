@@ -1,8 +1,6 @@
 Base images
 ===============================
 
-.. contents::
-    :backlinks: none
 
 This chapter discusses support for creating images that extend the ``scratch`` image
 to build base images.
