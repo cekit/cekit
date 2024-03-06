@@ -8,11 +8,6 @@ sys.path.append(os.path.abspath("./_ext"))
 
 from cekit.version import __version__ as cekit_version  # noqa: E402
 
-
-# def setup(app):
-#     app.add_css_file("css/custom.css")
-
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -51,7 +46,6 @@ exclude_patterns = ["_build", ".venv", "venv"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "monokai"
-                 #"sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -63,7 +57,7 @@ html_theme = "furo"
 
 html_theme_options = {
     "globaltoc_collapse": True,
-     "top_of_page_button": None,
+    "top_of_page_button": None,
 }
 
 html_sidebars = {
@@ -76,4 +70,3 @@ html_sidebars = {
         "sidebar/scroll-end.html",
     ]
 }
-

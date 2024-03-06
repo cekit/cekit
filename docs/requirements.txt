@@ -2,13 +2,4 @@ sphinx>=1.7.6
 sphinx-autobuild>=0.7.1
 sphinx-copybutton
 furo
-
-# ### to be removed
-sphinx-rtd-theme
-sphinx-nefertiti
-sphinx-book-theme
-pydata-sphinx-theme
-sphinxawesome-theme
-# END
-
 -r ../requirements.txt
