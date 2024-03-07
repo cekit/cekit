@@ -109,18 +109,14 @@ class CacheCli:
         cached = artifact_cache.cached(artifact)
 
         if cached:
-            click.echo("Artifact {} is already cached!".format(location))
+            click.echo(f"Artifact {location} is already cached!")
             sys.exit(0)
 
         try:
             artifact_id = artifact_cache.add(artifact)
-            click.echo(
-                "Artifact {} cached with UUID '{}'".format(location, artifact_id)
-            )
+            click.echo(f"Artifact {location} cached with UUID '{artifact_id}'")
         except Exception as ex:
-            click.secho(
-                "Cannot cache artifact {}: {}".format(location, str(ex)), fg="red"
-            )
+            click.secho(f"Cannot cache artifact {location}: {str(ex)}", fg="red")
             sys.exit(1)
 
     def ls(self):
@@ -137,16 +133,12 @@ class CacheCli:
                 )
                 for alg in SUPPORTED_HASH_ALGORITHMS:
                     if alg in artifact and artifact[alg]:
-                        click.echo(
-                            "  {}: {}".format(
-                                click.style(alg, bold=True), artifact[alg]
-                            )
-                        )
+                        click.echo(f"  {click.style(alg, bold=True)}: {artifact[alg]}")
 
                 if artifact["names"]:
-                    click.echo("  {}:".format(click.style("names", bold=True)))
+                    click.echo(f"  {click.style('names', bold=True)}:")
                     for name in artifact["names"]:
-                        click.echo("    - %s" % name)
+                        click.echo(f"    - {name}")
         else:
             click.echo("No artifacts cached!")
 
@@ -155,10 +147,10 @@ class CacheCli:
 
         try:
             artifact_cache.delete(uuid)
-            click.echo("Artifact with UUID '{}' removed".format(uuid))
+            click.echo(f"Artifact with UUID '{uuid}' removed")
         except Exception:
             click.secho(
-                "Artifact with UUID '{}' doesn't exists in the cache".format(uuid),
+                f"Artifact with UUID '{uuid}' doesn't exists in the cache",
                 fg="yellow",
             )
             sys.exit(1)

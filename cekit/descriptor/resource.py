@@ -78,9 +78,7 @@ class Resource(Descriptor):
     def __init__(self, descriptor: RawResourceDescriptor):
         # Schema must be provided by the implementing class
         if not self.schema:
-            raise CekitError(
-                "Resource '{}' has no schema defined".format(type(self).__name__)
-            )
+            raise CekitError(f"Resource '{type(self).__name__}' has no schema defined")
 
         # Includes validation
         super(Resource, self).__init__(descriptor)
@@ -228,24 +226,24 @@ class Resource(Descriptor):
         if os.path.isdir(target):
             target = os.path.join(target, self.target)
 
-        logger.info("Copying resource '{}'...".format(self.name))
+        logger.info(f"Copying resource '{self.name}'...")
 
         if os.path.exists(target) and self.__verify(target):
-            logger.debug("Local resource '{}' exists and is valid".format(self.name))
+            logger.debug(f"Local resource '{self.name}' exists and is valid")
             return target
 
         cached_resource = self.cache.cached(self)
 
         if cached_resource:
             shutil.copy(cached_resource["cached_path"], target)
-            logger.info("Using cached artifact '{}'.".format(self.name))
+            logger.info(f"Using cached artifact '{self.name}'.")
 
         else:
             try:
                 self.cache.add(self)
                 cached_resource = self.cache.get(self)
                 shutil.copy(cached_resource["cached_path"], target)
-                logger.info("Using cached artifact '{}'.".format(self.name))
+                logger.info(f"Using cached artifact '{self.name}'.")
             except ValueError:
                 return self.guarded_copy(target)
 
@@ -265,7 +263,7 @@ class Resource(Descriptor):
 
             # exception is fatal we be logged before Cekit dies
             raise CekitError(
-                "Error copying resource: '%s'. See logs for more info." % self.name
+                f"Error copying resource: '{self.name}'. See logs for more info."
             ) from ex
 
         if set(SUPPORTED_HASH_ALGORITHMS).intersection(self) and not self.__verify(
@@ -278,9 +276,7 @@ class Resource(Descriptor):
     def __verify(self, target: PathType) -> bool:
         """Checks all defined check_sums for an artifact"""
         if not set(SUPPORTED_HASH_ALGORITHMS).intersection(self):
-            logger.debug(
-                "Artifact '{}' lacks any checksum definition.".format(self.name)
-            )
+            logger.debug(f"Artifact '{self.name}' lacks any checksum definition.")
             return False
         if not Resource.CHECK_INTEGRITY:
             logger.info("Integrity checking disabled, skipping verification.")
@@ -304,7 +300,7 @@ class Resource(Descriptor):
         for algorithm in SUPPORTED_HASH_ALGORITHMS:
             if algorithm in self:
                 logger.debug(
-                    "Using {} checksum to fetch artifacts from cacher".format(algorithm)
+                    f"Using {algorithm} checksum to fetch artifacts from cacher"
                 )
 
                 url = (
@@ -313,7 +309,7 @@ class Resource(Descriptor):
                     .replace("#hash#", self[algorithm])
                 )
 
-                logger.debug("Using cache url '{}'".format(url))
+                logger.debug(f"Using cache url '{url}'")
 
         return url
 
@@ -325,7 +321,7 @@ class Resource(Descriptor):
             url = self.__substitute_cache_url(url)
         if not url:
             raise CekitError(
-                "Artifact %s cannot be downloaded, no URL provided" % self.name
+                f"Artifact {self.name} cannot be downloaded, no URL provided"
             )
         download_file(url, destination)
 
@@ -387,7 +383,7 @@ class _PathResource(Resource):
                     return target
                 except Exception as ex:
                     raise CekitError(
-                        "Could not download resource '%s' from cache" % self.name
+                        f"Could not download resource '{self.name}' from cache"
                     ) from ex
             else:
                 raise CekitError(
@@ -396,7 +392,7 @@ class _PathResource(Resource):
                     "Make sure you provided correct path" % self.name
                 )
 
-        logger.debug("Copying repository from '{}' to '{}'.".format(self.path, target))
+        logger.debug(f"Copying repository from '{self.path}' to '{target}'.")
         if os.path.isdir(self.path):
             shutil.copytree(self.path, target)
         else:
@@ -467,9 +463,7 @@ class _UrlResource(Resource):
             self._download_file(self.url, target)
         except Exception:
             logger.debug(
-                "Cannot hit artifact: '{}' via cache, trying directly.".format(
-                    self.name
-                )
+                f"Cannot hit artifact: '{self.name}' via cache, trying directly."
             )
             self._download_file(self.url, target, use_cache=False)
         return target
@@ -573,14 +567,14 @@ class _PlainResource(Resource):
             except Exception as e:
                 logger.debug(str(e))
                 logger.warning(
-                    "Could not download '{}' artifact using cacher".format(self.name)
+                    f"Could not download '{self.name}' artifact using cacher"
                 )
 
         # Next option is to download it from Brew directly but only if the md5 checksum
         # is provided and we are running with the --redhat switch
         if self.md5 and config.get("common", "redhat"):
             logger.debug(
-                "Trying to download artifact '{}' from Brew directly".format(self.name)
+                f"Trying to download artifact '{self.name}' from Brew directly"
             )
 
             try:
@@ -591,11 +585,9 @@ class _PlainResource(Resource):
                 return target
             except Exception as e:
                 logger.debug(str(e))
-                logger.warning(
-                    "Could not download artifact '{}' from Brew".format(self.name)
-                )
+                logger.warning(f"Could not download artifact '{self.name}' from Brew")
 
-        raise CekitError("Artifact {} could not be found".format(self.name))
+        raise CekitError(f"Artifact {self.name} could not be found")
 
     def _get_default_name_value(self, descriptor: RawResourceDescriptor) -> str:
         return ""

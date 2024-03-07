@@ -25,7 +25,7 @@ class Execute(Descriptor):
         descriptor["module_name"] = module_name
 
         if "name" not in descriptor:
-            descriptor["name"] = "{}/{}".format(module_name, descriptor["script"])
+            descriptor["name"] = f"{module_name}/{descriptor['script']}"
 
     @property
     def name(self) -> str:

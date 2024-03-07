@@ -430,7 +430,7 @@ def test_image_pnc_artifacts_2():
         ),
         "foo",
     )
-    print("Got {}".format(image.artifacts[0]))
+    print(f"Got {image.artifacts[0]}")
     assert image.artifacts[0]["name"] == "jolokia.jar"
     assert image.artifacts[0]["pnc_build_id"] == "54321"
     assert image.artifacts[0]["target"] == "jolokia.jar"

@@ -593,8 +593,8 @@ def check_dockerfile(image_dir, match, container_file="Dockerfile"):
 def check_dockerfile_text(image_dir, match, container_file="Dockerfile"):
     with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         dockerfile = fd.read()
-        print("MATCH:\n{}".format(match))
-        print("DOCKERFILE:\n{}".format(dockerfile))
+        print(f"MATCH:\n{match}")
+        print(f"DOCKERFILE:\n{dockerfile}")
         if match in dockerfile:
             return True
     return False
@@ -1548,7 +1548,7 @@ def test_disabling_content_sets(tmpdir, caplog, parameter):
             "--dry-run",
             # Ugly, but double braces are required for 'format to work'
             "--overrides",
-            '{{"packages": {{"{0}": ~}}}}'.format(parameter),
+            f'{{"packages": {{"{parameter}": ~}}}}',
             "podman",
         ],
     )

@@ -84,8 +84,8 @@ class TemplateHelper(object):
 
         ret = []
         for cmd in arr:
-            ret.append('"%s"' % cmd)
-        return "[%s]" % ", ".join(ret)
+            ret.append(f'"{cmd}"')
+        return f"[{', '.join(ret)}]"
 
     def all_envs(self, image):
         envs = []

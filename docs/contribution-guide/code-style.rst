@@ -21,10 +21,14 @@ will also verify this formatting.
 Logging
 --------
 
-Python supports a number of different logging patterns - for more information see `Pyformat <https://pyformat.info/>`_
-and `Formatting python log messages <https://reinout.vanrees.org/weblog/2015/06/05/logging-formatting.html>`_.
-We request that the new format style is followed e.g.
+Python supports a number of different logging patterns - for more information see `here <https://docs.python
+.org/3/tutorial/inputoutput.html>`_ and `Python's F-String for String Interpolation and Formatting
+<https://realpython.com/python-f-strings/>`_ and `here <https://martinheinz.dev/blog/70>`_
+
+Given most `performance measurements <https://www.reddit
+.com/r/Python/comments/pivojb/performance_comparison_of_string_formatting/>`_ show f-strings to be preferred we request
+that their style is followed e.g.
 
 .. code-block:: python3
 
-   logger.info("Fetching common steps from '{}'.".format(url))
+   logger.info(f"Fetching common steps from '{url}'.")

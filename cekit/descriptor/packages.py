@@ -77,7 +77,7 @@ class Packages(Descriptor):
             )
 
             if not os.path.exists(content_sets_file):
-                raise CekitError("'%s' file not found!" % content_sets_file)
+                raise CekitError(f"'{content_sets_file}' file not found!")
 
             with open(content_sets_file, "r") as file_:
                 descriptor["content_sets"] = yaml.safe_load(file_)
@@ -164,7 +164,7 @@ class Repository(Descriptor):
                 "['id', 'rpm', 'url']" % descriptor["name"]
             )
 
-        descriptor["filename"] = "%s.repo" % descriptor["name"].replace(" ", "_")
+        descriptor["filename"] = f"{descriptor['name'].replace(' ', '_')}.repo"
 
         if "url" not in descriptor:
             descriptor["url"] = {}
@@ -174,7 +174,7 @@ class Repository(Descriptor):
 
     def fetch(self, target_dir):
         if not self._descriptor["url"]["repository"]:
-            raise CekitError("Repository not defined for '{}'.".format(self.name))
+            raise CekitError(f"Repository not defined for '{self.name}'.")
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         create_resource({"url": self._descriptor["url"]["repository"]}).copy(

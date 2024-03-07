@@ -82,7 +82,7 @@ class Generator(object):
 
         if overrides:
             for override in overrides:
-                LOGGER.debug("Loading override '{}'".format(override))
+                LOGGER.debug(f"Loading override '{override}'")
                 if urlparse(override).scheme in ["http", "https", "file"]:
                     # HTTP Handling
                     tmpfile = tempfile.NamedTemporaryFile()
@@ -142,9 +142,7 @@ class Generator(object):
                 "Descriptor contains multiple elements, assuming multi-stage image"
             )
             LOGGER.info(
-                "Found {} builder image(s) and one target image".format(
-                    len(descriptor[:-1])
-                )
+                f"Found {len(descriptor[:-1])} builder image(s) and one target image"
             )
 
             # Iterate over images defined in image descriptor and
@@ -268,7 +266,7 @@ class Generator(object):
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
         for repo in self._module_repositories():
-            LOGGER.debug("Downloading module repository: '{}'".format(repo.name))
+            LOGGER.debug(f"Downloading module repository: '{repo.name}'")
             repo.copy(base_dir)
             self.load_repository(os.path.join(base_dir, repo.target))
 
@@ -286,15 +284,13 @@ class Generator(object):
                     modules_dir,
                     os.path.dirname(module_descriptor_path),
                 )
-                LOGGER.debug(
-                    "Adding module '{}', path: '{}'".format(module.name, module.path)
-                )
+                LOGGER.debug(f"Adding module '{module.name}', path: '{module.path}'")
                 self._module_registry.add_module(module)
 
     def get_tags(self) -> List[str]:
         return [
-            "%s:%s" % (self.image["name"], self.image["version"]),
-            "%s:latest" % self.image["name"],
+            f"{self.image['name']}:{self.image['version']}",
+            f"{self.image['name']}:latest",
         ]
 
     def copy_modules(self) -> None:
@@ -318,15 +314,13 @@ class Generator(object):
                 module.name, module.version, suppress_warnings=True
             )
             LOGGER.debug(
-                "Copying module '{}' required by '{}'.".format(
-                    module.name, self.image.name
-                )
+                f"Copying module '{module.name}' required by '{self.image.name}'."
             )
 
             dest = os.path.join(target, module.name)
 
             if not os.path.exists(dest):
-                LOGGER.debug("Copying module '{}' to: '{}'".format(module.name, dest))
+                LOGGER.debug(f"Copying module '{module.name}' to: '{dest}'")
                 shutil.copytree(module.path, dest)
             # write out the module with any overrides
             module.write(os.path.join(dest, "module.yaml"))
@@ -343,13 +337,13 @@ class Generator(object):
                     Env(
                         {
                             "name": "JBOSS_IMAGE_NAME",
-                            "value": "%s" % self._generator.image["name"],
+                            "value": f"{self._generator.image['name']}",
                         }
                     ),
                     Env(
                         {
                             "name": "JBOSS_IMAGE_VERSION",
-                            "value": "%s" % self._generator.image["version"],
+                            "value": f"{self._generator.image['version']}",
                         }
                     ),
                 ]
@@ -358,12 +352,12 @@ class Generator(object):
             def labels(self):
                 labels = [
                     Label(
-                        {"name": "name", "value": "%s" % self._generator.image["name"]}
+                        {"name": "name", "value": f"{self._generator.image['name']}"}
                     ),
                     Label(
                         {
                             "name": "version",
-                            "value": "%s" % self._generator.image["version"],
+                            "value": f"{self._generator.image['version']}",
                         }
                     ),
                 ]
@@ -419,9 +413,7 @@ class Generator(object):
                     os.path.dirname(self._descriptor_path), help_template_path
                 )
 
-        LOGGER.info(
-            "Rendering help.md page from template {}".format(help_template_path)
-        )
+        LOGGER.info(f"Rendering help.md page from template {help_template_path}")
 
         help_dirname, help_basename = os.path.split(help_template_path)
         loader = FileSystemLoader(help_dirname)
@@ -487,7 +479,7 @@ class Generator(object):
 
         if arch not in content_sets:
             raise CekitError(
-                "There are no content_sets defined for platform '{}'!".format(arch)
+                f"There are no content_sets defined for platform '{arch}'!"
             )
 
         repos = " ".join(content_sets[arch])
@@ -499,9 +491,7 @@ class Generator(object):
             odcs_service_type = "Red Hat"
             odcs_url = "https://odcs.engineering.redhat.com"
 
-        LOGGER.info(
-            "Using {} ODCS service to create composes".format(odcs_service_type)
-        )
+        LOGGER.info(f"Using {odcs_service_type} ODCS service to create composes")
 
         flags = []
 
@@ -539,24 +529,22 @@ class Generator(object):
 
         if not compose_id:
             raise CekitError(
-                "Invalid response from ODCS service: no compose id found: {}".format(
-                    compose
-                )
+                f"Invalid response from ODCS service: no compose id found: {compose}"
             )
 
-        LOGGER.debug("Waiting for compose {} to finish...".format(compose_id))
+        LOGGER.debug(f"Waiting for compose {compose_id} to finish...")
 
         compose = odcs.wait_for_compose(compose_id, timeout=600)
         state = compose.get("state", None)
 
         if not state:
             raise CekitError(
-                "Invalid response from ODCS service: no state found: {}".format(compose)
+                f"Invalid response from ODCS service: no state found: {compose}"
             )
 
         # State 2 is "done"
         if state != 2:
-            raise CekitError("Cannot create ODCS compose: '{}'".format(compose))
+            raise CekitError(f"Cannot create ODCS compose: '{compose}'")
 
         LOGGER.debug("Compose finished successfully")
 
@@ -640,9 +628,7 @@ class ModuleRegistry(object):
 
         # If there are no modules with the requested name, fail
         if not modules:
-            raise CekitError(
-                "There are no modules with '{}' name available".format(name)
-            )
+            raise CekitError(f"There are no modules with '{name}' name available")
 
         # If there is no module version requested, get default one
         if version is None:

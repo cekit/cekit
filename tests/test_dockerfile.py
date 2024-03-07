@@ -528,8 +528,8 @@ def test_supported_package_managers(tmpdir, manager):
     flags = "--setopt=tsflags=nodocs"
     if "microdnf" in manager:
         flags = "--setopt=install_weak_deps=0 " + flags
-    regex_dockerfile(target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
-    regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
+    regex_dockerfile(target, f"RUN {manager} {flags} install -y foo-repo.rpm")
+    regex_dockerfile(target, f"RUN {manager} {flags} install -y a")
     regex_dockerfile(target, "rpm -q a")
 
 

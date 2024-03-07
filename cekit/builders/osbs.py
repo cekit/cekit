@@ -152,7 +152,7 @@ class OSBSBuilder(Builder):
         if not os.path.exists(os.path.dirname(self.dist_git_dir)):
             os.makedirs(os.path.dirname(self.dist_git_dir))
 
-        LOGGER.debug("Using dist-git directory of {}".format(self.dist_git_dir))
+        LOGGER.debug(f"Using dist-git directory of {self.dist_git_dir}")
 
         self.git = Git(
             self.dist_git_dir,
@@ -168,9 +168,7 @@ class OSBSBuilder(Builder):
         self.git.clean(self.artifacts)
 
     def _copy_to_dist_git(self):
-        LOGGER.debug(
-            "Copying files to dist-git '{}' directory".format(self.dist_git_dir)
-        )
+        LOGGER.debug(f"Copying files to dist-git '{self.dist_git_dir}' directory")
         copy_recursively(os.path.join(self.target, "image"), self.dist_git_dir)
 
     def _sync_with_dist_git(self):
@@ -189,7 +187,7 @@ class OSBSBuilder(Builder):
     ):
         """Default timeout is 2hrs"""
 
-        LOGGER.debug("Checking if task {} is finished...".format(task_id))
+        LOGGER.debug(f"Checking if task {task_id} is finished...")
 
         # Time between subsequent querying the API
         sleep_time = 20
@@ -237,9 +235,7 @@ class OSBSBuilder(Builder):
 
         # In all other cases (failed, cancelled) task did not finish successfully
         raise CekitError(
-            "Task {} did not finish successfully, please check the task logs!".format(
-                task_id
-            )
+            f"Task {task_id} did not finish successfully, please check the task logs!"
         )
 
     def update_lookaside_cache(self):
@@ -300,14 +296,14 @@ class OSBSBuilder(Builder):
             # Parse the dist-git repository url
             url = urlparse(url)
             # Construct the url again, with a hash and removed username and password, if any
-            src = "git+https://{}/git{}#{}".format(url.hostname, url.path, commit)
+            src = f"git+https://{url.hostname}/git{url.path}#{commit}"
 
             target = self.generator.image.get("osbs", {}).get("koji_target")
 
             # If target was not specified in the image descriptor
             if not target:
                 # Default to computed target based on branch
-                target = "{}-containers-candidate".format(self.git.branch)
+                target = f"{self.git.branch}-containers-candidate"
 
             scratch = True
 
@@ -320,15 +316,13 @@ class OSBSBuilder(Builder):
 
             cmd.append(kwargs)
 
-            LOGGER.info("About to execute '{}'.".format(" ".join(cmd)))
+            LOGGER.info(f"About to execute '{' '.join(cmd)}'.")
 
             if self.params.assume_yes or tools.decision(
                 "Do you want to build the image in OSBS?"
             ):
                 build_type = "scratch" if scratch else "release"
-                LOGGER.info(
-                    "Executing {} container build in OSBS...".format(build_type)
-                )
+                LOGGER.info(f"Executing {build_type} container build in OSBS...")
 
                 task_id = run_wrapper(cmd, True).stdout
 
@@ -462,23 +456,17 @@ class Git(object):
     def prepare(self, stage, user: Optional[str] = None) -> None:
         if os.path.exists(self.output):
             with Chdir(self.output):
-                LOGGER.info("Fetching latest changes in repo {}...".format(self.repo))
+                LOGGER.info(f"Fetching latest changes in repo {self.repo}...")
                 run_wrapper(["git", "fetch"], False)
-                LOGGER.debug("Checking out {} branch...".format(self.branch))
+                LOGGER.debug(f"Checking out {self.branch} branch...")
                 run_wrapper(["git", "checkout", "-f", self.branch], False)
                 LOGGER.debug("Resetting branch...")
-                run_wrapper(
-                    ["git", "reset", "--hard", "origin/%s" % self.branch], False
-                )
+                run_wrapper(["git", "reset", "--hard", f"origin/{self.branch}"], False)
                 LOGGER.debug("Removing any untracked files or directories...")
                 run_wrapper(["git", "clean", "-fdx"], False)
             LOGGER.debug("Changes pulled")
         else:
-            LOGGER.info(
-                "Cloning {} git repository ({} branch)...".format(
-                    self.repo, self.branch
-                )
-            )
+            LOGGER.info(f"Cloning {self.repo} git repository ({self.branch} branch)...")
 
             if stage:
                 cmd = ["rhpkg-stage"]
@@ -488,9 +476,9 @@ class Git(object):
             if user:
                 cmd += ["--user", user]
             cmd += ["-q", "clone", "-b", self.branch, self.repo, self.output]
-            LOGGER.debug("Cloning: '{}'".format(" ".join(cmd)))
+            LOGGER.debug(f"Cloning: '{' '.join(cmd)}'")
             run_wrapper(cmd, False)
-            LOGGER.debug("Repository {} cloned".format(self.repo))
+            LOGGER.debug(f"Repository {self.repo} cloned")
 
     def clean(self, artifacts: List[str]) -> None:
         """
@@ -507,16 +495,14 @@ class Git(object):
             git_files = run_wrapper(["git", "ls-files", "."], True).stdout.splitlines()
 
             for d in ["repos", "modules"] + directory_artifacts:
-                LOGGER.info("Removing old '{}' directory".format(d))
+                LOGGER.info(f"Removing old '{d}' directory")
                 shutil.rmtree(d, ignore_errors=True)
 
                 if d in git_files:
                     run_wrapper(["git", "rm", "-rf", d], False)
 
             if os.path.exists(self.osbs_extra):
-                LOGGER.info(
-                    "Removing old osbs extra directory : {}".format(self.osbs_extra)
-                )
+                LOGGER.info(f"Removing old osbs extra directory : {self.osbs_extra}")
                 run_wrapper(["git", "rm", "-rf", self.osbs_extra], False)
 
             if os.path.exists("fetch-artifacts-url.yaml"):
@@ -550,13 +536,13 @@ class Git(object):
             commit_msg = "Sync"
 
             if self.source_repo_name:
-                commit_msg += " with %s" % self.source_repo_name
+                commit_msg += f" with {self.source_repo_name}"
 
             if self.source_repo_commit:
-                commit_msg += ", commit %s" % self.source_repo_commit
+                commit_msg += f", commit {self.source_repo_commit}"
 
         # Commit the change
-        LOGGER.info("Committing with message: '{}'".format(commit_msg))
+        LOGGER.info(f"Committing with message: '{commit_msg}'")
         run_wrapper(["git", "commit", "-q", "-m", commit_msg], False)
         untracked = run_wrapper(
             ["git", "ls-files", "--others", "--exclude-standard"], True
