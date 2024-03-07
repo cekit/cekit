@@ -352,9 +352,7 @@ class Image(Descriptor):
                     ).get(key):
                         new_value = artifact_overrides.get(name).get(key)
                         logger.debug(
-                            "Key ({}) found in original artifact as {}".format(
-                                key, new_value
-                            )
+                            f"Key ({key}) found in original artifact as {new_value}"
                         )
                         artifact[key] = new_value
 
@@ -366,9 +364,7 @@ class Image(Descriptor):
                 image_artifacts[name] = artifact
                 # Sort the output as it makes it easier to view and test.
                 logger.debug(
-                    "Final (with override) artifact is {}".format(
-                        sorted(artifact.items())
-                    )
+                    f"Final (with override) artifact is {sorted(artifact.items())}"
                 )
             self._descriptor["artifacts"] = list(image_artifacts.values())
 
@@ -439,9 +435,7 @@ class Image(Descriptor):
         artifact_overrides = self._image_overrides.artifacts
         for to_install in to_install_list:
             logger.debug(
-                "Preparing module '{}' required by '{}'.".format(
-                    to_install.name, source.name
-                )
+                f"Preparing module '{to_install.name}' required by '{source.name}'."
             )
             override = module_overrides.get(to_install.name, None)
             if override:

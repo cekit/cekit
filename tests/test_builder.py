@@ -185,7 +185,7 @@ def create_builder_object(
     elif "buildah" == builder:
         from cekit.builders.buildah import BuildahBuilder as BuilderImpl
     else:
-        raise Exception("Builder engine %s is not supported" % builder)
+        raise Exception(f"Builder engine {builder} is not supported")
 
     mocker.patch("cekit.tools.decision")
 

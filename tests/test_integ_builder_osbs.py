@@ -524,9 +524,7 @@ def test_osbs_builder_add_extra_files(tmpdir, mocker, caplog):
     assert os.path.exists(str(repo_dir.join("osbs_extra", "file_b"))) is True
     assert len(mock_run.mock_calls) == 11
     assert "Image was built successfully in OSBS!" in caplog.text
-    assert (
-        "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    )
+    assert f"Copying files to dist-git '{str(repo_dir)}' directory" in caplog.text
     assert (
         "Copying 'target/image/osbs_extra' to '{}'...".format(
             os.path.join(str(repo_dir), "osbs_extra")
@@ -612,9 +610,7 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     assert os.path.exists(str(repo_dir.join("osbs_extra").join("file_b"))) is True
     assert len(mock_run.mock_calls) == 12
     assert "Image was built successfully in OSBS!" in caplog.text
-    assert (
-        "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    )
+    assert f"Copying files to dist-git '{str(repo_dir)}' directory" in caplog.text
     assert "Removing old osbs extra directory : osbs_extra" in caplog.text
     assert (
         "Copying 'target/image/osbs_extra' to '{}'...".format(
@@ -715,14 +711,10 @@ def test_osbs_builder_add_extra_files_non_default_with_extra_dir_target(
     assert os.path.exists(str(repo_dir.join("foobar").join("file_b"))) is True
     assert len(mock_run.mock_calls) == 12
     assert "Image was built successfully in OSBS!" in caplog.text
-    assert (
-        "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    )
+    assert f"Copying files to dist-git '{str(repo_dir)}' directory" in caplog.text
     assert "Removing old osbs extra directory : foobar" in caplog.text
     assert (
-        "Copying 'target/image/foobar' to '{}'...".format(
-            os.path.join(str(repo_dir), "foobar")
-        )
+        f"Copying 'target/image/foobar' to '{os.path.join(str(repo_dir), 'foobar')}'..."
         in caplog.text
     )
     assert "Staging 'foobar'..." in caplog.text
@@ -796,9 +788,7 @@ def test_osbs_builder_add_extra_files_and_overwrite(tmpdir, mocker, caplog):
 
     assert len(mock_run.mock_calls) == 12
     assert "Image was built successfully in OSBS!" in caplog.text
-    assert (
-        "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    )
+    assert f"Copying files to dist-git '{str(repo_dir)}' directory" in caplog.text
     assert (
         "Copying 'target/image/osbs_extra' to '{}'...".format(
             os.path.join(str(repo_dir), "osbs_extra")
@@ -860,13 +850,9 @@ def test_osbs_builder_add_extra_files_from_custom_dir(tmpdir, mocker, caplog):
     )
     assert len(mock_run.mock_calls) == 11
     assert "Image was built successfully in OSBS!" in caplog.text
+    assert f"Copying files to dist-git '{str(repo_dir)}' directory" in caplog.text
     assert (
-        "Copying files to dist-git '{}' directory".format(str(repo_dir)) in caplog.text
-    )
-    assert (
-        "Copying 'target/image/dist' to '{}'...".format(
-            os.path.join(str(repo_dir), "dist")
-        )
+        f"Copying 'target/image/dist' to '{os.path.join(str(repo_dir), 'dist')}'..."
         in caplog.text
     )
     assert "Staging 'dist'..." in caplog.text
@@ -2468,7 +2454,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
         os.path.join(str(tmpdir), "target", "image", "fetch-artifacts-pnc.yaml"), "r"
     ) as _file:
         fetch_artifacts_yaml = yaml.safe_load(_file)
-    print("Read fetch_pnc_artifacts {}\n".format(fetch_artifacts))
+    print(f"Read fetch_pnc_artifacts {fetch_artifacts}\n")
     assert "# Created by CEKit version" in fetch_artifacts
     assert fetch_artifacts_yaml["builds"] == [
         {

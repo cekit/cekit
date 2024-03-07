@@ -35,13 +35,13 @@ class BehaveTestCollector(object):
                 logger.warning(
                     "Fetching information about test dependencies failed, running tests may not be possible!"
                 )
-                logger.debug("Exception: {}".format(e))
+                logger.debug(f"Exception: {e}")
 
         return deps
 
     def _fetch_steps(self, version, url):
         """Method fetches common steps"""
-        logger.info("Fetching common steps from '{}', ref '{}'.".format(url, version))
+        logger.info(f"Fetching common steps from '{url}', ref '{version}'.")
         cmd = [
             "git",
             "clone",
@@ -50,7 +50,7 @@ class BehaveTestCollector(object):
             url,
             self.test_dir,
             "-b",
-            "%s" % version,
+            f"{version}",
         ]
         run_wrapper(cmd, False, f"Could not fetch steps from {url}")
 
@@ -84,9 +84,7 @@ class BehaveTestCollector(object):
 
             if os.path.exists(obj_path):
                 target = os.path.join(self.test_dir, obj_name, name, target_dir)
-                logger.debug(
-                    "Collecting tests from '{}' into '{}'".format(obj_path, target)
-                )
+                logger.debug(f"Collecting tests from '{obj_path}' into '{target}'")
                 if obj_name == "features":
                     self.collected = True
                 shutil.copytree(obj_path, target)

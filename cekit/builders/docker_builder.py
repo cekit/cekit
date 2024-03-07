@@ -87,7 +87,7 @@ class DockerBuilder(Builder):
         build_log = []
         docker_layer_ids = []
 
-        LOGGER.debug("Running Docker build: {}".format(str(docker_args)))
+        LOGGER.debug(f"Running Docker build: {str(docker_args)}")
         try:
             stream = docker_client.build(**docker_args)
 
@@ -95,7 +95,7 @@ class DockerBuilder(Builder):
                 # In case an error is returned, log the message and fail the build
                 if "errorDetail" in part:
                     error_message = part.get("errorDetail", {}).get("message", "")
-                    raise CekitError("Image build failed: '{}'".format(error_message))
+                    raise CekitError(f"Image build failed: '{error_message}'")
                 elif "stream" in part:
                     messages = part["stream"]
                 else:
@@ -110,7 +110,7 @@ class DockerBuilder(Builder):
                 messages = ANSI_ESCAPE.sub("", messages).strip()
 
                 for message in messages.split("\n"):
-                    LOGGER.info("Docker: {}".format(message))
+                    LOGGER.info(f"Docker: {message}")
 
                 build_log.append(messages)
 
@@ -161,7 +161,7 @@ class DockerBuilder(Builder):
         return docker_layer_ids[-1]
 
     def _squash(self, docker_client, image_id):
-        LOGGER.info("Squashing image {}...".format(image_id))
+        LOGGER.info(f"Squashing image {image_id}...")
 
         squash = Squash(
             docker=docker_client,
@@ -270,5 +270,5 @@ class DockerBuilder(Builder):
         self._tag(docker_client, image_id, tags)
 
         LOGGER.info(
-            "Image built and available under following tags: {}".format(", ".join(tags))
+            f"Image built and available under following tags: {', '.join(tags)}"
         )

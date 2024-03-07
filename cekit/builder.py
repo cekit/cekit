@@ -91,10 +91,8 @@ class Builder(Command):
 
             container_file: str = "Dockerfile"
         else:
-            raise CekitError(
-                "Unsupported generator type: '{}'".format(self.build_engine)
-            )
-        LOGGER.info("Generating files for {} engine".format(self.build_engine))
+            raise CekitError(f"Unsupported generator type: '{self.build_engine}'")
+        LOGGER.info(f"Generating files for {self.build_engine} engine")
 
         if self.params.container_file:
             container_file: str = self.params.container_file

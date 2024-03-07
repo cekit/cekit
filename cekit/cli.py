@@ -355,7 +355,7 @@ def test(image, overrides):
 @click.option(
     "--steps-ref",
     help="Behave steps library reference (branch or tag)",
-    default="v%s" % schema_version,
+    default=f"v{schema_version}",
     show_default=True,
 )
 @click.option("--wip", help="Run test scenarios tagged with @wip only.", is_flag=True)
@@ -432,7 +432,7 @@ def run_test(ctx, tester):
 
         LOGGER.info("Using Behave tester to test the image")
     else:
-        raise CekitError("Tester engine {} is not supported".format(tester))
+        raise CekitError(f"Tester engine {tester} is not supported")
 
     run_command(ctx, tester_impl)
 
@@ -457,7 +457,7 @@ def run_build(ctx, builder):
 
         LOGGER.info("Using Buildah builder to build the image")
     else:
-        raise CekitError("Builder engine {} is not supported".format(builder))
+        raise CekitError(f"Builder engine {builder} is not supported")
 
     run_command(ctx, builder_impl)
 
@@ -479,7 +479,7 @@ class Cekit(object):
         else:
             LOGGER.setLevel(logging.INFO)
 
-        LOGGER.debug("Running version {}".format(__version__))
+        LOGGER.debug(f"Running version {__version__}")
 
         if "dev" in __version__ or "rc" in __version__:
             LOGGER.warning(
@@ -509,13 +509,11 @@ class Cekit(object):
 
         for directory in directories_to_clean:
             if os.path.exists(directory):
-                LOGGER.debug("Removing dirty directory: '{}'".format(directory))
+                LOGGER.debug(f"Removing dirty directory: '{directory}'")
                 try:
                     shutil.rmtree(directory)
                 except Exception as ex:
-                    raise CekitError(
-                        "Unable to clean directory '{}'".format(directory)
-                    ) from ex
+                    raise CekitError(f"Unable to clean directory '{directory}'") from ex
 
     def run(self, clazz: Type["Command"]):
         """Main application entry"""
@@ -535,9 +533,9 @@ class Cekit(object):
         except CalledProcessError as ex:
             LOGGER.error(ex)
             if ex.stdout:
-                LOGGER.error("Command stdout is:\n{}".format(ex.stdout))
+                LOGGER.error(f"Command stdout is:\n{ex.stdout}")
             if ex.stderr:
-                LOGGER.error("Command stderr is:\n{}".format(ex.stderr))
+                LOGGER.error(f"Command stderr is:\n{ex.stderr}")
             sys.exit(1)
         except CekitError as ex:
             if self.params.verbose:
