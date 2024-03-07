@@ -15,15 +15,18 @@ Let's start with a high-level diagram of CEKit.
     :alt: CEKit simple build process diagram
 
     digraph build_proces_high_level {
+        bgcolor="transparent";
         rankdir="LR";
+        style="filled";
         graph [fontsize="11", fontname="Open Sans", compound="true"];
         node [shape="box", fontname="Open Sans", fontsize="11"];
 
-        descriptor [label="Image descriptor"];
-        image [label="Image"];
+        descriptor [label="Image descriptor", style="filled", fillcolor="white"];
+        image [label="Image", style="filled", fillcolor="white"];
 
         subgraph cluster_0 {
             style="dashed";
+            fontcolor="red";
             node [style="filled"];
             label = "CEKit";
             penwidth = "2";
@@ -33,9 +36,9 @@ Let's start with a high-level diagram of CEKit.
             build [label="Build"];
         }
 
-        descriptor -> generate [lhead=cluster_0];
-        generate -> build;
-        build -> image [ltail=cluster_0];
+        descriptor -> generate [lhead=cluster_0, color="red"];
+        generate -> build [color="red"];
+        build -> image [ltail=cluster_0, color="red"];
 
     }
 
@@ -73,11 +76,12 @@ can find diagram that shows what is done from beginning to the end when you exec
      digraph build_process {
         graph [fontsize="11", fontname="Open Sans", compound="true"];
         node [shape="box", fontname="Open Sans", fontsize="10"];
+        bgcolor="transparent";
 
         subgraph cluster_out {
             style="invis";
-            start [label="START", style="bold", shape="circle"];
-            end [label="END", style="bold", shape="circle"];
+            start [label="START", shape="circle", style="bold,filled", fillcolor="white"];
+            end [label="END", shape="circle", style="bold,filled", fillcolor="white"];
 
             subgraph cluster_0 {
                 style="dashed";
@@ -101,10 +105,10 @@ can find diagram that shows what is done from beginning to the end when you exec
             }
         }
 
-        label_generate [label="Generate phase", shape="plaintext", fontsize="11"];
-        label_build [label="Build phase", shape="plaintext", fontsize="11"];
+        label_generate [label="Generate phase", shape="plaintext", fontsize="11", fontcolor="red"];
+        label_build [label="Build phase", shape="plaintext", fontsize="11", fontcolor="red"];
 
-        start -> read -> overrides -> modules -> artifacts -> generate -> build -> end;
+        start -> read -> overrides -> modules -> artifacts -> generate -> build -> end [color="red"];
         overrides -> label_generate [style="invis"];
         generate -> label_build [style="invis"];
      }

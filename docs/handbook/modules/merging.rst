@@ -70,7 +70,8 @@ This section will go through it and explain how we combine everything together i
 
      digraph module_installation {
         graph [fontsize="11", fontname="Open Sans", compound="true"];
-        node [shape="box", fontname="Open Sans", fontsize="10"];
+        node [shape="box", fontname="Open Sans", fontsize="10", style="filled", fillcolor="white"];
+        bgcolor="transparent";
 
         packages [label="Package installation", href="#packages"];
         envs [label="Environment variables", href="#environment-variables"];
@@ -79,7 +80,7 @@ This section will go through it and explain how we combine everything together i
         execs [label="Executions", href="#executions"];
         volumes [label="Volumes", href="#volumes"];
 
-        packages -> envs -> labels -> ports -> execs -> volumes;
+        packages -> envs -> labels -> ports -> execs -> volumes [color="red"];
      }
 
 
@@ -206,16 +207,17 @@ does not tell you the order in which modules are installed, but only what module
 
      digraph module_installation {
         graph [fontsize="11", fontname="Open Sans", compound="true"];
-        node [shape="circle", fontname="Open Sans", fontsize="10"];
+        node [shape="circle", fontname="Open Sans", fontsize="10", style="filled", fillcolor="white"];
+        bgcolor="transparent";
 
-        image [label="Image descriptor", shape="box"];
+        image [label="Image descriptor", shape="box", style="filled", fillcolor="white"];
 
-        A -> B;
-        A -> C;
-        B -> D;
+        A -> B [color="red"];
+        A -> C [color="red"];
+        B -> D [color="red"];
 
-        image -> E;
-        image -> A;
+        image -> E [color="red"];
+        image -> A [color="red"];
 
      }
 
