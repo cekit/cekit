@@ -56,12 +56,16 @@ Sponsor
 .. figure:: _static/Logo-Red_Hat-A-Standard-RGB.png
     :alt: Red Hat
     :figclass: only-light
+    :width: 50%
+    :class: no-scaled-link
 
     This is a Red Hat sponsored project.
 
 .. figure:: _static/Logo-Red_Hat-A-Reverse-RGB.png
     :alt: Red Hat
     :figclass: only-dark
+    :width: 50%
+    :class: no-scaled-link
 
     This is a Red Hat sponsored project.
 
