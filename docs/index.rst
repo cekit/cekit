@@ -52,11 +52,16 @@ Documentation
 
 Sponsor
 --------
-
-.. figure:: _static/rh.png
-    :width: 150px
+|
+.. figure:: _static/Logo-Red_Hat-A-Standard-RGB.png
     :alt: Red Hat
-    :target: #
+    :figclass: only-light
+
+    This is a Red Hat sponsored project.
+
+.. figure:: _static/Logo-Red_Hat-A-Reverse-RGB.png
+    :alt: Red Hat
+    :figclass: only-dark
 
     This is a Red Hat sponsored project.
 
