@@ -95,11 +95,9 @@ class OSBSGenerator(Generator):
                 )
 
         if len(all_configs) > 1:
-            logger.error(
-                "Found multiple {} definitions ({})".format(config_name, all_configs)
-            )
+            logger.error(f"Found multiple {config_name} definitions ({all_configs})")
             raise CekitError(
-                "Found multiple {} definitions ({})!".format(config_name, all_configs)
+                f"Found multiple {config_name} definitions ({all_configs})!"
             )
         elif len(all_configs) == 0:
             return
@@ -145,17 +143,13 @@ class OSBSGenerator(Generator):
                         # Verify if the URL can be used in fetch-artifact-url or now
                         for d in fad:
                             u = urlparse(d)
-                            logger.debug(
-                                "Parsed URL '{}' and path '{}'".format(u.netloc, u.path)
-                            )
+                            logger.debug(f"Parsed URL '{u.netloc}' and path '{u.path}'")
                             if u.netloc + u.path in artifact["url"]:
                                 process_fetch = True
                         if not process_fetch:
                             artifact["lookaside"] = True
                             logger.warning(
-                                "Ignoring {} as restricted to {}".format(
-                                    artifact["url"], fad
-                                )
+                                f"Ignoring {artifact['url']} as restricted to {fad}"
                             )
                     else:
                         # Just process all UrlResource
@@ -165,9 +159,7 @@ class OSBSGenerator(Generator):
                     intersected_hash = [
                         x for x in crypto.SUPPORTED_HASH_ALGORITHMS if x in artifact
                     ]
-                    logger.debug(
-                        "Found checksum markers of {}".format(intersected_hash)
-                    )
+                    logger.debug(f"Found checksum markers of {intersected_hash}")
                     if not intersected_hash:
                         logger.warning(
                             "No checksum supplied for {}, calculating from the remote artifact".format(
@@ -247,7 +239,7 @@ class OSBSGenerator(Generator):
                         artifact["lookaside"] = True
 
                 elif isinstance(artifact, _PncResource):
-                    logger.info("Handling pnc resources for {}".format(artifact))
+                    logger.info(f"Handling pnc resources for {artifact}")
                     build = fetch_artifacts_pnc.setdefault(artifact["pnc_build_id"], [])
                     build.append(
                         {
@@ -260,9 +252,7 @@ class OSBSGenerator(Generator):
                     if "url" in artifact:
                         file_comments[artifact["pnc_artifact_id"]] = artifact["url"]
                 else:
-                    logger.debug(
-                        "Copying artifact {} to {}".format(artifact, target_dir)
-                    )
+                    logger.debug(f"Copying artifact {artifact} to {target_dir}")
                     artifact.copy(target_dir)
 
         if fetch_artifacts_pnc:
@@ -276,11 +266,9 @@ class OSBSGenerator(Generator):
                     for key in fetch_artifacts_pnc
                 ],
             }
-            logger.debug("Writing {} to fetch-artifacts-pnc.yaml".format(pnc))
+            logger.debug(f"Writing {pnc} to fetch-artifacts-pnc.yaml")
             with open(fetch_artifacts_file, "w") as _file:
-                _file.write(
-                    "# Created by CEKit version {}\n".format(version.__version__)
-                )
+                _file.write(f"# Created by CEKit version {version.__version__}\n")
                 yaml.safe_dump(pnc, _file, default_flow_style=False, sort_keys=False)
             patch_file(file_comments, fetch_artifacts_file)
         if fetch_artifacts_url:
@@ -288,9 +276,7 @@ class OSBSGenerator(Generator):
                 self.target, "image", "fetch-artifacts-url.yaml"
             )
             with open(fetch_artifacts_file, "w") as _file:
-                _file.write(
-                    "# Created by CEKit version {}\n".format(version.__version__)
-                )
+                _file.write(f"# Created by CEKit version {version.__version__}\n")
                 yaml.safe_dump(
                     fetch_artifacts_url,
                     _file,

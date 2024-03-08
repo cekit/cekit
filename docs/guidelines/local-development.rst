@@ -1,8 +1,6 @@
 Local development
 ==========================
 
-.. contents::
-    :backlinks: none
 
 Developing image locally is an important part of the workflow. It needs to provide
 a simple way to reference parts of the image we changed. Executing a local build with our

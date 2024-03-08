@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import re
 import shutil
 import sys
 import uuid
@@ -178,8 +179,6 @@ def test_content_sets_file_container_embedded(tmpdir, mocker, caplog):
 
 
 def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
-    # Do not try to validate dependencies while running tests, these are not necessary
-    mocker.patch("cekit.generator.docker.DockerGenerator.dependencies").return_value({})
     mocker.patch("odcs.client.odcs.ODCS.new_compose", return_value={"id": 12})
     mocker.patch(
         "odcs.client.odcs.ODCS.wait_for_compose",
@@ -195,6 +194,10 @@ def test_content_sets_embedded_container_embedded(tmpdir, mocker, caplog):
 
     run_cekit_cs_overrides(image_dir, mocker, overrides_descriptor)
 
+    assert (
+        "Required CEKit library 'odcs-client' was found as a 'odcs' module!"
+        in caplog.text
+    )
     assert (
         "Requesting ODCS pulp compose for 'aaa bbb' repositories with '[]' flags..."
         in caplog.text
@@ -590,11 +593,18 @@ def check_dockerfile(image_dir, match, container_file="Dockerfile"):
 def check_dockerfile_text(image_dir, match, container_file="Dockerfile"):
     with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         dockerfile = fd.read()
-        print("MATCH:\n{}".format(match))
-        print("DOCKERFILE:\n{}".format(dockerfile))
+        print(f"MATCH:\n{match}")
+        print(f"DOCKERFILE:\n{dockerfile}")
         if match in dockerfile:
             return True
     return False
+
+
+def regex_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
+        dockerfile_content = fd.read()
+        regex = re.compile(exp_regex, re.MULTILINE)
+        assert regex.search(dockerfile_content) is not None
 
 
 def check_dockerfile_uniq(image_dir, match, container_file="Dockerfile"):
@@ -1328,13 +1338,10 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 """
 
     assert check_dockerfile_text(image_dir, expected_packages_order_install)
-    assert check_dockerfile_text(
-        image_dir,
-        "RUN yum clean all && [ ! -d /var/cache/yum ] || rm -rf /var/cache/yum",
-    )
+    regex_dockerfile(image_dir, "rm -rf.*/var/cache/yum")
 
 
-def test_package_related_commands_packages_in_image(tmpdir, mocker):
+def test_package_related_commands_packages_in_image(tmpdir, caplog):
     image_dir = str(tmpdir.mkdir("source"))
     copy_repos(image_dir)
 
@@ -1344,7 +1351,17 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
     with open(os.path.join(image_dir, "image.yaml"), "w") as fd:
         yaml.dump(img_desc, fd, default_flow_style=False)
 
-    run_cekit(image_dir)
+    run_cekit(
+        image_dir,
+        parameters=[
+            "-v",
+            "build",
+            "--dry-run",
+            "--container-file",
+            "Dockerfile",
+            "podman",
+        ],
+    )
 
     expected_packages_install = """
         USER root
@@ -1353,6 +1370,10 @@ def test_package_related_commands_packages_in_image(tmpdir, mocker):
             && rpm -q wget mc
 """
 
+    assert (
+        "Required CEKit library 'odcs-client' was found as a 'odcs' module!"
+        not in caplog.text
+    )
     assert check_dockerfile_text(image_dir, expected_packages_install)
 
 
@@ -1527,7 +1548,7 @@ def test_disabling_content_sets(tmpdir, caplog, parameter):
             "--dry-run",
             # Ugly, but double braces are required for 'format to work'
             "--overrides",
-            '{{"packages": {{"{0}": ~}}}}'.format(parameter),
+            f'{{"packages": {{"{parameter}": ~}}}}',
             "podman",
         ],
     )

@@ -7,11 +7,10 @@
 # This is the only way we could satisfy dependency requirements coming from
 # various places in different types (Python library, an external tool, a binary).
 
-PyYAML>=3.10
 Jinja2>=2.7
-pykwalify>=1.6.0
-colorlog>=2.10.0
+PyYAML>=3.10
 click>=6.7
+colorlog>=2.10.0
 packaging>=19.0
-odcs>=0.2.10
+pykwalify>=1.6.0
 ruamel.yaml<=0.18.3 ; python_version<'3.7'

@@ -138,20 +138,18 @@ class Configuration(Descriptor):
 
         remote_source = self.get("container", {}).get("remote_source", {})
         if remote_source:
-            logger.debug("Cachito definition is {}".format(remote_source))
+            logger.debug(f"Cachito definition is {remote_source}")
 
     def _process_osbs_config_files(
         self, loader: Callable[[Any], Any], text: str, filename: str
     ) -> None:
         if text in self and filename in self:
-            raise CekitError(
-                "You cannot specify %s and %s together!" % (text, filename)
-            )
+            raise CekitError(f"You cannot specify {text} and {filename} together!")
 
         if filename in self:
             path = os.path.join(self.descriptor_path, self[filename])
             if not os.path.exists(path):
-                raise CekitError("'%s' file not found!" % path)
+                raise CekitError(f"'{path}' file not found!")
             with open(path, "r") as file_:
                 self[text] = loader(file_)
             del self[filename]

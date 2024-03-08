@@ -12,8 +12,6 @@ Modules can be stacked -- some modules will be run before, some after your modul
 Please keep that in mind at the time you are developing your module -- you don't
 know how and when it'll be executed.
 
-.. contents::
-    :backlinks: none
 
 .. include:: includes/module/name.rst
 .. include:: includes/module/execute.rst

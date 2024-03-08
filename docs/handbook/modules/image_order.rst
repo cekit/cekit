@@ -1,8 +1,6 @@
 Image Descriptor and Modules
 ============================
 
-.. contents::
-    :backlinks: none
 
 .. note::
     This chapter applies to :doc:`builder engines </handbook/building/builder-engines>` that use Dockerfile as the input.
@@ -18,11 +16,13 @@ describes how the image processing interacts with the module processing.
     :name: module-installation-diagram
 
      digraph module_installation {
+        bgcolor="transparent";
         graph [fontsize="11", fontname="Open Sans", compound="true", splines=ortho, nodesep=0.5, ranksep=0.75];
-        node [shape="box", fontname="Open Sans", fontsize="10"];
+        node [shape="box", fontname="Open Sans", fontsize="10", style="filled", fillcolor="white"];
 
         // main rendering
         subgraph cluster_0 {
+                bgcolor="lightgrey"
                 label="Main Rendering Generation";
                 builder [label="Builder image handling"];
                 from [label="FROM generation"];
@@ -34,6 +34,7 @@ describes how the image processing interacts with the module processing.
 
         // process_image
         subgraph cluster_1 {
+                bgcolor="lightgrey"
                 label="Image Rendering";
                 cachito [label="Cachito Support", rank=same];
                 repo [label="Repository Management"];
@@ -43,6 +44,7 @@ describes how the image processing interacts with the module processing.
 
         // process_module
         subgraph cluster_2 {
+                bgcolor="lightgrey"
                 artifact [label="Artifact copying", rank=same];
                 pkg_install [label="Package installation"];
                 ports [label="Expose Ports"];
@@ -56,10 +58,10 @@ describes how the image processing interacts with the module processing.
         artifact -> pkg_install -> ports -> run -> volumes;
 
         // subgraph links
-        builder -> cachito[constraint=false];
-        image -> cachito[constraint=false];
-        module -> artifact[constraint=false];
-        complete_image -> artifact[constraint=false];
+        builder -> cachito[constraint=false, color="red"];
+        image -> cachito[constraint=false, color="red"];
+        module -> artifact[constraint=false, color="red"];
+        complete_image -> artifact[constraint=false, color="red"];
     }
 
 

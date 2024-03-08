@@ -302,9 +302,7 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
     assert "Error copying resource: 'dummy'. See logs for more info" in str(
         excinfo.value
     )
-    assert (
-        "Removing incompletely downloaded '{}' file".format(targetfile) in caplog.text
-    )
+    assert f"Removing incompletely downloaded '{targetfile}' file" in caplog.text
 
     urlopen_class_mock.assert_called_with("http://server.org/dummy", context=mocker.ANY)
     os_remove_mock.assert_called_with(targetfile)

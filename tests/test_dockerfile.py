@@ -449,7 +449,6 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
         "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
     )
     regex_dockerfile(target, "rpm -q a")
-    regex_dockerfile(target, "RUN microdnf clean all")
 
 
 # https://github.com/cekit/cekit/issues/462
@@ -480,7 +479,6 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
     regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y foo-repo.rpm")
     regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y a b")
     regex_dockerfile(target, "rpm -q a")
-    regex_dockerfile(target, "RUN dnf clean all")
 
 
 # https://github.com/cekit/cekit/issues/400
@@ -530,8 +528,8 @@ def test_supported_package_managers(tmpdir, manager):
     flags = "--setopt=tsflags=nodocs"
     if "microdnf" in manager:
         flags = "--setopt=install_weak_deps=0 " + flags
-    regex_dockerfile(target, "RUN {} {} install -y foo-repo.rpm".format(manager, flags))
-    regex_dockerfile(target, "RUN {} {} install -y a".format(manager, flags))
+    regex_dockerfile(target, f"RUN {manager} {flags} install -y foo-repo.rpm")
+    regex_dockerfile(target, f"RUN {manager} {flags} install -y a")
     regex_dockerfile(target, "rpm -q a")
 
 
@@ -824,6 +822,29 @@ def test_args_buildah(tmpdir):
         ARG labela"""
         in dockerfile
     )
+
+
+# https://github.com/cekit/cekit/issues/886
+def test_cleanup_rpm_dnf_default_pkg_manager(tmpdir):
+    target = str(tmpdir.mkdir("target"))
+
+    generate(
+        target,
+        ["-v", "build", "--dry-run", "--container-file", "Dockerfile", "podman"],
+        descriptor={
+            "packages": {
+                "manager": "microdnf",
+                "repositories": [{"name": "foo", "rpm": "foo-repo.rpm"}],
+                "install": ["a"],
+            },
+            "osbs": {"repository": {"name": "repo_name", "branch": "branch_name"}},
+        },
+    )
+    regex_dockerfile(target, "rm -rf.*/var/cache/yum")
+    regex_dockerfile(target, "rm -rf.*/var/lib/rpm")
+    regex_dockerfile(target, "rm -rf.*/var/lib/dnf")
+    regex_dockerfile(target, "rm -rf.*/var/cache/apt")
+    regex_dockerfile(target, "rm -rf.*/var/cache/dnf")
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):

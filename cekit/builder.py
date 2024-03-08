@@ -91,10 +91,8 @@ class Builder(Command):
 
             container_file: str = "Dockerfile"
         else:
-            raise CekitError(
-                "Unsupported generator type: '{}'".format(self.build_engine)
-            )
-        LOGGER.info("Generating files for {} engine".format(self.build_engine))
+            raise CekitError(f"Unsupported generator type: '{self.build_engine}'")
+        LOGGER.info(f"Generating files for {self.build_engine} engine")
 
         if self.params.container_file:
             container_file: str = self.params.container_file
@@ -111,11 +109,11 @@ class Builder(Command):
             self.generator.add_redhat_overrides()
 
     def before_generate(self) -> None:
-        # Handle dependencies for selected generator, if any
-        LOGGER.debug("Checking CEKit generate dependencies...")
-        self.dependency_handler.handle(self.generator, self.params)
-
         self.generator.init()
+
+        LOGGER.debug("Checking CEKit generate dependencies...")
+        # Handle dependencies for selected generator, if any
+        self.dependency_handler.handle(self.generator, self.params)
 
     def generate(self) -> None:
         self.generator.generate()

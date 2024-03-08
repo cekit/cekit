@@ -17,7 +17,7 @@ SUPPORTED_SOURCE_HASH_ALGORITHMS: List[str] = [
 def get_sum(target: PathType, algorithm: str) -> str:
     hash_function = getattr(hashlib, algorithm)()
 
-    logger.debug("Computing {} checksum for '{}' file".format(algorithm, target))
+    logger.debug(f"Computing {algorithm} checksum for '{target}' file")
 
     with open(target, "rb") as f:
         for chunk in iter(lambda: f.read(65536), b""):
@@ -31,7 +31,7 @@ def check_sum(target: PathType, algorithm: str, expected: str) -> bool:
       alg - algorithm which will be used for digest
       expected_checksum - checksum which artifact must match
     """
-    logger.debug("Checking '{}' {} hash...".format(target, algorithm))
+    logger.debug(f"Checking '{target}' {algorithm} hash...")
 
     checksum = get_sum(target, algorithm)
 

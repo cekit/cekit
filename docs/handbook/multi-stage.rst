@@ -1,8 +1,6 @@
 Multi-stage builds
 ====================
 
-.. contents::
-    :backlinks: none
 
 This chapter discusses support for multi-stage builds in CEKit.
 

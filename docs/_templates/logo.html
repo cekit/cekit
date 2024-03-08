@@ -1,4 +1,5 @@
 <div class="sidebar-wrapper" style="margin-bottom: 2em;">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
   <p class="logo">
     <a href="{{ pathto(master_doc) }}">
       <img
@@ -15,14 +16,9 @@
   <p>Container image creation tool</p>
 
   <p>
-    <iframe
-      src="https://ghbtns.com/github-btn.html?user=cekit&repo=cekit&type=star&count=true"
-      frameborder="0"
-      scrolling="0"
-      width="170px"
-      height="20px"
-    ></iframe>
+    <!-- Using https://buttons.github.io instead of https://ghbtns.com as the latter produces extra whitespace -->
+    <a class="github-button" href="https://github.com/cekit/cekit" data-size="large" data-show-count="true" aria-label="Star cekit/cekit on GitHub">Star</a>
   </p>
 
-  <p style="font-size: 0.8em;">{{ release }}</p>
+  <p style="font-size: small">Version: {{ release }}</p>
 </div>

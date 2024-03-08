@@ -141,16 +141,14 @@ def test_cekit_supported_algorithms(tmpdir, algorithm):
             work_dir,
             "add",
             artifact,
-            "--{}".format(algorithm),
+            f"--{algorithm}",
             "WRONG!",
         ],
         1,
     )
 
     assert (
-        "Cannot cache artifact {}: Artifact checksum verification failed!".format(
-            artifact
-        )
+        f"Cannot cache artifact {artifact}: Artifact checksum verification failed!"
         in result.output
     )
 

@@ -63,5 +63,5 @@ class PodmanBuilder(Builder):
         run_wrapper(cmd, False, f"Could not run podman {cmd}")
 
         LOGGER.info(
-            "Image built and available under following tags: {}".format(", ".join(tags))
+            f"Image built and available under following tags: {', '.join(tags)}"
         )

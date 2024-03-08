@@ -36,7 +36,7 @@ SafeRepresenter.add_representer(Map, SafeRepresenter.represent_dict)
 
 
 def download_file(url: str, destination: str) -> None:
-    logger.debug("Downloading from '{}' as {}".format(url, destination))
+    logger.debug(f"Downloading from '{url}' as {destination}")
 
     parsed_url = urlparse(url)
 
@@ -59,14 +59,14 @@ def download_file(url: str, destination: str) -> None:
         res = urlopen(url, context=ctx)
 
         if res.getcode() != 200:
-            raise CekitError("Could not download file from %s" % url)
+            raise CekitError(f"Could not download file from {url}")
 
         try:
             remote_size = int(res.getheader("Content-Length", "0"))
             chunk_size = 1048576  # 1 MB
             with open(destination, "wb") as f, click.progressbar(
                 length=remote_size,
-                label="Downloading {}".format(url.rsplit("/", 1)[-1]),
+                label=f"Downloading {url.rsplit('/', 1)[-1]}",
                 show_percent=True,
                 fill_char=(click.style("#", fg="green")),
                 empty_char=(click.style("-", fg="white", dim=True)),
@@ -80,19 +80,15 @@ def download_file(url: str, destination: str) -> None:
         except Exception as e:
             try:
                 logger.debug(
-                    "Removing incompletely downloaded '{}' file due to {}".format(
-                        destination, e
-                    )
+                    f"Removing incompletely downloaded '{destination}' file due to {e}"
                 )
                 os.remove(destination)
             except OSError:
-                logger.warning(
-                    "An error occurred while removing file '{}'".format(destination)
-                )
+                logger.warning(f"An error occurred while removing file '{destination}'")
 
             raise
     else:
-        raise CekitError("Unsupported URL scheme: {}".format(url))
+        raise CekitError(f"Unsupported URL scheme: {url}")
 
 
 def load_descriptor(descriptor: str) -> dict:
@@ -109,7 +105,7 @@ def load_descriptor(descriptor: str) -> dict:
 
     if "-" == descriptor:
         descriptor = click.get_text_stream("stdin").read()
-        logger.debug("Read from stdin: {}".format(descriptor))
+        logger.debug(f"Read from stdin: {descriptor}")
 
     try:
         data = yaml.safe_load(descriptor)
@@ -117,7 +113,7 @@ def load_descriptor(descriptor: str) -> dict:
         raise CekitError("Cannot load descriptor") from ex
 
     if isinstance(data, str):
-        logger.debug("Reading descriptor from '{}' file...".format(descriptor))
+        logger.debug(f"Reading descriptor from '{descriptor}' file...")
 
         if os.path.exists(descriptor):
             with open(descriptor, "r") as fh:
@@ -173,7 +169,7 @@ def get_tag_from_inspect_struct(struct: Mapping) -> str:
     """
     labels = struct.get("Labels")
     if not isinstance(labels, Mapping):
-        raise CekitError("Labels dict was not found in {}".format(struct))
+        raise CekitError(f"Labels dict was not found in {struct}")
 
     required_labels = {}
     missing_labels = []
@@ -185,22 +181,20 @@ def get_tag_from_inspect_struct(struct: Mapping) -> str:
 
     if missing_labels:
         raise CekitError(
-            "The following labels, for image {}, were not set or empty".format(
-                missing_labels
-            )
+            f"The following labels, for image {missing_labels}, were not set or empty"
         )
 
     return "{version}-{release}".format(**required_labels)
 
 
 def get_brew_url(md5: str) -> str:
-    logger.debug("Getting brew details for an artifact with '{}' md5 sum".format(md5))
+    logger.debug(f"Getting brew details for an artifact with '{md5}' md5 sum")
     list_archives_cmd = [
         "brew",
         "call",
         "--json-output",
         "listArchives",
-        "checksum={}".format(md5),
+        f"checksum={md5}",
         "type=maven",
     ]
 
@@ -218,9 +212,7 @@ def get_brew_url(md5: str) -> str:
     archives = yaml.safe_load(result.stdout)
 
     if not archives:
-        raise CekitError(
-            "Artifact with md5 checksum {} could not be found in Brew".format(md5)
-        )
+        raise CekitError(f"Artifact with md5 checksum {md5} could not be found in Brew")
 
     archive = archives[0]
     build_id = archive["build_id"]
@@ -234,7 +226,7 @@ def get_brew_url(md5: str) -> str:
         "call",
         "--json-output",
         "getBuild",
-        "buildInfo={}".format(build_id),
+        f"buildInfo={build_id}",
     ]
 
     result = run_wrapper(
@@ -302,7 +294,7 @@ def copy_recursively(
         src = os.path.join(source_directory, name)
         dst = os.path.join(destination_directory, name)
 
-        logger.debug("Copying '{}' to '{}'...".format(src, dst))
+        logger.debug(f"Copying '{src}' to '{dst}'...")
 
         if not os.path.isdir(os.path.dirname(dst)):
             os.makedirs(os.path.dirname(dst))
@@ -364,11 +356,7 @@ def run_wrapper(
             universal_newlines=True,
         )
     except subprocess.CalledProcessError as ex:
-        logger.error(
-            "{} Command stdout is '{}' with stderr '{}'".format(
-                ex, ex.stdout, ex.stderr
-            )
-        )
+        logger.error(f"{ex} Command stdout is '{ex.stdout}' with stderr '{ex.stderr}'")
         raise CekitError(exception_message) from ex
     if result.stdout:
         result.stdout = result.stdout.strip()
@@ -518,9 +506,7 @@ class DependencyHandler(object):
                     "executable", executable
                 )
 
-            logger.debug(
-                "Checking if '{}' dependency is provided...".format(dependency)
-            )
+            logger.debug(f"Checking if '{dependency}' dependency is provided...")
 
             if library:
                 if self._check_for_library(library):
@@ -540,7 +526,7 @@ class DependencyHandler(object):
                         package
                         and self.platform in DependencyHandler.KNOWN_OPERATING_SYSTEMS
                     ):
-                        msg += " Try to install the '{}' package.".format(package)
+                        msg += f" Try to install the '{package}' package."
 
                     raise CekitError(msg)
 
@@ -595,9 +581,7 @@ class DependencyHandler(object):
 
         if package:
             msg += (
-                " To satisfy this requirement you can install the '{}' package.".format(
-                    package
-                )
+                f" To satisfy this requirement you can install the '{package}' package."
             )
 
         raise CekitError(msg)
@@ -632,7 +616,7 @@ class DependencyHandler(object):
                 "using the certifi provided bundle doesn't work."
             )
             logger.warning(
-                "Certificate Authority (CA) bundle in use: '{}'".format(certifi.where())
+                f"Certificate Authority (CA) bundle in use: '{certifi.where()}'"
             )
         except ImportError:
             pass
@@ -647,18 +631,11 @@ class DependencyHandler(object):
         if not o:
             return
 
-        # Get the class of the object
-        clazz = type(o)
+        if callable(getattr(o, "dependencies", None)):
+            from cekit.generator.base import Generator
 
-        for var in [clazz, o]:
-            # Check if a static method or variable 'dependencies' exists
-            dependencies = getattr(var, "dependencies", None)
-
-            if not dependencies:
-                continue
-
-            # Check if we have a method
-            if callable(dependencies):
-                # Execute that method to get list of dependencies and try to handle them
+            # Execute that method to get list of dependencies and try to handle them
+            if isinstance(o, Generator):
+                self._handle_dependencies(o.dependencies(params, o.image))
+            else:
                 self._handle_dependencies(o.dependencies(params))
-                return

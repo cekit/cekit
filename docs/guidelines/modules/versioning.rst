@@ -1,8 +1,6 @@
 Module versioning
 ===================
 
-.. contents::
-    :backlinks: none
 
 This section focuses on best practices around module versioning. For information about how module
 versions are handled in CEKit take a look at :doc:`descriptor documentation for modules </handbook/modules/versioning>`.

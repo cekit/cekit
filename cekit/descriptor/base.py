@@ -56,7 +56,7 @@ class Descriptor(MutableMapping):
             core.validate(raise_exception=True)
         except SchemaError as ex:
             raise CekitError(
-                "Cannot validate schema: {}".format(self.__class__.__name__)
+                f"Cannot validate schema: {self.__class__.__name__}"
             ) from ex
 
     @classmethod
@@ -149,7 +149,7 @@ class Descriptor(MutableMapping):
         return self._descriptor.items()
 
     def __repr__(self):
-        return "%s" % self._descriptor
+        return f"{self._descriptor}"
 
     def get(self, k, default=None):
         return self._descriptor.get(k, default)

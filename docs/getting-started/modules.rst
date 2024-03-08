@@ -26,6 +26,7 @@ As per the below diagram a number of directories must be created next to ``image
     :alt: CEKit simple build process diagram
 
     digraph modules_diagram {
+        bgcolor="transparent";
         rankdir="LR";
         graph [fontsize="11", fontname="Open Sans", compound="true", splines=ortho];
         node [shape="box", fontname="Open Sans", fontsize="11"];
@@ -41,10 +42,10 @@ As per the below diagram a number of directories must be created next to ``image
             user [label="user"];
             tomcat [label="tomcat", group="m"];
         }
-        modules -> tomcat[lhead=cluster_0, arrowhead=none]
-        modules -> jdk8[lhead=cluster_0, arrowhead=none]
-        modules -> user[lhead=cluster_0, arrowhead=none]
-        descriptor [label="image.yaml"];
+        modules -> tomcat[lhead=cluster_0, arrowhead=none, color="red"]
+        modules -> jdk8[lhead=cluster_0, arrowhead=none, color="red"]
+        modules -> user[lhead=cluster_0, arrowhead=none, color="red"]
+        descriptor [label="image.yaml", style="filled", fillcolor="white"];
     }
 
 Once the modules subdirectory and the respective module directories below that have been created they can be added to the image. In order to select a module component from a repository it is necessary to add an ``install`` section as per the highlighted section below.
