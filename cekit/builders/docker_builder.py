@@ -20,7 +20,6 @@ except ImportError:
 try:
     # Docker Python library, the new one
     import docker
-    from docker.api.client import APIClient as APIClientClass
 except ImportError:
     pass
 
@@ -29,13 +28,6 @@ try:
     # so that the dependency mechanism can kick in and require the docker library
     # first which will pull requests
     import requests
-except ImportError:
-    pass
-
-try:
-    # Docker Python library, the old one
-    import docker  # noqa: F811
-    from docker.client import Client as APIClientClass  # noqa: F811
 except ImportError:
     pass
 
@@ -202,12 +194,12 @@ class DockerBuilder(Builder):
                 )
             )
 
-        params = {"version": "1.35"}
+        params = {"version": docker.constants.DEFAULT_DOCKER_API_VERSION}
         params.update(docker.utils.kwargs_from_env())
         params["timeout"] = timeout
 
         try:
-            client = APIClientClass(**params)
+            client = docker.APIClient(**params)
         except docker.errors.DockerException as e:
             LOGGER.error(
                 "Could not create Docker client, please make sure that you "
