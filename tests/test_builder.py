@@ -793,7 +793,7 @@ def test_osbs_dist_git_sync_NOT_called_when_dry_run_set(mocker, tmpdir):
 def test_docker_build_default_tags(mocker):
     builder = DockerBuilder(Map({"target": "something"}))
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     mock_generator = mocker.patch.object(builder, "generator")
     mock_generator.get_tags.return_value = ["image/test:1.0", "image/test:latest"]
@@ -822,7 +822,7 @@ def test_docker_squashing_enabled(mocker):
     assert builder.params.no_squash is None
     assert builder.params.tags == ["foo", "bar"]
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     mocker.patch.object(builder, "_build_with_docker")
     mocker.patch.object(builder, "_squash")
@@ -845,7 +845,7 @@ def test_docker_squashing_disabled(mocker):
 
     assert builder.params.no_squash is True
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     mocker.patch.object(builder, "_build_with_docker")
     mocker.patch.object(builder, "_squash")
@@ -866,7 +866,7 @@ def test_docker_squashing_parameters(mocker):
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash is None
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
     squash = squash_class.return_value
     docker_client = docker_client_class.return_value
