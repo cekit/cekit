@@ -32,6 +32,7 @@ except ImportError:
     pass
 
 ANSI_ESCAPE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+DOCKER_API_VERSION = "1.35"
 
 
 class DockerBuilder(Builder):
@@ -194,7 +195,7 @@ class DockerBuilder(Builder):
                 )
             )
 
-        params = {"version": docker.constants.DEFAULT_DOCKER_API_VERSION}
+        params = {"version": DOCKER_API_VERSION}
         params.update(docker.utils.kwargs_from_env())
         params["timeout"] = timeout
 
