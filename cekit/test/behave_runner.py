@@ -7,7 +7,7 @@ from cekit.tools import Chdir
 
 try:
     from behave.__main__ import main as behave_main
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 logger = logging.getLogger("cekit")

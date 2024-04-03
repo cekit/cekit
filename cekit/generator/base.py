@@ -42,7 +42,7 @@ try:
     # Requests is a dependency of ODCS client, so this should be safe
     import requests
     from odcs.client.odcs import ODCS, AuthMech
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 
