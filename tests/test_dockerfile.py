@@ -841,10 +841,10 @@ def test_cleanup_rpm_dnf_default_pkg_manager(tmpdir):
         },
     )
     regex_dockerfile(target, "rm -rf.*/var/cache/yum")
-    regex_dockerfile(target, "rm -rf.*/var/lib/rpm")
     regex_dockerfile(target, "rm -rf.*/var/lib/dnf")
     regex_dockerfile(target, "rm -rf.*/var/cache/apt")
     regex_dockerfile(target, "rm -rf.*/var/cache/dnf")
+    regex_not_dockerfile(target, "rm -rf.*/var/lib/rpm")
 
 
 def generate(image_dir, command, descriptor=None, exit_code=0):
@@ -880,3 +880,10 @@ def regex_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)
         assert regex.search(dockerfile_content) is not None
+
+
+def regex_not_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
+    with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
+        dockerfile_content = fd.read()
+        regex = re.compile(exp_regex, re.MULTILINE)
+        assert regex.search(dockerfile_content) is None

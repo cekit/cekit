@@ -74,7 +74,7 @@ rm{% for repo in repositories %} /etc/yum.repos.d/{{ repo.filename }}{% endfor %
  #}
 {%- macro repo_clear_cache(pkg_manager) -%}
     {% if pkg_manager in helper.SUPPORTED_PACKAGE_MANAGERS %}
-rm -rf "/var/cache/yum" "/var/lib/rpm" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
+rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
     {% endif %}
 {%- endmacro -%}
 
