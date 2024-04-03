@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12' ]
-        os: [macos-latest, ubuntu-20.04]
+        os: [macos-12, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -51,17 +51,20 @@ jobs:
         mkdir $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
         cd $HOME/bin && curl -sL https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
-        PV=${{ matrix.python-version }}
     - name: Setup MacOS
       if: startsWith(matrix.os,'macos')
       run: |
         pip install "tox<4.0.0" setuptools
         echo "Checking qemu info... $(brew list --versions qemu)"
-
-        brew install podman
+        wget --no-verbose --output-document=podman.pkg https://github.com/containers/podman/releases/download/v4.9.4/podman-installer-macos-amd64.pkg
+        /usr/bin/sudo installer -allowUntrusted -pkg podman.pkg -target /
+        : # Installs to /opt/podman according to https://podman-desktop.io/docs/troubleshooting/troubleshooting-podman-on-macos#unable-to-locate-podman-engine
+        PODMAN_HOME=/opt/podman/bin
+        PATH=$PODMAN_HOME:$PATH
         podman machine init
         podman machine start
         podman info
+        echo "$PODMAN_HOME" >> $GITHUB_PATH
         echo "$HOME/bin" >> $GITHUB_PATH
         mkdir $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
