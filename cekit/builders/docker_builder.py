@@ -14,13 +14,13 @@ LOGGER = logging.getLogger("cekit")
 try:
     # Squash library
     from docker_squash.squash import Squash
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 try:
     # Docker Python library, the new one
     import docker
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 try:
@@ -28,7 +28,7 @@ try:
     # so that the dependency mechanism can kick in and require the docker library
     # first which will pull requests
     import requests
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 ANSI_ESCAPE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
