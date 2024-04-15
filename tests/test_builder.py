@@ -253,7 +253,7 @@ def test_osbs_builder_run_brew_stage(mocker):
         ]
     )
 
-    builder._wait_for_osbs_task.assert_called_once_with("12345")
+    builder._wait_for_osbs_task.assert_called_once_with("12345", timeout=7200)
 
 
 def test_osbs_builder_run_brew(mocker):
@@ -312,7 +312,7 @@ def test_osbs_builder_run_brew(mocker):
         ]
     )
 
-    builder._wait_for_osbs_task.assert_called_once_with("12345")
+    builder._wait_for_osbs_task.assert_called_once_with("12345", timeout=7200)
 
 
 def test_osbs_builder_run_koji(mocker):
@@ -371,7 +371,7 @@ def test_osbs_builder_run_koji(mocker):
         ]
     )
 
-    builder._wait_for_osbs_task.assert_called_once_with("12345")
+    builder._wait_for_osbs_task.assert_called_once_with("12345", timeout=7200)
 
 
 def test_osbs_builder_run_brew_nowait(mocker):
@@ -510,7 +510,7 @@ def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
         ],
     )
 
-    assert builder._wait_for_osbs_task("12345") is True
+    assert builder._wait_for_osbs_task("12345", timeout=7200) is True
 
     run.assert_called_with(
         ["brew", "call", "--json-output", "getTaskInfo", "12345"],
@@ -564,7 +564,7 @@ def test_osbs_wait_for_osbs_task_in_progress(mocker):
         ],
     )
 
-    assert builder._wait_for_osbs_task("12345") is True
+    assert builder._wait_for_osbs_task("12345", timeout=7200) is True
 
     run.assert_has_calls(
         [
@@ -618,7 +618,7 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
         CekitError,
         match="Task 12345 did not finish successfully, please check the task logs!",
     ):
-        builder._wait_for_osbs_task("12345")
+        builder._wait_for_osbs_task("12345", timeout=7200)
 
     run.assert_called_with(
         ["brew", "call", "--json-output", "getTaskInfo", "12345"],
