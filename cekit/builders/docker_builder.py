@@ -6,6 +6,7 @@ import traceback
 from cekit.builder import Builder
 from cekit.cekit_types import DependencyDefinition
 from cekit.errors import CekitError
+from cekit.tools import parse_env_timeout
 
 LOGGER = logging.getLogger("cekit")
 
@@ -179,21 +180,7 @@ class DockerBuilder(Builder):
         # Default Docker daemon connection timeout 10 minutes
         # It needs to be high enough to allow Docker daemon to export the
         # image for squashing.
-        try:
-            timeout = int(os.getenv("DOCKER_TIMEOUT", "600"))
-        except ValueError:
-            raise CekitError(
-                "Provided timeout value: '{}' cannot be parsed as integer, exiting.".format(
-                    os.getenv("DOCKER_TIMEOUT")
-                )
-            )
-
-        if timeout <= 0:
-            raise CekitError(
-                "Provided timeout value needs to be greater than zero, currently: '{}', exiting.".format(
-                    timeout
-                )
-            )
+        timeout = parse_env_timeout("DOCKER_TIMEOUT", "600")
 
         params = {"version": DOCKER_API_VERSION}
         params.update(docker.utils.kwargs_from_env())

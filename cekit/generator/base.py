@@ -29,7 +29,13 @@ from cekit.errors import CekitError
 from cekit.generator import legacy_version
 from cekit.generator.legacy_version import LegacyVersion
 from cekit.template_helper import TemplateHelper
-from cekit.tools import DependencyDefinition, Map, download_file, load_descriptor
+from cekit.tools import (
+    DependencyDefinition,
+    Map,
+    download_file,
+    load_descriptor,
+    parse_env_timeout,
+)
 from cekit.version import __version__ as cekit_version
 
 if TYPE_CHECKING:
@@ -534,7 +540,9 @@ class Generator(object):
 
         LOGGER.debug(f"Waiting for compose {compose_id} to finish...")
 
-        compose = odcs.wait_for_compose(compose_id, timeout=600)
+        compose = odcs.wait_for_compose(
+            compose_id, timeout=parse_env_timeout("ODCS_TIMEOUT", "600")
+        )
         state = compose.get("state", None)
 
         if not state:

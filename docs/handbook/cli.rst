@@ -10,6 +10,9 @@ The ``cekit`` CLI tool supports the following common options:
 ``-v`` ``--verbose``
     Enable verbose logging
 
+``--trace``
+    Enable trace logging
+
 ``--nocolor``
     Disable color output. This is also implicitly activated when the environment variable ``NO_COLOR`` is set.
 
