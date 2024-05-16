@@ -1,3 +1,13 @@
+Environment Variables
+======================
+
+There are several environment variables that may be set to override default timeouts:
+
+* ``DOCKER_TIMEOUT`` - represents the Docker daemon connection timeout (default: 600)
+* ``OSBS_TIMEOUT`` - represents the OSBS timeout (default: 7200)
+* ``ODCS_TIMEOUT`` - represents the ODCS compose timeout (default: 600)
+
+
 Configuration file
 =========================
 

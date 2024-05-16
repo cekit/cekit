@@ -23,7 +23,7 @@ from cekit.descriptor.resource import (
     _UrlResource,
 )
 from cekit.errors import CekitError
-from cekit.tools import Chdir, copy_recursively, run_wrapper
+from cekit.tools import Chdir, copy_recursively, parse_env_timeout, run_wrapper
 
 if TYPE_CHECKING:
     from cekit.descriptor.osbs import Repository
@@ -182,9 +182,7 @@ class OSBSBuilder(Builder):
             else:
                 LOGGER.info("No changes made to the code, committing skipped")
 
-    def _wait_for_osbs_task(
-        self, task_id: str, current_time: int = 0, timeout: int = 7200
-    ):
+    def _wait_for_osbs_task(self, task_id: str, timeout: int, current_time: int = 0):
         """Default timeout is 2hrs"""
 
         LOGGER.debug(f"Checking if task {task_id} is finished...")
@@ -231,7 +229,7 @@ class OSBSBuilder(Builder):
         ):
             # It's not necessary to query the API so often
             time.sleep(sleep_time)
-            return self._wait_for_osbs_task(task_id, current_time + sleep_time, timeout)
+            return self._wait_for_osbs_task(task_id, timeout, current_time + sleep_time)
 
         # In all other cases (failed, cancelled) task did not finish successfully
         raise CekitError(
@@ -335,7 +333,9 @@ class OSBSBuilder(Builder):
                 if self.params.nowait:
                     return
 
-                self._wait_for_osbs_task(task_id)
+                self._wait_for_osbs_task(
+                    task_id, timeout=parse_env_timeout("OSBS_TIMEOUT", "7200")
+                )
 
                 LOGGER.info("Image was built successfully in OSBS!")
 

@@ -1,4 +1,3 @@
-import getpass
 import logging
 import os
 
@@ -7,7 +6,7 @@ from cekit.tools import Chdir
 
 try:
     from behave.__main__ import main as behave_main
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 logger = logging.getLogger("cekit")
@@ -58,13 +57,6 @@ class BehaveTestRunner(object):
                     args.append(f"@{tag.split('/')[0]},@{tag}")
                 else:
                     args.append(tag)
-
-            # Check if we're running runtests on CI or locally
-            # If we run tests locally - skip all features that
-            # are marked with the @ci annotation
-            if getpass.getuser() != "jenkins":
-                args.append("-t")
-                args.append("~ci ")
 
         if include_regex:
             args.append("-i")

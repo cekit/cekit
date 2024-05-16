@@ -94,7 +94,7 @@ def test_docker_client_build(mocker, caplog):
 
     squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
     squash = squash_class.return_value
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     docker_client_build = mocker.patch.object(
         docker_client, "build", return_value=docker_success_output
@@ -128,7 +128,7 @@ def test_docker_client_build_platform(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch("cekit.builders.docker_builder.Squash")
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     docker_client_build = mocker.patch.object(
         docker_client, "build", return_value=docker_success_output
@@ -167,7 +167,7 @@ def test_docker_client_build_with_failure(mocker, caplog):
         Map(merge_dicts({"target": "something"}, {"tags": ["foo", "bar"]}))
     )
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
     squash = squash_class.return_value
     docker_client = docker_client_class.return_value

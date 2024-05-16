@@ -372,6 +372,25 @@ def locate_binary(executable: str) -> str:
     return path
 
 
+def parse_env_timeout(name: str, default: str) -> int:
+    try:
+        timeout = int(os.getenv(name, default))
+    except ValueError:
+        raise CekitError(
+            "Provided timeout value: '{}' cannot be parsed as integer, exiting.".format(
+                os.getenv(name)
+            )
+        )
+
+    if timeout <= 0:
+        raise CekitError(
+            "Provided timeout value needs to be greater than zero, currently: '{}', exiting.".format(
+                timeout
+            )
+        )
+    return timeout
+
+
 class Chdir(object):
     """Context manager for changing the current working directory"""
 

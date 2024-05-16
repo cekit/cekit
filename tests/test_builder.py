@@ -253,7 +253,7 @@ def test_osbs_builder_run_brew_stage(mocker):
         ]
     )
 
-    builder._wait_for_osbs_task.assert_called_once_with("12345")
+    builder._wait_for_osbs_task.assert_called_once_with("12345", timeout=7200)
 
 
 def test_osbs_builder_run_brew(mocker):
@@ -312,7 +312,7 @@ def test_osbs_builder_run_brew(mocker):
         ]
     )
 
-    builder._wait_for_osbs_task.assert_called_once_with("12345")
+    builder._wait_for_osbs_task.assert_called_once_with("12345", timeout=7200)
 
 
 def test_osbs_builder_run_koji(mocker):
@@ -371,7 +371,7 @@ def test_osbs_builder_run_koji(mocker):
         ]
     )
 
-    builder._wait_for_osbs_task.assert_called_once_with("12345")
+    builder._wait_for_osbs_task.assert_called_once_with("12345", timeout=7200)
 
 
 def test_osbs_builder_run_brew_nowait(mocker):
@@ -510,7 +510,7 @@ def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
         ],
     )
 
-    assert builder._wait_for_osbs_task("12345") is True
+    assert builder._wait_for_osbs_task("12345", timeout=7200) is True
 
     run.assert_called_with(
         ["brew", "call", "--json-output", "getTaskInfo", "12345"],
@@ -564,7 +564,7 @@ def test_osbs_wait_for_osbs_task_in_progress(mocker):
         ],
     )
 
-    assert builder._wait_for_osbs_task("12345") is True
+    assert builder._wait_for_osbs_task("12345", timeout=7200) is True
 
     run.assert_has_calls(
         [
@@ -618,7 +618,7 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
         CekitError,
         match="Task 12345 did not finish successfully, please check the task logs!",
     ):
-        builder._wait_for_osbs_task("12345")
+        builder._wait_for_osbs_task("12345", timeout=7200)
 
     run.assert_called_with(
         ["brew", "call", "--json-output", "getTaskInfo", "12345"],
@@ -793,7 +793,7 @@ def test_osbs_dist_git_sync_NOT_called_when_dry_run_set(mocker, tmpdir):
 def test_docker_build_default_tags(mocker):
     builder = DockerBuilder(Map({"target": "something"}))
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     mock_generator = mocker.patch.object(builder, "generator")
     mock_generator.get_tags.return_value = ["image/test:1.0", "image/test:latest"]
@@ -822,7 +822,7 @@ def test_docker_squashing_enabled(mocker):
     assert builder.params.no_squash is None
     assert builder.params.tags == ["foo", "bar"]
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     mocker.patch.object(builder, "_build_with_docker")
     mocker.patch.object(builder, "_squash")
@@ -845,7 +845,7 @@ def test_docker_squashing_disabled(mocker):
 
     assert builder.params.no_squash is True
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     docker_client = docker_client_class.return_value
     mocker.patch.object(builder, "_build_with_docker")
     mocker.patch.object(builder, "_squash")
@@ -866,7 +866,7 @@ def test_docker_squashing_parameters(mocker):
     # None is fine here, default values for params are tested in different place
     assert builder.params.no_squash is None
 
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.APIClientClass")
+    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
     squash_class = mocker.patch("cekit.builders.docker_builder.Squash")
     squash = squash_class.return_value
     docker_client = docker_client_class.return_value

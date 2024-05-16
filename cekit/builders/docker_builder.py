@@ -6,6 +6,7 @@ import traceback
 from cekit.builder import Builder
 from cekit.cekit_types import DependencyDefinition
 from cekit.errors import CekitError
+from cekit.tools import parse_env_timeout
 
 LOGGER = logging.getLogger("cekit")
 
@@ -14,14 +15,13 @@ LOGGER = logging.getLogger("cekit")
 try:
     # Squash library
     from docker_squash.squash import Squash
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 try:
     # Docker Python library, the new one
     import docker
-    from docker.api.client import APIClient as APIClientClass
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 try:
@@ -29,17 +29,11 @@ try:
     # so that the dependency mechanism can kick in and require the docker library
     # first which will pull requests
     import requests
-except ImportError:
-    pass
-
-try:
-    # Docker Python library, the old one
-    import docker  # noqa: F811
-    from docker.client import Client as APIClientClass  # noqa: F811
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 ANSI_ESCAPE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+DOCKER_API_VERSION = "1.35"
 
 
 class DockerBuilder(Builder):
@@ -186,28 +180,14 @@ class DockerBuilder(Builder):
         # Default Docker daemon connection timeout 10 minutes
         # It needs to be high enough to allow Docker daemon to export the
         # image for squashing.
-        try:
-            timeout = int(os.getenv("DOCKER_TIMEOUT", "600"))
-        except ValueError:
-            raise CekitError(
-                "Provided timeout value: '{}' cannot be parsed as integer, exiting.".format(
-                    os.getenv("DOCKER_TIMEOUT")
-                )
-            )
+        timeout = parse_env_timeout("DOCKER_TIMEOUT", "600")
 
-        if timeout <= 0:
-            raise CekitError(
-                "Provided timeout value needs to be greater than zero, currently: '{}', exiting.".format(
-                    timeout
-                )
-            )
-
-        params = {"version": "1.35"}
+        params = {"version": DOCKER_API_VERSION}
         params.update(docker.utils.kwargs_from_env())
         params["timeout"] = timeout
 
         try:
-            client = APIClientClass(**params)
+            client = docker.APIClient(**params)
         except docker.errors.DockerException as e:
             LOGGER.error(
                 "Could not create Docker client, please make sure that you "

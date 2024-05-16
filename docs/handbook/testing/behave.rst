@@ -278,14 +278,6 @@ Special tags
     execute tests with ``--wip`` parameter. All scenarios not tagged with ``@wip``
     will be ignored.
 
-``@ci``
-    If CEKit is **not** running as a user called ``jenkins``, the tag ``@ci``
-    is added to the list of **ignored** tags, meaning any tests tagged ``@ci`` are
-    ignored and not executed.
-
-    The purpose of this behavior is to ease specifying tests that are only
-    executed when run within CI.
-
 ``@ignore``
     If a Scenario or Feature is tagged with ``@ignore`` these tests will be skipped.
 
@@ -325,7 +317,7 @@ for the specific image/module.
 Writing features
 ^^^^^^^^^^^^^^^^
 
-The most important 
+The most important
 
 .. todo::
     TBD

@@ -946,3 +946,32 @@ def test_locate_binary(caplog):
     assert "/bin/ls" in locate_binary("ls")
     with pytest.raises(CekitError):
         locate_binary("no-ls")
+
+
+@mock.patch.dict(os.environ, {"DOCKER_TIMEOUT": "10"})
+def test_parse_env_timeout():
+    timeout = tools.parse_env_timeout("DOCKER_TIMEOUT", "600")
+    assert timeout == 10
+
+
+def test_parse_env_timeout_2():
+    timeout = tools.parse_env_timeout("DOCKER_TIMEOUT", "600")
+    assert timeout == 600
+
+
+@mock.patch.dict(os.environ, {"DOCKER_TIMEOUT": "timeout"})
+def test_parse_env_timeout_3():
+    with pytest.raises(
+        CekitError,
+        match="cannot be parsed as integer, exiting",
+    ):
+        tools.parse_env_timeout("DOCKER_TIMEOUT", "600")
+
+
+@mock.patch.dict(os.environ, {"OSBS_TIMEOUT": "0"})
+def test_parse_env_timeout_4():
+    with pytest.raises(
+        CekitError,
+        match="Provided timeout value needs to be greater than zero",
+    ):
+        tools.parse_env_timeout("OSBS_TIMEOUT", "600")
