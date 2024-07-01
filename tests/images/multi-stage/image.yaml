@@ -1,6 +1,6 @@
 - name: builder
   version: 1.0.0
-  from: centos:7
+  from: centos:stream9
   description: Some base image
 
   modules:
