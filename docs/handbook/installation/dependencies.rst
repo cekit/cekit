@@ -43,8 +43,8 @@ Docker builder dependencies
 Docker
     Required to build the image.
 `Docker Python bindings <https://github.com/docker/docker-py>`__
-    We use Python library to communicate with the Docker daemon instead of using the ``docker`` command directly.
-    Both, old (``docker-py``) and new (``docker``) library is supported.
+    We use Python library to communicate with the Docker daemon instead of using the ``docker`` command directly
+(specifically the `docker <https://pypi.org/project/docker/>`__ library)..
 `Docker squash tool <https://github.com/goldmann/docker-squash>`__
     After an image is built, all layers added by the image build process are squashed together with this tool.
 
