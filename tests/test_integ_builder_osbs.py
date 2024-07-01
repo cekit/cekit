@@ -2146,9 +2146,9 @@ redhat = True
         #            )
         # Verify the nested ubi-minimal has been updated but then revert it back to
         # a static value for easier comparisons.
-        assert re.search(r"ubi-minimal:\d\.\d-(\d|\.)+", dockerfile)
+        assert re.search(r"ubi-minimal:\d\.\d+-(\d|\.)+", dockerfile)
         dockerfile = re.sub(
-            r"ubi-minimal:\d\.\d-(\d|\.)+", "ubi-minimal:latest", dockerfile
+            r"ubi-minimal:\d\.\d+-(\d|\.)+", "ubi-minimal:latest", dockerfile
         )
         assert result in dockerfile
     container_path = os.path.join(
