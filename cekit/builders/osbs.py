@@ -62,7 +62,7 @@ class OSBSBuilder(Builder):
         deps = {}
 
         if CONFIG.get("common", "redhat"):
-            if CONFIG.get("common", "stage"):
+            if params.get("stage"):
                 fedpkg = "rhpkg-stage"
                 koji = "brewkoji-stage"
                 koji_executable = "brew-stage"
