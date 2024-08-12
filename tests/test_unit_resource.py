@@ -130,7 +130,7 @@ def test_fetching_with_ssl_verify(mocker):
     except Exception:
         pass
 
-    request: Request = mock_urlopen.call_args.args[0]
+    request: Request = mock_urlopen.call_args[0][0]
     mock_urlopen.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "https://dummy"
     assert ctx.check_hostname is True
@@ -151,7 +151,7 @@ def test_fetching_disable_ssl_verify(mocker):
     except Exception:
         pass
 
-    request: Request = mock_urlopen.call_args.args[0]
+    request: Request = mock_urlopen.call_args[0][0]
     mock_urlopen.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "https://dummy"
 
@@ -202,7 +202,7 @@ def test_fetching_file_exists_fetched_again(mocker):
         # will not have md5 equal to 123456. We need investigate
         # mocking of requests get calls to do it properly
         res.copy()
-    request: Request = mock_urlopen.call_args.args[0]
+    request: Request = mock_urlopen.call_args[0][0]
     mock_urlopen.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "http://dummy"
 
@@ -225,7 +225,7 @@ def test_fetching_file_exists_no_hash_fetched_again(mocker):
         # url is not valid so we get error, but we are not interested
         # in it. We just need to check that we attempted to downlad.
         res.copy()
-    request: Request = mock_urlopen.call_args.args[0]
+    request: Request = mock_urlopen.call_args[0][0]
     mock_urlopen.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "http://dummy"
 
@@ -313,7 +313,7 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
     )
     assert f"Removing incompletely downloaded '{targetfile}' file" in caplog.text
 
-    request: Request = urlopen_class_mock.call_args.args[0]
+    request: Request = urlopen_class_mock.call_args[0][0]
     urlopen_class_mock.assert_called_with(request, context=mocker.ANY)
     assert request.get_full_url() == "http://server.org/dummy"
     os_remove_mock.assert_called_with(targetfile)
@@ -343,7 +343,7 @@ def test_copy_plain_resource_with_cacher(mocker, tmpdir):
     res.copy(str(tmpdir))
 
     substitute_cache_url_mock.assert_called_once_with(None)
-    request: Request = urlopen_class_mock.call_args.args[0]
+    request: Request = urlopen_class_mock.call_args[0][0]
     urlopen_class_mock.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "http://cache/abc"
 
@@ -375,7 +375,7 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
 
     mock_get_brew_url.assert_called_once_with("5b9164ad6f496d9dee12ec7634ce253f")
     assert res._Resource__substitute_cache_url.call_count == 0
-    request: Request = urlopen_class_mock.call_args.args[0]
+    request: Request = urlopen_class_mock.call_args[0][0]
     urlopen_class_mock.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "http://cache/abc"
 
@@ -436,7 +436,7 @@ def test_fetching_file_with_authentication(mocker):
         # will not have md5 equal to 123456. We need investigate
         # mocking of requests get calls to do it properly
         res.copy()
-    request: Request = mock_urlopen.call_args.args[0]
+    request: Request = mock_urlopen.call_args[0][0]
     mock_urlopen.assert_called_with(request, context=ctx)
     assert request.get_full_url() == "http://dummy.com"
     assert request.get_header("Authorization") == "Basic dXNlcm5hbWU6cGFzc3dvcmQ="

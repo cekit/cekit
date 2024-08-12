@@ -689,7 +689,7 @@ def test_run_load_remote_override(tmpdir, mocker):
     )
 
     assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
-    request: Request = mock_urlopen.call_args.args[0]
+    request: Request = mock_urlopen.call_args[0][0]
     assert request.get_full_url() == "https://example.com/overrides.yaml"
 
 
