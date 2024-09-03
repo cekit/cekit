@@ -1,7 +1,6 @@
 *.pyc
 *.swp
 target
-build
 .tox
 .coverage
 .cache
