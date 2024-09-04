@@ -3,8 +3,8 @@ version: 1.0
 
 artifacts:
   - name: ant.tar.gz
-    url: https://downloads.apache.org/ant/binaries/apache-ant-1.10.13-bin.zip
-    sha512: 347e964db73d1f8e9fe110f135625920e09c8c9997e9950c405cfeec60b70750044a91ef0535d76d6f8e023de0788f2619be76fd91b7a80be9a6b569a16cc3e8
+    url: https://downloads.apache.org/ant/binaries/apache-ant-1.10.15-bin.zip
+    sha512: 1de7facbc9874fa4e5a2f045d5c659f64e0b89318c1dbc8acc6aae4595c4ffaf90a7b1ffb57f958dd08d6e086d3fff07aa90e50c77342a0aa5c9b4c36bff03a9
 
 execute:
     - script: build.sh

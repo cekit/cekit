@@ -226,6 +226,10 @@ This approach relies on :doc:`/handbook/caching` to provide the artifact.
 The ``source-url`` and source checksum (which may be ``source-md5``, ``source-sha1`` or
 ``source-sha256`` are optional and denote where the sources may be found.
 
+.. note::
+
+   See :doc:`/handbook/configuration` for information on how URL authentication may be configured.
+
 Path artifacts
 ******************
 

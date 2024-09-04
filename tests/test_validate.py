@@ -5,6 +5,7 @@ import re
 import shutil
 import sys
 import uuid
+from urllib.request import Request
 
 import pytest
 import yaml
@@ -688,9 +689,8 @@ def test_run_load_remote_override(tmpdir, mocker):
     )
 
     assert check_dockerfile(image_dir, "USER 4321", "Containerfile")
-    mock_urlopen.assert_called_with(
-        "https://example.com/overrides.yaml", context=mocker.ANY
-    )
+    request: Request = mock_urlopen.call_args[0][0]
+    assert request.get_full_url() == "https://example.com/overrides.yaml"
 
 
 def test_run_load_remote_file_override(tmpdir, mocker):

@@ -150,3 +150,23 @@ Example
         [common]
         fetch_artifact_domains = https://www.foo.bar/my-path,https://www.example.com
 
+URL Artifact Authentication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Key
+    ``url_authentication``
+
+Description
+    This option makes it possible to provide a username/password on a per-domain basis when downloading URL based artifacts. Multiple domains each with their own username/password may be specified with a ``;`` deliminator while the domain is separated from the ``username:password`` combination via a ``#`` deliminator.
+
+Default
+    Not set
+
+Example
+    .. code-block:: ini
+
+        [common]
+        url_authentication=example.com#username:password;www.foo.org#username:password
+
+.. note::
+    Due to the separators being used (``;``, ``#``, ``:``) these characters cannot be used within a password.

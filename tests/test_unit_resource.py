@@ -1,5 +1,6 @@
 import logging
 import os
+from urllib.request import Request
 
 import pytest
 import yaml
@@ -122,14 +123,16 @@ def test_fetching_with_ssl_verify(mocker):
     get_mock_ssl(mocker, ctx)
     mock_urlopen = get_mock_urlopen(mocker)
 
-    res = create_resource({"name": "file", "url": "https:///dummy"})
+    res = create_resource({"name": "file", "url": "https://dummy"})
 
     try:
         res.copy()
     except Exception:
         pass
 
-    mock_urlopen.assert_called_with("https:///dummy", context=ctx)
+    request: Request = mock_urlopen.call_args[0][0]
+    mock_urlopen.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "https://dummy"
     assert ctx.check_hostname is True
     assert ctx.verify_mode == 1
 
@@ -141,21 +144,23 @@ def test_fetching_disable_ssl_verify(mocker):
     ctx = get_ctx(mocker)
     get_mock_ssl(mocker, ctx)
 
-    res = create_resource({"name": "file", "url": "https:///dummy"})
+    res = create_resource({"name": "file", "url": "https://dummy"})
 
     try:
         res.copy()
     except Exception:
         pass
 
-    mock_urlopen.assert_called_with("https:///dummy", context=ctx)
+    request: Request = mock_urlopen.call_args[0][0]
+    mock_urlopen.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "https://dummy"
 
     assert ctx.check_hostname is False
     assert ctx.verify_mode == 0
 
 
 def test_fetching_bad_status_code():
-    res = create_resource({"name": "file", "url": "http:///dummy"})
+    res = create_resource({"name": "file", "url": "http://dummy"})
     with pytest.raises(CekitError):
         res.copy()
 
@@ -172,7 +177,7 @@ def test_fetching_file_exists_but_used_as_is(mocker):
     res = create_resource(
         {
             "name": "file",
-            "url": "http:///dummy",
+            "url": "http://dummy",
             "md5": "d41d8cd98f00b204e9800998ecf8427e",
         }
     )
@@ -191,13 +196,15 @@ def test_fetching_file_exists_fetched_again(mocker):
 
     with open("file", "w") as f:  # noqa: F841
         pass
-    res = create_resource({"name": "file", "url": "http:///dummy", "md5": "123456"})
+    res = create_resource({"name": "file", "url": "http://dummy", "md5": "123456"})
     with pytest.raises(CekitError):
         # Checksum will fail, because the "downloaded" file
         # will not have md5 equal to 123456. We need investigate
         # mocking of requests get calls to do it properly
         res.copy()
-    mock_urlopen.assert_called_with("http:///dummy", context=ctx)
+    request: Request = mock_urlopen.call_args[0][0]
+    mock_urlopen.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "http://dummy"
 
 
 def test_fetching_file_exists_no_hash_fetched_again(mocker):
@@ -212,13 +219,15 @@ def test_fetching_file_exists_no_hash_fetched_again(mocker):
     with open("file", "w") as f:  # noqa: F841
         pass
 
-    res = create_resource({"name": "file", "url": "http:///dummy"})
+    res = create_resource({"name": "file", "url": "http://dummy"})
 
     with pytest.raises(CekitError):
         # url is not valid so we get error, but we are not interested
         # in it. We just need to check that we attempted to downlad.
         res.copy()
-    mock_urlopen.assert_called_with("http:///dummy", context=ctx)
+    request: Request = mock_urlopen.call_args[0][0]
+    mock_urlopen.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "http://dummy"
 
 
 def test_generated_url_without_cacher():
@@ -304,7 +313,9 @@ def test_url_resource_download_cleanup_after_failure(mocker, tmpdir, caplog):
     )
     assert f"Removing incompletely downloaded '{targetfile}' file" in caplog.text
 
-    urlopen_class_mock.assert_called_with("http://server.org/dummy", context=mocker.ANY)
+    request: Request = urlopen_class_mock.call_args[0][0]
+    urlopen_class_mock.assert_called_with(request, context=mocker.ANY)
+    assert request.get_full_url() == "http://server.org/dummy"
     os_remove_mock.assert_called_with(targetfile)
 
 
@@ -332,7 +343,9 @@ def test_copy_plain_resource_with_cacher(mocker, tmpdir):
     res.copy(str(tmpdir))
 
     substitute_cache_url_mock.assert_called_once_with(None)
-    urlopen_class_mock.assert_called_with("http://cache/abc", context=ctx)
+    request: Request = urlopen_class_mock.call_args[0][0]
+    urlopen_class_mock.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "http://cache/abc"
 
 
 def test_copy_plain_resource_from_brew(mocker, tmpdir):
@@ -362,7 +375,9 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
 
     mock_get_brew_url.assert_called_once_with("5b9164ad6f496d9dee12ec7634ce253f")
     assert res._Resource__substitute_cache_url.call_count == 0
-    urlopen_class_mock.assert_called_with("http://cache/abc", context=ctx)
+    request: Request = urlopen_class_mock.call_args[0][0]
+    urlopen_class_mock.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "http://cache/abc"
 
 
 def test_override_resource_remove_chksum():
@@ -401,3 +416,27 @@ def test_override_resource_remove_chksum():
     assert "sha1" not in overrides["artifacts"][0]
     assert "sha256" not in overrides["artifacts"][0]
     assert "sha512" not in overrides["artifacts"][0]
+
+
+def test_fetching_file_with_authentication(mocker):
+    """
+    It should download the file again, because available
+    file locally doesn't match checksum.
+    """
+    mock_urlopen = get_mock_urlopen(mocker)
+    config.cfg["common"]["url_authentication"] = "dummy.com#username:password"
+    ctx = get_ctx(mocker)
+    get_mock_ssl(mocker, ctx)
+
+    with open("file", "w") as f:  # noqa: F841
+        pass
+    res = create_resource({"name": "file", "url": "http://dummy.com", "md5": "123456"})
+    with pytest.raises(CekitError):
+        # Checksum will fail, because the "downloaded" file
+        # will not have md5 equal to 123456. We need investigate
+        # mocking of requests get calls to do it properly
+        res.copy()
+    request: Request = mock_urlopen.call_args[0][0]
+    mock_urlopen.assert_called_with(request, context=ctx)
+    assert request.get_full_url() == "http://dummy.com"
+    assert request.get_header("Authorization") == "Basic dXNlcm5hbWU6cGFzc3dvcmQ="

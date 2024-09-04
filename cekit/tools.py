@@ -1,3 +1,4 @@
+import base64
 import importlib
 import logging
 import os
@@ -7,7 +8,7 @@ import subprocess
 import sys
 from typing import Any, Mapping, Sequence
 from urllib.parse import urlparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import click
 import yaml
@@ -56,7 +57,24 @@ def download_file(url: str, destination: str) -> None:
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
-        res = urlopen(url, context=ctx)
+        request: Request = Request(url)
+        if config.get("common", "url_authentication"):
+            domains = dict(
+                [
+                    x.split("#")
+                    for x in config.get("common", "url_authentication").split(";")
+                ]
+            )
+            for d, a in domains.items():
+                if parsed_url.hostname == d:
+                    logger.debug(
+                        f"Located matching hostname '{d}' to add authentication with username '{a.split(':')[0]}'."
+                    )
+                    b64auth = base64.b64encode(a.encode("latin-1")).decode()
+                    request.add_header("Authorization", f"Basic {b64auth}")
+                    break
+
+        res = urlopen(request, context=ctx)
 
         if res.getcode() != 200:
             raise CekitError(f"Could not download file from {url}")
