@@ -10,6 +10,7 @@ from cekit.cli import cli
 from cekit.config import Config
 from cekit.descriptor import Repository
 from cekit.tools import Chdir
+from cekit.version import __version__
 from cekit.version import __version__ as cekit_version
 
 basic_config = {"release": 1, "version": 1, "from": "fromimage", "name": "testimage"}
@@ -597,23 +598,84 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
 
     with open(module_yaml_path, "w") as outfile:
         yaml.dump(
-            {"name": "foo", "version": "1.0", "execute": [{"script": "configure.sh"}]},
+            {
+                "name": "foo",
+                "version": "1.0",
+                "execute": [{"script": "configure.sh"}],
+                "args": [
+                    {"name": "modulearg", "value": "modulebar"},
+                    {"name": "modulelabel"},
+                ],
+            },
             outfile,
             default_flow_style=False,
         )
 
     generate(
         target,
-        ["-v", "--work-dir", target, "build", "--dry-run", "podman"],
+        [
+            "-v",
+            "--work-dir",
+            target,
+            "build",
+            "--overrides",
+            "{'args': [{'name': 'foo', 'value': 'NEW'}]}",
+            "--dry-run",
+            "podman",
+        ],
         descriptor={
+            "args": [{"name": "foo", "value": "bar"}, {"name": "labela"}],
             "modules": {
                 "repositories": [{"name": "modules", "path": "modules"}],
                 "install": [{"name": "foo"}],
-            }
+            },
         },
     )
 
-    regex_dockerfile(target, "COPY modules/foo /tmp/scripts/foo", "Containerfile")
+    with open(os.path.join(target, "target", "image", "Containerfile"), "r") as fd:
+        dockerfile_content = fd.read()
+        print(f"docker is \n{dockerfile_content}")
+        assert (
+            """## START target image testimage:1
+## \\
+    FROM fromimage
+
+
+    USER root
+        ARG foo="NEW"
+        ARG labela
+
+
+###### START module 'foo:1.0'
+###### \\
+        # Copy 'foo' module content
+        COPY modules/foo /tmp/scripts/foo
+        ARG modulearg="modulebar"
+        ARG modulelabel
+
+        # Custom scripts from 'foo' module
+        USER root
+        RUN [ "sh", "-x", "/tmp/scripts/foo/configure.sh" ]
+###### /
+###### END module 'foo:1.0'
+
+###### START image 'testimage:1'
+###### \\
+        # Set 'testimage' image defined labels
+        LABEL \\
+            io.cekit.version="VVVVV"
+###### /
+###### END image 'testimage:1'
+
+
+
+    # Switch to 'root' user and remove artifacts and modules
+    USER root
+""".replace(
+                "VVVVV", __version__
+            )
+            in dockerfile_content
+        )
 
 
 def test_dockerfile_destination_of_artifact(mocker, tmpdir):

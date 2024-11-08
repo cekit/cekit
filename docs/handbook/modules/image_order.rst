@@ -37,6 +37,7 @@ describes how the image processing interacts with the module processing.
                 bgcolor="lightgrey"
                 label="Image Rendering";
                 cachito [label="Cachito Support", rank=same];
+                arg [label="Main image ARG handling"];
                 repo [label="Repository Management"];
                 module [label="Included Module Processing"];
                 complete_image [label="Final Image stages", href="#final-image-stages"];
@@ -54,7 +55,7 @@ describes how the image processing interacts with the module processing.
 
         // graph control
         builder -> from -> extra -> image -> cleanup -> final;
-        cachito -> repo -> module -> complete_image;
+        cachito -> repo -> arg -> module -> complete_image;
         artifact -> pkg_install -> ports -> run -> volumes;
 
         // subgraph links
@@ -73,5 +74,10 @@ This encompasses defining the ``USER``, the ``WORKDIR``, and ``ENTRYPOINT``. Fin
 Final Image Stages
 """""""""""""""""""""""
 
-This encompasses the final part of the generation for the image descriptor which may include e.g. package installation.
-Note that this happens **after** modules have been included and processed.
+This encompasses the final part of the generation for the image descriptor which may include e.g. package
+installation or artifact handling.
+
+.. note::
+    Note that the main image handling happens **after** modules have been included and processed.
+
+    The only exception to this is ``args`` which are injected first.
