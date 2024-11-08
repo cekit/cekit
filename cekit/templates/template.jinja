@@ -78,6 +78,24 @@ rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
     {% endif %}
 {%- endmacro -%}
 
+
+{#
+ # Handle processing ARGS
+ #}
+{%- macro process_args(module) -%}
+{% if module.args|count > 0 %}
+    {% for arg in module.args|sort(attribute='name') %}
+    {% if 'value' in arg %}
+        ARG {{ arg.name }}="{{ arg.value }}"
+    {% else %}
+        ARG {{ arg.name }}
+    {% endif -%}
+    {% endfor %}
+
+{% endif %}
+{%- endmacro -%}
+
+
 {#
  # Macro for processing content of a module (or image).
  #
@@ -140,19 +158,11 @@ rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
         # Reinstall packages defined in the '{{ module.name }}' {{ module_type }}
         RUN {{ pkg_reinstall(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.reinstall) }}
         {% endif -%}
-        {% endif -%}
-
-        {% if module.args|count > 0 %}
-        {% for arg in module.args|sort(attribute='name') %}
-        {% if 'value' in arg %}
-        ARG {{ arg.name }}="{{ arg.value }}"
-        {% else %}
-        ARG {{ arg.name }}
-        {% endif -%}
-        {% endfor %}
 
         {% endif -%}
-
+        {% if module_type == 'module' %}
+        {{- process_args(module) -}}
+        {% endif -%}
         {% if module.envs|selectattr("value")|list|length > 0 %}
         # Set '{{ module.name }}' {{ module_type }} defined environment variables
         ENV \
@@ -228,6 +238,7 @@ rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
     {% endfor %}
     {% endif %}
 
+    {{- process_args(animage) }}
     {% for to_install in animage.modules.install %}
 {{ process_module(helper.module(to_install), animage) }}
     {% endfor %}

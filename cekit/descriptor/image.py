@@ -83,6 +83,7 @@ class Image(Descriptor):
         self._descriptor["labels"] = [
             Label(x) for x in self._descriptor.get("labels", [])
         ]
+        self._descriptor["args"] = [Arg(x) for x in self._descriptor.get("args", [])]
         self._descriptor["envs"] = [Env(x) for x in self._descriptor.get("envs", [])]
         self._descriptor["ports"] = [Port(x) for x in self._descriptor.get("ports", [])]
         if "run" in self._descriptor:
@@ -266,6 +267,15 @@ class Image(Descriptor):
                 else:
                     labels[name] = label
             self._descriptor["labels"] = list(labels.values())
+
+            args = Image._to_dict(self.args)
+            for argument in override.args:
+                name = argument.name
+                if name in args:
+                    args[name] = argument.merge(args[name])
+                else:
+                    args[name] = argument
+            self._descriptor["args"] = list(args.values())
 
             envs = Image._to_dict(self.envs)
             for env in override.envs:
