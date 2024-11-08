@@ -149,7 +149,7 @@ class DockerBuilder(Builder):
                     "your image/module descriptor for proper repository "
                     "definitions."
                 )
-
+            LOGGER.error(ex)
             raise CekitError(msg) from ex
 
         return docker_layer_ids[-1]
