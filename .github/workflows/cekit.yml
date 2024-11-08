@@ -59,7 +59,7 @@ jobs:
         brew install podman
         echo "PODMAN `which podman`"
         podman machine init
-        podman machine start
+        podman machine start  --log-level debug
         podman info
         echo "$HOME/bin" >> $GITHUB_PATH
         mkdir $HOME/bin
