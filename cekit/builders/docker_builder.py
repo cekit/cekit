@@ -68,9 +68,9 @@ class DockerBuilder(Builder):
         docker_args["rm"] = True
         if self.params.platform:
             docker_args["platform"] = self.params.platform
-        if self.params.args:
+        if self.params.build_args:
             buildargs = {}
-            for arg in self.params.args:
+            for arg in self.params.build_args:
                 if "=" in arg:
                     split = arg.split("=")
                     buildargs.update({split[0]: split[1]})
