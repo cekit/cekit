@@ -169,7 +169,7 @@ def build(validate, dry_run, container_file, overrides):
 )
 @click.option(
     "--build-arg",
-    "args",
+    "build_args",
     metavar="ARG[=VALUE]",
     help="Pass specified build-arg to the build process, can be specified multiple times.",
     multiple=True,
@@ -179,7 +179,7 @@ def build(validate, dry_run, container_file, overrides):
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_docker(ctx, pull, no_squash, tags, args, platform):
+def build_docker(ctx, pull, no_squash, tags, build_args, platform):
     """
     DESCRIPTION
 
@@ -206,7 +206,7 @@ def build_docker(ctx, pull, no_squash, tags, args, platform):
 )
 @click.option(
     "--build-arg",
-    "args",
+    "build_args",
     metavar="ARG[=VALUE]",
     help="Pass specified build-arg to the build process, can be specified multiple times.",
     multiple=True,
@@ -216,7 +216,7 @@ def build_docker(ctx, pull, no_squash, tags, args, platform):
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_buildah(ctx, pull, no_squash, tags, args, platform):
+def build_buildah(ctx, pull, no_squash, tags, build_args, platform):
     """
     DESCRIPTION
 
@@ -241,7 +241,7 @@ def build_buildah(ctx, pull, no_squash, tags, args, platform):
 )
 @click.option(
     "--build-arg",
-    "args",
+    "build_args",
     metavar="ARG[=VALUE]",
     help="Pass specified build-arg to the build process, can be specified multiple times.",
     multiple=True,
@@ -251,7 +251,7 @@ def build_buildah(ctx, pull, no_squash, tags, args, platform):
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_podman(ctx, pull, no_squash, tags, args, platform):
+def build_podman(ctx, pull, no_squash, tags, build_args, platform):
     """
     DESCRIPTION
 
