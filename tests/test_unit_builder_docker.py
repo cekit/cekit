@@ -121,18 +121,15 @@ def test_docker_client_build(mocker, caplog):
         "Docker: This system is not receiving updates. You can use subscription-manager on the host to register and assign subscriptions."
         in caplog.text
     )
-    assert "Image built and available under following tags: foo, bar" in caplog.text
+    assert "built and available under following tags: foo, bar" in caplog.text
 
 
 def test_docker_client_build_platform(mocker, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     mocker.patch("cekit.builders.docker_builder.Squash")
-    docker_client_class = mocker.patch("cekit.builders.docker_builder.docker.APIClient")
-    docker_client = docker_client_class.return_value
-    docker_client_build = mocker.patch.object(
-        docker_client, "build", return_value=docker_success_output
-    )
+    mocker.patch("cekit.builders.docker_builder.docker.APIClient")
+    mocker.patch("subprocess.run")
 
     builder = DockerBuilder(
         Map(
@@ -146,15 +143,8 @@ def test_docker_client_build_platform(mocker, caplog):
     builder.generator = Map({"image": {"from": "FROM"}})
     builder.run()
 
-    docker_client_build.assert_called_once_with(
-        decode=True,
-        path="something/image",
-        platform="linux/amd64,linux/arm64",
-        pull=None,
-        rm=True,
-    )
     assert re.match(
-        ".*Running Docker build:.*'platform': 'linux/amd64,linux/arm64'.*",
+        ".*Executing.*docker build.*platform.*linux/amd64,linux/arm64.*",
         caplog.text,
         re.DOTALL,
     )
