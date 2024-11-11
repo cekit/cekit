@@ -25,6 +25,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -49,6 +50,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -73,6 +75,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -97,6 +100,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -121,6 +125,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -145,6 +150,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -298,6 +304,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -347,6 +354,7 @@ def _get_class_by_name(clazz):
             "cekit.builders.docker_builder.DockerBuilder",
             {
                 "build_args": (),
+                "build_tool": (),
                 "container_file": None,
                 "descriptor": "image.yaml",
                 "verbose": False,
@@ -384,6 +392,7 @@ def _get_class_by_name(clazz):
                 "pull": False,
                 "tags": (),
                 "build_args": (),
+                "build_tool": (),
                 "platform": None,
                 "no_squash": False,
             },

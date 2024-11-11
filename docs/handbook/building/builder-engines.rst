@@ -30,8 +30,15 @@ Parameters
         descriptor.
     ``--build-arg`` <ARG=VALUE>
         Pass specified build-arg to the build process, can be specified multiple times.
+    ``--build-tool`` <ARG=VALUE>
+        Pass arbitrary arguments to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
+
+.. note::
+        If ``--platform`` or ``--build-tool`` is passed in the build will be invoke by calling the Docker CLI
+        directly instead of using the `Python API <https://docker-py.readthedocs.io/en/stable>`_.  This is due to
+        https://github.com/docker/docker-py/issues/2230
 
 Example
     Building Docker image
