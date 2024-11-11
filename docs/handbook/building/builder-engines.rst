@@ -22,12 +22,14 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
+    ``--no-squash``
+        Do not squash the image after build is done.
     ``--tag`` <tag-name>
         Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
         then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
         descriptor.
-    ``--no-squash``
-        Do not squash the image after build is done.
+    ``--build-arg`` <ARG=VALUE>
+        Pass specified build-arg to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
 
@@ -194,12 +196,16 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
+    ``--no-squash``
+        Do not squash the image after build is done.
     ``--tag`` <tag-name>
         Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
         then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
         descriptor.
-    ``--no-squash``
-        Do not squash the image after build is done.
+    ``--build-arg`` <ARG=VALUE>
+        Pass specified build-arg to the build process, can be specified multiple times.
+    ``--build-tool`` <ARG=VALUE>
+        Pass arbitrary arguments to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
 
@@ -254,12 +260,16 @@ Input format
 Parameters
     ``--pull``
         Ask a builder engine to check and fetch latest base image
+    ``--no-squash``
+        Do not squash the image after build is done.
     ``--tag`` <tag-name>
         Use specified tag to tag the image after the build. (can be specified multiple times). If not specified
         then the image will be tagged with ``<name>:<version>`` and ``<name>:latest`` using keys from the image
         descriptor.
-    ``--no-squash``
-        Do not squash the image after build is done.
+    ``--build-arg`` <ARG=VALUE>
+        Pass specified build-arg to the build process, can be specified multiple times.
+    ``--build-tool`` <ARG=VALUE>
+        Pass arbitrary arguments to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
 
@@ -275,6 +285,12 @@ Example
     .. code-block:: bash
 
         $ cekit build podman --pull
+
+    Build image using Podman
+
+    .. code-block:: bash
+
+        $ cekit build podman --pull --build-arg=FOO=BAR --build-tool=--secret=id=id,src=path
 
 Podman environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

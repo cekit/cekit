@@ -175,11 +175,18 @@ def build(validate, dry_run, container_file, overrides):
     multiple=True,
 )
 @click.option(
+    "--build-tool",
+    "build_tool",
+    metavar="ARG[=VALUE]",
+    help="Pass arbitrary arguments to the underlying build process, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
     "--platform",
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_docker(ctx, pull, no_squash, tags, build_args, platform):
+def build_docker(ctx, pull, no_squash, tags, build_args, build_tool, platform):
     """
     DESCRIPTION
 
@@ -212,11 +219,18 @@ def build_docker(ctx, pull, no_squash, tags, build_args, platform):
     multiple=True,
 )
 @click.option(
+    "--build-tool",
+    "build_tool",
+    metavar="ARG[=VALUE]",
+    help="Pass arbitrary arguments to the underlying build process, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
     "--platform",
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_buildah(ctx, pull, no_squash, tags, build_args, platform):
+def build_buildah(ctx, pull, no_squash, tags, build_args, build_tool, platform):
     """
     DESCRIPTION
 
@@ -247,11 +261,18 @@ def build_buildah(ctx, pull, no_squash, tags, build_args, platform):
     multiple=True,
 )
 @click.option(
+    "--build-tool",
+    "build_tool",
+    metavar="ARG[=VALUE]",
+    help="Pass arbitrary arguments to the underlying build process, can be specified multiple times.",
+    multiple=True,
+)
+@click.option(
     "--platform",
     help="Set the ARCH of the image to the provided value instead of the architecture of the host.",
 )
 @click.pass_context
-def build_podman(ctx, pull, no_squash, tags, build_args, platform):
+def build_podman(ctx, pull, no_squash, tags, build_args, build_tool, platform):
     """
     DESCRIPTION
 
