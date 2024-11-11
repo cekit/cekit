@@ -1241,6 +1241,41 @@ def test_podman_builder_with_build_arg(mocker):
     )
 
 
+def test_podman_builder_with_build_tool(mocker):
+    params = {"build_tool": ["--compress"]}
+    run = mocker.patch.object(subprocess, "run")
+    builder = create_builder_object(mocker, "podman", params)
+    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator.image = Image(
+        yaml.safe_load(
+            """
+    name: foo
+    version: 1.9
+    """
+        ),
+        "foo",
+    )
+    builder.run()
+
+    run.assert_called_once_with(
+        [
+            shutil.which("podman"),
+            "build",
+            "--squash",
+            "-t",
+            "foo:1.9",
+            "-t",
+            "foo:latest",
+            "--compress",
+            "something/image",
+        ],
+        stderr=None,
+        stdout=None,
+        check=True,
+        universal_newlines=True,
+    )
+
+
 def test_docker_squashing_disabled_dependencies(mocker, tmpdir, caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
