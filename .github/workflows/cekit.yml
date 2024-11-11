@@ -55,9 +55,8 @@ jobs:
       if: startsWith(matrix.os,'macos')
       run: |
         pip install "tox<4.0.0" setuptools
-        echo "Checking qemu info... $(brew list --versions qemu)"
         brew install podman
-        echo "PODMAN `which podman`"
+        echo "Podman `which podman`"
         podman machine init
         podman machine start  --log-level debug
         podman info
@@ -66,6 +65,7 @@ jobs:
         ln -s /usr/bin/true $HOME/bin/brew
         ln -s /usr/bin/true $HOME/bin/skopeo
         ln -s /usr/bin/true $HOME/bin/buildah
+        ln -s /usr/bin/true $HOME/bin/docker
     - name: Run tests
       run: |
         PV=${{ matrix.python-version }}
