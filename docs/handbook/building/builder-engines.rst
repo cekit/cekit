@@ -30,13 +30,13 @@ Parameters
         descriptor.
     ``--build-arg`` <ARG=VALUE>
         Pass specified build-arg to the build process, can be specified multiple times.
-    ``--build-tool`` <ARG=VALUE>
+    ``--build-flag`` <ARG=VALUE>
         Pass arbitrary arguments to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
 
 .. note::
-        If ``--platform`` or ``--build-tool`` is passed in the build will be invoke by calling the Docker CLI
+        If ``--platform`` or ``--build-flag`` is passed in the build will be invoke by calling the Docker CLI
         directly instead of using the `Python API <https://docker-py.readthedocs.io/en/stable>`_.  This is due to
         https://github.com/docker/docker-py/issues/2230
 
@@ -211,7 +211,7 @@ Parameters
         descriptor.
     ``--build-arg`` <ARG=VALUE>
         Pass specified build-arg to the build process, can be specified multiple times.
-    ``--build-tool`` <ARG=VALUE>
+    ``--build-flag`` <ARG=VALUE>
         Pass arbitrary arguments to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
@@ -275,7 +275,7 @@ Parameters
         descriptor.
     ``--build-arg`` <ARG=VALUE>
         Pass specified build-arg to the build process, can be specified multiple times.
-    ``--build-tool`` <ARG=VALUE>
+    ``--build-flag`` <ARG=VALUE>
         Pass arbitrary arguments to the build process, can be specified multiple times.
     ``--platform``
         Set the ARCH of the image to the provided value(s).
@@ -297,7 +297,7 @@ Example
 
     .. code-block:: bash
 
-        $ cekit build podman --pull --build-arg=FOO=BAR --build-tool=--secret=id=id,src=path
+        $ cekit build podman --pull --build-arg=FOO=BAR --build-flag=--secret=id=id,src=path
 
 Podman environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

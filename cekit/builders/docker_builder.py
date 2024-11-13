@@ -69,8 +69,6 @@ class DockerBuilder(OCIBuilder):
         docker_args["path"] = os.path.join(self.target, "image")
         docker_args["pull"] = self.params.pull
         docker_args["rm"] = True
-        if self.params.platform:
-            docker_args["platform"] = self.params.platform
         if self.params.build_args:
             buildargs = {}
             for arg in self.params.build_args:
@@ -246,7 +244,7 @@ class DockerBuilder(OCIBuilder):
 
         docker_client = self._docker_client()
 
-        if self.params.platform or self.params.build_tool:
+        if self.params.platform or self.params.build_flag:
             cmd: List[str] = [locate_binary("docker"), "build"]
             with tempfile.NamedTemporaryFile() as tmp:
                 cmd.append(f"--iidfile={tmp.name}")

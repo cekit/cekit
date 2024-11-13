@@ -12,7 +12,7 @@ class OCIBuilder(Builder):
     def common_build(self, build_type: str, cmd: List[str], tagging=True):
         tags: List[str] = self.params.tags
         args: List[str] = self.params.build_args
-        generic_args: List[str] = self.params.build_tool
+        generic_args: List[str] = self.params.build_flag
 
         if tagging and not tags:
             tags = self.generator.get_tags()
