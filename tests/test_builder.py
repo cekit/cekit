@@ -1241,8 +1241,8 @@ def test_podman_builder_with_build_arg(mocker):
     )
 
 
-def test_podman_builder_with_build_tool(mocker):
-    params = {"build_tool": ["--compress"]}
+def test_podman_builder_with_build_flag(mocker):
+    params = {"build_flag": ["--compress"]}
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
     builder.generator = DockerGenerator("", "", "", [])
