@@ -1,12 +1,15 @@
 import logging
 import os
 import re
+import tempfile
 import traceback
+from pathlib import Path
+from typing import List
 
-from cekit.builder import Builder
+from cekit.builders.oci_builder import OCIBuilder
 from cekit.cekit_types import DependencyDefinition
 from cekit.errors import CekitError
-from cekit.tools import parse_env_timeout
+from cekit.tools import locate_binary, parse_env_timeout
 
 LOGGER = logging.getLogger("cekit")
 
@@ -36,7 +39,7 @@ ANSI_ESCAPE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 DOCKER_API_VERSION = "1.35"
 
 
-class DockerBuilder(Builder):
+class DockerBuilder(OCIBuilder):
     """This class wraps docker build command to build and image"""
 
     def __init__(self, params):
@@ -66,11 +69,9 @@ class DockerBuilder(Builder):
         docker_args["path"] = os.path.join(self.target, "image")
         docker_args["pull"] = self.params.pull
         docker_args["rm"] = True
-        if self.params.platform:
-            docker_args["platform"] = self.params.platform
-        if self.params.args:
+        if self.params.build_args:
             buildargs = {}
-            for arg in self.params.args:
+            for arg in self.params.build_args:
                 if "=" in arg:
                     split = arg.split("=")
                     buildargs.update({split[0]: split[1]})
@@ -149,18 +150,22 @@ class DockerBuilder(Builder):
                     "your image/module descriptor for proper repository "
                     "definitions."
                 )
-
+            LOGGER.error(ex)
             raise CekitError(msg) from ex
 
         return docker_layer_ids[-1]
 
-    def _squash(self, docker_client, image_id):
+    def _squash(self, docker_client, image_id, squash_all_layers=False):
         LOGGER.info(f"Squashing image {image_id}...")
 
+        if squash_all_layers:
+            layer = None
+        else:
+            layer = self.generator.image["from"]
         squash = Squash(
             docker=docker_client,
             log=LOGGER,
-            from_layer=self.generator.image["from"],
+            from_layer=layer,
             image=image_id,
             cleanup=True,
         )
@@ -239,16 +244,29 @@ class DockerBuilder(Builder):
 
         docker_client = self._docker_client()
 
-        # Build image
-        image_id = self._build_with_docker(docker_client)
+        if self.params.platform or self.params.build_flag:
+            cmd: List[str] = [locate_binary("docker"), "build"]
+            with tempfile.NamedTemporaryFile() as tmp:
+                cmd.append(f"--iidfile={tmp.name}")
+                # Don't tag in the common_build as it leads to image reference issues
+                self.common_build("docker", cmd, False)
+                # Strip "sha256:" from the start
+                image_id = Path(tmp.name).read_text()[7:]
+            if not self.params.no_squash:
+                # Docker buildkit does not show history so squash without a from reference
+                # https://github.com/moby/buildkit/issues/1235
+                image_id = self._squash(docker_client, image_id, True)
+        else:
+            # Build image
+            image_id = self._build_with_docker(docker_client)
 
-        # Squash only if --no-squash is NOT defined
-        if not self.params.no_squash:
-            image_id = self._squash(docker_client, image_id)
+            # Squash only if --no-squash is NOT defined
+            if not self.params.no_squash:
+                image_id = self._squash(docker_client, image_id)
 
         # Tag the image
         self._tag(docker_client, image_id, tags)
 
         LOGGER.info(
-            f"Image built and available under following tags: {', '.join(tags)}"
+            f"Image ID {image_id} built and available under following tags: {', '.join(tags)}"
         )

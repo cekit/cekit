@@ -4,7 +4,7 @@ jobs:
     parallelism: 3
     machine:
       # New tag format : https://discuss.circleci.com/t/new-image-tag-convention-for-ubuntu-linux-android-and-windows-vms/43750
-      image: ubuntu-2204:2022.04.2
+      image: ubuntu-2204:current
     steps:
       - run:
           name: "Install required packages"

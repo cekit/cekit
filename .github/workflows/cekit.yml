@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12' ]
-        os: [macos-12, ubuntu-20.04]
+        os: [macos-13, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -55,28 +55,24 @@ jobs:
       if: startsWith(matrix.os,'macos')
       run: |
         pip install "tox<4.0.0" setuptools
-        echo "Checking qemu info... $(brew list --versions qemu)"
-        wget --no-verbose --output-document=podman.pkg https://github.com/containers/podman/releases/download/v4.9.4/podman-installer-macos-amd64.pkg
-        /usr/bin/sudo installer -allowUntrusted -pkg podman.pkg -target /
-        : # Installs to /opt/podman according to https://podman-desktop.io/docs/troubleshooting/troubleshooting-podman-on-macos#unable-to-locate-podman-engine
-        PODMAN_HOME=/opt/podman/bin
-        PATH=$PODMAN_HOME:$PATH
+        brew install podman
+        echo "Podman `which podman`"
         podman machine init
-        podman machine start
+        podman machine start  --log-level debug
         podman info
-        echo "$PODMAN_HOME" >> $GITHUB_PATH
         echo "$HOME/bin" >> $GITHUB_PATH
         mkdir $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
         ln -s /usr/bin/true $HOME/bin/skopeo
         ln -s /usr/bin/true $HOME/bin/buildah
+        ln -s /usr/bin/true $HOME/bin/docker
     - name: Run tests
       run: |
         PV=${{ matrix.python-version }}
         echo "Running for Python version $PV ( ${PV/./} )"
         make test-py"${PV/./}"
     - name: Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./target/cov.xml

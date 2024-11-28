@@ -996,8 +996,8 @@ def test_podman_builder_run_pull(mocker):
         [
             shutil.which("podman"),
             "build",
-            "--pull-always",
             "--squash",
+            "--pull-always",
             "-t",
             "foo",
             "-t",
@@ -1025,8 +1025,8 @@ def test_podman_builder_run_platform(mocker):
         [
             shutil.which("podman"),
             "build",
-            "--pull-always",
             "--squash",
+            "--pull-always",
             "--platform",
             "linux/amd64,linux/arm64",
             "-t",
@@ -1150,7 +1150,7 @@ def test_buildah_builder_with_squashing_disabled(mocker):
 
 
 def test_buildah_builder_with_build_arg(mocker):
-    params = {"tags": ["foo", "bar"], "no_squash": True, "args": ["KEY=VALUE"]}
+    params = {"tags": ["foo", "bar"], "no_squash": True, "build_args": ["KEY=VALUE"]}
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "buildah", params)
     builder.run()
@@ -1207,7 +1207,7 @@ def test_podman_builder_with_squashing_disabled(mocker):
 
 
 def test_podman_builder_with_build_arg(mocker):
-    params = {"args": ["KEY=VALUE"]}
+    params = {"build_args": ["KEY=VALUE"]}
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
     builder.generator = DockerGenerator("", "", "", [])
@@ -1232,6 +1232,41 @@ def test_podman_builder_with_build_arg(mocker):
             "-t",
             "foo:latest",
             "--build-arg=KEY=VALUE",
+            "something/image",
+        ],
+        stderr=None,
+        stdout=None,
+        check=True,
+        universal_newlines=True,
+    )
+
+
+def test_podman_builder_with_build_flag(mocker):
+    params = {"build_flag": ["--compress"]}
+    run = mocker.patch.object(subprocess, "run")
+    builder = create_builder_object(mocker, "podman", params)
+    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator.image = Image(
+        yaml.safe_load(
+            """
+    name: foo
+    version: 1.9
+    """
+        ),
+        "foo",
+    )
+    builder.run()
+
+    run.assert_called_once_with(
+        [
+            shutil.which("podman"),
+            "build",
+            "--squash",
+            "-t",
+            "foo:1.9",
+            "-t",
+            "foo:latest",
+            "--compress",
             "something/image",
         ],
         stderr=None,
