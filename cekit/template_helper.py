@@ -2,7 +2,6 @@ import os
 
 
 class TemplateHelper(object):
-
     def __init__(self, module_registry):
         self._module_registry = module_registry
 
