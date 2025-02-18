@@ -55,6 +55,8 @@ jobs:
         mkdir $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
         cd $HOME/bin && curl -sL https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
+        # Skopeo fails with "/run/containers/1001/auth.json: permission denied" / https://github.com/containers/skopeo/issues/1654
+        echo 'REGISTRY_AUTH_FILE=/tmp/auth.json' >> $GITHUB_ENV
     - name: Setup MacOS
       if: startsWith(matrix.os,'macos')
       run: |
