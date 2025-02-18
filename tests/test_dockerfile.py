@@ -798,6 +798,11 @@ def test_package_removal_and_install_and_reinstall(tmpdir):
             && rpm -q t"""
         in dockerfile
     )
+    assert (
+        """RUN rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
+    """
+        in dockerfile
+    )
 
 
 def test_package_removal_without_install(tmpdir):

@@ -2,7 +2,6 @@ import os
 
 
 class TemplateHelper(object):
-    SUPPORTED_PACKAGE_MANAGERS = ["yum", "dnf", "microdnf", "apk", "apt-get"]
 
     def __init__(self, module_registry):
         self._module_registry = module_registry
@@ -169,13 +168,26 @@ class TemplateHelper(object):
         else:
             return "reinstall -y"
 
-    def package_manager_query(self, pkg_mgr):
+    def package_manager_cleanup(self, image):
+        if (
+            self.packages_to_install(image)
+            or self.packages_to_remove(image)
+            or self.packages_to_reinstall(image)
+            and image.packages.manager in ["yum", "dnf", "microdnf"]
+        ):
+            return True
+
+    def package_manager_clean_and_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "apk info -e"
         elif "apt-get" in pkg_mgr:
             return "dpkg-query --list"
         else:
-            return "rpm -q"
+            result = ""
+            if "microdnf" in pkg_mgr:
+                result += "microdnf clean all && "
+            result += "rpm -q"
+            return result
 
     def package_manager_remove(self, pkg_mgr):
         if "apk" in pkg_mgr:
