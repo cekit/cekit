@@ -8,7 +8,7 @@ env_schema = yaml.safe_load(
     """
 type: map
 allowempty: True
-mapping:
+map:
   name: {type: str, required: True}
   value: {type: any}
   example: {type: any}
