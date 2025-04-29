@@ -7,7 +7,8 @@ arg_schemas = yaml.safe_load(
 map:
   name: {type: str, required: True}
   value: {type: str}
-"""
+  example: {type: str}
+  description: {type: str}"""
 )
 
 
@@ -37,3 +38,19 @@ class Arg(Descriptor):
     @value.setter
     def value(self, value: str):
         self._descriptor["value"] = value
+
+    @property
+    def example(self) -> str:
+        return self.get("example")
+
+    @example.setter
+    def example(self, value: str):
+        self._descriptor["example"] = value
+
+    @property
+    def description(self) -> str:
+        return self.get("description")
+
+    @description.setter
+    def description(self, value: str):
+        self._descriptor["description"] = value
