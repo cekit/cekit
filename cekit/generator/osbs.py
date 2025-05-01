@@ -37,10 +37,11 @@ class OSBSGenerator(Generator):
         target: PathType,
         container_file: str,
         overrides: List[str],
+        no_squash: bool,
     ):
         self._wipe = True
         super(OSBSGenerator, self).__init__(
-            descriptor_path, target, container_file, overrides
+            descriptor_path, target, container_file, overrides, no_squash
         )
 
     def init(self):

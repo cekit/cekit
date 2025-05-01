@@ -937,8 +937,8 @@ def test_run_wrapper_capture_error(tmpdir) -> None:
         result = run_wrapper(
             ["git", "rev-parse", "--is-inside-work-tree"], True, check=False
         )
-        assert result.stdout == ""
-        assert not result.stderr.endswith("\n")
+        assert result.stderr is None
+        assert not result.stdout.endswith("\n")
         assert result.returncode == 128
 
 
