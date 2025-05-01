@@ -169,7 +169,7 @@ def test_dockerfile_docker_odcs_rpm_microdnf(tmpdir, mocker):
     )
     regex_dockerfile(
         target,
-        "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
+        "&& microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
     )
     regex_dockerfile(target, "rpm -q a b")
 
@@ -197,7 +197,7 @@ def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_1(tmpdir, mocker):
         desc_part,
     )
     regex_dockerfile(target, "RUN microdnf  install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN microdnf  install -y a b")
+    regex_dockerfile(target, "&& microdnf  install -y a b")
     regex_dockerfile(target, "rpm -q a b")
 
 
@@ -226,7 +226,7 @@ def test_dockerfile_docker_odcs_rpm_microdnf_custom_flag_2(tmpdir, mocker):
     regex_dockerfile(
         target, "RUN microdnf --setopt=tsflags=nodocs install -y foo-repo.rpm"
     )
-    regex_dockerfile(target, "RUN microdnf --setopt=tsflags=nodocs install -y a b")
+    regex_dockerfile(target, "&& microdnf --setopt=tsflags=nodocs install -y a b")
     regex_dockerfile(target, "rpm -q a b")
 
 
@@ -412,7 +412,7 @@ def test_default_package_manager(tmpdir):
     )
 
     regex_dockerfile(target, "RUN yum --setopt=tsflags=nodocs install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN yum --setopt=tsflags=nodocs install -y a")
+    regex_dockerfile(target, "&& yum --setopt=tsflags=nodocs install -y a")
     regex_dockerfile(target, "rpm -q a")
 
 
@@ -447,7 +447,7 @@ def test_dockerfile_custom_package_manager_with_overrides(tmpdir):
     )
     regex_dockerfile(
         target,
-        "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
+        "&& microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a b",
     )
     regex_dockerfile(target, "rpm -q a")
 
@@ -478,7 +478,7 @@ def test_dockerfile_custom_package_manager_with_overrides_overriden_again(tmpdir
         },
     )
     regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y foo-repo.rpm")
-    regex_dockerfile(target, "RUN dnf --setopt=tsflags=nodocs install -y a b")
+    regex_dockerfile(target, "&& dnf --setopt=tsflags=nodocs install -y a b")
     regex_dockerfile(target, "rpm -q a")
 
 
@@ -504,7 +504,7 @@ def test_dockerfile_osbs_odcs_rpm_microdnf(tmpdir):
     )
     regex_dockerfile(
         target,
-        "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a",
+        "&& microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y a",
     )
     regex_dockerfile(target, "rpm -q a")
 
@@ -530,7 +530,7 @@ def test_supported_package_managers(tmpdir, manager):
     if "microdnf" in manager:
         flags = "--setopt=install_weak_deps=0 " + flags
     regex_dockerfile(target, f"RUN {manager} {flags} install -y foo-repo.rpm")
-    regex_dockerfile(target, f"RUN {manager} {flags} install -y a")
+    regex_dockerfile(target, f"&& {manager} {flags} install -y a")
     regex_dockerfile(target, "rpm -q a")
 
 
@@ -548,7 +548,7 @@ def test_supported_package_managers_apk(tmpdir, caplog):
             }
         },
     )
-    regex_dockerfile(target, "RUN apk  add a")
+    regex_dockerfile(target, "&& apk  add a")
     regex_dockerfile(target, "apk info -e a")
     assert (
         "Package manager apk does not support defining repositories, skipping all repositories"
@@ -572,7 +572,7 @@ def test_supported_package_managers_apt(tmpdir, caplog):
     )
     regex_dockerfile(
         target,
-        "RUN apt-get update && apt-get --no-install-recommends install -y a b=1.0.0",
+        "&& apt-get update && apt-get --no-install-recommends install -y a b=1.0.0",
     )
     regex_dockerfile(target, "dpkg-query --list a b")
     assert (
@@ -788,13 +788,14 @@ def test_package_removal_and_install_and_reinstall(tmpdir):
     assert (
         """# Switch to 'root' user for package management for 'testimage' image defined packages
         USER root
+        RUN : \\
         # Remove packages defined in the 'testimage' image
-        RUN dnf --setopt=tsflags=nodocs remove -y b
+        && dnf --setopt=tsflags=nodocs remove -y b \\
         # Install packages defined in the 'testimage' image
-        RUN dnf --setopt=tsflags=nodocs install -y a \\
-            && rpm -q a
+        && dnf --setopt=tsflags=nodocs install -y a \\
+            && rpm -q a \\
         # Reinstall packages defined in the 'testimage' image
-        RUN dnf --setopt=tsflags=nodocs reinstall -y t \\
+        && dnf --setopt=tsflags=nodocs reinstall -y t \\
             && rpm -q t"""
         in dockerfile
     )
@@ -946,6 +947,7 @@ def regex_dockerfile(image_dir, exp_regex, container_file="Dockerfile"):
     with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         dockerfile_content = fd.read()
         regex = re.compile(exp_regex, re.MULTILINE)
+        print(f"Searching for {regex} in {dockerfile_content}")
         assert regex.search(dockerfile_content) is not None
 
 

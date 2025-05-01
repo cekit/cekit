@@ -48,7 +48,15 @@ class OCIBuilder(Builder):
 
         cmd.append(os.path.join(self.target, "image"))
 
-        run_wrapper(cmd, False, f"Could not run {build_type} {cmd}")
+        capture: bool = False
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            # Normally we'll just let output print to stdout/stderr. If verbose(debug) is enabled
+            # then we'll capture it but log it as well. This is useful for tests verifying the output.
+            capture = True
+        result = run_wrapper(cmd, capture, f"Could not run {build_type} {cmd}")
+        if result.stdout is not None:
+            LOGGER.debug(result.stdout)
+            LOGGER.debug("\n")
 
         LOGGER.info(
             f"Image built and available under following tags: {', '.join(tags)}"

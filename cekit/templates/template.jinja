@@ -12,7 +12,7 @@ repos/{{ repo.filename }} \
  # Removes packages using specified package manager.
  #}
 {%- macro pkg_remove(pkg_manager, pkg_manager_flags, packages) -%}
-{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_remove(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %}
+{{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_remove(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
 {%- endmacro -%}
 
 {#
@@ -20,7 +20,7 @@ repos/{{ repo.filename }} \
  #}
 {%- macro pkg_install(pkg_manager, pkg_manager_flags, packages) -%}
 {{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
-            && {{ helper.package_manager_clean_and_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %}
+            && {{ helper.package_manager_clean_and_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %} \
 {%- endmacro -%}
 
 {#
@@ -28,7 +28,7 @@ repos/{{ repo.filename }} \
  #}
 {%- macro pkg_reinstall(pkg_manager, pkg_manager_flags, packages) -%}
 {{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_reinstall(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
-            && {{ helper.package_manager_clean_and_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %}
+            && {{ helper.package_manager_clean_and_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %} \
 {%- endmacro -%}
 
 
@@ -99,18 +99,35 @@ repos/{{ repo.filename }} \
         {% if module.packages and module.packages.remove or module.packages.install or module.packages.reinstall %}
         # Switch to 'root' user for package management for '{{ module.name }}' {{ module_type }} defined packages
         USER root
+        {#
+         # Ideally we would use heredoc but its not available in all versions so use continuation lines.
+         #}
+        RUN : \
         {% if module.packages and module.packages.remove %}
         # Remove packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_remove(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.remove) }}
+        && {{ pkg_remove(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.remove) }}
         {% endif -%}
         {% if module.packages and module.packages.install %}
         # Install packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_install(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.install) }}
+        && {{ pkg_install(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.install) }}
         {% endif -%}
         {% if module.packages and module.packages.reinstall %}
         # Reinstall packages defined in the '{{ module.name }}' {{ module_type }}
-        RUN {{ pkg_reinstall(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.reinstall) }}
+        && {{ pkg_reinstall(parent_image.packages.manager, parent_image.packages.manager_flags, module.packages.reinstall) }}
         {% endif -%}
+        {#
+         # Only if we're not using CEKit squashing do we clear the metadata here.
+         #}
+        {% if no_squash %}
+        {% if helper.package_manager_cleanup(image) %}
+        # Clear package manager metadata
+        && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf" \
+        {% endif -%}
+        {% endif -%}
+        {#
+         # The : noop is only to complete any prior continuation lines.
+         #}
+        && :
 
         {% endif -%}
         {% if module_type == 'module' %}
@@ -239,9 +256,11 @@ repos/{{ repo.filename }} \
     {#
      # Clears repository cache.
      #}
+    {% if not no_squash %}
     {% if helper.package_manager_cleanup(image) %}
     # Clear package manager metadata
     RUN rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
+    {% endif -%}
     {% endif -%}
 
     {#

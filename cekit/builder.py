@@ -102,6 +102,7 @@ class Builder(Command):
             self.params.target,
             container_file,
             self.params.overrides,
+            self.params.no_squash,
         )
 
         if CONFIG.get("common", "redhat"):

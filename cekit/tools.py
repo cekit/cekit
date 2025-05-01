@@ -362,7 +362,7 @@ def run_wrapper(
         stderr_capture = None
         if capture_output:
             stdout_capture = subprocess.PIPE
-            stderr_capture = subprocess.PIPE
+            stderr_capture = subprocess.STDOUT
         # subprocess.run uses Popen: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
         # which uses https://docs.python.org/3/library/os.html#os.execvpe like behaviour
         # to locate the executable if its relative on POSIX.
