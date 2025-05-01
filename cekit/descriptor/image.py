@@ -533,8 +533,11 @@ class Image(Descriptor):
                 if self.help.get("template", "") and not os.path.isabs(
                     module.help.get("template")
                 ):
-                    self.help["template"] = "target/image/modules/" + self.help.get(
-                        "template"
+                    self.help["template"] = (
+                        "target/image/modules/"
+                        + to_install.name
+                        + "/"
+                        + self.help.get("template")
                     )
 
             # move this module to the end of the list.

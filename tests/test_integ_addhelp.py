@@ -214,7 +214,7 @@ def test_custom_help_template_path_with_modules(tmpdir, path_type, template_str)
     help_template = str(help_template_file)
 
     if path_type == "relative":
-        help_template = "test_module/help.jinja"
+        help_template = "help.jinja"
 
     my_image_descriptor = image_descriptor.copy()
     my_image_descriptor.update(
