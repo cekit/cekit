@@ -575,7 +575,8 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
 
     required_matches = [
         "&& microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y package1 package2 \\",
-        "&& microdnf clean all && rpm -q package1 package2 \\",
+        "RUN microdnf clean all \\",
+        '&& rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"',
     ]
 
     for match in required_matches:
@@ -585,7 +586,6 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
 def check_dockerfile(image_dir, match, container_file="Dockerfile"):
     with open(os.path.join(image_dir, "target", "image", container_file), "r") as fd:
         for line in fd.readlines():
-            print(line)
             if line.strip() == match.strip():
                 return True
     return False

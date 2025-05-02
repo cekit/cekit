@@ -176,20 +176,25 @@ class TemplateHelper(object):
         ):
             return True
 
-    def package_manager_clean_and_query(self, pkg_mgr):
+    def package_manager_query(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "apk info -e"
         elif "apt-get" in pkg_mgr:
             return "dpkg-query --list"
         else:
-            result = ""
-            if "microdnf" in pkg_mgr:
-                result += "microdnf clean all && "
-            result += "rpm -q"
-            return result
+            return "rpm -q"
 
     def package_manager_remove(self, pkg_mgr):
         if "apk" in pkg_mgr:
             return "del"
         else:
             return "remove -y"
+
+    def package_manager_clean(self, pkg_mgr):
+        if "apk" in pkg_mgr:
+            # Cache is not enabled by default so there is nothing to clean
+            return ":"
+        elif "apt-get" in pkg_mgr:
+            return pkg_mgr + " clean"
+        else:
+            return pkg_mgr + " clean all"

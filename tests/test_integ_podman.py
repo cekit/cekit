@@ -46,7 +46,7 @@ def test_podman_builder_with_alpine_image(tmpdir, caplog):
 
     print(f"#### Caplog {caplog.text} ####")
     assert (
-        """STEP 11/12: RUN rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
+        """STEP 11/12: RUN :     && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
 """
         in caplog.text
     )
@@ -69,7 +69,7 @@ def test_podman_builder_with_alpine_image_and_no_squash(tmpdir, caplog):
         args=["-v", "build", "podman", "--no-squash"],
     )
     assert (
-        """STEP 5/11: RUN :         && apk  add python3             && apk info -e python3         && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"         && :"""
+        """STEP 5/11: RUN :         && apk  add python3             && apk info -e python3         && :         && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"         && :"""
         in caplog.text
     )
 
@@ -89,6 +89,7 @@ def test_podman_builder_with_alpine_image_and_no_squash(tmpdir, caplog):
         && apk  add python3 \\
             && apk info -e python3 \\
         # Clear package manager metadata
+        && : \\
         && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf" \\
         && :
 
