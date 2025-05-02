@@ -20,7 +20,7 @@ repos/{{ repo.filename }} \
  #}
 {%- macro pkg_install(pkg_manager, pkg_manager_flags, packages) -%}
 {{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_install(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
-            && {{ helper.package_manager_clean_and_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %} \
+            && {{ helper.package_manager_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %} \
 {%- endmacro -%}
 
 {#
@@ -28,9 +28,16 @@ repos/{{ repo.filename }} \
  #}
 {%- macro pkg_reinstall(pkg_manager, pkg_manager_flags, packages) -%}
 {{ pkg_manager }} {{ helper.package_manager_flags(pkg_manager, pkg_manager_flags) }} {{ helper.package_manager_reinstall(pkg_manager) }} {%- for package in packages %} {{ package }}{% endfor %} \
-            && {{ helper.package_manager_clean_and_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %} \
+            && {{ helper.package_manager_query(pkg_manager) }}{% for package in packages %} {{ package.split('=')[0] }}{% endfor %} \
 {%- endmacro -%}
 
+
+{#
+ # Cleans up package manager.
+ #}
+{%- macro pkg_cleanup(pkg_manager) -%}
+    {{ helper.package_manager_clean(pkg_manager) }} \
+{%- endmacro -%}
 
 {#
  # Handle processing ARGS
@@ -121,6 +128,7 @@ repos/{{ repo.filename }} \
         {% if no_squash %}
         {% if helper.package_manager_cleanup(image) %}
         # Clear package manager metadata
+        && {{ pkg_cleanup(parent_image.packages.manager) }}
         && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf" \
         {% endif -%}
         {% endif -%}
@@ -259,7 +267,8 @@ repos/{{ repo.filename }} \
     {% if not no_squash %}
     {% if helper.package_manager_cleanup(image) %}
     # Clear package manager metadata
-    RUN rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
+    RUN {{ pkg_cleanup(image.packages.manager) }}
+    && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
     {% endif -%}
     {% endif -%}
 

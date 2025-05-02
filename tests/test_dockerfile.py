@@ -800,7 +800,8 @@ def test_package_removal_and_install_and_reinstall(tmpdir):
         in dockerfile
     )
     assert (
-        """RUN rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
+        """RUN dnf clean all \\
+    && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
     """
         in dockerfile
     )
