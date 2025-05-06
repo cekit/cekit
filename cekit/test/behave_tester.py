@@ -33,6 +33,7 @@ class BehaveTester(Command):
             self.params.target,
             "Dockerfile",
             self.params.overrides,
+            False,
         )
 
         # Handle dependencies for selected generator, if any

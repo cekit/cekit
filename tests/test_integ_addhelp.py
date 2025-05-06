@@ -157,3 +157,108 @@ And more text"""
         )
     assert os.path.exists(os.path.join(tmpdir, "target", "image", "help.md"))
     assert check_file_text(tmpdir, "Markdown Heading", "help.md") is True
+
+
+def test_should_generate_help_if_enabled_in_overrides(tmpdir):
+    """Uses default template"""
+    tmpdir = str(tmpdir)
+    my_image_descriptor = image_descriptor.copy()
+    overrides_descriptor = {"schema_version": 1, "help": {"add": True}}
+
+    with open(os.path.join(str(tmpdir), "overrides.yaml"), "w") as fd:
+        yaml.dump(overrides_descriptor, fd, default_flow_style=False)
+
+    print(
+        run_cekit(
+            tmpdir,
+            [
+                "-v",
+                "build",
+                "--overrides-file",
+                "overrides.yaml",
+                "--dry-run",
+                "docker",
+            ],
+            descriptor=my_image_descriptor,
+        ).output
+    )
+    assert os.path.exists(os.path.join(tmpdir, "target", "image", "help.md"))
+    assert check_file_text(tmpdir, "# `test/image:1.0`", "help.md") is True
+    assert (
+        check_file_text(tmpdir, "Container will run as `root` user.", "help.md") is True
+    )
+    assert check_file_text(tmpdir, "There are no defined ports.", "help.md") is True
+    assert check_file_text(tmpdir, "There are no volumes defined.", "help.md") is True
+    assert (
+        check_file_text(
+            tmpdir, "This image is based on the `centos:7` image.", "help.md"
+        )
+        is True
+    )
+    assert (
+        check_file_text(
+            tmpdir, "There is no entrypoint specified for the container.", "help.md"
+        )
+        is True
+    )
+
+
+@pytest.mark.parametrize("template_str", [template_teststr_1, template_teststr_2])
+@pytest.mark.parametrize("path_type", ["absolute", "relative"])
+def test_custom_help_template_path_with_modules(tmpdir, path_type, template_str):
+    module_dir = tmpdir / "modules"
+    module_dir.mkdir()
+
+    help_template_file = module_dir / "help.jinja"
+    help_template_file.write_text(template_str, encoding="utf-8")
+    help_template = str(help_template_file)
+
+    if path_type == "relative":
+        help_template = "help.jinja"
+
+    my_image_descriptor = image_descriptor.copy()
+    my_image_descriptor.update(
+        {
+            "modules": {
+                "repositories": [{"name": "modules", "path": "modules/"}],
+                "install": [{"name": "test_module"}],
+            }
+        }
+    )
+
+    module_descriptor_file = module_dir / "module.yaml"
+    module_descriptor_file.write_text(
+        yaml.dump(
+            {
+                "name": "test_module",
+                "version": "1.0",
+                "help": {"template": help_template, "add": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with Chdir(str(tmpdir)):
+        with open("image.yaml", "w") as fd:
+            yaml.dump(my_image_descriptor, fd, default_flow_style=False)
+
+        result = CliRunner().invoke(
+            cli, ["-v", "build", "--dry-run", "docker"], catch_exceptions=False
+        )
+        sys.stdout.write("\n")
+        sys.stdout.write(result.output)
+
+        with open("target/image/help.md", "r") as fd:
+            contents = fd.read()
+            if (
+                "This string does not occur in the default help.md template"
+                in template_str
+            ):
+                assert template_str in contents
+            else:
+                assert (
+                    """
+centos:7
+A simple template with a substitution."""
+                    in contents
+                )

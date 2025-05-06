@@ -21,8 +21,22 @@ a ``help.md`` is generated and added to the **dist-git** repository.
 The default help template is supplied within CEKit. You can override it for
 every image via image definition. The optional help sub-section defines
 a key ``template``, which can be used to define a filename to use for generating
-image documentation at build time. Note that if the ``template`` denotes a file *without*
-any substitution markers then effectively the file is copied to the dist-git repository as ``help.md`` verbatim.
+image documentation at build time.
+
+The filename may be absolute or a relative path. If the latter it is used as relative to the image descriptor.
+For modules a relative path will be relative to the module root.
+
+.. code-block:: sh
+
+   cat test_module/module.yaml
+   version: '1.0'
+   name: test_module
+   help:
+     add: true
+     template: help.jinja
+
+Note that if the ``template`` denotes a file *without* any substitution markers then effectively the file is copied
+to the dist-git repository as ``help.md`` verbatim.
 
 .. code-block:: yaml
 
@@ -72,3 +86,6 @@ will produce the following rendered Markdown file:
 For a more detailed template example, see the
 `default help.jinja supplied in the CEKit source code
 <https://github.com/cekit/cekit/blob/develop/cekit/templates/help.jinja>`__.
+
+.. warning::
+    If multiple help templates are used (e.g. in modules), as they cannot be merged the last one will be used.

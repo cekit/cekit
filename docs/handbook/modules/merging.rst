@@ -73,6 +73,7 @@ This section will go through it and explain how we combine everything together i
         node [shape="box", fontname="Open Sans", fontsize="10", style="filled", fillcolor="white"];
         bgcolor="transparent";
 
+        artifacts [label="Artifact Copying", href="#artifacts"];
         packages [label="Package installation", href="#packages"];
         envs [label="Environment variables", href="#environment-variables"];
         labels [label="Labels", href="#labels"];
@@ -80,14 +81,30 @@ This section will go through it and explain how we combine everything together i
         execs [label="Executions", href="#executions"];
         volumes [label="Volumes", href="#volumes"];
 
-        packages -> envs -> labels -> ports -> execs -> volumes [color="red"];
+        artifacts -> packages -> envs -> labels -> ports -> execs -> volumes [color="red"];
      }
 
+
+Artifacts
+^^^^^^^^^^^
+
+The first thing done for each module is the copying of any defined :ref:`artifacts <descriptor/module:Artifacts>`.
+This is useful to ensure files are copied into the container. This can avoid needing an explicit script (triggered
+by ``execute:``) that copies the files. Instead the files can be listed:
+
+.. code-block:: yaml
+
+    artifacts:
+      - path: artifacts/maven.module
+        dest: /etc/dnf/modules.d`
+
+.. note::
+    It is recommended to set the chmod/chown permissions correctly on the initial files so they are preserved upon copy.
 
 Packages
 ^^^^^^^^^^^
 
-The first thing done for each module is the package installation for all :ref:`packages defined in the module <descriptor/module:Packages to install>`.
+Next is the package installation for all :ref:`packages defined in the module <descriptor/module:Packages to install>`.
 We do not clean the cache on each run, because this
 would slow subsequent package manager executions. You should also not worry about it taking too much space,
 because every image is squashed (depends on builder though).

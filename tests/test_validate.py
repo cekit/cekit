@@ -533,7 +533,7 @@ def test_override_add_module_and_packages_in_overrides(tmpdir):
 
     assert check_dockerfile(
         image_dir,
-        "RUN yum --setopt=tsflags=nodocs install -y package1 package2 \\",
+        "&& yum --setopt=tsflags=nodocs install -y package1 package2 \\",
         "Containerfile",
     )
     assert check_dockerfile(
@@ -574,9 +574,9 @@ def test_microdnf_clean_all_cmd_present(tmpdir):
     )
 
     required_matches = [
-        "RUN microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y package1 package2 \\",
-        "&& microdnf clean all \\",
-        "&& rpm -q package1 package2",
+        "&& microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y package1 package2 \\",
+        "RUN microdnf clean all \\",
+        '&& rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"',
     ]
 
     for match in required_matches:
@@ -1207,7 +1207,7 @@ def test_override_modules_flat(tmpdir, mocker):
     run_cekit(image_dir)
 
     assert check_dockerfile_text(image_dir, 'foo="mod_2"')
-    assert not check_dockerfile_text(image_dir, "RUN yum clean all")
+    assert not check_dockerfile_text(image_dir, "&& yum clean all")
 
 
 def test_execution_order_flat(tmpdir, mocker):
@@ -1294,7 +1294,7 @@ def test_execution_order_flat(tmpdir, mocker):
 ###### END module 'mod_4:1.0'
 """
     assert check_dockerfile_text(image_dir, expected_modules_order)
-    assert not check_dockerfile_text(image_dir, "RUN yum clean all")
+    assert not check_dockerfile_text(image_dir, "&& yum clean all")
 
 
 def test_package_related_commands_packages_in_module(tmpdir, mocker):
@@ -1320,9 +1320,12 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 ###### \\
         # Switch to 'root' user for package management for 'packages_module' module defined packages
         USER root
+        RUN : \\
         # Install packages defined in the 'packages_module' module
-        RUN yum --setopt=tsflags=nodocs install -y kernel java-1.8.0-openjdk \\
-            && rpm -q kernel java-1.8.0-openjdk
+        && yum --setopt=tsflags=nodocs install -y kernel java-1.8.0-openjdk \\
+            && rpm -q kernel java-1.8.0-openjdk \\
+        && :
+
 ###### /
 ###### END module 'packages_module:1.0'
 
@@ -1330,9 +1333,12 @@ def test_package_related_commands_packages_in_module(tmpdir, mocker):
 ###### \\
         # Switch to 'root' user for package management for 'packages_module_1' module defined packages
         USER root
+        RUN : \\
         # Install packages defined in the 'packages_module_1' module
-        RUN yum --setopt=tsflags=nodocs install -y wget mc \\
-            && rpm -q wget mc
+        && yum --setopt=tsflags=nodocs install -y wget mc \\
+            && rpm -q wget mc \\
+        && :
+
 ###### /
 ###### END module 'packages_module_1:1.0'
 """
@@ -1365,10 +1371,10 @@ def test_package_related_commands_packages_in_image(tmpdir, caplog):
 
     expected_packages_install = """
         USER root
+        RUN : \\
         # Install packages defined in the 'test/image' image
-        RUN yum --setopt=tsflags=nodocs install -y wget mc \\
-            && rpm -q wget mc
-"""
+        && yum --setopt=tsflags=nodocs install -y wget mc \\
+            && rpm -q wget mc"""
 
     assert (
         "Required CEKit library 'odcs-client' was found as a 'odcs' module!"

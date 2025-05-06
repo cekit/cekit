@@ -11,9 +11,10 @@ class BehaveGenerator(Generator):
         target: PathType,
         container_file: str,
         overrides: List[str],
+        no_squash: bool,
     ):
         super(BehaveGenerator, self).__init__(
-            descriptor_path, target, container_file, overrides
+            descriptor_path, target, container_file, overrides, no_squash
         )
 
     def prepare_artifacts(self):

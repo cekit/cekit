@@ -73,6 +73,7 @@ class Generator(object):
         target: PathType,
         container_file: str,
         overrides: List[str],
+        no_squash: bool,
     ):
         self._descriptor_path: PathType = descriptor_path
         self._overrides: List[Overrides] = []
@@ -83,6 +84,7 @@ class Generator(object):
         self.builder_images: List[Image] = []
         self.images: List[Image] = []
         self.container_file: str = container_file
+        self.no_squash: bool = no_squash
 
         # If descriptor has been passed in from standard input its not a path so use current working directory
         if "-" == descriptor_path:
@@ -385,6 +387,7 @@ class Generator(object):
         env.globals["helper"] = TemplateHelper(self._module_registry)
         env.globals["image"] = self.image
         env.globals["builders"] = self.builder_images
+        env.globals["no_squash"] = self.no_squash
 
         template = env.get_template(os.path.basename(template_file))
 

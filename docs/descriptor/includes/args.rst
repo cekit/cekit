@@ -19,3 +19,6 @@ details. CEKit makes it easy to do so with the ``args`` section. An optional def
         - name: "user1"
           value: "someuser"
         - name: "QUARKUS_EXTENSION"
+        - name: "ARG_WITH_DESCRIPTION"
+          example: "ARG_WITH_DESCRIPTION=a-value"
+          description: "Example argument."

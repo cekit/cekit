@@ -30,6 +30,7 @@ def main(check: bool, verbose: bool) -> None:
     verbose_opt = []
     if check:
         options.append("--check")
+        options.append("--diff")
     if verbose:
         logger.setLevel(logging.DEBUG)
         verbose_opt.append("--verbose")

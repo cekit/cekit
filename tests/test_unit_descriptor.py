@@ -43,6 +43,7 @@ def test_arg():
     )
     assert arg.name == "QUARKUS_EXTENSIONS"
     assert arg.value is None
+    assert arg.description is None
 
 
 def test_env():
@@ -200,6 +201,11 @@ def test_image():
     from: foo
     name: test/foo
     version: 1.9
+    args:
+      - name: "user1"
+        value: "someuser"
+        description: "Some description"
+        example: "Set this example"
     labels:
       - name: test
         value: val1
@@ -210,6 +216,7 @@ def test_image():
         value: env1val
         required: false
         usage: build-time
+        description: "Env description"
     """
         ),
         "foo",
@@ -219,6 +226,9 @@ def test_image():
     assert isinstance(image["labels"][0], Label)
     assert image["labels"][0]["name"] == "test"
     assert image["envs"][0]["required"] is False
+    assert image["envs"][0].description == "Env description"
+    assert image["args"][0].description == "Some description"
+    assert image["args"][0].example == "Set this example"
 
 
 def test_image_missing_name():

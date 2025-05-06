@@ -224,14 +224,14 @@ def test_osbs_builder_run_brew_stage(mocker):
         [
             call(
                 ["git", "config", "--get", "remote.origin.url"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
             ),
             call(
                 ["git", "rev-parse", "HEAD"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -245,7 +245,7 @@ def test_osbs_builder_run_brew_stage(mocker):
                     "--kwargs",
                     "{'src': 'git+https://something.redhat.com/git/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}",
                 ],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -283,14 +283,14 @@ def test_osbs_builder_run_brew(mocker):
         [
             call(
                 ["git", "config", "--get", "remote.origin.url"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
             ),
             call(
                 ["git", "rev-parse", "HEAD"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -304,7 +304,7 @@ def test_osbs_builder_run_brew(mocker):
                     "--kwargs",
                     "{'src': 'git+https://something.redhat.com/git/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}",
                 ],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -342,14 +342,14 @@ def test_osbs_builder_run_koji(mocker):
         [
             call(
                 ["git", "config", "--get", "remote.origin.url"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
             ),
             call(
                 ["git", "rev-parse", "HEAD"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -363,7 +363,7 @@ def test_osbs_builder_run_koji(mocker):
                     "--kwargs",
                     "{'src': 'git+https://something.redhat.com/git/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}",
                 ],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -435,7 +435,7 @@ def test_osbs_builder_run_brew_user(mocker):
             "--kwargs",
             "{'src': 'git+https://something.redhat.com/git/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-branch-containers-candidate', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}",
         ],
-        stderr=-1,
+        stderr=-2,
         stdout=-1,
         check=True,
         universal_newlines=True,
@@ -476,7 +476,7 @@ def test_osbs_builder_run_brew_target_defined_in_descriptor(mocker):
             "--kwargs",
             "{'src': 'git+https://something.redhat.com/git/containers/openjdk#c5a0731b558c8a247dd7f85b5f54462cd5b68b23', 'target': 'some-target', 'opts': {'scratch': True, 'git_branch': 'some-branch', 'yum_repourls': []}}",
         ],
-        stderr=-1,
+        stderr=-2,
         stdout=-1,
         check=True,
         universal_newlines=True,
@@ -514,7 +514,7 @@ def test_osbs_wait_for_osbs_task_finished_successfully(mocker):
 
     run.assert_called_with(
         ["brew", "call", "--json-output", "getTaskInfo", "12345"],
-        stderr=-1,
+        stderr=-2,
         stdout=-1,
         check=True,
         universal_newlines=True,
@@ -570,14 +570,14 @@ def test_osbs_wait_for_osbs_task_in_progress(mocker):
         [
             call(
                 ["brew", "call", "--json-output", "getTaskInfo", "12345"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
             ),
             call(
                 ["brew", "call", "--json-output", "getTaskInfo", "12345"],
-                stderr=-1,
+                stderr=-2,
                 stdout=-1,
                 check=True,
                 universal_newlines=True,
@@ -622,7 +622,7 @@ def test_osbs_wait_for_osbs_task_failed(mocker):
 
     run.assert_called_with(
         ["brew", "call", "--json-output", "getTaskInfo", "12345"],
-        stderr=-1,
+        stderr=-2,
         stdout=-1,
         check=True,
         universal_newlines=True,
@@ -1046,7 +1046,7 @@ def test_podman_builder_run_with_generator(mocker):
     params = Map({"tags": []})
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
-    builder.generator = DockerGenerator("", "", "", {})
+    builder.generator = DockerGenerator("", "", "", {}, False)
     builder.generator.image = Image(
         yaml.safe_load(
             """
@@ -1088,7 +1088,7 @@ def test_buildah_builder_run_with_generator(mocker):
     params = Map({"tags": []})
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "buildah", params)
-    builder.generator = DockerGenerator("", "", "", {})
+    builder.generator = DockerGenerator("", "", "", {}, False)
     builder.generator.image = Image(
         yaml.safe_load(
             """
@@ -1177,7 +1177,7 @@ def test_podman_builder_with_squashing_disabled(mocker):
     params = {"no_squash": True}
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
-    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator = DockerGenerator("", "", "", [], True)
     builder.generator.image = Image(
         yaml.safe_load(
             """
@@ -1210,7 +1210,7 @@ def test_podman_builder_with_build_arg(mocker):
     params = {"build_args": ["KEY=VALUE"]}
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
-    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator = DockerGenerator("", "", "", [], False)
     builder.generator.image = Image(
         yaml.safe_load(
             """
@@ -1245,7 +1245,7 @@ def test_podman_builder_with_build_flag(mocker):
     params = {"build_flag": ["--compress"]}
     run = mocker.patch.object(subprocess, "run")
     builder = create_builder_object(mocker, "podman", params)
-    builder.generator = DockerGenerator("", "", "", [])
+    builder.generator = DockerGenerator("", "", "", [], False)
     builder.generator.image = Image(
         yaml.safe_load(
             """

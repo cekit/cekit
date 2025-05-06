@@ -78,8 +78,6 @@ def test_merging_description_osbs():
     yaml.SafeDumper.add_multi_representer(Descriptor, Descriptor.to_yaml)
     desc1 = Osbs({"extra_dir_target": "foo"}, None)
     desc2 = Osbs({"repository": {"branch": "branch", "name": "repo"}}, None)
-    #    print("\n### Output is:\n" + yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper))
-
     merged = _merge_descriptors(desc1, desc2)
     assert (
         yaml.dump(merged, None, default_flow_style=False, Dumper=yaml.SafeDumper)
@@ -937,8 +935,8 @@ def test_run_wrapper_capture_error(tmpdir) -> None:
         result = run_wrapper(
             ["git", "rev-parse", "--is-inside-work-tree"], True, check=False
         )
-        assert result.stdout == ""
-        assert not result.stderr.endswith("\n")
+        assert result.stderr is None
+        assert not result.stdout.endswith("\n")
         assert result.returncode == 128
 
 

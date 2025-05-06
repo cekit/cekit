@@ -1,5 +1,6 @@
 import copy
 import logging
+import os
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Union
 
@@ -243,6 +244,10 @@ class Image(Descriptor):
     def help(self) -> dict:
         return self.get("help", {})
 
+    @help.setter
+    def help(self, value):
+        self._descriptor["help"] = value
+
     def apply_image_overrides(self, overrides: List["Overrides"]):
         """
         Applies overrides to the image descriptor.
@@ -258,6 +263,8 @@ class Image(Descriptor):
                 self.base = override.base
             if override.description:
                 self.description = override.description
+            if override.help:
+                self.help = override.help
 
             labels = Image._to_dict(self.labels)
             for label in override.labels:
@@ -518,6 +525,20 @@ class Image(Descriptor):
             self.process_install_list(
                 module, module.modules.install, install_list, module_registry
             )
+
+            if module.help:
+                self.help = module.help
+                # This makes it easier for people to use helper templates in modules. It automatically prepends
+                # the appropriate path for modules so a relative path can be located.
+                if self.help.get("template", "") and not os.path.isabs(
+                    module.help.get("template")
+                ):
+                    self.help["template"] = (
+                        "target/image/modules/"
+                        + to_install.name
+                        + "/"
+                        + self.help.get("template")
+                    )
 
             # move this module to the end of the list.
             install_list.pop(to_install.name)
