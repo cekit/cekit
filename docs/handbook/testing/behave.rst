@@ -127,6 +127,29 @@ Options
 * ``--include-re`` -- Regex of feature files which will be executed only
 * ``--exclude-re`` -- Regex of feature files which will not be executed
 
+Environment variables
+^^^^^^^^^^^^^^^^^^^^^
+
+``DOCKER_HOST``
+    The ``DOCKER_HOST`` environment variable is where you specify where the Daemon is running. It supports
+    multiple protocols, but the most widely used ones are: ``unix://`` (where you specify path to a local
+    socket) and ``tcp://`` (where you can define host location and port).
+
+    Examples of ``DOCKER_HOST``: ``unix:///var/run/docker.sock``,
+    ``unix:///run/user/1000/podman/podman.sock``,
+    ``tcp://192.168.22.33:1234``.
+
+    By defining ``DOCKER_HOST``, you can use an alternative container runtime such as Podman.
+
+Using Podman instead of Docker
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Behave test implementation is designed for use with Docker, specifically via the
+`Python docker library <https://pypi.org/project/docker/>`.
+
+To use Podman instead, you must first `enable Podman's API socket <https://github.com/containers/podman/blob/main/docs/tutorials/socket_activation.md#socket-activation-of-the-api-service>`
+and then define ``DOCKER_HOST`` to point at it.
+
 Examples
 ^^^^^^^^^
 
