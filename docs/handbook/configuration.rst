@@ -3,6 +3,7 @@ Environment Variables
 
 There are several environment variables that may be set to override default timeouts:
 
+* ``DOCKER_MIN_API_VERSION`` - represents the Docker API version currently in use (default: 1.44)
 * ``DOCKER_TIMEOUT`` - represents the Docker daemon connection timeout (default: 600)
 * ``OSBS_TIMEOUT`` - represents the OSBS timeout (default: 7200)
 * ``ODCS_TIMEOUT`` - represents the ODCS compose timeout (default: 600)
