@@ -41,7 +41,7 @@ Environment variables can be divided into two categories:
 {% if env.value %}
 **Value**
 
-{{ env.value }}
+    {{ env.value }}
 
 {% endif %}
 {% if env.example %}
@@ -74,6 +74,35 @@ There are no environment variables defined in the image descriptor or modules.
 {% endfor %}
 {% else %}
 There are no labels defined in the image descriptor or modules.
+{% endif %}
+
+## Args
+
+{% if helper.all_args(image)|count > 0 %}
+{% for args in helper.all_args(image)|sort(attribute='name', case_sensitive=True) %}
+### `{{ args.name }}`
+
+{% if args.description %}
+**Description**
+
+{{ args.description }}
+
+{% endif %}
+{% if args.value %}
+**Value**
+
+    {{ args.value }}
+
+{% endif %}
+{% if args.example %}
+**Example**
+
+    {{ args.example }}
+
+{% endif %}
+{% endfor %}
+{% else %}
+    There are no args defined in the image descriptor or modules.
 {% endif %}
 
 ## Container runtime

@@ -99,6 +99,13 @@ class TemplateHelper(object):
 
         return labels
 
+    def all_args(self, image):
+        args = []
+        for module in self.modules(image):
+            args += module.args
+
+        return args
+
     def ports(self, available_ports):
         """
         Combines all ports that should be added to the

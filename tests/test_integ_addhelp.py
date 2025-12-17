@@ -17,9 +17,13 @@ image_descriptor = {
     "from": "centos:7",
     "name": "test/image",
     "version": "1.0",
-    "labels": [{"name": "foo", "value": "bar"}, {"name": "labela", "value": "a"}],
+    "labels": [
+        {"name": "foo", "value": "bar"},
+        {"name": "labela", "value": "arandomlabel", "description": "a description"},
+    ],
     "envs": [{"name": "baz", "value": "qux"}, {"name": "enva", "value": "a"}],
     "run": {"cmd": ["sleep", "60"]},
+    "args": [{"name": "user1", "value": "someuser"}],
 }
 
 template_teststr_1 = "This string does not occur in the default help.md template."
@@ -115,6 +119,7 @@ def test_should_generate_help_if_enabled_in_descriptor(tmpdir):
             descriptor=my_image_descriptor,
         ).output
     )
+
     assert os.path.exists(os.path.join(tmpdir, "target", "image", "help.md"))
     assert check_file_text(tmpdir, "# `test/image:1.0`", "help.md") is True
     assert (
@@ -122,6 +127,8 @@ def test_should_generate_help_if_enabled_in_descriptor(tmpdir):
     )
     assert check_file_text(tmpdir, "There are no defined ports.", "help.md") is True
     assert check_file_text(tmpdir, "There are no volumes defined.", "help.md") is True
+    assert check_file_text(tmpdir, "   arandomlabel", "help.md") is True
+    assert check_file_text(tmpdir, "someuser", "help.md") is True
     assert (
         check_file_text(
             tmpdir, "This image is based on the `centos:7` image.", "help.md"
