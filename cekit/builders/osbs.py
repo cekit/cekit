@@ -100,7 +100,7 @@ class OSBSBuilder(Builder):
 
         if not (repository and branch):
             raise CekitError(
-                "OSBS builder needs repository and branch provided, see http://docs.cekit.io/en/latest/descriptor/image.html#osbs for more information"
+                "OSBS builder needs repository and branch provided, see https://docs.cekit.io/en/latest/descriptor/image.html#osbs for more information"
             )
 
         if self.params.stage:
