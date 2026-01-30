@@ -33,8 +33,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("cekit")
 config = Config()
 
-_image_schema = yaml.safe_load(
-    """
+_image_schema = yaml.safe_load("""
 map:
   name: {type: str, required: True}
   version: {type: text, required: True}
@@ -56,8 +55,7 @@ map:
   help:
     map:
       add: {type: bool}
-      template: {type: text}"""
-)
+      template: {type: text}""")
 
 
 class ImageOverrides(NamedTuple):

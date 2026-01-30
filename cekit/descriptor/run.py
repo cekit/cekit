@@ -4,8 +4,7 @@ import yaml
 
 from cekit.descriptor import Descriptor
 
-run_schema = yaml.safe_load(
-    """
+run_schema = yaml.safe_load("""
 map:
   workdir: {type: str}
   user: {type: text}
@@ -14,8 +13,7 @@ map:
       - {type: str}
   entrypoint:
     seq:
-      - {type: str} """
-)
+      - {type: str} """)
 
 
 class Run(Descriptor):

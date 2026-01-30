@@ -7,12 +7,10 @@ from cekit.descriptor import Descriptor
 
 logger = logging.getLogger("cekit")
 
-volume_schema = yaml.safe_load(
-    """
+volume_schema = yaml.safe_load("""
 map:
   name: {type: str}
-  path: {type: str, required: True}"""
-)
+  path: {type: str, required: True}""")
 
 
 class Volume(Descriptor):

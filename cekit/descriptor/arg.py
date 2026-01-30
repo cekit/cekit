@@ -2,14 +2,12 @@ import yaml
 
 from cekit.descriptor.base import Descriptor
 
-arg_schemas = yaml.safe_load(
-    """
+arg_schemas = yaml.safe_load("""
 map:
   name: {type: str, required: True}
   value: {type: str}
   example: {type: str}
-  description: {type: str}"""
-)
+  description: {type: str}""")
 
 
 class Arg(Descriptor):

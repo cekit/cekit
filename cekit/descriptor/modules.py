@@ -5,23 +5,19 @@ import yaml
 from cekit.descriptor import Descriptor
 from cekit.descriptor.resource import Resource, create_resource
 
-modules_schema = yaml.safe_load(
-    """
+modules_schema = yaml.safe_load("""
 map:
   repositories:
     seq:
       - {type: any}
   install:
     seq:
-      - {type: any}"""
-)
+      - {type: any}""")
 
-install_schema = yaml.safe_load(
-    """
+install_schema = yaml.safe_load("""
 map:
   name: {type: str, required: True}
-  version: {type: str}"""
-)
+  version: {type: str}""")
 
 
 class Modules(Descriptor):

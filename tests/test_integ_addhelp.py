@@ -92,11 +92,8 @@ def test_custom_help_template_path(tmpdir, path_type, template_str):
             ):
                 assert template_str in contents
             else:
-                assert (
-                    """centos:7
-A simple template with a substitution."""
-                    in contents
-                )
+                assert """centos:7
+A simple template with a substitution.""" in contents
 
 
 def test_default_should_not_generate_help(tmpdir):
@@ -149,10 +146,8 @@ def test_should_generate_help_if_enabled_from_file(tmpdir):
 
     with Chdir(str(tmpdir)):
         with open("help.md", "w") as fd:
-            fd.write(
-                """# Markdown Heading
-And more text"""
-            )
+            fd.write("""# Markdown Heading
+And more text""")
 
         my_image_descriptor = image_descriptor.copy()
         my_image_descriptor["help"] = {"add": True, "template": "help.md"}
@@ -263,9 +258,6 @@ def test_custom_help_template_path_with_modules(tmpdir, path_type, template_str)
             ):
                 assert template_str in contents
             else:
-                assert (
-                    """
+                assert """
 centos:7
-A simple template with a substitution."""
-                    in contents
-                )
+A simple template with a substitution.""" in contents

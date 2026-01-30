@@ -77,8 +77,7 @@ def test_podman_builder_with_alpine_image_and_no_squash(tmpdir, caplog):
         os.path.join(str(tmpdir), "alpine/target/image/Containerfile"), "r"
     ) as _file:
         containerFile = _file.read()
-        assert (
-            """###### START module 'app:1.0'
+        assert """###### START module 'app:1.0'
 ###### \\
         # Copy 'app' module content
         COPY modules/app /tmp/scripts/app
@@ -115,11 +114,7 @@ def test_podman_builder_with_alpine_image_and_no_squash(tmpdir, caplog):
     USER root
     RUN rm -rf "/tmp/scripts" "/tmp/artifacts"
     # Define the user
-    USER root""".replace(
-                "VVVVV", __version__
-            )
-            in containerFile
-        )
+    USER root""".replace("VVVVV", __version__) in containerFile
 
 
 def test_podman_from_scratch(tmpdir):

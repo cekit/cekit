@@ -13,8 +13,7 @@ from cekit.errors import CekitError
 logger = logging.getLogger("cekit")
 config = Config()
 
-packages_schema = yaml.safe_load(
-    """
+packages_schema = yaml.safe_load("""
 map:
   content_sets: {type: any}
   content_sets_file: {type: str}
@@ -31,12 +30,10 @@ map:
     seq:
       - {type: any}
   manager: {type: str, enum: ['yum', 'dnf', 'microdnf', 'apk', 'apt-get']}
-  manager_flags: {type: str}"""
-)
+  manager_flags: {type: str}""")
 
 
-repository_schema = yaml.safe_load(
-    """
+repository_schema = yaml.safe_load("""
 map:
   name: {type: str, required: True}
   id: {type: str}
@@ -45,8 +42,7 @@ map:
       repository: {type: str}
   rpm: {type: str}
   description: {type: str}
-  """
-)
+  """)
 
 
 class Packages(Descriptor):

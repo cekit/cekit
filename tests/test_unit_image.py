@@ -12,8 +12,7 @@ from cekit.tools import Map
 
 def test_image_overrides_with_content_sets_none():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -25,8 +24,7 @@ def test_image_overrides_with_content_sets_none():
         arch:
           - namea
           - nameb
-    """
-        ),
+    """),
         "foo",
     )
 
@@ -51,8 +49,7 @@ def test_image_overrides_with_content_sets_file_none(mocker):
             mocker.mock_open(read_data='{"arch": ["a", "b"]}'),
         ):
             image = Image(
-                yaml.safe_load(
-                    """
+                yaml.safe_load("""
                 from: foo
                 name: test/foo
                 version: 1.9
@@ -61,8 +58,7 @@ def test_image_overrides_with_content_sets_file_none(mocker):
                         - abc
                          def
                     content_sets_file: cs.yaml
-                """
-                ),
+                """),
                 "foo",
             )
 
@@ -79,8 +75,7 @@ def test_image_overrides_with_content_sets_file_none(mocker):
 
 def test_image_overrides_with_content_sets():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -92,8 +87,7 @@ def test_image_overrides_with_content_sets():
         arch:
           - namea
           - nameb
-    """
-        ),
+    """),
         "foo",
     )
 
@@ -110,8 +104,7 @@ def test_image_overrides_with_content_sets():
 
 def test_image_overrides_with_content_sets_file(mocker):
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -123,8 +116,7 @@ def test_image_overrides_with_content_sets_file(mocker):
         arch:
           - namea
           - nameb
-    """
-        ),
+    """),
         "foo",
     )
 
@@ -149,8 +141,7 @@ def test_image_overrides_with_content_sets_file(mocker):
 
 def test_image_overrides_packages_repositories_add():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
@@ -158,8 +149,7 @@ def test_image_overrides_packages_repositories_add():
             repositories:
                 - name: scl
                   rpm: centos-release-scl
-        """
-        ),
+        """),
         "foo",
     )
 
@@ -189,8 +179,7 @@ def test_image_overrides_packages_repositories_add():
 
 def test_image_overrides_packages_repositories_replace():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
@@ -198,8 +187,7 @@ def test_image_overrides_packages_repositories_replace():
             repositories:
                 - name: scl
                   rpm: centos-release-scl
-        """
-        ),
+        """),
         "foo",
     )
 
@@ -228,34 +216,28 @@ def test_image_overrides_packages_repositories_replace():
 
 def test_module_processing_simple_modules_order_to_install():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
-        """
-        ),
+        """),
         "foo",
     )
 
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
 
     module_b = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.b
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -285,23 +267,19 @@ def test_module_processing_simple_modules_order_to_install():
 
 def test_module_processing_fail_when_no_modules_of_specified_name_can_be_found():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
-        """
-        ),
+        """),
         "foo",
     )
 
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -328,23 +306,19 @@ def test_module_processing_fail_when_no_modules_of_specified_name_can_be_found()
 
 def test_module_processing_fail_when_module_not_found_for_specific_version():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
-        """
-        ),
+        """),
         "foo",
     )
 
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -371,45 +345,37 @@ def test_module_processing_modules_with_multiple_versions(caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
-        """
-        ),
+        """),
         "foo",
     )
 
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
 
     module_b = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.b
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
 
     module_b_1 = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.b
         version: 1.1
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -448,34 +414,28 @@ def test_module_processing_modules_with_single_versions(caplog):
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
-        """
-        ),
+        """),
         "foo",
     )
 
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
 
     module_b = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.b
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -507,23 +467,19 @@ def test_module_processing_modules_with_single_versions(caplog):
 
 def test_module_processing_fail_when_a_module_aready_exists_in_registry():
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
 
     module_a1 = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -547,23 +503,19 @@ def test_module_processing_warning_when_a_module_version_cannot_be_parsed_as_pep
     caplog.set_level(logging.DEBUG, logger="cekit")
 
     module_a = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: 1.0
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
 
     module_a1 = Module(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         name: org.test.module.a
         version: aa fs df
-        """
-        ),
+        """),
         "path",
         "artifact_path",
     )
@@ -581,8 +533,7 @@ def test_module_processing_warning_when_a_module_version_cannot_be_parsed_as_pep
 def test_image_no_name():
     with pytest.raises(CekitError) as excinfo:
         Image(
-            yaml.safe_load(
-                """
+            yaml.safe_load("""
         version: 1.9
         labels:
           - name: test
@@ -592,8 +543,7 @@ def test_image_no_name():
         envs:
           - name: env1
             value: env1val
-        """
-            ),
+        """),
             "foo",
         )
 
