@@ -5,13 +5,11 @@ import yaml
 import cekit
 from cekit.descriptor import Descriptor
 
-execute_schemas = yaml.safe_load(
-    """
+execute_schemas = yaml.safe_load("""
         map:
           name: {type: str}
           script: {type: str}
-          user: {type: text}"""
-)
+          user: {type: text}""")
 
 logger = logging.getLogger("cekit")
 

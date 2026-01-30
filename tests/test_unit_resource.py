@@ -382,8 +382,7 @@ def test_copy_plain_resource_from_brew(mocker, tmpdir):
 
 def test_override_resource_remove_chksum():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -394,18 +393,15 @@ def test_override_resource_remove_chksum():
         sha1: 'foo'
         sha256: 'foo'
         sha512: 'foo'
-    """
-        ),
+    """),
         "foo",
     )
     overrides = Overrides(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     artifacts:
       - name: abs
         path: /tmp/over
-"""
-        ),
+"""),
         "foo",
     )
     overrides.merge(image)

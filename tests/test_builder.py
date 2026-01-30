@@ -1048,8 +1048,7 @@ def test_podman_builder_run_with_generator(mocker):
     builder = create_builder_object(mocker, "podman", params)
     builder.generator = DockerGenerator("", "", "", {}, False)
     builder.generator.image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     name: foo
     version: 1.9
     labels:
@@ -1060,8 +1059,7 @@ def test_podman_builder_run_with_generator(mocker):
     envs:
       - name: env1
         value: env1val
-    """
-        ),
+    """),
         "foo",
     )
     builder.run()
@@ -1090,8 +1088,7 @@ def test_buildah_builder_run_with_generator(mocker):
     builder = create_builder_object(mocker, "buildah", params)
     builder.generator = DockerGenerator("", "", "", {}, False)
     builder.generator.image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     name: foo
     version: 1.9
     labels:
@@ -1102,8 +1099,7 @@ def test_buildah_builder_run_with_generator(mocker):
     envs:
       - name: env1
         value: env1val
-    """
-        ),
+    """),
         "foo",
     )
     builder.run()
@@ -1179,12 +1175,10 @@ def test_podman_builder_with_squashing_disabled(mocker):
     builder = create_builder_object(mocker, "podman", params)
     builder.generator = DockerGenerator("", "", "", [], True)
     builder.generator.image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     name: foo
     version: 1.9
-    """
-        ),
+    """),
         "foo",
     )
     builder.run()
@@ -1212,12 +1206,10 @@ def test_podman_builder_with_build_arg(mocker):
     builder = create_builder_object(mocker, "podman", params)
     builder.generator = DockerGenerator("", "", "", [], False)
     builder.generator.image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     name: foo
     version: 1.9
-    """
-        ),
+    """),
         "foo",
     )
     builder.run()
@@ -1247,12 +1239,10 @@ def test_podman_builder_with_build_flag(mocker):
     builder = create_builder_object(mocker, "podman", params)
     builder.generator = DockerGenerator("", "", "", [], False)
     builder.generator.image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     name: foo
     version: 1.9
-    """
-        ),
+    """),
         "foo",
     )
     builder.run()

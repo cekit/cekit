@@ -635,8 +635,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
     with open(os.path.join(target, "target", "image", "Containerfile"), "r") as fd:
         dockerfile_content = fd.read()
         print(f"docker is \n{dockerfile_content}")
-        assert (
-            """## START target image testimage:1
+        assert """## START target image testimage:1
 ## \\
     FROM fromimage
 
@@ -671,11 +670,7 @@ def test_dockerfile_copy_modules_if_modules_defined(tmpdir, caplog):
 
     # Switch to 'root' user and remove artifacts and modules
     USER root
-""".replace(
-                "VVVVV", __version__
-            )
-            in dockerfile_content
-        )
+""".replace("VVVVV", __version__) in dockerfile_content
 
 
 def test_dockerfile_destination_of_artifact(mocker, tmpdir):
@@ -799,12 +794,9 @@ def test_package_removal_and_install_and_reinstall(tmpdir):
             && rpm -q t"""
         in dockerfile
     )
-    assert (
-        """RUN dnf clean all \\
+    assert """RUN dnf clean all \\
     && rm -rf "/var/cache/yum" "/var/lib/dnf" "/var/cache/apt" "/var/cache/dnf"
-    """
-        in dockerfile
-    )
+    """ in dockerfile
 
 
 def test_package_removal_without_install(tmpdir):
@@ -861,11 +853,8 @@ def test_args_podman(tmpdir):
     )
     with open(os.path.join(target, "target", "image", "Dockerfile"), "r") as _file:
         dockerfile = _file.read()
-    assert (
-        """        ARG foo="bar"
-        ARG labela"""
-        in dockerfile
-    )
+    assert """        ARG foo="bar"
+        ARG labela""" in dockerfile
 
 
 def test_args_buildah(tmpdir):
@@ -886,11 +875,8 @@ def test_args_buildah(tmpdir):
     )
     with open(os.path.join(target, "target", "image", "Dockerfile"), "r") as _file:
         dockerfile = _file.read()
-    assert (
-        """        ARG foo="bar"
-        ARG labela"""
-        in dockerfile
-    )
+    assert """        ARG foo="bar"
+        ARG labela""" in dockerfile
 
 
 # https://github.com/cekit/cekit/issues/886

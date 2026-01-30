@@ -10,103 +10,73 @@ config.configure("/dev/null", {"redhat": True})
 
 
 def test_label():
-    label = Label(
-        yaml.safe_load(
-            """
+    label = Label(yaml.safe_load("""
       name: "io.k8s.display-name"
       value: "JBoss A-MQ 6.2"
-"""
-        )
-    )
+"""))
     assert label["name"] == "io.k8s.display-name"
     assert label["value"] == "JBoss A-MQ 6.2"
 
 
 def test_arg():
-    arg = Arg(
-        yaml.safe_load(
-            """
+    arg = Arg(yaml.safe_load("""
       name: "io.k8s.display-name"
       value: "JBoss A-MQ 6.2"
-"""
-        )
-    )
+"""))
     assert arg.name == "io.k8s.display-name"
     assert arg.value == "JBoss A-MQ 6.2"
 
-    arg = Arg(
-        yaml.safe_load(
-            """
+    arg = Arg(yaml.safe_load("""
         name: "QUARKUS_EXTENSIONS"
-"""
-        )
-    )
+"""))
     assert arg.name == "QUARKUS_EXTENSIONS"
     assert arg.value is None
     assert arg.description is None
 
 
 def test_env():
-    env = Env(
-        yaml.safe_load(
-            """
+    env = Env(yaml.safe_load("""
       name: "io.k8s.display-name"
       value: "JBoss A-MQ 6.2"
-"""
-        )
-    )
+"""))
     assert env["name"] == "io.k8s.display-name"
     assert env["value"] == "JBoss A-MQ 6.2"
 
 
 def test_port():
-    env = Port(
-        yaml.safe_load(
-            """
+    env = Port(yaml.safe_load("""
       value: 8788
       expose: False
-"""
-        )
-    )
+"""))
     assert env["value"] == 8788
     assert env["name"] == 8788
     assert not env["expose"]
 
 
 def test_volume():
-    volume = Volume(
-        yaml.safe_load(
-            """
+    volume = Volume(yaml.safe_load("""
     name: vol1
     path: /tmp/a
-"""
-        )
-    )
+"""))
     assert volume["name"] == "vol1"
     assert volume["path"] == "/tmp/a"
 
 
 def test_volume_name():
-    volume = Volume(
-        yaml.safe_load(
-            """
+    volume = Volume(yaml.safe_load("""
     path: /tmp/a
-"""
-        )
-    )
+"""))
     assert volume["name"] == "a"
     assert volume["path"] == "/tmp/a"
 
 
 def test_osbs():
     osbs = Osbs(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     repository:
       name: foo
       branch: bar
-"""
-        ),
+"""),
         "a/path/image.yaml",
     )
 
@@ -116,11 +86,9 @@ def test_osbs():
 
 def test_packages():
     pkg = Packages(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
       install:
-          - pkg-foo"""
-        ),
+          - pkg-foo"""),
         "a/path/image.yaml",
     )
 
@@ -130,14 +98,12 @@ def test_packages():
 def test_packages_invalid_old_repository_definition():
     with pytest.raises(CekitError, match=r"Cannot validate schema: Repository"):
         Packages(
-            yaml.safe_load(
-                """
+            yaml.safe_load("""
         repositories:
             - repo-foo
             - repo-bar
         install:
-            - pkg-foo"""
-            ),
+            - pkg-foo"""),
             "a/path/image.yaml",
         )
 
@@ -196,8 +162,7 @@ def test_packages_content_sets_file(mocker):
 
 def test_image():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -217,8 +182,7 @@ def test_image():
         required: false
         usage: build-time
         description: "Env description"
-    """
-        ),
+    """),
         "foo",
     )
 
@@ -234,27 +198,23 @@ def test_image():
 def test_image_missing_name():
     with pytest.raises(CekitError):
         Image(
-            yaml.safe_load(
-                """
+            yaml.safe_load("""
         from: foo
-        version: 1.9"""
-            ),
+        version: 1.9"""),
             "foo",
         )
 
 
 def test_remove_none_key():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
     envs:
      - name: foo
        value: ~
-    """
-        ),
+    """),
         "foo",
     )
     image.remove_none_keys()
@@ -265,8 +225,7 @@ def test_remove_none_key():
 
 def test_image_artifacts(caplog):
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -283,8 +242,7 @@ def test_image_artifacts(caplog):
     envs:
       - name: env1
         value: env1val
-    """
-        ),
+    """),
         "foo",
     )
 
@@ -304,16 +262,14 @@ def test_image_artifacts(caplog):
 def test_image_plain_artifacts_md5_fail(caplog):
     with pytest.raises(CekitError) as excinfo:
         Image(
-            yaml.safe_load(
-                """
+            yaml.safe_load("""
             from: foo
             name: test/foo
             version: 1.9
             artifacts:
               - target: jolokia.jar
                 md5: 080075877a66adf52b7f6d0013fa9730
-            """
-            ),
+            """),
             "foo",
         )
     assert "Cannot validate schema: _PlainResource" in excinfo.value.message
@@ -322,8 +278,7 @@ def test_image_plain_artifacts_md5_fail(caplog):
 
 def test_image_plain_artifacts_md5():
     Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
@@ -331,16 +286,14 @@ def test_image_plain_artifacts_md5():
           - name: jolokia.jar
             target: jolokia.jar
             md5: 080075877a66adf52b7f6d0013fa9730
-        """
-        ),
+        """),
         "foo",
     )
 
 
 def test_image_plain_artifacts_sha256():
     Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
@@ -348,16 +301,14 @@ def test_image_plain_artifacts_sha256():
           - name: jolokia.jar
             target: jolokia.jar
             sha256: ac8aef606f79c19321c9d74790168da973c4f10d2784e2e763d2bec8b4ac610f
-        """
-        ),
+        """),
         "foo",
     )
 
 
 def test_image_modules_git_repo(caplog):
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
@@ -372,8 +323,7 @@ def test_image_modules_git_repo(caplog):
                 ref: "release-1.1"
         install:
             - name: "org.company.project.feature"
-    """
-        ),
+    """),
         "foo",
     )
 
@@ -387,15 +337,13 @@ def test_image_modules_git_repo(caplog):
 def test_image_descriptor_with_execute():
     with pytest.raises(CekitError) as excinfo:
         Image(
-            yaml.safe_load(
-                """
+            yaml.safe_load("""
         from: foo
         name: test/foo
         version: 1.9
         execute:
               - script: build.sh
-        """
-            ),
+        """),
             "foo",
         )
 
@@ -404,8 +352,7 @@ def test_image_descriptor_with_execute():
 
 def test_image_pnc_artifacts_1():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
             from: foo
             name: test/foo
             version: 1.9
@@ -414,8 +361,7 @@ def test_image_pnc_artifacts_1():
                 target: jolokia.jar
                 pnc_artifact_id: '12345'
                 pnc_build_id: '54321'
-            """
-        ),
+            """),
         "foo",
     )
     assert image.artifacts[0]["name"] == "foobar"
@@ -426,8 +372,7 @@ def test_image_pnc_artifacts_1():
 
 def test_image_pnc_artifacts_2():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
             from: foo
             name: test/foo
             version: 1.9
@@ -436,8 +381,7 @@ def test_image_pnc_artifacts_2():
                 dest: '/installation/'
                 pnc_artifact_id: '12345'
                 pnc_build_id: '54321'
-            """
-        ),
+            """),
         "foo",
     )
     print(f"Got {image.artifacts[0]}")
@@ -449,8 +393,7 @@ def test_image_pnc_artifacts_2():
 
 def test_image_follow_tag():
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo:latest
     name: test/foo
     follow_tag: registry.fedoraproject.org/flatpak-build-base
@@ -463,8 +406,7 @@ def test_image_follow_tag():
     envs:
       - name: env1
         value: env1val
-    """
-        ),
+    """),
         "foo",
     )
 
