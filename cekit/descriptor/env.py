@@ -4,16 +4,14 @@ import yaml
 
 from cekit.descriptor import Descriptor
 
-env_schema = yaml.safe_load(
-    """
+env_schema = yaml.safe_load("""
 type: map
 allowempty: True
 map:
   name: {type: str, required: True}
   value: {type: any}
   example: {type: any}
-  description: {type: str}"""
-)
+  description: {type: str}""")
 
 
 class Env(Descriptor):

@@ -7,7 +7,8 @@ verify_ssl = true
 autopep8 = "*"
 behave = "*"
 black = "*"
-click = "*"
+# Click 8.2.0 causes weird "ValueError: I/O operation on closed file" from pytest
+click = "<=8.1.0"
 docker = "*"
 docker-squash = "*"
 flake8 = ">3.6.0"

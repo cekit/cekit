@@ -50,7 +50,8 @@ try:
     # Requests is a dependency of ODCS client, so this should be safe
     import requests
     from odcs.client.odcs import ODCS, AuthMech
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
+    LOGGER.debug(f"Module not found for {e}", exc_info=True)
     pass
 
 
@@ -124,6 +125,9 @@ class Generator(object):
             deps["odcs-client"] = {
                 "package": "python3-odcs-client",
                 "library": "odcs",
+            }
+            deps["setuptools"] = {
+                "library": "setuptools",
             }
 
         if CONFIG.get("common", "redhat"):

@@ -219,6 +219,46 @@ Linking
         compose:
             pulp_repos: true
 
+OSBS Cachito Integration
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Currently CEKit looks for the ``remote_source`` block within the ``configuration`` block to activate cachito
+integration (i.e. copying remote sources). This configuration block must be within the image that needs the integration
+activated. While an explicit flag was considered (see `this issue <https://github.com/cekit/cekit/issues/732>`_) this would not
+be backwards compatible and OSBS is a legacy system. The configuration block may be in any image as its used to
+generate a ``container.yaml``. In the case of multistage builds a developer may need to do this:
+
+    .. code-block:: yaml
+
+        - name: builder
+          version: 1.0.0
+          from: "registry.redhat.io/ubi9/go-toolset"
+          description: Go builder image
+          osbs:
+            configuration:
+              container:
+                compose:
+                  pulp_repos: true
+                remote_source:
+                  repo: https://github.com/wildfly/wildfly-operator.git
+                  # Based on Upstream 1.1.3 TAG: https://github.com/wildfly/wildfly-operator/releases/tag/1.1.3
+                  ref: e2f1ee353aa3993c15c0b33a00499952e3bf58c1
+        - name: "jboss-eap/eap-rhel9-operator"
+          description: "Red Hat EAP Operator"
+          version: "3.2"
+          from: "registry.redhat.io/ubi9/ubi-minimal:latest"
+          osbs:
+            repository:
+              name: containers/jboss-eap-operator
+              branch: jb-eap-operator-3.2-dev-rhel-9
+          run:
+            entrypoint:
+              - "/usr/local/bin/wildfly-operator"
+            user: "1001"
+
+i.e. in this case the cachito integration is activated for the builder image and so the entire configuration block must
+be placed in that image. To ensure OSBS has the correct repository definition that is placed in the final image block.
+
 OSBS Gating Files
 ^^^^^^^^^^^^^^^^^
 

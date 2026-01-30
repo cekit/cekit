@@ -3,8 +3,9 @@ Installation instructions
 
 
 
-Python versions >= 3.6 are supported. See the `GitHub Action <https://github.com/cekit/cekit/blob/develop/
-.github/workflows/cekit.yml#L20>`_ for the matrix we test against.
+Python versions >= 3.7 are supported. See the `GitHub Action <https://github.com/cekit/cekit/blob/develop/
+.github/workflows/cekit.yml#L20>`_ for the matrix we test against. While the code is not tested against
+Python 3.6 (since December 2025) it *may* work.
 
 We provide RPM packages for Fedora, CentOS/RHEL distribution.
 CEKit installation on other platforms is still possible via ``pip``.

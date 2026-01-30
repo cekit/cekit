@@ -95,16 +95,14 @@ def test_prepare_content_sets_should_not_fail_when_cs_is_empty(tmpdir):
 
 def test_large_labels_should_break_lines(tmpdir):
     image = Image(
-        yaml.safe_load(
-            """
+        yaml.safe_load("""
     from: foo
     name: test/foo
     version: 1.9
     labels:
       - name: 'the.large.label'
         value: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium finibus lorem vitae pellentesque. Maecenas tincidunt amet.
-    """
-        ),
+    """),
         "foo",
     )
     with docker_generator(tmpdir) as generator:

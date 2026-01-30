@@ -8,8 +8,7 @@ from cekit.cekit_types import PathType
 from cekit.descriptor import Descriptor
 from cekit.errors import CekitError
 
-osbs_schema = yaml.safe_load(
-    """
+osbs_schema = yaml.safe_load("""
 map:
   repository: {type: any}
   configuration: {type: any}
@@ -17,25 +16,20 @@ map:
   extra_dir: {type: str}
   extra_dir_target: {type: str}
 
-"""
-)
+""")
 
-configuration_schema = yaml.safe_load(
-    """
+configuration_schema = yaml.safe_load("""
     map:
       container: {type: any}
       container_file: {type: str}
       gating_file: {type: str}
-"""
-)
+""")
 
-repository_schema = yaml.safe_load(
-    """
+repository_schema = yaml.safe_load("""
     map:
       name: {type: str}
       branch: {type: str}
-"""
-)
+""")
 
 logger = logging.getLogger("cekit")
 

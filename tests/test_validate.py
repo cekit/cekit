@@ -450,11 +450,8 @@ def test_image_test_with_override_yaml_on_cmd(tmpdir):
         os.path.join(image_dir, "target", "image", "Containerfile"), "r"
     ) as _file:
         dockerfile = _file.read()
-    assert (
-        """LABEL \\
-            foo="overriden"""
-        in dockerfile
-    )
+    assert """LABEL \\
+            foo="overriden""" in dockerfile
 
 
 def test_module_override(tmpdir):

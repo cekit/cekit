@@ -103,7 +103,7 @@ Feature: Basic tests
     assert result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
-    assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
+    assert "3 steps passed, 0 failed, 0 skipped" in result.output
 
 
 @pytest.mark.skipif(
@@ -143,7 +143,7 @@ Feature: Basic tests
     assert result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
-    assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
+    assert "3 steps passed, 0 failed, 0 skipped" in result.output
 
 
 @pytest.mark.skipif(
@@ -181,7 +181,7 @@ Feature: Basic tests
     assert result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
-    assert "3 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
+    assert "3 steps passed, 0 failed, 0 skipped" in result.output
 
 
 @pytest.mark.skipif(
@@ -219,7 +219,7 @@ Feature: Basic tests
     assert result.exit_code == 0
     assert "0 features passed, 0 failed, 0 skipped" in result.output
     assert "0 scenarios passed, 0 failed, 0 skipped" in result.output
-    assert "0 steps passed, 0 failed, 0 skipped, 0 undefined" in result.output
+    assert "0 steps passed, 0 failed, 0 skipped" in result.output
 
 
 @pytest.mark.skipif(
@@ -256,7 +256,7 @@ def test_execute_behave_test_from_module(tmpdir):
     assert test_result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in test_result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in test_result.output
-    assert "2 steps passed, 0 failed, 0 skipped, 0 undefined" in test_result.output
+    assert "2 steps passed, 0 failed, 0 skipped" in test_result.output
 
 
 @pytest.mark.skipif(
@@ -300,7 +300,7 @@ def test_simple_image_test(build_image):
     assert test_result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in test_result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in test_result.output
-    assert "2 steps passed, 0 failed, 0 skipped, 0 undefined" in test_result.output
+    assert "2 steps passed, 0 failed, 0 skipped" in test_result.output
     assert os.path.exists(os.path.join(image_dir, "target", "image", "Dockerfile"))
 
 
@@ -349,7 +349,7 @@ Feature: Basic tests
     assert result.exit_code == 0
     assert "1 feature passed, 0 failed, 0 skipped" in result.output
     assert "1 scenario passed, 0 failed, 0 skipped" in result.output
-    assert "1 step passed, 0 failed, 0 skipped, 0 undefined" in result.output
+    assert "1 step passed, 0 failed, 0 skipped" in result.output
     assert (
         "Creating docker container with arguments and image: -e RESOURCE_ADAPTERS=TEST_1 -e TEST_1_ID=fileQS -e "
         "TEST_1_MODULE_SLOT=main -e TEST_1_MODULE_ID=org.jboss.teiid.resource-adapter.file -e "

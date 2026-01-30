@@ -621,17 +621,14 @@ def test_osbs_builder_add_extra_files_with_extra_dir_target(tmpdir, mocker, capl
     assert "Staging 'osbs_extra'..." in caplog.text
     with open(os.path.join(str(repo_dir), "Dockerfile"), "r") as _file:
         dockerfile = _file.read()
-        assert (
-            """## START target image test/image:1.0
+        assert """## START target image test/image:1.0
 ## \\
     FROM centos:7
 
     COPY osbs_extra /foobar
 
     USER root
-"""
-            in dockerfile
-        )
+""" in dockerfile
 
     assert "COPY osbs_extra /foobar" in dockerfile
 
@@ -1980,8 +1977,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
     assert os.path.exists(dockerfile_path) is True
     with open(dockerfile_path, "r") as _file:
         dockerfile = _file.read()
-        assert (
-            """## START target image test/image:1.0
+        assert """## START target image test/image:1.0
 ## \\
     FROM centos:7
 
@@ -2008,11 +2004,7 @@ def test_osbs_builder_with_cachito_enabled(tmpdir, mocker, caplog):
 ###### END image 'test/image:1.0'
 
     RUN rm -rf $REMOTE_SOURCE_DIR
-""".replace(
-                "VVVVV", __version__
-            )
-            in dockerfile
-        )
+""".replace("VVVVV", __version__) in dockerfile
     assert re.search("Cachito definition is .*http://foo.bar.com", caplog.text)
 
 
@@ -2158,8 +2150,7 @@ redhat = True
     with open(container_path, "r") as _file:
         containerfile = _file.read()
         print("\n" + containerfile + "\n")
-        assert (
-            """image_build_method: imagebuilder
+        assert """image_build_method: imagebuilder
 platforms:
   only:
   - x86_64
@@ -2167,9 +2158,7 @@ remote_source:
   pkg_managers:
   - gomod
   ref: db4a5d18f5f52a64083d8f1bd1776ad60a46904c
-  repo: https://github.com/kiegroup/rhpam-kogito-operator"""
-            in containerfile
-        )
+  repo: https://github.com/kiegroup/rhpam-kogito-operator""" in containerfile
 
 
 def test_osbs_builder_with_rhpam_2(tmpdir, caplog):
@@ -2356,10 +2345,7 @@ redhat = True
     # Define the user
     USER 1001
 ## /
-## END target image""".replace(
-                "VVVVV", __version__
-            )
-            in dockerfile
+## END target image""".replace("VVVVV", __version__) in dockerfile
         )
     container_path = os.path.join(
         str(tmpdir), "rhpam", "target", "image", "container.yaml"
@@ -2368,8 +2354,7 @@ redhat = True
     with open(container_path, "r") as _file:
         containerfile = _file.read()
         print("\n" + containerfile + "\n")
-        assert (
-            """image_build_method: imagebuilder
+        assert """image_build_method: imagebuilder
 platforms:
   only:
   - x86_64
@@ -2377,9 +2362,7 @@ remote_source:
   pkg_managers:
   - gomod
   ref: db4a5d18f5f52a64083d8f1bd1776ad60a46904c
-  repo: https://github.com/kiegroup/rhpam-kogito-operator"""
-            in containerfile
-        )
+  repo: https://github.com/kiegroup/rhpam-kogito-operator""" in containerfile
 
 
 def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_1(tmpdir, mocker, caplog):
@@ -2469,8 +2452,7 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
             "artifacts": [{"id": "00002", "target": "foobar/goo.zip"}],
         },
     ]
-    assert (
-        """builds:
+    assert """builds:
 - build_id: '123456'
   artifacts:
   - id: '00001'
@@ -2480,19 +2462,14 @@ def test_osbs_builder_with_fetch_artifacts_pnc_file_creation_2(tmpdir, mocker, c
 - build_id: '987654'
   artifacts:
   - id: '00002'
-    target: foobar/goo.zip"""
-        in fetch_artifacts
-    )
+    target: foobar/goo.zip""" in fetch_artifacts
     with open(os.path.join(str(tmpdir), "target", "image", "Dockerfile"), "r") as _file:
         dockerfile = _file.read()
-    assert (
-        """COPY \\
+    assert """COPY \\
             artifacts/boo.jar \\
             artifacts/foo.jar \\
             artifacts/foobar/goo.zip \\
-            /tmp/artifacts/"""
-        in dockerfile
-    )
+            /tmp/artifacts/""" in dockerfile
 
 
 def test_osbs_builder_with_brew_and_lookaside(tmpdir, mocker, caplog):
