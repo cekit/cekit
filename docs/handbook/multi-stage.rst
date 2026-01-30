@@ -84,7 +84,6 @@ and where the actual artifact will be built.
     * ``volumes``
     * ``run``
     * ``help``
-    * ``osbs``
 
 The second image is the final image where we will place the built artifact. But how to do it? Let's take
 a look at the ``app`` module which defines a special artifact.
