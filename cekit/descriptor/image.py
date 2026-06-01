@@ -16,6 +16,7 @@ from cekit.descriptor import (
     Label,
     Modules,
     Osbs,
+    Konflux,
     Packages,
     Port,
     Run,
@@ -51,6 +52,7 @@ map:
   modules: {type: any}
   packages: {type: any}
   osbs: {type: any}
+  konflux: {type: any}
   volumes: {type: any}
   help:
     map:
@@ -98,6 +100,7 @@ class Image(Descriptor):
             self._descriptor.get("packages", {}), self.path
         )
         self._descriptor["osbs"] = Osbs(self._descriptor.get("osbs", {}), self.path)
+        self._descriptor["konflux"] = Konflux(self._descriptor.get("konflux", {}), self.path)
         self._descriptor["volumes"] = [
             Volume(x) for x in self._descriptor.get("volumes", [])
         ]
@@ -325,6 +328,9 @@ class Image(Descriptor):
 
             # Merge override osbs items into self.
             self.osbs = self.osbs.merge(override.osbs)
+
+            # Same, for Konflux
+            self.konflux = self.konflux.merge(override.konflux)
 
             # Using 'or []' to avoid having to set default value in packages.py for _descriptor["remove"]
             for package in override.packages.remove or []:

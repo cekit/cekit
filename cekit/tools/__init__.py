@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 import click
+import json
 import yaml
 from yaml.representer import SafeRepresenter
 
@@ -153,11 +154,10 @@ def decision(question: str) -> bool:
     return click.confirm(question, show_default=True)
 
 
-def get_latest_image_version(image: str) -> str:
+def get_skopeo_inspect_json(image: str) -> str:
     inspect_cmd = [
         "skopeo",
         "inspect",
-        "--config",
         f"docker://{image}",
     ]
     auth = os.getenv("REGISTRY_AUTH_FILE")
@@ -165,11 +165,28 @@ def get_latest_image_version(image: str) -> str:
         inspect_cmd.extend(["--authfile", auth])
 
     result = run_wrapper(inspect_cmd, True, f"Could not inspect container {image}")
-    inspect_json = yaml.safe_load(result.stdout)["config"]
+    return json.loads(result.stdout)
+
+
+def get_latest_image_version(image: str) -> str:
+    inspect_json = get_latest_image_version(image)
     tag = get_tag_from_inspect_struct(inspect_json)
     logger.debug(f"Found new tag {tag} for {image}")
     return f'{image.split(":")[0]}:{tag}'
 
+
+def split_image_name_ref(img: str) -> str:
+    """
+    Convert a container image URI into a tuple of the base image and the
+    reference. If the original URI did not specify a reference, default to
+    'latest'.
+    """
+    ref = 'latest'
+    if img.find(':') > 0:
+        bits = img.split(':')
+        ref  = bits.pop()
+        img  = ':'.join(bits)
+    return (img, ref)
 
 def get_tag_from_inspect_struct(struct: Mapping) -> str:
     """Get the tag of a component from it's inspect struct

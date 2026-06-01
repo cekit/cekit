@@ -8,6 +8,7 @@ from cekit.descriptor.port import Port
 from cekit.descriptor.env import Env
 from cekit.descriptor.volume import Volume
 from cekit.descriptor.osbs import Osbs
+from cekit.descriptor.konflux import Konflux
 from cekit.descriptor.run import Run
 from cekit.descriptor.packages import Packages
 from cekit.descriptor.packages import Repository

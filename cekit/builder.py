@@ -90,6 +90,10 @@ class Builder(Command):
             from cekit.generator.osbs import OSBSGenerator as generator_impl
 
             container_file: str = "Dockerfile"
+        elif self.build_engine == "konflux":
+            from cekit.generator.konflux import KonfluxGenerator as generator_impl
+
+            container_file: str = "Dockerfile"
         else:
             raise CekitError(f"Unsupported generator type: '{self.build_engine}'")
         LOGGER.info(f"Generating files for {self.build_engine} engine")

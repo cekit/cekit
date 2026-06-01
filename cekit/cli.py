@@ -133,7 +133,7 @@ def build(validate, dry_run, container_file, overrides):
 
     BUILDERS
 
-        Currently supported builders: Docker, OSBS, Podman and Buildah.
+        Currently supported builders: Docker, OSBS, Konflux, Podman and Buildah.
 
             $ cekit build BUILDER
 
@@ -334,6 +334,21 @@ def build_osbs(
     """
     run_build(ctx, "osbs")
 
+@build.command(name="konflux", short_help="Prepare for Konflux build")
+@click.pass_context
+def build_konflux(ctx):
+    """
+    DESCRIPTION
+
+        Prepare container sources for Konflux.
+
+    EXAMPLES
+
+        This is it so far
+
+            $ cekit build konflux
+    """
+    run_build(ctx, "konflux")
 
 @cli.group(short_help="Execute container image tests")
 @click.option("--image", help="Image to run tests against.")
@@ -477,6 +492,10 @@ def run_build(ctx, builder):
         from cekit.builders.buildah import BuildahBuilder as builder_impl
 
         LOGGER.info("Using Buildah builder to build the image")
+    elif builder == "konflux":
+        from cekit.builders.konflux import KonfluxBuilder as builder_impl
+
+        LOGGER.info("Using Konflux builder to build the image")
     else:
         raise CekitError(f"Builder engine {builder} is not supported")
 
