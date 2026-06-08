@@ -74,7 +74,7 @@ jobs:
         echo "Running for Python version $PV ( ${PV/./} )"
         make test-py"${PV/./}"
     - name: Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./target/cov.xml
