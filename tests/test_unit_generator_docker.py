@@ -93,6 +93,141 @@ def test_prepare_content_sets_should_not_fail_when_cs_is_empty(tmpdir):
             assert generator._prepare_content_sets({}) is False
 
 
+def test_add_build_labels_injects_oci_base_labels(tmpdir, mocker):
+    """When skopeo returns a digest, the two OCI base labels should be added."""
+    image = Image(
+        yaml.safe_load("""
+    from: registry.example.com/mybase:1.0
+    name: test/foo
+    version: 1.9
+    """),
+        "foo",
+    )
+    mocker.patch(
+        "cekit.generator.base.get_base_image_digest_info",
+        return_value=("registry.example.com/mybase:1.0", "sha256:abcdef1234567890"),
+    )
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        generator.add_build_labels()
+
+    label_names = {lbl.name: lbl.value for lbl in image.labels}
+    assert label_names["org.opencontainers.image.base.name"] == "registry.example.com/mybase:1.0"
+    assert label_names["org.opencontainers.image.base.digest"] == "sha256:abcdef1234567890"
+
+
+def test_add_build_labels_skips_oci_base_labels_when_already_set(tmpdir, mocker):
+    """User-defined OCI base labels must not be overwritten."""
+    image = Image(
+        yaml.safe_load("""
+    from: registry.example.com/mybase:1.0
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: org.opencontainers.image.base.name
+        value: user-defined-name
+      - name: org.opencontainers.image.base.digest
+        value: sha256:userdigest
+    """),
+        "foo",
+    )
+    mock_fn = mocker.patch("cekit.generator.base.get_base_image_digest_info")
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        generator.add_build_labels()
+
+    mock_fn.assert_not_called()
+    label_names = {lbl.name: lbl.value for lbl in image.labels}
+    assert label_names["org.opencontainers.image.base.name"] == "user-defined-name"
+    assert label_names["org.opencontainers.image.base.digest"] == "sha256:userdigest"
+
+
+def test_add_build_labels_skips_oci_base_labels_for_scratch(tmpdir, mocker):
+    """FROM scratch images must not trigger a skopeo call."""
+    image = Image(
+        yaml.safe_load("""
+    from: scratch
+    name: test/foo
+    version: 1.9
+    """),
+        "foo",
+    )
+    mock_fn = mocker.patch("cekit.generator.base.get_base_image_digest_info")
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        generator.add_build_labels()
+
+    mock_fn.assert_not_called()
+
+
+def test_add_build_labels_skips_oci_base_labels_when_only_name_is_set(tmpdir, mocker):
+    """If the user sets only base.name, skopeo must not be called and base.digest must not be injected."""
+    image = Image(
+        yaml.safe_load("""
+    from: registry.example.com/mybase:1.0
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: org.opencontainers.image.base.name
+        value: user-defined-name
+    """),
+        "foo",
+    )
+    mock_fn = mocker.patch("cekit.generator.base.get_base_image_digest_info")
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        generator.add_build_labels()
+
+    mock_fn.assert_not_called()
+    label_names = {lbl.name: lbl.value for lbl in image.labels}
+    assert label_names["org.opencontainers.image.base.name"] == "user-defined-name"
+    assert "org.opencontainers.image.base.digest" not in label_names
+
+
+def test_add_build_labels_skips_oci_base_labels_when_only_digest_is_set(tmpdir, mocker):
+    """If the user sets only base.digest, skopeo must not be called and base.name must not be injected."""
+    image = Image(
+        yaml.safe_load("""
+    from: registry.example.com/mybase:1.0
+    name: test/foo
+    version: 1.9
+    labels:
+      - name: org.opencontainers.image.base.digest
+        value: sha256:userdigest
+    """),
+        "foo",
+    )
+    mock_fn = mocker.patch("cekit.generator.base.get_base_image_digest_info")
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        generator.add_build_labels()
+
+    mock_fn.assert_not_called()
+    label_names = {lbl.name: lbl.value for lbl in image.labels}
+    assert label_names["org.opencontainers.image.base.digest"] == "sha256:userdigest"
+    assert "org.opencontainers.image.base.name" not in label_names
+
+
+def test_add_build_labels_tolerates_skopeo_unavailable(tmpdir, mocker):
+    """If skopeo is unavailable (returns None), build should not fail."""
+    image = Image(
+        yaml.safe_load("""
+    from: registry.example.com/mybase:1.0
+    name: test/foo
+    version: 1.9
+    """),
+        "foo",
+    )
+    mocker.patch("cekit.generator.base.get_base_image_digest_info", return_value=None)
+    with docker_generator(tmpdir) as generator:
+        generator.image = image
+        generator.add_build_labels()
+
+    label_names = {lbl.name for lbl in image.labels}
+    assert "org.opencontainers.image.base.name" not in label_names
+    assert "org.opencontainers.image.base.digest" not in label_names
+
+
 def test_large_labels_should_break_lines(tmpdir):
     image = Image(
         yaml.safe_load("""
