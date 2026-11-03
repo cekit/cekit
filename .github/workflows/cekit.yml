@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13' ]
+        python-version: [ '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
         os: [macos-15-intel, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
@@ -53,17 +53,22 @@ jobs:
         cd $HOME/bin && curl -sL https://github.com/openshift/source-to-image/releases/download/v1.1.13/source-to-image-v1.1.13-b54d75d3-linux-amd64.tar.gz | tar xvz
         # Skopeo fails with "/run/containers/1001/auth.json: permission denied" / https://github.com/containers/skopeo/issues/1654
         echo 'REGISTRY_AUTH_FILE=/tmp/auth.json' >> $GITHUB_ENV
+    # macOS 15 Intel runner image lifecycle: https://github.com/actions/runner-images/issues/13045 (supported until August 2027)
     - name: Setup MacOS
-      if: startsWith(matrix.os,'macos-15-intel')
+      if: startsWith(matrix.os,'macos')
       run: |
         pip install "tox<4.0.0" setuptools
-        brew install podman
+        PODMAN_VERSION="5.8.9"
+        curl -fsSL -O "https://github.com/containers/podman/releases/download/v${PODMAN_VERSION}/podman-installer-macos-amd64.pkg"
+        sudo installer -pkg "podman-installer-macos-amd64.pkg" -target /
+        echo "/opt/podman/bin" >> $GITHUB_PATH
+        export PATH="/opt/podman/bin:$PATH"
         echo "Podman `which podman`"
         podman machine init
         podman machine start  --log-level debug
         podman info
         echo "$HOME/bin" >> $GITHUB_PATH
-        mkdir $HOME/bin
+        mkdir -p $HOME/bin
         ln -s /usr/bin/true $HOME/bin/brew
         ln -s /usr/bin/true $HOME/bin/skopeo
         ln -s /usr/bin/true $HOME/bin/buildah

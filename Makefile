@@ -25,6 +25,9 @@ test-py312: prepare
 test-py313: prepare
 	tox -e py313 -- tests
 
+test-py314: prepare
+	tox -e py314 -- tests
+
 clean:
 	@find . -name "*.pyc" -exec rm -rf {} \;
 	@rm -rf target
