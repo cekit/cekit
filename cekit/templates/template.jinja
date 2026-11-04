@@ -169,7 +169,7 @@ repos/{{ repo.filename }} \
         # Custom scripts from '{{ module.name }}' {{ module_type }}
         {% for exec in module.execute %}
         USER {{ exec.user }}
-        RUN [ "sh", "-x", "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}" ]
+        RUN sh -x "/tmp/scripts/{{ exec.directory }}/{{ exec.script }}"
         {% endfor %}
         {% endif -%}
 
