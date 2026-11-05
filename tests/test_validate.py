@@ -896,6 +896,10 @@ def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, cap
     mocker.patch("cekit.crypto.get_sum", return_value="123456")
     mocker.patch("cekit.cache.artifact.get_sum", return_value="123456")
 
+    # 'foobar.jar' has no checksum, so it is downloaded directly from its URL.
+    # Mock the HTTP request so the test does not depend on an external host.
+    mock_urlopen = mocker.patch("cekit.tools.urlopen", return_value=get_res(mocker))
+
     cache_id = uuid.uuid4()
     mocker.patch("uuid.uuid4", return_value=cache_id)
 
@@ -966,6 +970,8 @@ def test_run_override_artifact_with_custom_override_example2(tmpdir, mocker, cap
         "('target', 'foobar.jar'), ('url', 'https://dummy.com/foobar.jar')]"
         in caplog.text
     )
+    request: Request = mock_urlopen.call_args[0][0]
+    assert request.full_url == "https://dummy.com/foobar.jar"
 
 
 def test_run_path_artifact_brew(tmpdir, caplog):
