@@ -6,7 +6,7 @@ import shutil
 import ssl
 import subprocess
 import sys
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -151,6 +151,54 @@ def load_descriptor(descriptor: str) -> dict:
 def decision(question: str) -> bool:
     """Asks user for a question returning True/False answered"""
     return click.confirm(question, show_default=True)
+
+
+def get_base_image_digest_info(image: str) -> Optional[Tuple[str, str]]:
+    """Fetch the digest and resolved name of a base image using skopeo.
+
+    Returns a tuple ``(name, digest)`` where *name* is the image reference
+    as passed in and *digest* is the ``sha256:…`` digest string, or ``None``
+    if skopeo is not available or the inspection fails.
+    """
+    skopeo = shutil.which("skopeo")
+    if not skopeo:
+        logger.warning(
+            "skopeo binary not found; skipping injection of "
+            "org.opencontainers.image.base.* labels"
+        )
+        return None
+
+    inspect_cmd = [
+        skopeo,
+        "inspect",
+        "--override-os", "linux",
+        "--format",
+        "{{.Digest}}",
+        f"docker://{image}",
+    ]
+    auth = os.getenv("REGISTRY_AUTH_FILE")
+    if auth:
+        inspect_cmd.extend(["--authfile", auth])
+
+    try:
+        result = run_wrapper(inspect_cmd, True, f"Could not inspect container {image}")
+    except CekitError as e:
+        logger.warning(
+            f"Could not retrieve digest for base image '{image}': {e}; "
+            "skipping injection of org.opencontainers.image.base.* labels"
+        )
+        return None
+
+    digest = result.stdout
+    if not digest:
+        logger.warning(
+            f"Empty digest returned for base image '{image}'; "
+            "skipping injection of org.opencontainers.image.base.* labels"
+        )
+        return None
+
+    logger.debug(f"Found digest {digest} for base image {image}")
+    return image, digest
 
 
 def get_latest_image_version(image: str) -> str:

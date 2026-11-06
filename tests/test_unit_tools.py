@@ -481,6 +481,75 @@ def brew_call_removed(*args, **kwargs) -> subprocess.CompletedProcess:
     return subprocess.CompletedProcess(args[0], 0, "")
 
 
+# ── get_base_image_digest_info ────────────────────────────────────────────────
+
+
+def skopeo_digest_call_ok(*args, **kwargs) -> subprocess.CompletedProcess:
+    return subprocess.CompletedProcess(args[0], 0, "sha256:abcdef1234567890")
+
+
+def test_get_base_image_digest_info_returns_name_and_digest(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("shutil.which", return_value="/usr/bin/skopeo")
+    mocker.patch("subprocess.run", side_effect=skopeo_digest_call_ok)
+    result = tools.get_base_image_digest_info("registry.example.com/myimage:latest")
+    assert result == (
+        "registry.example.com/myimage:latest",
+        "sha256:abcdef1234567890",
+    )
+    assert (
+        "Found digest sha256:abcdef1234567890 for base image registry.example.com/myimage:latest"
+        in caplog.text
+    )
+
+
+@mock.patch.dict(
+    os.environ, {"REGISTRY_AUTH_FILE": "/tmp/auth.json"}
+)
+def test_get_base_image_digest_info_passes_authfile(mocker, caplog):
+    caplog.set_level(logging.DEBUG, logger="cekit")
+    mocker.patch("shutil.which", return_value="/usr/bin/skopeo")
+    mocker.patch("subprocess.run", side_effect=skopeo_digest_call_ok)
+    tools.get_base_image_digest_info("registry.example.com/myimage:latest")
+    call_args = subprocess.run.call_args[0][0]
+    assert "--override-os" in call_args
+    assert "linux" in call_args
+    assert "--authfile" in call_args
+    assert "/tmp/auth.json" in call_args
+
+
+def test_get_base_image_digest_info_returns_none_when_skopeo_missing(mocker, caplog):
+    mocker.patch("shutil.which", return_value=None)
+    result = tools.get_base_image_digest_info("registry.example.com/myimage:latest")
+    assert result is None
+    assert "skopeo binary not found" in caplog.text
+
+
+def test_get_base_image_digest_info_returns_none_on_skopeo_error(mocker, caplog):
+    mocker.patch("shutil.which", return_value="/usr/bin/skopeo")
+    mocker.patch(
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(1, "skopeo"),
+    )
+    result = tools.get_base_image_digest_info("registry.example.com/myimage:latest")
+    assert result is None
+    assert "Could not retrieve digest for base image" in caplog.text
+
+
+def test_get_base_image_digest_info_returns_none_on_empty_digest(mocker, caplog):
+    mocker.patch("shutil.which", return_value="/usr/bin/skopeo")
+    mocker.patch(
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess([], 0, ""),
+    )
+    result = tools.get_base_image_digest_info("registry.example.com/myimage:latest")
+    assert result is None
+    assert "Empty digest returned" in caplog.text
+
+
+# ── get_latest_image_version ──────────────────────────────────────────────────
+
+
 @mock.patch.dict(
     os.environ, {"REGISTRY_AUTH_FILE": "/tmp/e790b157-5023-47f5-b4ec-103b8985be0f.json"}
 )
